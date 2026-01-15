@@ -53,10 +53,19 @@ export function JobCard({ job }: JobCardProps) {
           </div>
 
           <div className="flex justify-between items-center text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Badge variant={job.source === 'native' ? 'default' : 'outline'}>
-                {job.source}
-              </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Source Attribution - Legal Compliance */}
+              <span className="text-xs">
+                Originally posted on:{' '}
+                <Badge variant={job.source === 'native' ? 'default' : 'outline'}>
+                  {job.source === 'justjoinit' && 'JustJoin.it'}
+                  {job.source === 'nofluffjobs' && 'NoFluffJobs'}
+                  {job.source === 'pracuj' && 'Pracuj.pl'}
+                  {job.source === 'indeed' && 'Indeed'}
+                  {job.source === 'native' && 'JobStack'}
+                  {!['justjoinit', 'nofluffjobs', 'pracuj', 'indeed', 'native'].includes(job.source) && job.source}
+                </Badge>
+              </span>
               {job.featured && (
                 <Badge className="bg-yellow-500 hover:bg-yellow-600">⭐ Featured</Badge>
               )}
