@@ -180,8 +180,14 @@ export default function HomePage() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <h3 className="font-bold text-lg mb-4">JobStack</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 Find your perfect job in one place. Aggregating opportunities from all major Polish job boards.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                <strong>JobStack by KobeeCloud</strong><br />
+                Jednoosobowa Działalność Gospodarcza<br />
+                NIP: [Your NIP]<br />
+                REGON: [Your REGON]
               </p>
             </div>
             <div>
@@ -201,17 +207,35 @@ export default function HomePage() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
+              <h4 className="font-semibold mb-4">Legal & Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/about" className="hover:text-foreground">About</Link></li>
-                <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
-                <li><Link href="/privacy" className="hover:text-foreground">Privacy</Link></li>
-                <li><Link href="/terms" className="hover:text-foreground">Terms</Link></li>
+                <li><Link href="/terms" className="hover:text-foreground">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground">Privacy Policy (RODO)</Link></li>
+                <li><Link href="/cookies" className="hover:text-foreground">Cookie Policy</Link></li>
+                <li><Link href="/contact" className="hover:text-foreground">Contact Us</Link></li>
+                <li className="pt-2">
+                  <a href="mailto:legal@jobstack.pl" className="hover:text-foreground">
+                    legal@jobstack.pl
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
+
+          {/* Legal Notice */}
+          <div className="border-t pt-6 mb-6">
+            <p className="text-xs text-muted-foreground text-center max-w-4xl mx-auto">
+              <strong>Legal Disclaimer:</strong> JobStack is a job aggregation platform. We collect publicly available job listings from various sources
+              (JustJoin.it, NoFluffJobs, etc.) and display them with clear attribution. We are NOT an employer and do NOT guarantee the accuracy
+              of third-party job listings. By applying to jobs, you will be redirected to the original job board. See our{' '}
+              <Link href="/terms" className="underline hover:text-foreground">Terms of Service</Link> and{' '}
+              <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link> for details.
+            </p>
+          </div>
+
+          {/* Copyright */}
           <div className="text-center text-sm text-muted-foreground border-t pt-8">
-            <p>© 2026 JobStack by KobeeCloud. All rights reserved.</p>
+            <p>© 2026 JobStack by KobeeCloud. All rights reserved. Made with ❤️ in Poland 🇵🇱</p>
           </div>
         </div>
       </footer>

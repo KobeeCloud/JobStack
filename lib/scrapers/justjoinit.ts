@@ -35,7 +35,8 @@ export async function fetchJustJoinItJobs() {
 
     const response = await fetch('https://justjoin.it/api/offers', {
       headers: {
-        'User-Agent': 'JobStack/1.0',
+        'User-Agent': 'JobStackBot/1.0 (+https://jobstack.pl/bot; legal@jobstack.pl)',
+        'Accept': 'application/json',
       },
     });
 
