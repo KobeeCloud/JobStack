@@ -1,0 +1,211 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
+
+// POST /api/employer/jobs - Create a new job
+export async function POST(request: NextRequest) {
+  try {
+    // Check for API key or session auth
+    const apiKey = request.headers.get('x-api-key');
+    let userId: string | null = null;
+    let companyId: string | null = null;
+
+    if (apiKey) {
+      // API Key authentication
+      const { data: company, error } = await supabaseAdmin
+        .from('companies')
+        .select('id, owner_id, plan')
+        .eq('api_key', apiKey)
+        .single();
+
+      if (error || !company) {
+        return NextResponse.json(
+          { error: 'Invalid API key' },
+          { status: 401 }
+        );
+      }
+
+      userId = company.owner_id;
+      companyId = company.id;
+
+      // Check plan limits (free plan: 1 job/month)
+      if (company.plan === 'free') {
+        const { count } = await supabaseAdmin
+          .from('jobs')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', company.id)
+          .gte('created_at', new Date(new Date().setDate(1)).toISOString());
+
+        if (count && count >= 1) {
+          return NextResponse.json(
+            { error: 'Free plan limit reached. Upgrade to post more jobs.' },
+            { status: 403 }
+          );
+        }
+      }
+    } else {
+      // Session authentication
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+
+      userId = user.id;
+
+      // Get user's company
+      const { data: employerProfile } = await supabase
+        .from('employer_profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!employerProfile) {
+        return NextResponse.json(
+          { error: 'Employer profile not found' },
+          { status: 404 }
+        );
+      }
+
+      companyId = employerProfile.company_id;
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const {
+      title,
+      location,
+      remote = false,
+      salary_min,
+      salary_max,
+      salary_currency = 'PLN',
+      tech_stack = [],
+      description,
+      requirements = [],
+      benefits = [],
+      apply_url,
+      featured = false,
+      expires_in_days = 30,
+    } = body;
+
+    // Validation
+    if (!title || !location || !description) {
+      return NextResponse.json(
+        { error: 'Missing required fields: title, location, description' },
+        { status: 400 }
+      );
+    }
+
+    // Get company name
+    const { data: company } = await supabaseAdmin
+      .from('companies')
+      .select('name, logo_url')
+      .eq('id', companyId)
+      .single();
+
+    // Calculate expiry date
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + expires_in_days);
+
+    // Create job
+    const { data: job, error: insertError } = await supabaseAdmin
+      .from('jobs')
+      .insert({
+        company_id: companyId,
+        company_name: company?.name || 'Unknown Company',
+        company_logo: company?.logo_url,
+        title,
+        location,
+        remote,
+        salary_min,
+        salary_max,
+        salary_currency,
+        tech_stack,
+        description,
+        requirements,
+        benefits,
+        source: 'native',
+        source_url: apply_url,
+        featured,
+        expires_at: expiresAt.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Job creation error:', insertError);
+      return NextResponse.json(
+        { error: 'Failed to create job' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ job }, { status: 201 });
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /api/employer/jobs - List employer's jobs
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Get user's company
+    const { data: employerProfile } = await supabase
+      .from('employer_profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!employerProfile) {
+      return NextResponse.json(
+        { error: 'Employer profile not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get company's jobs
+    const { data: jobs, error } = await supabaseAdmin
+      .from('jobs')
+      .select('*')
+      .eq('company_id', employerProfile.company_id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching jobs:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch jobs' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ jobs });
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
