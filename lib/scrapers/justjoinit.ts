@@ -33,7 +33,6 @@ export async function fetchJustJoinItJobs() {
   try {
     console.log('Fetching jobs from JustJoin.it...');
 
-    // Legal compliance: Proper User-Agent with contact info
     const response = await fetch('https://justjoin.it/api/offers', {
       headers: {
         'User-Agent': 'JobStackBot/1.0 (+https://jobstack.pl/bot; legal@jobstack.pl)',

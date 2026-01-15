@@ -143,6 +143,7 @@ http://localhost:3000/api/scrape/justjoinit
 - [x] Employer API (POST /api/employer/jobs)
 - [x] API documentation
 - [x] Deployment guides
+
 - [x] **Legal compliance (RODO/GDPR)**
   - [x] Terms of Service
   - [x] Privacy Policy
@@ -159,6 +160,7 @@ http://localhost:3000/api/scrape/justjoinit
 - [ ] Cookie consent banner UI
 - [ ] RODO data export API endpoint
 - [ ] Account deletion API endpoint
+
 
 ### 📅 Planned
 - [ ] Company profiles & branding
@@ -217,6 +219,7 @@ Contributions welcome! Please read our [Contributing Guide](./CONTRIBUTING.md) f
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
 
 ## 📄 License
 
