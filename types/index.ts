@@ -1,7 +1,8 @@
 export interface Job {
   id: string;
   title: string;
-  company: string;
+  company?: string; // For backward compatibility
+  company_name: string;
   companyLogo?: string;
   location: string;
   remote: boolean;
@@ -10,15 +11,15 @@ export interface Job {
     max: number;
     currency: string;
   };
-  techStack: string[];
+  techStack?: string[];
   description: string;
-  requirements: string[];
+  requirements?: string[];
   benefits?: string[];
   source: 'native' | 'justjoinit' | 'nofluffjobs' | 'pracuj' | 'indeed';
   sourceUrl?: string;
   featured: boolean;
-  publishedAt: Date;
-  expiresAt: Date;
+  publishedAt?: Date;
+  expiresAt?: Date;
   createdAt: Date;
 }
 
