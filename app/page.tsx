@@ -1,9 +1,42 @@
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Navigation */}
+      <nav className="border-b bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <Link href="/" className="text-2xl font-bold text-blue-600">
+              JobStack
+            </Link>
+            <div className="flex gap-4">
+              <Link href="/jobs">
+                <Button variant="ghost">Browse Jobs</Button>
+              </Link>
+              <Link href="/for-employers">
+                <Button variant="ghost">For Employers</Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="outline">Sign In</Button>
+              </Link>
+              <Link href="/register">
+                <Button>Get Started</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center">
+          <Badge className="mb-4" variant="secondary">
+            🚀 Now aggregating 50,000+ jobs from 5+ boards
+          </Badge>
           <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Find Your Perfect Job
             <br />
@@ -15,23 +48,18 @@ export default function HomePage() {
             Stop wasting time checking multiple job boards. We aggregate thousands of opportunities from JustJoin.it, NoFluffJobs, Pracuj.pl and more.
           </p>
 
-          {/* Search Bar */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <div className="flex gap-4">
-              <input
-                type="text"
-                placeholder="Job title, keywords, or company"
-                className="flex-1 px-6 py-4 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                type="text"
-                placeholder="Location"
-                className="w-48 px-6 py-4 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
-                Search
-              </button>
-            </div>
+          {/* CTA Buttons */}
+          <div className="flex gap-4 justify-center mb-12">
+            <Link href="/jobs">
+              <Button size="lg" className="text-lg px-8 py-6">
+                🔍 Search Jobs Now
+              </Button>
+            </Link>
+            <Link href="/for-employers">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+                👔 Post a Job
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}
@@ -58,51 +86,132 @@ export default function HomePage() {
           Why JobStack?
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">🔍</div>
-            <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">All Jobs in One Place</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              No more switching between multiple job boards. Find everything from JustJoin.it, NoFluffJobs, Pracuj.pl and more.
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">⚡</div>
-            <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Real-time Updates</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              New jobs are added every hour. Get instant access to the latest opportunities before anyone else.
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-            <div className="text-4xl mb-4">🎯</div>
-            <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Smart Filtering</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Filter by technology, location, salary, remote work and more. Find exactly what you're looking for.
-            </p>
-          </div>
+          <Card className="border-2 hover:border-blue-500 transition-colors">
+            <CardHeader>
+              <div className="text-5xl mb-4">🔍</div>
+              <CardTitle>All Jobs in One Place</CardTitle>
+              <CardDescription className="text-base">
+                No more switching between multiple job boards. Find everything from JustJoin.it, NoFluffJobs, Pracuj.pl and more.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-2 hover:border-blue-500 transition-colors">
+            <CardHeader>
+              <div className="text-5xl mb-4">⚡</div>
+              <CardTitle>Real-time Updates</CardTitle>
+              <CardDescription className="text-base">
+                New jobs are added every hour. Get instant access to the latest opportunities before anyone else.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-2 hover:border-blue-500 transition-colors">
+            <CardHeader>
+              <div className="text-5xl mb-4">🎯</div>
+              <CardTitle>Smart Filtering</CardTitle>
+              <CardDescription className="text-base">
+                Filter by technology, location, salary, remote work and more. Find exactly what you're looking for.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-2 hover:border-blue-500 transition-colors">
+            <CardHeader>
+              <div className="text-5xl mb-4">🤖</div>
+              <CardTitle>API for Automation</CardTitle>
+              <CardDescription className="text-base">
+                Automate your job posting process with our RESTful API. Perfect for HR teams and ATS integrations.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-2 hover:border-blue-500 transition-colors">
+            <CardHeader>
+              <div className="text-5xl mb-4">📧</div>
+              <CardTitle>Email Alerts</CardTitle>
+              <CardDescription className="text-base">
+                Get notified when new jobs matching your criteria are posted. Never miss an opportunity.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-2 hover:border-blue-500 transition-colors">
+            <CardHeader>
+              <div className="text-5xl mb-4">💼</div>
+              <CardTitle>For Employers</CardTitle>
+              <CardDescription className="text-base">
+                Post jobs easily with our dashboard or API. Reach thousands of qualified candidates.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
       </div>
 
       {/* CTA */}
       <div className="container mx-auto px-4 py-20">
-        <div className="bg-blue-600 rounded-2xl p-12 text-center text-white">
-          <h2 className="text-4xl font-bold mb-4">Ready to find your dream job?</h2>
-          <p className="text-xl mb-8 opacity-90">Join thousands of job seekers using JobStack</p>
-          <div className="flex gap-4 justify-center">
-            <button className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors">
-              Get Started Free
-            </button>
-            <button className="px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
-              For Employers
-            </button>
-          </div>
-        </div>
+        <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-0">
+          <CardContent className="p-12 text-center text-white">
+            <h2 className="text-4xl font-bold mb-4">Ready to find your dream job?</h2>
+            <p className="text-xl mb-8 opacity-90">Join thousands of job seekers using JobStack</p>
+            <div className="flex gap-4 justify-center">
+              <Link href="/register">
+                <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+                  Get Started Free
+                </Button>
+              </Link>
+              <Link href="/for-employers">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-8 py-6 text-white border-white hover:bg-white/20"
+                >
+                  For Employers
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 dark:border-gray-700">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-gray-600 dark:text-gray-400">
-            <p>© 2026 JobStack. All rights reserved.</p>
+      <footer className="border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h3 className="font-bold text-lg mb-4">JobStack</h3>
+              <p className="text-sm text-muted-foreground">
+                Find your perfect job in one place. Aggregating opportunities from all major Polish job boards.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">For Job Seekers</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/jobs" className="hover:text-foreground">Browse Jobs</Link></li>
+                <li><Link href="/register" className="hover:text-foreground">Create Account</Link></li>
+                <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">For Employers</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/for-employers" className="hover:text-foreground">Post a Job</Link></li>
+                <li><Link href="/api-docs" className="hover:text-foreground">API Documentation</Link></li>
+                <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/about" className="hover:text-foreground">About</Link></li>
+                <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:text-foreground">Terms</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="text-center text-sm text-muted-foreground border-t pt-8">
+            <p>© 2026 JobStack by KobeeCloud. All rights reserved.</p>
           </div>
         </div>
       </footer>
