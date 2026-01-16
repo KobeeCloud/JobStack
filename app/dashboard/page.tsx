@@ -97,11 +97,26 @@ export default async function DashboardPage() {
   }
 
   // Get user profile
-  const { data: profile } = await supabase
+  let { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
+
+  // If profile doesn't exist, create it
+  if (profileError && profileError.code === 'PGRST116') {
+    const { data: newProfile } = await supabase
+      .from('profiles')
+      .insert({
+        id: user.id,
+        email: user.email!,
+        role: 'candidate', // default role
+      })
+      .select()
+      .single();
+
+    profile = newProfile;
+  }
 
   const isEmployer = profile?.role === 'employer';
 

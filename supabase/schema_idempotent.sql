@@ -1,29 +1,35 @@
--- JobStack Database Schema
+-- JobStack Database Schema - Idempotent Version
 -- Run this SQL in your Supabase SQL Editor
+-- Can be run multiple times safely
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Drop existing policies to allow re-running this script
+-- Drop existing policies before recreating
 DO $$
 BEGIN
-    -- Profiles
+    -- Profiles policies
     DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
     DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
     DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-    -- Candidate profiles
+
+    -- Candidate profiles policies
     DROP POLICY IF EXISTS "Candidate profiles are viewable by employers and owner" ON public.candidate_profiles;
     DROP POLICY IF EXISTS "Users can update own candidate profile" ON public.candidate_profiles;
-    -- Jobs
+
+    -- Jobs policies
     DROP POLICY IF EXISTS "Jobs are viewable by everyone" ON public.jobs;
     DROP POLICY IF EXISTS "Employers can insert jobs for their company" ON public.jobs;
     DROP POLICY IF EXISTS "Employers can update jobs for their company" ON public.jobs;
-    -- Applications
+
+    -- Applications policies
     DROP POLICY IF EXISTS "Users can view own applications" ON public.applications;
     DROP POLICY IF EXISTS "Candidates can create applications" ON public.applications;
-    -- Saved jobs
+
+    -- Saved jobs policies
     DROP POLICY IF EXISTS "Users can manage own saved jobs" ON public.saved_jobs;
-    -- Email alerts
+
+    -- Email alerts policies
     DROP POLICY IF EXISTS "Users can manage own email alerts" ON public.email_alerts;
 EXCEPTION
     WHEN undefined_table THEN NULL;
@@ -31,7 +37,7 @@ EXCEPTION
 END $$;
 
 -- Users table (extends Supabase auth.users)
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   email TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('candidate', 'employer')),
@@ -40,7 +46,7 @@ CREATE TABLE public.profiles (
 );
 
 -- Candidate profiles
-CREATE TABLE public.candidate_profiles (
+CREATE TABLE IF NOT EXISTS public.candidate_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   first_name TEXT,
@@ -57,7 +63,7 @@ CREATE TABLE public.candidate_profiles (
 );
 
 -- Companies
-CREATE TABLE public.companies (
+CREATE TABLE IF NOT EXISTS public.companies (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   logo_url TEXT,
@@ -71,7 +77,7 @@ CREATE TABLE public.companies (
 );
 
 -- Employer profiles
-CREATE TABLE public.employer_profiles (
+CREATE TABLE IF NOT EXISTS public.employer_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
@@ -81,11 +87,11 @@ CREATE TABLE public.employer_profiles (
 );
 
 -- Jobs
-CREATE TABLE public.jobs (
+CREATE TABLE IF NOT EXISTS public.jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   company_id UUID REFERENCES public.companies(id),
-  company_name TEXT NOT NULL, -- For scraped jobs without company_id
+  company_name TEXT NOT NULL,
   company_logo TEXT,
   location TEXT NOT NULL,
   remote BOOLEAN DEFAULT false,
@@ -96,21 +102,19 @@ CREATE TABLE public.jobs (
   description TEXT NOT NULL,
   requirements TEXT[],
   benefits TEXT[],
-  source TEXT NOT NULL CHECK (source IN ('native', 'justjoinit', 'nofluffjobs', 'pracuj', 'indeed')),
+  source TEXT NOT NULL CHECK (source IN ('native', 'justjoinit', 'nofluffjobs', 'pracuj', 'indeed', 'bulldogjob', 'rocketjobs')),
   source_url TEXT,
-  source_id TEXT, -- Original ID from source
+  source_id TEXT,
   featured BOOLEAN DEFAULT false,
   published_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-  -- For deduplication
   UNIQUE(source, source_id)
 );
 
 -- Applications
-CREATE TABLE public.applications (
+CREATE TABLE IF NOT EXISTS public.applications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   job_id UUID REFERENCES public.jobs(id) ON DELETE CASCADE,
   candidate_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -119,28 +123,24 @@ CREATE TABLE public.applications (
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'viewed', 'rejected', 'hired')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-  -- One application per job per candidate
   UNIQUE(job_id, candidate_id)
 );
 
 -- Saved jobs
-CREATE TABLE public.saved_jobs (
+CREATE TABLE IF NOT EXISTS public.saved_jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   job_id UUID REFERENCES public.jobs(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-  -- One save per job per user
   UNIQUE(user_id, job_id)
 );
 
 -- Email alerts
-CREATE TABLE public.email_alerts (
+CREATE TABLE IF NOT EXISTS public.email_alerts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
-  filters JSONB NOT NULL, -- Store JobFilters as JSON
+  filters JSONB NOT NULL,
   frequency TEXT NOT NULL CHECK (frequency IN ('instant', 'daily', 'weekly')),
   enabled BOOLEAN DEFAULT true,
   last_sent_at TIMESTAMP WITH TIME ZONE,
@@ -148,29 +148,35 @@ CREATE TABLE public.email_alerts (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Indexes for performance
-CREATE INDEX idx_jobs_source ON public.jobs(source);
-CREATE INDEX idx_jobs_published_at ON public.jobs(published_at DESC);
-CREATE INDEX idx_jobs_featured ON public.jobs(featured) WHERE featured = true;
-CREATE INDEX idx_jobs_tech_stack ON public.jobs USING GIN(tech_stack);
-CREATE INDEX idx_jobs_location ON public.jobs(location);
-CREATE INDEX idx_jobs_remote ON public.jobs(remote) WHERE remote = true;
-CREATE INDEX idx_jobs_expires_at ON public.jobs(expires_at);
-CREATE INDEX idx_applications_candidate_id ON public.applications(candidate_id);
-CREATE INDEX idx_applications_job_id ON public.applications(job_id);
-CREATE INDEX idx_saved_jobs_user_id ON public.saved_jobs(user_id);
+-- Indexes (IF NOT EXISTS supported in Postgres 9.5+)
+CREATE INDEX IF NOT EXISTS idx_jobs_source ON public.jobs(source);
+CREATE INDEX IF NOT EXISTS idx_jobs_published_at ON public.jobs(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_jobs_featured ON public.jobs(featured) WHERE featured = true;
+CREATE INDEX IF NOT EXISTS idx_jobs_tech_stack ON public.jobs USING GIN(tech_stack);
+CREATE INDEX IF NOT EXISTS idx_jobs_location ON public.jobs(location);
+CREATE INDEX IF NOT EXISTS idx_jobs_remote ON public.jobs(remote) WHERE remote = true;
+CREATE INDEX IF NOT EXISTS idx_jobs_expires_at ON public.jobs(expires_at);
+CREATE INDEX IF NOT EXISTS idx_applications_candidate_id ON public.applications(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_applications_job_id ON public.applications(job_id);
+CREATE INDEX IF NOT EXISTS idx_saved_jobs_user_id ON public.saved_jobs(user_id);
 
--- Full-text search index
-ALTER TABLE public.jobs ADD COLUMN search_vector tsvector
-  GENERATED ALWAYS AS (
-    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(company_name, '')), 'B') ||
-    setweight(to_tsvector('english', coalesce(description, '')), 'C')
-  ) STORED;
+-- Add search_vector column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name = 'jobs' AND column_name = 'search_vector') THEN
+        ALTER TABLE public.jobs ADD COLUMN search_vector tsvector
+          GENERATED ALWAYS AS (
+            setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+            setweight(to_tsvector('english', coalesce(company_name, '')), 'B') ||
+            setweight(to_tsvector('english', coalesce(description, '')), 'C')
+          ) STORED;
+    END IF;
+END $$;
 
-CREATE INDEX idx_jobs_search ON public.jobs USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_jobs_search ON public.jobs USING GIN(search_vector);
 
--- Row Level Security (RLS)
+-- Enable RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.candidate_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.employer_profiles ENABLE ROW LEVEL SECURITY;
