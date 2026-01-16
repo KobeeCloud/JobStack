@@ -133,7 +133,13 @@ export async function fetchNoFluffJobs() {
           });
 
         if (error) {
-          console.error(`Error upserting job ${offer.id}:`, error);
+          console.error(`Error upserting job ${offer.id}:`, {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+          console.error('Job data that failed:', JSON.stringify(jobData, null, 2));
           errors++;
         } else {
           inserted++;

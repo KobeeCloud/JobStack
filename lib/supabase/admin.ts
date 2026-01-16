@@ -22,6 +22,14 @@ function getSupabaseAdmin(): SupabaseClient {
       autoRefreshToken: false,
       persistSession: false,
     },
+    db: {
+      schema: 'public',
+    },
+    global: {
+      headers: {
+        'x-supabase-bypass-rls': 'true',
+      },
+    },
   });
 
   return _supabaseAdmin;

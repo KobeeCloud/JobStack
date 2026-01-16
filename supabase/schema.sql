@@ -232,17 +232,28 @@ CREATE POLICY "Jobs are viewable by everyone"
   ON public.jobs FOR SELECT
   USING (expires_at IS NULL OR expires_at > NOW());
 
-CREATE POLICY "Employers can insert jobs for their company"
+CREATE POLICY "Scraped jobs can be inserted by service role"
   ON public.jobs FOR INSERT
   WITH CHECK (
+    source != 'native' OR
     EXISTS (
       SELECT 1 FROM public.employer_profiles
       WHERE user_id = auth.uid() AND company_id = jobs.company_id
     )
   );
 
-CREATE POLICY "Employers can update jobs for their company"
+CREATE POLICY "Scraped jobs can be updated by service role"
   ON public.jobs FOR UPDATE
+  USING (
+    source != 'native' OR
+    EXISTS (
+      SELECT 1 FROM public.employer_profiles
+      WHERE user_id = auth.uid() AND company_id = jobs.company_id
+    )
+  );
+
+CREATE POLICY "Employers can delete their jobs"
+  ON public.jobs FOR DELETE
   USING (
     EXISTS (
       SELECT 1 FROM public.employer_profiles
