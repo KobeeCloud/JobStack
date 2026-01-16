@@ -36,7 +36,25 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ job: data });
+    // Transform database format to frontend format
+    const transformedJob = {
+      ...data,
+      company_name: data.company_name,
+      companyLogo: data.company_logo,
+      techStack: data.tech_stack,
+      sourceUrl: data.source_url,
+      publishedAt: data.published_at,
+      expiresAt: data.expires_at,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      salary: data.salary_min || data.salary_max ? {
+        min: data.salary_min,
+        max: data.salary_max,
+        currency: data.salary_currency || 'PLN',
+      } : undefined,
+    };
+
+    return NextResponse.json({ job: transformedJob });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(

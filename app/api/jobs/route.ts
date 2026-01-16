@@ -81,8 +81,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Transform database format to frontend format
+    const transformedJobs = (data || []).map((job: any) => ({
+      ...job,
+      company_name: job.company_name,
+      companyLogo: job.company_logo,
+      techStack: job.tech_stack,
+      sourceUrl: job.source_url,
+      publishedAt: job.published_at,
+      expiresAt: job.expires_at,
+      createdAt: job.created_at,
+      updatedAt: job.updated_at,
+      salary: job.salary_min || job.salary_max ? {
+        min: job.salary_min,
+        max: job.salary_max,
+        currency: job.salary_currency || 'PLN',
+      } : undefined,
+    }));
+
     return NextResponse.json({
-      jobs: data || [],
+      jobs: transformedJobs,
       pagination: {
         page,
         limit,

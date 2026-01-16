@@ -7,13 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { QuickApply } from '@/components/quick-apply';
 import { type Job } from '@/types';
 import { formatSalary, formatDate } from '@/lib/utils';
+
+interface ApplicationQuestion {
+  id: string;
+  question_text: string;
+  question_type: 'text' | 'textarea' | 'checkbox' | 'radio' | 'select';
+  options?: string[];
+  required: boolean;
+  order_index: number;
+}
 
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
+  const [questions, setQuestions] = useState<ApplicationQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +46,15 @@ export default function JobDetailPage() {
 
         const data = await response.json();
         setJob(data.job);
+
+        // Fetch custom questions if this is a native job
+        if (data.job.source === 'native') {
+          const questionsResponse = await fetch(`/api/jobs/${params.id}/questions`);
+          if (questionsResponse.ok) {
+            const questionsData = await questionsResponse.json();
+            setQuestions(questionsData.questions || []);
+          }
+        }
       } catch (err) {
         console.error('Error fetching job:', err);
         setError('Failed to load job');
@@ -167,9 +187,18 @@ export default function JobDetailPage() {
 
             <CardContent>
               <div className="flex gap-3">
-                <Button size="lg" onClick={handleApply} className="flex-1">
-                  Apply Now →
-                </Button>
+                {job.source === 'native' ? (
+                  <QuickApply
+                    jobId={job.id}
+                    jobTitle={job.title}
+                    companyName={job.company_name}
+                    questions={questions}
+                  />
+                ) : (
+                  <Button size="lg" onClick={handleApply} className="flex-1">
+                    Apply on {job.source} →
+                  </Button>
+                )}
                 <Button size="lg" variant="outline">
                   💾 Save Job
                 </Button>
