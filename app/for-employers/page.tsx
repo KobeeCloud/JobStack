@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
+import { SimpleStats } from '@/components/home-stats';
 import { useLocale } from '@/lib/i18n';
 import { Target, Zap, BarChart3, Code2, Check, ArrowRight, Sparkles, Users, Building2 } from 'lucide-react';
 
@@ -95,29 +96,10 @@ export default function ForEmployersPage() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Stats - Dynamic */}
       <section className="py-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto text-center">
-            <div>
-              <div className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-                50,000+
-              </div>
-              <div className="text-gray-600 dark:text-gray-400">Kandydatów IT</div>
-            </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-                5+
-              </div>
-              <div className="text-gray-600 dark:text-gray-400">Portali zintegrowanych</div>
-            </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-                0 PLN
-              </div>
-              <div className="text-gray-600 dark:text-gray-400">Koszt na start</div>
-            </div>
-          </div>
+          <SimpleStats />
         </div>
       </section>
 

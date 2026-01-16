@@ -1,6 +1,7 @@
 'use client';
 
-import { MapPin, Building2, Banknote, Clock, Bookmark } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Building2, Banknote, Clock, Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { type Job } from '@/types';
@@ -10,6 +11,8 @@ interface JobCardProps {
   job: Job;
   onClick?: () => void;
   isSelected?: boolean;
+  isSaved?: boolean;
+  onSaveToggle?: (jobId: string, saved: boolean) => void;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -22,11 +25,71 @@ const SOURCE_LABELS: Record<string, string> = {
   native: 'JobStack',
 };
 
-export function JobCard({ job, onClick, isSelected }: JobCardProps) {
+export function JobCard({ job, onClick, isSelected, isSaved = false, onSaveToggle }: JobCardProps) {
   const { t } = useLocale();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(isSaved);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const sourceLabel = SOURCE_LABELS[job.source] || job.source || 'Unknown';
   const companyName = job.company || job.company_name || 'Firma';
+
+  const handleSaveClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSaveError(null);
+    setSaving(true);
+
+    try {
+      if (saved) {
+        // Remove from saved
+        const response = await fetch(`/api/saved-jobs?jobId=${job.id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          setSaved(false);
+          onSaveToggle?.(job.id, false);
+        } else {
+          const data = await response.json();
+          if (response.status === 401) {
+            setSaveError('Zaloguj się, aby zapisywać oferty');
+          } else {
+            setSaveError(data.error || 'Nie udało się usunąć');
+          }
+        }
+      } else {
+        // Add to saved
+        const response = await fetch('/api/saved-jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId: job.id }),
+        });
+
+        if (response.ok) {
+          setSaved(true);
+          onSaveToggle?.(job.id, true);
+        } else {
+          const data = await response.json();
+          if (response.status === 401) {
+            setSaveError('Zaloguj się, aby zapisywać oferty');
+          } else if (data.alreadySaved) {
+            setSaved(true);
+          } else {
+            setSaveError(data.error || 'Nie udało się zapisać');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error saving job:', error);
+      setSaveError('Wystąpił błąd');
+    } finally {
+      setSaving(false);
+      // Clear error after 3 seconds
+      if (saveError) {
+        setTimeout(() => setSaveError(null), 3000);
+      }
+    }
+  };
 
   const formatSalary = () => {
     if (!job.salary?.min && !job.salary?.max) return null;
@@ -112,17 +175,33 @@ export function JobCard({ job, onClick, isSelected }: JobCardProps) {
           </div>
 
           {/* Bookmark button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              // TODO: Implement bookmark
-            }}
-          >
-            <Bookmark className="w-5 h-5" />
-          </Button>
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={saving}
+              className={`rounded-xl transition-all ${
+                saved
+                  ? 'text-blue-600 dark:text-blue-400 opacity-100'
+                  : 'opacity-0 group-hover:opacity-100'
+              }`}
+              onClick={handleSaveClick}
+              title={saved ? 'Usuń z zapisanych' : 'Zapisz ofertę'}
+            >
+              {saving ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : saved ? (
+                <BookmarkCheck className="w-5 h-5 fill-current" />
+              ) : (
+                <Bookmark className="w-5 h-5" />
+              )}
+            </Button>
+            {saveError && (
+              <div className="absolute top-full right-0 mt-1 px-2 py-1 text-xs bg-red-500 text-white rounded-lg whitespace-nowrap z-20">
+                {saveError}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Quick Info Row */}

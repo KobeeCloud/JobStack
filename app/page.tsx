@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
+import { HomeStats } from '@/components/home-stats';
 import { useLocale } from '@/lib/i18n';
-import { Search, Zap, Target, Bot, Mail, Briefcase, ArrowRight, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { Search, Zap, Target, Bot, Mail, Briefcase, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function HomePage() {
   const { t } = useLocale();
@@ -49,12 +50,6 @@ export default function HomePage() {
       descKey: 'home.features.employers.desc' as const,
       color: 'from-indigo-500 to-violet-500',
     },
-  ];
-
-  const stats = [
-    { value: '50,000+', labelKey: 'home.stats.jobs' as const, icon: Briefcase },
-    { value: '5+', labelKey: 'home.stats.boards' as const, icon: TrendingUp },
-    { value: '10,000+', labelKey: 'home.stats.users' as const, icon: Users },
   ];
 
   return (
@@ -109,23 +104,8 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              {stats.map((stat, index) => (
-                <div
-                  key={index}
-                  className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20"
-                >
-                  <stat.icon className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-                  <div className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-1">
-                    {stat.value}
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-400 font-medium">
-                    {t(stat.labelKey)}
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Stats - Dynamic */}
+            <HomeStats />
           </div>
         </div>
       </section>

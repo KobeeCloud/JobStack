@@ -15,6 +15,7 @@ export const translations = {
       dashboard: 'Panel',
       profile: 'Profil',
       logout: 'Wyloguj',
+      savedJobs: 'Zapisane',
     },
 
     // Common
@@ -329,6 +330,7 @@ export const translations = {
       dashboard: 'Dashboard',
       profile: 'Profile',
       logout: 'Sign Out',
+      savedJobs: 'Saved',
     },
 
     // Common
