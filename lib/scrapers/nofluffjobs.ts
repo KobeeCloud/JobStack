@@ -73,8 +73,10 @@ export async function fetchNoFluffJobs() {
     // Deduplicate offers - NoFluffJobs returns same job for each location
     const uniqueOffers = new Map<string, NoFluffJobsOffer>();
     for (const offer of offers) {
-      // Extract base ID without location suffix
-      const baseId = offer.url.split('/').pop()?.split('-').slice(0, -1).join('-') || offer.url;
+      // Extract base ID without location suffix from offer.id
+      // Example: "data-engineer-pyspark-verita-hr-Kraków" -> "data-engineer-pyspark-verita-hr"
+      const idParts = offer.id.split('-');
+      const baseId = idParts.slice(0, -1).join('-');
 
       if (!uniqueOffers.has(baseId)) {
         uniqueOffers.set(baseId, offer);
@@ -85,7 +87,7 @@ export async function fetchNoFluffJobs() {
       }
     }
 
-    console.log(`Deduplicated to ${uniqueOffers.size} unique jobs`);
+    console.log(`Deduplicated to ${uniqueOffers.size} unique jobs (from ${offers.length} total)`);
 
     for (const [baseId, offer] of uniqueOffers) {
       try {

@@ -23,11 +23,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Next.js (no cache)
-        run: |
-          rm -rf .next
-          npm run build
-
       - name: Run scraper directly
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
