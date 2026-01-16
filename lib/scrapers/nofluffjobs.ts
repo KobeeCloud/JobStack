@@ -100,6 +100,10 @@ export async function fetchNoFluffJobs() {
         }
 
         // Prepare job data
+        // Set expiry to 60 days from now (jobs older than this will be cleaned up)
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 60);
+
         const jobData = {
           title: offer.title,
           company_name: offer.name,
@@ -117,7 +121,7 @@ export async function fetchNoFluffJobs() {
           source_id: offer.id,
           featured: false,
           published_at: new Date(offer.posted).toISOString(),
-          expires_at: null,
+          expires_at: expiryDate.toISOString(),
         };
 
         // Upsert to database
@@ -142,12 +146,28 @@ export async function fetchNoFluffJobs() {
 
     console.log(`NoFluffJobs import completed: ${inserted} inserted, ${updated} updated, ${errors} errors`);
 
+    // Cleanup expired jobs from NoFluffJobs (older than expiry date)
+    const { data: deletedJobs, error: deleteError } = await supabaseAdmin
+      .from('jobs')
+      .delete()
+      .eq('source', 'nofluffjobs')
+      .lt('expires_at', new Date().toISOString())
+      .select('id');
+
+    const deletedCount = deletedJobs?.length || 0;
+    if (deleteError) {
+      console.error('Error deleting expired NoFluffJobs:', deleteError);
+    } else {
+      console.log(`Deleted ${deletedCount} expired NoFluffJobs jobs`);
+    }
+
     return {
       success: true,
       total: offers.length,
       inserted,
       updated,
       errors,
+      deleted: deletedCount,
     };
   } catch (error) {
     console.error('NoFluffJobs scraper error:', error);
