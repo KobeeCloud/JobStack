@@ -53,35 +53,36 @@ async function runScrapers() {
     errors.push(`NoFluffJobs: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  // Run Pracuj.pl scraper
-  try {
-    results.pracuj = await fetchPracujJobs();
-    console.log('✅ Pracuj.pl scraper completed');
-  } catch (error) {
-    console.error('❌ Pracuj.pl scraper failed:', error);
-    results.pracuj = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    errors.push(`Pracuj.pl: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  // TODO: Uncomment when ready to enable other scrapers
+  // // Run Pracuj.pl scraper
+  // try {
+  //   results.pracuj = await fetchPracujJobs();
+  //   console.log('✅ Pracuj.pl scraper completed');
+  // } catch (error) {
+  //   console.error('❌ Pracuj.pl scraper failed:', error);
+  //   results.pracuj = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  //   errors.push(`Pracuj.pl: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  // }
 
-  // Run Bulldogjob scraper
-  try {
-    results.bulldogjob = await fetchBulldogJobs();
-    console.log('✅ Bulldogjob scraper completed');
-  } catch (error) {
-    console.error('❌ Bulldogjob scraper failed:', error);
-    results.bulldogjob = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    errors.push(`Bulldogjob: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  // // Run Bulldogjob scraper
+  // try {
+  //   results.bulldogjob = await fetchBulldogJobs();
+  //   console.log('✅ Bulldogjob scraper completed');
+  // } catch (error) {
+  //   console.error('❌ Bulldogjob scraper failed:', error);
+  //   results.bulldogjob = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  //   errors.push(`Bulldogjob: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  // }
 
-  // Run RocketJobs scraper
-  try {
-    results.rocketjobs = await fetchRocketJobs();
-    console.log('✅ RocketJobs scraper completed');
-  } catch (error) {
-    console.error('❌ RocketJobs scraper failed:', error);
-    results.rocketjobs = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-    errors.push(`RocketJobs: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  // // Run RocketJobs scraper
+  // try {
+  //   results.rocketjobs = await fetchRocketJobs();
+  //   console.log('✅ RocketJobs scraper completed');
+  // } catch (error) {
+  //   console.error('❌ RocketJobs scraper failed:', error);
+  //   results.rocketjobs = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  //   errors.push(`RocketJobs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  // }
 
   // JustJoin.it - disabled (API changed)
   // try {
