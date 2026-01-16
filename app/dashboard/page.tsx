@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CareersImporter } from '@/components/careers-importer';
+import { AtsImporter } from '@/components/ats-importer';
 import {
   Briefcase,
   Users,
@@ -426,6 +428,12 @@ export default async function DashboardPage() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Jobs List */}
             <div className="lg:col-span-2">
+              <div className="mb-6">
+                <CareersImporter />
+              </div>
+              <div className="mb-6">
+                <AtsImporter />
+              </div>
               <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>

@@ -14,6 +14,7 @@ import { useLocale } from '@/lib/i18n/context';
 export default function LoginPage() {
   const router = useRouter();
   const { t } = useLocale();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,11 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${siteUrl}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
