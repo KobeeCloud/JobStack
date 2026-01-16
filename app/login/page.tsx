@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Sparkles, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase/client';
@@ -18,20 +18,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [alreadyLoggedIn, setAlreadyLoggedIn] = useState(false);
 
   // Check if user is already logged in
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        router.push('/dashboard');
-      } else {
-        setCheckingAuth(false);
+        setAlreadyLoggedIn(true);
       }
     };
     checkUser();
-  }, [router]);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,14 +69,38 @@ export default function LoginPage() {
     }
   };
 
-  // Show loading spinner while checking auth
-  if (checkingAuth) {
+  // Show message if already logged in
+  if (alreadyLoggedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Sprawdzanie sesji...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
+        <Navbar />
+        <main className="flex items-center justify-center px-4 py-20 min-h-[calc(100vh-160px)]">
+          <div className="w-full max-w-md">
+            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8 text-center">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Jesteś już zalogowany
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Przejdź do panelu lub strony głównej
+              </p>
+              <div className="flex gap-3">
+                <Link href="/dashboard" className="flex-1">
+                  <Button className="w-full">
+                    Przejdź do panelu
+                  </Button>
+                </Link>
+                <Link href="/" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    Strona główna
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
