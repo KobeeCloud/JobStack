@@ -7,10 +7,9 @@ import { JobDetailModal, JobData } from '@/components/job-detail-modal';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { type Job } from '@/types';
 import { useLocale } from '@/lib/i18n';
-import { Search, SlidersHorizontal, MapPin, Briefcase, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
 
 interface JobsResponse {
   jobs: Job[];
@@ -22,6 +21,17 @@ interface JobsResponse {
   };
   error?: string;
   warning?: string;
+}
+
+interface SearchFilters {
+  query: string;
+  location: string;
+  techStack: string[];
+  remote: boolean;
+  workMode?: 'remote' | 'hybrid' | 'onsite';
+  role?: string;
+  voivodeship?: string;
+  distance?: number;
 }
 
 // Transform Job to JobData for modal
@@ -59,13 +69,12 @@ export default function JobsPage() {
     total: 0,
     totalPages: 0,
   });
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<SearchFilters>({
     query: '',
     location: '',
-    techStack: [] as string[],
+    techStack: [],
     remote: false,
   });
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchJobs = useCallback(async (page: number = 1) => {
@@ -83,6 +92,10 @@ export default function JobsPage() {
       if (filters.techStack.length > 0) {
         params.append('techStack', filters.techStack.join(','));
       }
+      if (filters.workMode) params.append('workMode', filters.workMode);
+      if (filters.role) params.append('role', filters.role);
+      if (filters.voivodeship) params.append('voivodeship', filters.voivodeship);
+      if (filters.distance) params.append('distance', filters.distance.toString());
 
       const response = await fetch(`/api/jobs?${params.toString()}`);
       const data: JobsResponse = await response.json();
@@ -108,7 +121,7 @@ export default function JobsPage() {
     fetchJobs();
   }, [fetchJobs]);
 
-  const handleSearch = (newFilters: typeof filters) => {
+  const handleSearch = (newFilters: SearchFilters) => {
     setFilters(newFilters);
     setError(null);
     setPagination(prev => ({ ...prev, page: 1 }));
@@ -130,17 +143,11 @@ export default function JobsPage() {
     setTimeout(() => setSelectedJob(null), 300);
   };
 
-  const quickFilters = [
-    { id: 'all', label: 'Wszystkie', icon: Briefcase },
-    { id: 'remote', label: 'Tylko zdalne', icon: MapPin },
-    { id: 'featured', label: 'Wyróżnione', icon: TrendingUp },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
       <Navbar />
 
-      {/* Hero Section */}
+      {/* Hero Section with Search */}
       <section className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-8">
@@ -151,9 +158,13 @@ export default function JobsPage() {
               {t('jobs.subtitle')}
             </p>
           </div>
+        </div>
+      </section>
 
-          {/* Search */}
-          <div className="max-w-4xl mx-auto">
+      {/* Search Section */}
+      <section className="-mt-6 relative z-10 pb-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
             <JobSearch onSearch={handleSearch} />
           </div>
         </div>
@@ -175,40 +186,16 @@ export default function JobsPage() {
             </div>
           )}
 
-          {/* Quick Filters & Results Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            {/* Quick Filters */}
-            <div className="flex flex-wrap gap-2">
-              {quickFilters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => {
-                    setActiveFilter(activeFilter === filter.id ? null : filter.id);
-                    if (filter.id === 'remote') {
-                      setFilters(prev => ({ ...prev, remote: !prev.remote }));
-                    }
-                  }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeFilter === filter.id
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
-                  }`}
-                >
-                  <filter.icon className="w-4 h-4" />
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Results Count */}
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+          {/* Results Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Briefcase className="w-5 h-5 text-blue-600" />
+              <div className="text-gray-700 dark:text-gray-300">
                 {loading ? (
                   <span className="animate-pulse">{t('common.loading')}</span>
                 ) : (
                   <span>
-                    <span className="font-bold text-gray-900 dark:text-white">{pagination.total}</span>
-                    {' '}ofert pracy
+                    Znaleziono <span className="font-bold text-gray-900 dark:text-white">{pagination.total}</span> ofert pracy
                   </span>
                 )}
               </div>
@@ -237,7 +224,6 @@ export default function JobsPage() {
               <Button
                 onClick={() => {
                   setFilters({ query: '', location: '', techStack: [], remote: false });
-                  setActiveFilter(null);
                 }}
                 variant="outline"
               >
