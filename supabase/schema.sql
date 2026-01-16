@@ -96,7 +96,7 @@ CREATE TABLE public.jobs (
   description TEXT NOT NULL,
   requirements TEXT[],
   benefits TEXT[],
-  source TEXT NOT NULL CHECK (source IN ('native', 'justjoinit', 'nofluffjobs', 'pracuj', 'indeed')),
+  source TEXT NOT NULL CHECK (source IN ('native', 'justjoinit', 'nofluffjobs', 'pracuj', 'indeed', 'bulldogjob', 'rocketjobs')),
   source_url TEXT,
   source_id TEXT, -- Original ID from source
   featured BOOLEAN DEFAULT false,
