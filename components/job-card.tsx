@@ -136,10 +136,10 @@ export function JobCard({ job, onClick, isSelected, isSaved = false, onSaveToggl
   return (
     <article
       onClick={onClick}
-      className={`group relative bg-white dark:bg-gray-800/50 rounded-2xl border-2 transition-all duration-300 cursor-pointer hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 ${
+      className={`group relative bg-card/80 backdrop-blur-md dark:bg-card/40 rounded-2xl border transition-all duration-300 cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 ${
         isSelected
-          ? 'border-blue-500 dark:border-blue-500 shadow-xl ring-2 ring-blue-500/20'
-          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+          ? 'border-primary ring-1 ring-primary shadow-lg shadow-primary/10'
+          : 'border-border/50 hover:border-primary/50'
       }`}
     >
       {/* Featured banner */}

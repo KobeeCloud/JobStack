@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { CookieBanner } from "@/components/cookie-banner";
 import { Providers } from "@/components/providers";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "JobStack - Agregator ofert pracy IT w Polsce",
@@ -17,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl" suppressHydrationWarning>
-      <body className="antialiased">
+      <body className={`${inter.className} antialiased`}>
         <Providers>
           {children}
           <Toaster />

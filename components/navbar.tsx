@@ -47,8 +47,8 @@ export function Navbar({ transparent = false }: NavbarProps) {
     <nav
       className={`sticky top-0 z-50 border-b transition-all duration-200 ${
         transparent
-          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md'
-          : 'bg-white dark:bg-gray-900'
+          ? 'bg-background/60 backdrop-blur-md border-transparent'
+          : 'bg-background/80 backdrop-blur-md border-border supports-[backdrop-filter]:bg-background/60'
       }`}
     >
       <div className="container mx-auto px-4">
@@ -56,8 +56,8 @@ export function Navbar({ transparent = false }: NavbarProps) {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-bold">
-              <span className="text-blue-600">Job</span>
-              <span className="text-indigo-600">Stack</span>
+              <span className="text-primary">Job</span>
+              <span className="text-foreground">Stack</span>
               <span className="text-gray-400">.pl</span>
             </span>
           </Link>
