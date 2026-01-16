@@ -87,6 +87,19 @@ export default function HomePage() {
               {t('home.description')}
             </p>
 
+            <div className="mb-10">
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-white/70 dark:bg-gray-900/60 border border-blue-100 dark:border-blue-900/40 shadow-sm">
+                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Start 2026</span>
+                <span className="h-4 w-px bg-blue-200 dark:bg-blue-900/60" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Przez długi czas bez opłat — korzystaj bez ograniczeń
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                Dołącz do JobStack i rozwijaj karierę lub zespół od pierwszego dnia.
+              </p>
+            </div>
+
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
               <Link href="/jobs">

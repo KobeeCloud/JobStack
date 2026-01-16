@@ -80,49 +80,49 @@ export async function PUT(request: NextRequest) {
     const {
       firstName,
       lastName,
-      phone,
-      location,
-      bio,
       title,
-      yearsExperience,
-      currentPosition,
-      expectedSalaryMin,
-      expectedSalaryMax,
-      availableFrom,
+      experience,
       linkedinUrl,
       githubUrl,
       portfolioUrl,
       skills,
       cvUrl,
-      publicProfile,
     } = body;
 
-    // Update candidate profile
-    const { error: updateError } = await supabaseAdmin
+    const basePayload = {
+      user_id: user.id,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      title: title || null,
+      experience: experience || null,
+      linkedin_url: linkedinUrl || null,
+      github_url: githubUrl || null,
+      portfolio_url: portfolioUrl || null,
+      skills: Array.isArray(skills) ? skills : [],
+      cv_url: cvUrl || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Try extended payload first (if columns exist), fallback to base schema
+    const extendedPayload = {
+      ...basePayload,
+      resume_url: cvUrl || null,
+      public_profile: false,
+    };
+
+    let updateError = null;
+    const { error: extendedError } = await supabaseAdmin
       .from('candidate_profiles')
-      .upsert({
-        user_id: user.id,
-        first_name: firstName,
-        last_name: lastName,
-        phone,
-        location,
-        bio,
-        title,
-        years_experience: yearsExperience ? parseInt(yearsExperience) : null,
-        current_position: currentPosition,
-        expected_salary_min: expectedSalaryMin ? parseInt(expectedSalaryMin) : null,
-        expected_salary_max: expectedSalaryMax ? parseInt(expectedSalaryMax) : null,
-        available_from: availableFrom || null,
-        linkedin_url: linkedinUrl,
-        github_url: githubUrl,
-        portfolio_url: portfolioUrl,
-        skills: skills || [],
-        resume_url: cvUrl,
-        public_profile: publicProfile || false,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id',
-      });
+      .upsert(extendedPayload, { onConflict: 'user_id' });
+
+    if (extendedError && extendedError.code === '42703') {
+      const { error: baseError } = await supabaseAdmin
+        .from('candidate_profiles')
+        .upsert(basePayload, { onConflict: 'user_id' });
+      updateError = baseError;
+    } else {
+      updateError = extendedError;
+    }
 
     if (updateError) {
       console.error('Update error:', updateError);

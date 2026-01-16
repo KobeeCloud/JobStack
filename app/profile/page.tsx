@@ -7,35 +7,66 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { User, Mail, Phone, MapPin, Briefcase, Calendar, DollarSign, Github, Linkedin, Globe, Upload } from 'lucide-react';
+import { User, Mail, Briefcase, Github, Linkedin, Globe, Upload } from 'lucide-react';
 
 export default function ProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   const [profile, setProfile] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
-    location: '',
-    bio: '',
     title: '',
-    yearsExperience: '',
-    currentPosition: '',
-    expectedSalaryMin: '',
-    expectedSalaryMax: '',
-    availableFrom: '',
+    experience: '',
     linkedinUrl: '',
     githubUrl: '',
     portfolioUrl: '',
     skills: [] as string[],
     cvUrl: '',
-    publicProfile: false,
   });
 
   const [newSkill, setNewSkill] = useState('');
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        if (response.status === 401) {
+          router.push('/login?redirect=/profile');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+
+        const data = await response.json();
+        const candidateProfile = data.candidateProfile || {};
+
+        setProfile({
+          firstName: candidateProfile.first_name || '',
+          lastName: candidateProfile.last_name || '',
+          email: data.email || '',
+          title: candidateProfile.title || '',
+          experience: candidateProfile.experience || '',
+          linkedinUrl: candidateProfile.linkedin_url || '',
+          githubUrl: candidateProfile.github_url || '',
+          portfolioUrl: candidateProfile.portfolio_url || '',
+          skills: candidateProfile.skills || [],
+          cvUrl: candidateProfile.cv_url || '',
+        });
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    loadProfile();
+  }, [router]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -43,7 +74,17 @@ export default function ProfilePage() {
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile),
+        body: JSON.stringify({
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          title: profile.title,
+          experience: profile.experience,
+          linkedinUrl: profile.linkedinUrl,
+          githubUrl: profile.githubUrl,
+          portfolioUrl: profile.portfolioUrl,
+          skills: profile.skills,
+          cvUrl: profile.cvUrl,
+        }),
       });
 
       if (!response.ok) {
@@ -94,6 +135,17 @@ export default function ProfilePage() {
       alert('❌ Błąd podczas przesyłania CV');
     }
   };
+
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Upload className="h-6 w-6 animate-spin mx-auto text-blue-600" />
+          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">Ładowanie profilu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -183,85 +235,7 @@ export default function ProfilePage() {
                   <Mail className="h-4 w-4" />
                   Email
                 </label>
-                {editing ? (
-                  <Input
-                    type="email"
-                    value={profile.email}
-                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  />
-                ) : (
-                  <p className="p-2">{profile.email || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Telefon
-                </label>
-                {editing ? (
-                  <Input
-                    type="tel"
-                    value={profile.phone}
-                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                  />
-                ) : (
-                  <p className="p-2">{profile.phone || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Lokalizacja
-                </label>
-                {editing ? (
-                  <Input
-                    value={profile.location}
-                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                    placeholder="np. Gdańsk, Polska"
-                  />
-                ) : (
-                  <p className="p-2">{profile.location || '-'}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block">O mnie</label>
-                {editing ? (
-                  <textarea
-                    className="w-full min-h-[100px] p-2 border rounded-md"
-                    value={profile.bio}
-                    onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                    placeholder="Opowiedz o sobie..."
-                  />
-                ) : (
-                  <p className="p-2 whitespace-pre-wrap">{profile.bio || '-'}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Professional Information */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                Doświadczenie zawodowe
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Obecne stanowisko</label>
-                {editing ? (
-                  <Input
-                    value={profile.currentPosition}
-                    onChange={(e) => setProfile({ ...profile, currentPosition: e.target.value })}
-                    placeholder="np. Senior Full-Stack Developer"
-                  />
-                ) : (
-                  <p className="p-2">{profile.currentPosition || '-'}</p>
-                )}
+                <Input type="email" value={profile.email} readOnly className="bg-gray-50 dark:bg-gray-800" />
               </div>
 
               <div>
@@ -276,65 +250,29 @@ export default function ProfilePage() {
                   <p className="p-2">{profile.title || '-'}</p>
                 )}
               </div>
+            </CardContent>
+          </Card>
 
+          {/* Experience */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Doświadczenie i opis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">Lata doświadczenia</label>
+                <label className="text-sm font-medium mb-1 block">Twoje doświadczenie / bio</label>
                 {editing ? (
-                  <Input
-                    type="number"
-                    value={profile.yearsExperience}
-                    onChange={(e) => setProfile({ ...profile, yearsExperience: e.target.value })}
+                  <textarea
+                    className="w-full min-h-[120px] p-2 border rounded-md"
+                    value={profile.experience}
+                    onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
+                    placeholder="Opisz swoje doświadczenie, projekty i preferencje..."
                   />
                 ) : (
-                  <p className="p-2">{profile.yearsExperience || '-'}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-1 block flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    Oczekiwane wynagrodzenie (od)
-                  </label>
-                  {editing ? (
-                    <Input
-                      type="number"
-                      value={profile.expectedSalaryMin}
-                      onChange={(e) => setProfile({ ...profile, expectedSalaryMin: e.target.value })}
-                      placeholder="PLN"
-                    />
-                  ) : (
-                    <p className="p-2">{profile.expectedSalaryMin ? `${profile.expectedSalaryMin} PLN` : '-'}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Oczekiwane wynagrodzenie (do)</label>
-                  {editing ? (
-                    <Input
-                      type="number"
-                      value={profile.expectedSalaryMax}
-                      onChange={(e) => setProfile({ ...profile, expectedSalaryMax: e.target.value })}
-                      placeholder="PLN"
-                    />
-                  ) : (
-                    <p className="p-2">{profile.expectedSalaryMax ? `${profile.expectedSalaryMax} PLN` : '-'}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-1 block flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Dostępny od
-                </label>
-                {editing ? (
-                  <Input
-                    type="date"
-                    value={profile.availableFrom}
-                    onChange={(e) => setProfile({ ...profile, availableFrom: e.target.value })}
-                  />
-                ) : (
-                  <p className="p-2">{profile.availableFrom || '-'}</p>
+                  <p className="p-2 whitespace-pre-wrap">{profile.experience || '-'}</p>
                 )}
               </div>
             </CardContent>

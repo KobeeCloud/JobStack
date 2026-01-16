@@ -51,6 +51,7 @@ export default function PostJobPage() {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Check authentication on mount
   useEffect(() => {
@@ -59,6 +60,14 @@ export default function PostJobPage() {
       if (!user) {
         router.push('/login?redirect=/dashboard/post-job');
         return;
+      }
+      const profileResponse = await fetch('/api/profile');
+      if (profileResponse.ok) {
+        const profile = await profileResponse.json();
+        if (profile.role !== 'employer') {
+          router.push('/dashboard');
+          return;
+        }
       }
       setIsAuthenticated(true);
       setIsLoading(false);
@@ -83,6 +92,7 @@ export default function PostJobPage() {
     requirements: '',
     niceToHave: '',
     benefits: '',
+    applyUrl: '',
   });
 
   const [techInput, setTechInput] = useState('');
@@ -118,15 +128,53 @@ export default function PostJobPage() {
     }));
   };
 
+  const splitLines = (value: string) =>
+    value
+      .split(/\n|,/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const requirements = splitLines(formData.requirements);
+      const niceToHave = splitLines(formData.niceToHave).map((item) => `Mile widziane: ${item}`);
+      const benefits = splitLines(formData.benefits);
+      const resolvedLocation = formData.workType === 'remote' ? 'Zdalnie' : formData.location;
 
-    // Redirect to dashboard with success message
-    router.push('/dashboard?posted=success');
+      const response = await fetch('/api/employer/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          location: resolvedLocation,
+          remote: formData.workType === 'remote',
+          salary_min: formData.salaryMin ? Number(formData.salaryMin) : null,
+          salary_max: formData.salaryMax ? Number(formData.salaryMax) : null,
+          salary_currency: formData.currency,
+          tech_stack: formData.techStack,
+          description: formData.description,
+          requirements: [...requirements, ...niceToHave],
+          benefits,
+          apply_url: formData.applyUrl || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Nie udało się opublikować oferty');
+      }
+
+      router.push('/dashboard?posted=success');
+    } catch (error) {
+      console.error('Job post error:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Nie udało się opublikować oferty');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const selectedRoleStacks = formData.role && JOB_ROLES[formData.role as keyof typeof JOB_ROLES]
@@ -559,6 +607,21 @@ export default function PostJobPage() {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="applyUrl">Link do zewnętrznej rekrutacji (opcjonalnie)</Label>
+                    <Input
+                      id="applyUrl"
+                      value={formData.applyUrl}
+                      onChange={(e) => handleInputChange('applyUrl', e.target.value)}
+                      placeholder="https://twoja-firma.pl/kariera/oferta"
+                      className="rounded-xl"
+                      type="url"
+                    />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Jeśli podasz link, kandydaci będą mogli aplikować bezpośrednio na Twojej stronie.
+                    </p>
+                  </div>
+
                   <div className="flex justify-between pt-4 border-t dark:border-gray-700">
                     <Button
                       type="button"
@@ -596,6 +659,11 @@ export default function PostJobPage() {
                       </Button>
                     </div>
                   </div>
+                  {submitError && (
+                    <div className="mt-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-xl px-4 py-3">
+                      {submitError}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

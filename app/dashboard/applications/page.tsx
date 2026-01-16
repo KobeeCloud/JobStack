@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import {
   ArrowLeft,
   Search,
-  Filter,
   Users,
   Mail,
   Phone,
@@ -21,109 +20,28 @@ import {
   Star,
   Calendar,
   Building2,
-  ChevronDown,
-  Download,
   Eye
 } from 'lucide-react';
 
-// Mock data for demo
-const mockApplications = [
-  {
-    id: '1',
-    jobId: '1',
-    jobTitle: 'Senior DevOps Engineer',
-    candidateName: 'Jan Kowalski',
-    email: 'jan.kowalski@example.com',
-    phone: '+48 123 456 789',
-    appliedAt: '2026-01-14T10:30:00',
-    status: 'new',
-    experience: '5+ lat',
-    currentPosition: 'DevOps Engineer w Google',
-    cvUrl: '#',
-    linkedIn: 'https://linkedin.com/in/jankowalski',
-    coverLetter: 'Interesuje mnie ta pozycja, ponieważ...',
-    techStack: ['Kubernetes', 'Docker', 'Terraform', 'AWS'],
-    salaryExpectation: '25 000 - 30 000 PLN',
-    rating: 5,
-    notes: '',
-  },
-  {
-    id: '2',
-    jobId: '1',
-    jobTitle: 'Senior DevOps Engineer',
-    candidateName: 'Anna Nowak',
-    email: 'anna.nowak@example.com',
-    phone: '+48 987 654 321',
-    appliedAt: '2026-01-13T14:20:00',
-    status: 'reviewed',
-    experience: '4 lata',
-    currentPosition: 'Platform Engineer w Allegro',
-    cvUrl: '#',
-    linkedIn: 'https://linkedin.com/in/annanowak',
-    coverLetter: 'Szukam nowych wyzwań w dziedzinie DevOps...',
-    techStack: ['AWS', 'GCP', 'Ansible', 'Python'],
-    salaryExpectation: '22 000 - 26 000 PLN',
-    rating: 4,
-    notes: 'Dobry kandydat, zaplanować rozmowę',
-  },
-  {
-    id: '3',
-    jobId: '2',
-    jobTitle: 'Cloud Platform Engineer',
-    candidateName: 'Piotr Wiśniewski',
-    email: 'piotr.wisniewski@example.com',
-    phone: '+48 555 666 777',
-    appliedAt: '2026-01-15T09:15:00',
-    status: 'new',
-    experience: '3 lata',
-    currentPosition: 'Cloud Engineer w CDPR',
-    cvUrl: '#',
-    linkedIn: 'https://linkedin.com/in/piotrwisniewski',
-    coverLetter: 'Jestem pasjonatem technologii chmurowych...',
-    techStack: ['Azure', 'Kubernetes', 'Helm', 'ArgoCD'],
-    salaryExpectation: '20 000 - 24 000 PLN',
-    rating: 0,
-    notes: '',
-  },
-  {
-    id: '4',
-    jobId: '1',
-    jobTitle: 'Senior DevOps Engineer',
-    candidateName: 'Maria Wiśniewska',
-    email: 'maria.wisniewska@example.com',
-    phone: '+48 111 222 333',
-    appliedAt: '2026-01-12T11:00:00',
-    status: 'interview',
-    experience: '7 lat',
-    currentPosition: 'Senior SRE w Netflix',
-    cvUrl: '#',
-    linkedIn: 'https://linkedin.com/in/mariawisniewska',
-    coverLetter: 'Mam wieloletnie doświadczenie w...',
-    techStack: ['Kubernetes', 'Docker', 'Prometheus', 'Grafana', 'AWS', 'GCP'],
-    salaryExpectation: '30 000 - 35 000 PLN',
-    rating: 5,
-    notes: 'Rozmowa techniczna zaplanowana na 20.01',
-  },
-  {
-    id: '5',
-    jobId: '2',
-    jobTitle: 'Cloud Platform Engineer',
-    candidateName: 'Tomasz Zieliński',
-    email: 'tomasz.zielinski@example.com',
-    phone: '+48 444 555 666',
-    appliedAt: '2026-01-10T16:45:00',
-    status: 'rejected',
-    experience: '1 rok',
-    currentPosition: 'Junior Developer w Startup',
-    cvUrl: '#',
-    linkedIn: '',
-    coverLetter: 'Chciałbym rozwinąć się w kierunku...',
-    techStack: ['Docker', 'Linux'],
-    salaryExpectation: '12 000 - 15 000 PLN',
-    rating: 2,
-    notes: 'Za mało doświadczenia, za 2 lata może się odezwać',
-  },
-];
+type EmployerApplication = {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  candidateName: string;
+  email: string;
+  phone: string;
+  appliedAt: string;
+  status: string;
+  experience: string;
+  currentPosition: string;
+  cvUrl: string;
+  linkedIn: string;
+  coverLetter: string;
+  techStack: string[];
+  salaryExpectation: string;
+  rating: number;
+  notes: string;
+};
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   new: { label: 'Nowa', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
@@ -138,11 +56,33 @@ export default function ApplicationsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [jobFilter, setJobFilter] = useState('all');
-  const [selectedApplication, setSelectedApplication] = useState<typeof mockApplications[0] | null>(null);
+  const [applications, setApplications] = useState<EmployerApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<EmployerApplication | null>(null);
 
-  const jobs = [...new Set(mockApplications.map(a => a.jobTitle))];
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const response = await fetch('/api/employer/applications');
+        if (!response.ok) {
+          throw new Error('Nie udało się pobrać aplikacji');
+        }
+        const data = await response.json();
+        setApplications(data.applications || []);
+      } catch (err) {
+        console.error('Error fetching applications:', err);
+        setError('Nie udało się pobrać aplikacji');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchApplications();
+  }, []);
 
-  const filteredApplications = mockApplications.filter(app => {
+  const jobs = [...new Set(applications.map(a => a.jobTitle))];
+
+  const filteredApplications = applications.filter(app => {
     const matchesSearch =
       app.candidateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -154,7 +94,7 @@ export default function ApplicationsPage() {
     return matchesSearch && matchesStatus && matchesJob;
   });
 
-  const newCount = mockApplications.filter(a => a.status === 'new').length;
+  const newCount = applications.filter(a => a.status === 'new').length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
@@ -246,7 +186,21 @@ export default function ApplicationsPage() {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Applications List */}
             <div className="lg:col-span-2 space-y-4">
-              {filteredApplications.length === 0 ? (
+              {loading ? (
+                <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
+                  <CardContent className="py-12 text-center">
+                    <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-spin" />
+                    <p className="text-gray-500 dark:text-gray-400">Ładowanie aplikacji...</p>
+                  </CardContent>
+                </Card>
+              ) : error ? (
+                <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
+                  <CardContent className="py-12 text-center">
+                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">{error}</p>
+                  </CardContent>
+                </Card>
+              ) : filteredApplications.length === 0 ? (
                 <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
                   <CardContent className="py-12 text-center">
                     <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -271,8 +225,8 @@ export default function ApplicationsPage() {
                             <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
                               {app.candidateName}
                             </h3>
-                            <Badge className={statusLabels[app.status].color}>
-                              {statusLabels[app.status].label}
+                            <Badge className={(statusLabels[app.status] || statusLabels.new).color}>
+                              {(statusLabels[app.status] || statusLabels.new).label}
                             </Badge>
                           </div>
                           <p className="text-gray-600 dark:text-gray-400 text-sm">
@@ -293,18 +247,20 @@ export default function ApplicationsPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {app.techStack.slice(0, 4).map((tech) => (
-                          <Badge key={tech} variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                            {tech}
-                          </Badge>
-                        ))}
-                        {app.techStack.length > 4 && (
-                          <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-500">
-                            +{app.techStack.length - 4}
-                          </Badge>
-                        )}
-                      </div>
+                      {app.techStack.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {app.techStack.slice(0, 4).map((tech) => (
+                            <Badge key={tech} variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                              {tech}
+                            </Badge>
+                          ))}
+                          {app.techStack.length > 4 && (
+                            <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-700 text-gray-500">
+                              +{app.techStack.length - 4}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -312,10 +268,12 @@ export default function ApplicationsPage() {
                             <Clock className="w-4 h-4" />
                             {new Date(app.appliedAt).toLocaleDateString('pl-PL')}
                           </span>
-                          <span>{app.experience}</span>
-                          <span className="font-medium text-green-600 dark:text-green-400">
-                            {app.salaryExpectation}
-                          </span>
+                          {app.experience && <span>{app.experience}</span>}
+                          {app.salaryExpectation && (
+                            <span className="font-medium text-green-600 dark:text-green-400">
+                              {app.salaryExpectation}
+                            </span>
+                          )}
                         </div>
                         <span className="text-sm text-blue-600 dark:text-blue-400">
                           {app.jobTitle}
@@ -334,8 +292,8 @@ export default function ApplicationsPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle>{selectedApplication.candidateName}</CardTitle>
-                      <Badge className={statusLabels[selectedApplication.status].color}>
-                        {statusLabels[selectedApplication.status].label}
+                      <Badge className={(statusLabels[selectedApplication.status] || statusLabels.new).color}>
+                        {(statusLabels[selectedApplication.status] || statusLabels.new).label}
                       </Badge>
                     </div>
                     <CardDescription>{selectedApplication.currentPosition}</CardDescription>
@@ -352,40 +310,48 @@ export default function ApplicationsPage() {
                           <Mail className="w-4 h-4" />
                           {selectedApplication.email}
                         </a>
-                        <a
-                          href={`tel:${selectedApplication.phone}`}
-                          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600"
-                        >
-                          <Phone className="w-4 h-4" />
-                          {selectedApplication.phone}
-                        </a>
+                        {selectedApplication.phone && (
+                          <a
+                            href={`tel:${selectedApplication.phone}`}
+                            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600"
+                          >
+                            <Phone className="w-4 h-4" />
+                            {selectedApplication.phone}
+                          </a>
+                        )}
                       </div>
                     </div>
 
                     {/* Tech Stack */}
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900 dark:text-white">Tech Stack</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedApplication.techStack.map((tech) => (
-                          <Badge key={tech} variant="secondary" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                            {tech}
-                          </Badge>
-                        ))}
+                    {selectedApplication.techStack.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-gray-900 dark:text-white">Tech Stack</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApplication.techStack.map((tech) => (
+                            <Badge key={tech} variant="secondary" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                              {tech}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Details */}
                     <div className="space-y-3">
                       <h4 className="font-medium text-gray-900 dark:text-white">Szczegóły</h4>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Doświadczenie:</span>
-                          <span className="font-medium text-gray-900 dark:text-white">{selectedApplication.experience}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Oczekiwania:</span>
-                          <span className="font-medium text-green-600">{selectedApplication.salaryExpectation}</span>
-                        </div>
+                        {selectedApplication.experience && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Doświadczenie:</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{selectedApplication.experience}</span>
+                          </div>
+                        )}
+                        {selectedApplication.salaryExpectation && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Oczekiwania:</span>
+                            <span className="font-medium text-green-600">{selectedApplication.salaryExpectation}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span className="text-gray-500">Data aplikacji:</span>
                           <span className="font-medium text-gray-900 dark:text-white">
@@ -425,10 +391,19 @@ export default function ApplicationsPage() {
                     {/* Actions */}
                     <div className="space-y-3 pt-4 border-t dark:border-gray-700">
                       <div className="flex gap-2">
-                        <Button className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                          <FileText className="w-4 h-4 mr-2" />
-                          Pobierz CV
-                        </Button>
+                        {selectedApplication.cvUrl ? (
+                          <Button className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" asChild>
+                            <a href={selectedApplication.cvUrl} target="_blank" rel="noopener noreferrer">
+                              <FileText className="w-4 h-4 mr-2" />
+                              Pobierz CV
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button className="flex-1 rounded-xl" variant="outline" disabled>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Brak CV
+                          </Button>
+                        )}
                         {selectedApplication.linkedIn && (
                           <Button variant="outline" className="rounded-xl" asChild>
                             <a href={selectedApplication.linkedIn} target="_blank" rel="noopener noreferrer">

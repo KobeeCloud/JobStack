@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,67 +24,6 @@ import {
   Building2,
   Search
 } from 'lucide-react';
-
-// Mock data for demo - in real app this would come from database
-const mockEmployerJobs = [
-  {
-    id: '1',
-    title: 'Senior DevOps Engineer',
-    status: 'active',
-    views: 234,
-    applications: 12,
-    publishedAt: '2026-01-10',
-    expiresAt: '2026-02-10',
-  },
-  {
-    id: '2',
-    title: 'Cloud Platform Engineer',
-    status: 'active',
-    views: 156,
-    applications: 8,
-    publishedAt: '2026-01-12',
-    expiresAt: '2026-02-12',
-  },
-  {
-    id: '3',
-    title: 'Junior Backend Developer',
-    status: 'expired',
-    views: 89,
-    applications: 5,
-    publishedAt: '2025-12-15',
-    expiresAt: '2026-01-15',
-  },
-];
-
-const mockApplications = [
-  {
-    id: '1',
-    jobTitle: 'Senior DevOps Engineer',
-    candidateName: 'Jan Kowalski',
-    email: 'jan.kowalski@example.com',
-    appliedAt: '2026-01-14',
-    status: 'new',
-    cvUrl: '#',
-  },
-  {
-    id: '2',
-    jobTitle: 'Senior DevOps Engineer',
-    candidateName: 'Anna Nowak',
-    email: 'anna.nowak@example.com',
-    appliedAt: '2026-01-13',
-    status: 'reviewed',
-    cvUrl: '#',
-  },
-  {
-    id: '3',
-    jobTitle: 'Cloud Platform Engineer',
-    candidateName: 'Piotr Wiśniewski',
-    email: 'piotr.wisniewski@example.com',
-    appliedAt: '2026-01-15',
-    status: 'new',
-    cvUrl: '#',
-  },
-];
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -129,6 +69,87 @@ export default async function DashboardPage() {
   }
 
   const isEmployer = profile?.role === 'employer';
+  const fallbackName = user.email?.split('@')[0] || 'Konto';
+
+  // Candidate data
+  let candidateProfile: { first_name?: string | null; last_name?: string | null } | null = null;
+  let savedJobsCount = 0;
+  let applicationsCount = 0;
+  let alertsCount = 0;
+
+  // Employer data
+  let employerCompanyName = '';
+  let employerJobs: Array<{ id: string; title: string; expires_at: string | null }> = [];
+  let employerApplications: Array<{
+    id: string;
+    job_id: string;
+    status: string | null;
+    created_at: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+    cv_url?: string | null;
+  }> = [];
+
+  if (!isEmployer) {
+    const { data: candidateData } = await supabaseAdmin
+      .from('candidate_profiles')
+      .select('first_name, last_name')
+      .eq('user_id', user.id)
+      .single();
+    candidateProfile = candidateData || null;
+
+    const [{ count: savedCount }, { count: appsCount }, { count: emailAlertsCount }] = await Promise.all([
+      supabase
+        .from('saved_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id),
+      supabaseAdmin
+        .from('applications')
+        .select('id', { count: 'exact', head: true })
+        .eq('candidate_id', user.id),
+      supabase
+        .from('email_alerts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id),
+    ]);
+
+    savedJobsCount = savedCount || 0;
+    applicationsCount = appsCount || 0;
+    alertsCount = emailAlertsCount || 0;
+  } else {
+    const { data: employerProfile } = await supabase
+      .from('employer_profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (employerProfile?.company_id) {
+      const { data: company } = await supabaseAdmin
+        .from('companies')
+        .select('name')
+        .eq('id', employerProfile.company_id)
+        .single();
+      employerCompanyName = company?.name || '';
+
+      const { data: jobs } = await supabaseAdmin
+        .from('jobs')
+        .select('id, title, expires_at')
+        .eq('company_id', employerProfile.company_id)
+        .order('created_at', { ascending: false });
+      employerJobs = jobs || [];
+
+      const jobIds = employerJobs.map((job) => job.id);
+      if (jobIds.length > 0) {
+        const { data: apps } = await supabaseAdmin
+          .from('applications')
+          .select('id, job_id, status, created_at, first_name, last_name, email, cv_url')
+          .in('job_id', jobIds)
+          .order('created_at', { ascending: false });
+        employerApplications = apps || [];
+      }
+    }
+  }
 
   const handleSignOut = async () => {
     'use server';
@@ -172,7 +193,14 @@ export default async function DashboardPage() {
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Witaj ponownie! 👋
+                Witaj,
+                <Link
+                  href="/profile"
+                  className="ml-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                >
+                  {([candidateProfile?.first_name, candidateProfile?.last_name].filter(Boolean).join(' ') || fallbackName)}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Znajdź swoją wymarzoną pracę
@@ -187,8 +215,10 @@ export default async function DashboardPage() {
                   <Briefcase className="w-5 h-5 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">0</div>
-                  <p className="text-xs text-gray-500 mt-1">Brak zapisanych ofert</p>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{savedJobsCount}</div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {savedJobsCount > 0 ? 'Masz zapisane oferty' : 'Brak zapisanych ofert'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -198,8 +228,10 @@ export default async function DashboardPage() {
                   <FileText className="w-5 h-5 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">0</div>
-                  <p className="text-xs text-gray-500 mt-1">Brak aplikacji</p>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{applicationsCount}</div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {applicationsCount > 0 ? 'Twoje aplikacje' : 'Brak aplikacji'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -209,8 +241,10 @@ export default async function DashboardPage() {
                   <Bell className="w-5 h-5 text-purple-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">0</div>
-                  <p className="text-xs text-gray-500 mt-1">Brak skonfigurowanych alertów</p>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">{alertsCount}</div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {alertsCount > 0 ? 'Aktywne alerty' : 'Brak skonfigurowanych alertów'}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -267,10 +301,14 @@ export default async function DashboardPage() {
   }
 
   // Employer Dashboard
-  const newApplicationsCount = mockApplications.filter(a => a.status === 'new').length;
-  const activeJobsCount = mockEmployerJobs.filter(j => j.status === 'active').length;
-  const totalViews = mockEmployerJobs.reduce((sum, j) => sum + j.views, 0);
-  const totalApplications = mockEmployerJobs.reduce((sum, j) => sum + j.applications, 0);
+  const jobApplicationsCount = employerApplications.reduce((acc, app) => {
+    acc[app.job_id] = (acc[app.job_id] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const newApplicationsCount = employerApplications.filter((a) => (a.status || '') === 'pending' || (a.status || '') === 'new').length;
+  const activeJobsCount = employerJobs.filter((j) => !j.expires_at || new Date(j.expires_at) > new Date()).length;
+  const totalViews = 0;
+  const totalApplications = employerApplications.length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
@@ -287,7 +325,7 @@ export default async function DashboardPage() {
                 Pracodawca
               </Badge>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {user.email}
+                {employerCompanyName || user.email}
               </span>
               <form action={handleSignOut}>
                 <Button variant="outline" type="submit" className="rounded-xl">
@@ -305,7 +343,14 @@ export default async function DashboardPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Panel Pracodawcy 💼
+                Witaj,
+                <Link
+                  href="/dashboard/jobs"
+                  className="ml-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                >
+                  {employerCompanyName || fallbackName}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Zarządzaj ofertami pracy i przeglądaj aplikacje
@@ -395,7 +440,12 @@ export default async function DashboardPage() {
                   </Link>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {mockEmployerJobs.map((job) => (
+                  {employerJobs.length === 0 ? (
+                    <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                      Brak opublikowanych ofert pracy.
+                    </div>
+                  ) : (
+                    employerJobs.map((job) => (
                     <div
                       key={job.id}
                       className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
@@ -406,25 +456,25 @@ export default async function DashboardPage() {
                             {job.title}
                           </h4>
                           <Badge className={
-                            job.status === 'active'
+                            !job.expires_at || new Date(job.expires_at) > new Date()
                               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                           }>
-                            {job.status === 'active' ? 'Aktywna' : 'Wygasła'}
+                            {!job.expires_at || new Date(job.expires_at) > new Date() ? 'Aktywna' : 'Wygasła'}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                           <span className="flex items-center gap-1">
                             <Eye className="w-4 h-4" />
-                            {job.views} wyświetleń
+                            0 wyświetleń
                           </span>
                           <span className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            {job.applications} aplikacji
+                            {jobApplicationsCount[job.id] || 0} aplikacji
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            Wygasa: {new Date(job.expiresAt).toLocaleDateString('pl-PL')}
+                            Wygasa: {job.expires_at ? new Date(job.expires_at).toLocaleDateString('pl-PL') : 'bezterminowo'}
                           </span>
                         </div>
                       </div>
@@ -437,7 +487,8 @@ export default async function DashboardPage() {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                  )))
+                  }
                 </CardContent>
               </Card>
             </div>
@@ -457,54 +508,75 @@ export default async function DashboardPage() {
                   <CardDescription>Kandydaci, którzy złożyli aplikacje</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {mockApplications.map((app) => (
-                    <div
-                      key={app.id}
-                      className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
-                            {app.candidateName}
-                          </h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {app.jobTitle}
-                          </p>
-                        </div>
-                        {app.status === 'new' ? (
-                          <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                            Nowa
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-gray-500">
-                            Przejrzana
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                        <Mail className="w-4 h-4" />
-                        {app.email}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-400">
-                          {new Date(app.appliedAt).toLocaleDateString('pl-PL')}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="rounded-lg text-xs h-8">
-                            <FileText className="w-3 h-3 mr-1" />
-                            CV
-                          </Button>
-                          <Button size="sm" className="rounded-lg text-xs h-8 bg-green-600 hover:bg-green-700">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Akceptuj
-                          </Button>
-                          <Button size="sm" variant="outline" className="rounded-lg text-xs h-8 text-red-600 hover:bg-red-50">
-                            <XCircle className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
+                  {employerApplications.length === 0 ? (
+                    <div className="p-4 text-sm text-gray-500 dark:text-gray-400">
+                      Brak aplikacji do wyświetlenia.
                     </div>
-                  ))}
+                  ) : (
+                    employerApplications.slice(0, 5).map((app) => {
+                      const candidateName = [app.first_name, app.last_name].filter(Boolean).join(' ') || app.email || 'Kandydat';
+                      const status = (app.status || 'pending') === 'pending' || (app.status || 'new') === 'new';
+                      const jobTitle = employerJobs.find((job) => job.id === app.job_id)?.title || 'Oferta pracy';
+
+                      return (
+                        <div
+                          key={app.id}
+                          className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900 dark:text-white">
+                                {candidateName}
+                              </h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {jobTitle}
+                              </p>
+                            </div>
+                            {status ? (
+                              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                Nowa
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-gray-500">
+                                Przejrzana
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                            <Mail className="w-4 h-4" />
+                            {app.email || 'Brak email'}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-400">
+                              {app.created_at ? new Date(app.created_at).toLocaleDateString('pl-PL') : '-'}
+                            </span>
+                            <div className="flex gap-2">
+                              {app.cv_url ? (
+                                <Button size="sm" variant="outline" className="rounded-lg text-xs h-8" asChild>
+                                  <a href={app.cv_url} target="_blank" rel="noopener noreferrer">
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    CV
+                                  </a>
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline" className="rounded-lg text-xs h-8" disabled>
+                                  <FileText className="w-3 h-3 mr-1" />
+                                  CV
+                                </Button>
+                              )}
+                              <Button size="sm" className="rounded-lg text-xs h-8 bg-green-600 hover:bg-green-700">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Akceptuj
+                              </Button>
+                              <Button size="sm" variant="outline" className="rounded-lg text-xs h-8 text-red-600 hover:bg-red-50">
+                                <XCircle className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
 
                   <Link href="/dashboard/applications">
                     <Button variant="outline" className="w-full rounded-xl mt-2">
