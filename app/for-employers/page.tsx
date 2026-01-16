@@ -76,7 +76,7 @@ export default function ForEmployersPage() {
               Bez limitów, bez ukrytych opłat, bez karty kredytowej.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Link href="/register?role=employer">
+              <Link href="/dashboard/post-job">
                 <Button
                   size="lg"
                   className="text-lg px-8 py-6 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all group"
@@ -167,7 +167,7 @@ export default function ForEmployersPage() {
               </div>
 
               <div className="text-center">
-                <Link href="/register?role=employer">
+                <Link href="/dashboard/post-job">
                   <Button
                     size="lg"
                     className="px-12 py-6 text-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl shadow-lg"
@@ -229,7 +229,7 @@ export default function ForEmployersPage() {
                     Dokumentacja API
                   </Button>
                 </Link>
-                <Link href="/register?role=employer">
+                <Link href="/dashboard/post-job">
                   <Button variant="outline" size="lg" className="rounded-xl text-white border-white/30 hover:bg-white/10">
                     Pobierz klucz API (za darmo)
                   </Button>
@@ -252,7 +252,7 @@ export default function ForEmployersPage() {
               <p className="text-xl mb-8 opacity-90 max-w-lg mx-auto">
                 Dołącz do firm korzystających z JobStack, aby znaleźć najlepszych kandydatów
               </p>
-              <Link href="/register?role=employer">
+              <Link href="/dashboard/post-job">
                 <Button
                   size="lg"
                   variant="secondary"
