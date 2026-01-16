@@ -31,20 +31,28 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
           NODE_ENV: production
         run: |
           npm start &
           echo "⏳ Waiting for server to start..."
-          sleep 10
+          for i in {1..30}; do
+            if curl -fsS "http://localhost:3000" > /dev/null; then
+              echo "✅ Server is up"
+              break
+            fi
+            sleep 2
+          done
 
       - name: Run scraper via API (same as curl)
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           echo "🚀 Starting job scraper via API..."
-          curl -X GET "http://localhost:3000/api/scrape" \
+          curl -fsS -X GET "http://localhost:3000/api/scrape" \
             -H "Authorization: Bearer $CRON_SECRET" \
-            -v
+            -o /tmp/scraper-response.json
+          cat /tmp/scraper-response.json
           echo "✅ Scraper completed"
 
       - name: Notify on success

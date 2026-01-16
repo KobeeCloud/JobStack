@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -16,7 +17,7 @@ function getSupabase(): SupabaseClient {
     throw new Error('Supabase client not configured - check environment variables');
   }
 
-  _supabase = createClient(supabaseUrl, supabaseAnonKey);
+  _supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
   return _supabase;
 }
 

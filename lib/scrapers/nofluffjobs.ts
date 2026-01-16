@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { checkRobotsTxt } from '@/lib/utils/robots-checker';
 
 interface NoFluffJobsOffer {
   id: string;
@@ -47,20 +48,65 @@ interface NoFluffJobsResponse {
   postings: NoFluffJobsOffer[];
 }
 
+const NOFLUFFJOBS_API_URL = 'https://nofluffjobs.com/api/posting?region=pl&limit=1000';
+const REQUEST_TIMEOUT_MS = 20000;
+const MAX_RETRIES = 3;
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = MAX_RETRIES) {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        throw new Error(`NoFluffJobs API error: ${response.status} ${response.statusText}${body ? ` - ${body}` : ''}`);
+      }
+
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      lastError = error;
+
+      if (attempt < retries) {
+        const delayMs = 1000 * Math.pow(2, attempt - 1);
+        console.warn(`NoFluffJobs fetch failed (attempt ${attempt}/${retries}). Retrying in ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        continue;
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('NoFluffJobs fetch failed');
+}
+
 export async function fetchNoFluffJobs() {
   try {
     console.log('Fetching jobs from NoFluffJobs...');
 
-    const response = await fetch('https://nofluffjobs.com/api/posting?region=pl&limit=1000', {
+    const isAllowed = await checkRobotsTxt('https://nofluffjobs.com', '/api/posting');
+    if (!isAllowed) {
+      console.warn('robots.txt disallows scraping NoFluffJobs /api/posting');
+      return {
+        success: false,
+        error: 'robots.txt disallows scraping',
+      };
+    }
+
+    const response = await fetchWithRetry(NOFLUFFJOBS_API_URL, {
       headers: {
         'User-Agent': 'JobStackBot/1.0 (+https://jobstack.pl/bot; legal@jobstack.pl)',
         'Accept': 'application/json',
       },
     });
-
-    if (!response.ok) {
-      throw new Error(`NoFluffJobs API error: ${response.status}`);
-    }
 
     const data: NoFluffJobsResponse = await response.json();
     const offers = data.postings || [];

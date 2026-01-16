@@ -15,7 +15,15 @@ BEGIN
 
     -- Candidate profiles policies
     DROP POLICY IF EXISTS "Candidate profiles are viewable by employers and owner" ON public.candidate_profiles;
+    DROP POLICY IF EXISTS "Users can insert own candidate profile" ON public.candidate_profiles;
     DROP POLICY IF EXISTS "Users can update own candidate profile" ON public.candidate_profiles;
+    DROP POLICY IF EXISTS "Users can delete own candidate profile" ON public.candidate_profiles;
+
+    -- Employer profiles policies
+    DROP POLICY IF EXISTS "Employers can view own employer profile" ON public.employer_profiles;
+    DROP POLICY IF EXISTS "Employers can insert own employer profile" ON public.employer_profiles;
+    DROP POLICY IF EXISTS "Employers can update own employer profile" ON public.employer_profiles;
+    DROP POLICY IF EXISTS "Employers can delete own employer profile" ON public.employer_profiles;
 
     -- Jobs policies
     DROP POLICY IF EXISTS "Jobs are viewable by everyone" ON public.jobs;
@@ -210,8 +218,33 @@ CREATE POLICY "Candidate profiles are viewable by employers and owner"
     )
   );
 
+CREATE POLICY "Users can insert own candidate profile"
+  ON public.candidate_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
 CREATE POLICY "Users can update own candidate profile"
-  ON public.candidate_profiles FOR ALL
+  ON public.candidate_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own candidate profile"
+  ON public.candidate_profiles FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- RLS Policies for employer_profiles
+CREATE POLICY "Employers can view own employer profile"
+  ON public.employer_profiles FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Employers can insert own employer profile"
+  ON public.employer_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Employers can update own employer profile"
+  ON public.employer_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Employers can delete own employer profile"
+  ON public.employer_profiles FOR DELETE
   USING (auth.uid() = user_id);
 
 -- RLS Policies for jobs (public viewing)

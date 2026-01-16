@@ -8,6 +8,15 @@ DROP POLICY IF EXISTS "Scraped jobs can be inserted by service role" ON public.j
 DROP POLICY IF EXISTS "Scraped jobs can be updated by service role" ON public.jobs;
 DROP POLICY IF EXISTS "Employers can delete their jobs" ON public.jobs;
 
+-- Drop candidate/employer profile policies if missing
+DROP POLICY IF EXISTS "Users can insert own candidate profile" ON public.candidate_profiles;
+DROP POLICY IF EXISTS "Users can update own candidate profile" ON public.candidate_profiles;
+DROP POLICY IF EXISTS "Users can delete own candidate profile" ON public.candidate_profiles;
+DROP POLICY IF EXISTS "Employers can view own employer profile" ON public.employer_profiles;
+DROP POLICY IF EXISTS "Employers can insert own employer profile" ON public.employer_profiles;
+DROP POLICY IF EXISTS "Employers can update own employer profile" ON public.employer_profiles;
+DROP POLICY IF EXISTS "Employers can delete own employer profile" ON public.employer_profiles;
+
 -- Create new policies that allow scraped jobs
 -- Ta polityka pozwala na INSERT dla wszystkich ofert z source != 'native'
 CREATE POLICY "Scraped jobs can be inserted"
@@ -41,5 +50,37 @@ CREATE POLICY "Employers can delete their jobs"
     )
   );
 
+-- Candidate profile policies
+CREATE POLICY "Users can insert own candidate profile"
+  ON public.candidate_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own candidate profile"
+  ON public.candidate_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own candidate profile"
+  ON public.candidate_profiles FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Employer profile policies
+CREATE POLICY "Employers can view own employer profile"
+  ON public.employer_profiles FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Employers can insert own employer profile"
+  ON public.employer_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Employers can update own employer profile"
+  ON public.employer_profiles FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Employers can delete own employer profile"
+  ON public.employer_profiles FOR DELETE
+  USING (auth.uid() = user_id);
+
 -- Sprawdź czy polityki zostały utworzone
 SELECT * FROM pg_policies WHERE tablename = 'jobs';
+SELECT * FROM pg_policies WHERE tablename = 'candidate_profiles';
+SELECT * FROM pg_policies WHERE tablename = 'employer_profiles';
