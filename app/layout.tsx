@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { CookieBanner } from "@/components/cookie-banner";
 
 export const metadata: Metadata = {
   title: "JobStack - Find Your Perfect Job in One Place",
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body className="antialiased">
         {children}
         <Toaster />
+        <CookieBanner />
       </body>
     </html>
   );

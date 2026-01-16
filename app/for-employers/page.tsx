@@ -27,24 +27,33 @@ export default function ForEmployersPage() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <div className="container mx-auto px-4 py-20">
+      {/* Hero with FREE banner */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="bg-green-100 dark:bg-green-900/30 border-2 border-green-500 rounded-xl p-8 max-w-3xl mx-auto text-center mb-12">
+          <div className="text-5xl mb-4">🎉</div>
+          <h2 className="text-3xl font-bold text-green-700 dark:text-green-400 mb-3">100% Darmowe na Start!</h2>
+          <p className="text-lg text-green-600 dark:text-green-300">
+            JobStack jest obecnie całkowicie <strong>darmowy</strong> dla pracodawców.<br/>
+            Bez limitów, bez ukrytych opłat, bez karty kredytowej.
+          </p>
+        </div>
+
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
-            Reach Thousands of Qualified Candidates
+            Dotrzej do Tysięcy Kandydatów IT
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Post your job openings on JobStack and get discovered by top tech talent in Poland
+            Publikuj oferty pracy i dotrzyj do najlepszych specjalistów IT w Polsce
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/register?role=employer">
-              <Button size="lg" className="text-lg px-8 py-6">
-                Post a Job - Free Trial
+              <Button size="lg" className="text-lg px-8 py-6 bg-green-600 hover:bg-green-700">
+                Dodaj ofertę za darmo →
               </Button>
             </Link>
             <Link href="/api-docs">
               <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                📖 API Documentation
+                📖 Dokumentacja API
               </Button>
             </Link>
           </div>
@@ -53,15 +62,15 @@ export default function ForEmployersPage() {
 
       {/* Features */}
       <div className="container mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold text-center mb-12">Why Choose JobStack?</h2>
+        <h2 className="text-3xl font-bold text-center mb-12">Dlaczego JobStack?</h2>
 
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           <Card>
             <CardHeader>
               <div className="text-4xl mb-4">🎯</div>
-              <CardTitle>Targeted Audience</CardTitle>
+              <CardTitle>Targetowana Grupa</CardTitle>
               <CardDescription>
-                Reach developers actively looking for opportunities in Poland. Your jobs appear alongside listings from JustJoin.it, NoFluffJobs, and more.
+                Dotrzyj do programistów aktywnie szukających pracy. Twoje oferty obok NoFluffJobs, Pracuj.pl i innych.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -69,9 +78,9 @@ export default function ForEmployersPage() {
           <Card>
             <CardHeader>
               <div className="text-4xl mb-4">⚡</div>
-              <CardTitle>Quick & Easy Posting</CardTitle>
+              <CardTitle>Szybkie Publikowanie</CardTitle>
               <CardDescription>
-                Post jobs in minutes via our dashboard or automate the process with our RESTful API. Perfect for ATS integrations.
+                Dodaj ofertę w minuty przez dashboard lub automatyzuj przez API. Idealne dla integracji z ATS.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -79,130 +88,75 @@ export default function ForEmployersPage() {
           <Card>
             <CardHeader>
               <div className="text-4xl mb-4">📊</div>
-              <CardTitle>Analytics & Insights</CardTitle>
+              <CardTitle>Analityka</CardTitle>
               <CardDescription>
-                Track views, clicks, and applications. Understand which tech stacks and salary ranges attract the most candidates.
+                Śledź wyświetlenia, kliknięcia i aplikacje. Zrozum, co przyciąga kandydatów.
               </CardDescription>
             </CardHeader>
           </Card>
         </div>
 
-        {/* Pricing */}
-        <h2 className="text-3xl font-bold text-center mb-12">Simple, Transparent Pricing</h2>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Free Plan */}
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-2xl">Free</CardTitle>
-              <div className="text-4xl font-bold my-4">0 PLN<span className="text-sm font-normal text-muted-foreground">/month</span></div>
-              <CardDescription>Perfect for startups and small teams</CardDescription>
+        {/* What's Free */}
+        <div className="max-w-3xl mx-auto">
+          <Card className="border-2 border-green-500">
+            <CardHeader className="text-center">
+              <div className="text-sm font-semibold text-green-600 mb-2">AKTUALNIE</div>
+              <CardTitle className="text-3xl">Wszystko Za Darmo</CardTitle>
+              <div className="text-5xl font-bold my-4 text-green-600">0 PLN</div>
+              <CardDescription className="text-lg">Bez karty kredytowej, bez zobowiązań</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>1 job posting per month</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>7 days listing duration</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Basic analytics</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>API access</span>
-                </li>
-              </ul>
-              <Link href="/register?role=employer&plan=free">
-                <Button variant="outline" className="w-full">Get Started</Button>
-              </Link>
+              <div className="grid md:grid-cols-2 gap-6">
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2 text-xl">✓</span>
+                    <span><strong>Nielimitowane</strong> oferty pracy</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2 text-xl">✓</span>
+                    <span>30 dni wyświetlania oferty</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2 text-xl">✓</span>
+                    <span>Logo firmy przy ofercie</span>
+                  </li>
+                </ul>
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2 text-xl">✓</span>
+                    <span>Podstawowa analityka</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2 text-xl">✓</span>
+                    <span>Pełny dostęp do API</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2 text-xl">✓</span>
+                    <span>Wsparcie email</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-8 text-center">
+                <Link href="/register?role=employer">
+                  <Button size="lg" className="bg-green-600 hover:bg-green-700 px-12">
+                    Zacznij publikować za darmo
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Pro Plan */}
-          <Card className="border-2 border-blue-500 relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                Most Popular
-              </span>
-            </div>
-            <CardHeader>
-              <CardTitle className="text-2xl">Pro</CardTitle>
-              <div className="text-4xl font-bold my-4">199 PLN<span className="text-sm font-normal text-muted-foreground">/month</span></div>
-              <CardDescription>For growing companies</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span><strong>Unlimited</strong> job postings</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>30 days listing duration</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>⭐ Featured placement (5 jobs/month)</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Advanced analytics</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Company branding & logo</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Priority support</span>
-                </li>
-              </ul>
-              <Link href="/register?role=employer&plan=pro">
-                <Button className="w-full">Start Free Trial</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Enterprise */}
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-2xl">Enterprise</CardTitle>
-              <div className="text-4xl font-bold my-4">Custom</div>
-              <CardDescription>For large organizations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Everything in Pro</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Dedicated account manager</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Custom integrations</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>SLA guarantees</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  <span>Bulk discounts</span>
-                </li>
-              </ul>
-              <Link href="mailto:sales@jobstack.pl">
-                <Button variant="outline" className="w-full">Contact Sales</Button>
-              </Link>
-            </CardContent>
-          </Card>
+        {/* Future plans disclaimer */}
+        <div className="mt-12 max-w-2xl mx-auto text-center">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+            <h3 className="font-bold mb-2">📢 Co w przyszłości?</h3>
+            <p className="text-sm text-muted-foreground">
+              Gdy JobStack urośnie, planujemy wprowadzić <strong>opcjonalne</strong> płatne funkcje premium:
+              wyróżnienie ofert, zaawansowaną analitykę, priorytetowe wsparcie.
+              Podstawowy plan pozostanie dostępny.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -211,9 +165,9 @@ export default function ForEmployersPage() {
         <div className="max-w-4xl mx-auto">
           <Card className="bg-gradient-to-r from-gray-900 to-gray-800 text-white">
             <CardHeader>
-              <CardTitle className="text-3xl">Automate with Our API</CardTitle>
+              <CardTitle className="text-3xl">Automatyzuj z API</CardTitle>
               <CardDescription className="text-gray-300 text-lg">
-                Integrate JobStack directly with your ATS or HR system
+                Zintegruj JobStack z Twoim ATS lub systemem HR - za darmo!
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -224,7 +178,7 @@ export default function ForEmployersPage() {
   -H "Content-Type: application/json" \\
   -d '{
     "title": "Senior Frontend Developer",
-    "location": "Warsaw, Poland",
+    "location": "Warszawa",
     "remote": true,
     "salary_min": 15000,
     "salary_max": 25000,
@@ -232,15 +186,15 @@ export default function ForEmployersPage() {
   }'`}
                 </pre>
               </div>
-              <div className="flex gap-4">
+              <div className="flex gap-4 flex-wrap">
                 <Link href="/api-docs">
                   <Button variant="secondary" size="lg">
-                    📖 Read API Docs
+                    📖 Dokumentacja API
                   </Button>
                 </Link>
                 <Link href="/register?role=employer">
                   <Button variant="outline" size="lg" className="text-white border-white hover:bg-white/20">
-                    Get API Key
+                    Pobierz klucz API (za darmo)
                   </Button>
                 </Link>
               </div>
@@ -252,13 +206,13 @@ export default function ForEmployersPage() {
       {/* CTA */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-4xl font-bold mb-4">Ready to hire?</h2>
+          <h2 className="text-4xl font-bold mb-4">Gotowy do rekrutacji?</h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            Join hundreds of companies using JobStack to find their next hire
+            Dołącz do firm korzystających z JobStack, aby znaleźć najlepszych kandydatów
           </p>
           <Link href="/register?role=employer">
-            <Button size="lg" className="text-lg px-12 py-6">
-              Post Your First Job - Free
+            <Button size="lg" className="text-lg px-12 py-6 bg-green-600 hover:bg-green-700">
+              Dodaj pierwszą ofertę - Za Darmo
             </Button>
           </Link>
         </div>

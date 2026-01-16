@@ -12,6 +12,8 @@ const SOURCE_LABELS: Record<string, string> = {
   justjoinit: 'JustJoin.it',
   nofluffjobs: 'NoFluffJobs',
   pracuj: 'Pracuj.pl',
+  bulldogjob: 'Bulldogjob',
+  rocketjobs: 'RocketJobs',
   indeed: 'Indeed',
   native: 'JobStack',
 };

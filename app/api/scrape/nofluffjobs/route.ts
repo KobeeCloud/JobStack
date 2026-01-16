@@ -1,13 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchNoFluffJobs } from '@/lib/scrapers/nofluffjobs';
 
+/**
+ * Verify if request is authorized
+ */
+function isAuthorized(request: NextRequest): boolean {
+  // Vercel Cron sends this header automatically
+  const vercelCronHeader = request.headers.get('x-vercel-cron');
+  if (vercelCronHeader) {
+    return true;
+  }
+
+  // Allow manual triggers with Authorization header
+  const authHeader = request.headers.get('authorization');
+  const expectedToken = process.env.CRON_SECRET;
+
+  if (expectedToken && authHeader === `Bearer ${expectedToken}`) {
+    return true;
+  }
+
+  // In development, allow requests without auth for testing
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+
+  return false;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // Simple auth check
-    const authHeader = request.headers.get('authorization');
-    const expectedToken = process.env.CRON_SECRET || 'dev-secret-token';
-
-    if (authHeader !== `Bearer ${expectedToken}`) {
+    if (!isAuthorized(request)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -15,7 +37,6 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await fetchNoFluffJobs();
-
     return NextResponse.json(result);
   } catch (error) {
     console.error('NoFluffJobs scraper API error:', error);
@@ -26,14 +47,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow GET for manual testing (but require auth to prevent abuse)
 export async function GET(request: NextRequest) {
   try {
-    // Same auth check as POST
-    const authHeader = request.headers.get('authorization');
-    const expectedToken = process.env.CRON_SECRET || 'dev-secret-token';
-
-    if (authHeader !== `Bearer ${expectedToken}`) {
+    if (!isAuthorized(request)) {
       return NextResponse.json(
         { error: 'Unauthorized - scraper requires authentication' },
         { status: 401 }
