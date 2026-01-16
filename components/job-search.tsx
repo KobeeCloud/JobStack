@@ -61,6 +61,9 @@ export function JobSearch({ onSearch }: JobSearchProps) {
   }, [selectedRole]);
 
   const handleSearch = () => {
+    // Collapse expanded sections on search
+    setShowAllRoles(false);
+
     onSearch({
       query: selectedRole ? `${selectedRole} ${query}`.trim() : query,
       location: workMode === 'remote' ? '' : location,
