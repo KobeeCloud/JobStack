@@ -16,6 +16,8 @@ interface JobsResponse {
     total: number;
     totalPages: number;
   };
+  error?: string;
+  warning?: string;
 }
 
 export default function JobsPage() {
@@ -33,9 +35,11 @@ export default function JobsPage() {
     techStack: [] as string[],
     remote: false,
   });
+  const [error, setError] = useState<string | null>(null);
 
   const fetchJobs = async (page: number = 1) => {
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -52,10 +56,20 @@ export default function JobsPage() {
       const response = await fetch(`/api/jobs?${params.toString()}`);
       const data: JobsResponse = await response.json();
 
-      setJobs(data.jobs);
-      setPagination(data.pagination);
+      // Handle API errors gracefully
+      if (data.error) {
+        console.warn('API returned error:', data.error);
+        setError(data.error);
+      }
+
+      // Always set jobs (API returns empty array on error now)
+      setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
     } catch (error) {
       console.error('Error fetching jobs:', error);
+      setError('Failed to load jobs. Please try again later.');
+      setJobs([]);
+      setPagination({ page: 1, limit: 20, total: 0, totalPages: 0 });
     } finally {
       setLoading(false);
     }
@@ -67,6 +81,7 @@ export default function JobsPage() {
 
   const handleSearch = (newFilters: typeof filters) => {
     setFilters(newFilters);
+    setError(null);
     // Reset to page 1 when filters change
     setPagination(prev => ({ ...prev, page: 1 }));
 
@@ -87,10 +102,18 @@ export default function JobsPage() {
     fetch(`/api/jobs?${params.toString()}`)
       .then(res => res.json())
       .then((data: JobsResponse) => {
-        setJobs(data.jobs);
-        setPagination(data.pagination);
+        if (data.error) {
+          console.warn('API returned error:', data.error);
+          setError(data.error);
+        }
+        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+        setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
       })
-      .catch(err => console.error('Error fetching jobs:', err))
+      .catch(err => {
+        console.error('Error fetching jobs:', err);
+        setError('Failed to load jobs. Please try again later.');
+        setJobs([]);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -131,6 +154,19 @@ export default function JobsPage() {
 
       {/* Results Section */}
       <div className="container mx-auto px-4 py-8">
+        {/* Error Banner */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+            <button
+              onClick={() => fetchJobs(pagination.page)}
+              className="mt-2 text-sm text-red-700 dark:text-red-300 underline hover:no-underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {/* Results Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -144,7 +180,7 @@ export default function JobsPage() {
               )}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Page {pagination.page} of {pagination.totalPages}
+              Page {pagination.page} of {pagination.totalPages || 1}
             </p>
           </div>
 
@@ -174,7 +210,7 @@ export default function JobsPage() {
           </div>
         ) : jobs.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">🔍</div>
+            <div className="text-6xl mb-4">{error ? '😞' : '🔍'}</div>
             <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
             <p className="text-muted-foreground">
               Try adjusting your filters or search terms

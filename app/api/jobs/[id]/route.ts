@@ -8,11 +8,33 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const { data, error } = await supabaseAdmin
-      .from('jobs')
-      .select('*')
-      .eq('id', id)
-      .single();
+    // Validate ID format (should be UUID)
+    if (!id || typeof id !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid job ID' },
+        { status: 400 }
+      );
+    }
+
+    let data;
+    let error;
+
+    try {
+      const result = await supabaseAdmin
+        .from('jobs')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      data = result.data;
+      error = result.error;
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 503 }
+      );
+    }
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -28,6 +50,13 @@ export async function GET(
       );
     }
 
+    if (!data) {
+      return NextResponse.json(
+        { error: 'Job not found' },
+        { status: 404 }
+      );
+    }
+
     // Check if job is expired
     if (data.expires_at && new Date(data.expires_at) < new Date()) {
       return NextResponse.json(
@@ -36,22 +65,30 @@ export async function GET(
       );
     }
 
-    // Transform database format to frontend format
+    // Transform database format to frontend format with null safety
     const transformedJob = {
-      ...data,
-      company_name: data.company_name,
-      companyLogo: data.company_logo,
-      techStack: data.tech_stack,
-      sourceUrl: data.source_url,
-      publishedAt: data.published_at,
-      expiresAt: data.expires_at,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      salary: data.salary_min || data.salary_max ? {
-        min: data.salary_min,
-        max: data.salary_max,
+      id: data.id,
+      title: data.title || 'Untitled Position',
+      company_name: data.company_name || 'Unknown Company',
+      companyLogo: data.company_logo || null,
+      location: data.location || 'Not specified',
+      remote: Boolean(data.remote),
+      techStack: Array.isArray(data.tech_stack) ? data.tech_stack : [],
+      description: data.description || '',
+      requirements: Array.isArray(data.requirements) ? data.requirements : [],
+      benefits: Array.isArray(data.benefits) ? data.benefits : [],
+      source: data.source || 'native',
+      sourceUrl: data.source_url || null,
+      featured: Boolean(data.featured),
+      publishedAt: data.published_at || null,
+      expiresAt: data.expires_at || null,
+      createdAt: data.created_at || new Date().toISOString(),
+      updatedAt: data.updated_at || null,
+      salary: (data.salary_min || data.salary_max) ? {
+        min: data.salary_min || 0,
+        max: data.salary_max || 0,
         currency: data.salary_currency || 'PLN',
-      } : undefined,
+      } : null,
     };
 
     return NextResponse.json({ job: transformedJob });

@@ -22,21 +22,32 @@ export function formatSalary(min?: number, max?: number, currency: string = 'PLN
   return formatter.format(min || max || 0);
 }
 
-export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+export function formatDate(date: string | Date | undefined | null): string {
+  if (!date) return 'Unknown';
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
 
-  return d.toLocaleDateString('pl-PL', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+    // Check if date is valid
+    if (isNaN(d.getTime())) return 'Unknown';
+
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 0) return 'Upcoming'; // Future date
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+
+    return d.toLocaleDateString('pl-PL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return 'Unknown';
+  }
 }

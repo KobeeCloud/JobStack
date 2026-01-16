@@ -1,23 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { type JobFilters } from '@/types';
+
+// Helper to safely create the admin client
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return null;
+  }
+
+  // Dynamic import to avoid throw at module load time
+  const { createClient } = require('@supabase/supabase-js');
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
     // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const supabaseAdmin = getSupabaseAdmin();
+
+    if (!supabaseAdmin) {
       console.error('Missing Supabase environment variables');
-      return NextResponse.json(
-        { error: 'Server configuration error - Supabase not configured' },
-        { status: 500 }
-      );
+      // Return empty jobs instead of error for better UX
+      return NextResponse.json({
+        jobs: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+        },
+        warning: 'Database not configured - showing empty results',
+      });
     }
 
     const searchParams = request.nextUrl.searchParams;
 
     // Pagination
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20));
     const offset = (page - 1) * limit;
 
     // Filters
@@ -38,7 +65,11 @@ export async function GET(request: NextRequest) {
     query = query.or('expires_at.is.null,expires_at.gt.now()');
 
     if (search) {
-      query = query.textSearch('search_vector', search.split(' ').join(' & '));
+      // Sanitize search query for full-text search
+      const sanitizedSearch = search.trim().split(/\s+/).filter(Boolean).join(' & ');
+      if (sanitizedSearch) {
+        query = query.textSearch('search_vector', sanitizedSearch);
+      }
     }
 
     if (location) {
@@ -57,7 +88,7 @@ export async function GET(request: NextRequest) {
       query = query.in('source', source);
     }
 
-    if (salaryMin) {
+    if (salaryMin && !isNaN(salaryMin)) {
       query = query.gte('salary_min', salaryMin);
     }
 
@@ -68,36 +99,57 @@ export async function GET(request: NextRequest) {
     // Sort by featured first, then by published date
     query = query
       .order('featured', { ascending: false })
-      .order('published_at', { ascending: false })
+      .order('published_at', { ascending: false, nullsFirst: false })
       .range(offset, offset + limit - 1);
 
     const { data, error, count } = await query;
 
     if (error) {
       console.error('Supabase error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch jobs' },
-        { status: 500 }
-      );
+      // Return empty jobs with error info instead of failing
+      return NextResponse.json({
+        jobs: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          totalPages: 0,
+        },
+        error: 'Failed to fetch jobs - please try again later',
+      });
     }
 
-    // Transform database format to frontend format
-    const transformedJobs = (data || []).map((job: any) => ({
-      ...job,
-      company_name: job.company_name,
-      companyLogo: job.company_logo,
-      techStack: job.tech_stack,
-      sourceUrl: job.source_url,
-      publishedAt: job.published_at,
-      expiresAt: job.expires_at,
-      createdAt: job.created_at,
-      updatedAt: job.updated_at,
-      salary: job.salary_min || job.salary_max ? {
-        min: job.salary_min,
-        max: job.salary_max,
-        currency: job.salary_currency || 'PLN',
-      } : undefined,
-    }));
+    // Transform database format to frontend format with null safety
+    const transformedJobs = (data || []).map((job: any) => {
+      try {
+        return {
+          id: job.id,
+          title: job.title || 'Untitled Position',
+          company_name: job.company_name || 'Unknown Company',
+          companyLogo: job.company_logo || null,
+          location: job.location || 'Not specified',
+          remote: Boolean(job.remote),
+          techStack: Array.isArray(job.tech_stack) ? job.tech_stack : [],
+          description: job.description || '',
+          requirements: Array.isArray(job.requirements) ? job.requirements : [],
+          benefits: Array.isArray(job.benefits) ? job.benefits : [],
+          source: job.source || 'native',
+          sourceUrl: job.source_url || null,
+          featured: Boolean(job.featured),
+          publishedAt: job.published_at || null,
+          expiresAt: job.expires_at || null,
+          createdAt: job.created_at || new Date().toISOString(),
+          salary: (job.salary_min || job.salary_max) ? {
+            min: job.salary_min || 0,
+            max: job.salary_max || 0,
+            currency: job.salary_currency || 'PLN',
+          } : null,
+        };
+      } catch (transformError) {
+        console.error('Error transforming job:', job.id, transformError);
+        return null;
+      }
+    }).filter(Boolean); // Remove any null entries from failed transformations
 
     return NextResponse.json({
       jobs: transformedJobs,

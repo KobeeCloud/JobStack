@@ -1,4 +1,9 @@
 {
   "buildCommand": "npm run build",
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/scrape",
+      "schedule": "0 8 * * *"
+    }
+  ]
 }

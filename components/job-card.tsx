@@ -8,31 +8,49 @@ interface JobCardProps {
   job: Job;
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  justjoinit: 'JustJoin.it',
+  nofluffjobs: 'NoFluffJobs',
+  pracuj: 'Pracuj.pl',
+  indeed: 'Indeed',
+  native: 'JobStack',
+};
+
 export function JobCard({ job }: JobCardProps) {
+  // Safely get source label
+  const sourceLabel = SOURCE_LABELS[job.source] || job.source || 'Unknown';
+
+  // Safely get company name
+  const companyName = job.company || job.company_name || 'Unknown Company';
+
   return (
     <Link href={job.sourceUrl || `/jobs/${job.id}`}>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer">
         <CardHeader>
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
-              <CardTitle className="text-xl mb-1">{job.title}</CardTitle>
+              <CardTitle className="text-xl mb-1">{job.title || 'Untitled Position'}</CardTitle>
               <CardDescription className="text-base">
-                {job.company || job.company_name}
+                {companyName}
               </CardDescription>
             </div>
             {job.companyLogo && (
               <img
                 src={job.companyLogo}
-                alt={job.company || job.company_name}
+                alt={companyName}
                 className="w-12 h-12 object-contain"
+                onError={(e) => {
+                  // Hide broken images
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
             )}
           </div>
 
           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-            <span>📍 {job.location}</span>
+            <span>📍 {job.location || 'Location not specified'}</span>
             {job.remote && <span>🏠 Remote</span>}
-            {job.salary && (
+            {job.salary && (job.salary.min || job.salary.max) && (
               <span className="font-semibold text-foreground">
                 💰 {formatSalary(job.salary.min, job.salary.max, job.salary.currency)}
               </span>
@@ -42,7 +60,7 @@ export function JobCard({ job }: JobCardProps) {
 
         <CardContent>
           <div className="flex flex-wrap gap-2 mb-3">
-            {job.techStack?.slice(0, 5).map((tech) => (
+            {(job.techStack || []).slice(0, 5).map((tech) => (
               <Badge key={tech} variant="secondary">
                 {tech}
               </Badge>
@@ -58,12 +76,7 @@ export function JobCard({ job }: JobCardProps) {
               <span className="text-xs">
                 Originally posted on:{' '}
                 <Badge variant={job.source === 'native' ? 'default' : 'outline'}>
-                  {job.source === 'justjoinit' && 'JustJoin.it'}
-                  {job.source === 'nofluffjobs' && 'NoFluffJobs'}
-                  {job.source === 'pracuj' && 'Pracuj.pl'}
-                  {job.source === 'indeed' && 'Indeed'}
-                  {job.source === 'native' && 'JobStack'}
-                  {!['justjoinit', 'nofluffjobs', 'pracuj', 'indeed', 'native'].includes(job.source) && job.source}
+                  {sourceLabel}
                 </Badge>
               </span>
               {job.featured && (

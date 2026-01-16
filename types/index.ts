@@ -10,7 +10,7 @@ export interface Job {
     min: number;
     max: number;
     currency: string;
-  };
+  } | null;
   techStack?: string[];
   description: string;
   requirements?: string[];
@@ -18,9 +18,9 @@ export interface Job {
   source: 'native' | 'justjoinit' | 'nofluffjobs' | 'pracuj' | 'indeed';
   sourceUrl?: string;
   featured: boolean;
-  publishedAt?: Date;
-  expiresAt?: Date;
-  createdAt: Date;
+  publishedAt?: string;
+  expiresAt?: string;
+  createdAt: string;
 }
 
 export interface Company {
