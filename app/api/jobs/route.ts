@@ -4,6 +4,15 @@ import { type JobFilters } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase environment variables');
+      return NextResponse.json(
+        { error: 'Server configuration error - Supabase not configured' },
+        { status: 500 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
 
     // Pagination
