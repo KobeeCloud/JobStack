@@ -48,7 +48,7 @@ export function JobSearch({ onSearch }: JobSearchProps) {
   const [voivodeship, setVoivodeship] = useState<string | null>(null);
   const [distance, setDistance] = useState<number>(50);
   const [showLocationOptions, setShowLocationOptions] = useState(false);
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [showAllRoles, setShowAllRoles] = useState(false);
   const [suggestedStacks, setSuggestedStacks] = useState<string[]>([]);
 
   // Update suggested stacks when role changes
@@ -83,7 +83,6 @@ export function JobSearch({ onSearch }: JobSearchProps) {
 
   const selectRole = (role: string) => {
     setSelectedRole(role === selectedRole ? null : role);
-    setShowRoleDropdown(false);
   };
 
   const clearAllFilters = () => {
@@ -236,7 +235,7 @@ export function JobSearch({ onSearch }: JobSearchProps) {
       )}
 
       {/* Role Selection */}
-      <div className="relative">
+      <div>
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-blue-500" />
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -244,7 +243,8 @@ export function JobSearch({ onSearch }: JobSearchProps) {
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {Object.entries(JOB_ROLES).slice(0, 6).map(([role, data]) => (
+          {/* Show first 6 roles, or all if expanded */}
+          {Object.entries(JOB_ROLES).slice(0, showAllRoles ? undefined : 6).map(([role, data]) => (
             <button
               key={role}
               onClick={() => selectRole(role)}
@@ -258,34 +258,17 @@ export function JobSearch({ onSearch }: JobSearchProps) {
               <span>{role}</span>
             </button>
           ))}
-          <button
-            onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          >
-            Więcej
-            <ChevronDown className="w-4 h-4" />
-          </button>
+          {/* Show more/less button */}
+          {Object.keys(JOB_ROLES).length > 6 && (
+            <button
+              onClick={() => setShowAllRoles(!showAllRoles)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            >
+              {showAllRoles ? 'Mniej' : 'Więcej'}
+              <ChevronDown className={`w-4 h-4 transition-transform ${showAllRoles ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </div>
-
-        {/* More roles dropdown */}
-        {showRoleDropdown && (
-          <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 p-2">
-            {Object.entries(JOB_ROLES).slice(6).map(([role, data]) => (
-              <button
-                key={role}
-                onClick={() => selectRole(role)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  selectedRole === role
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                <span className="text-lg">{data.icon}</span>
-                <span className="font-medium">{role}</span>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Tech Stack Filter */}

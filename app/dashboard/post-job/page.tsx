@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,9 +19,11 @@ import {
   X,
   Eye,
   Save,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { JOB_ROLES, TECH_STACKS, VOIVODESHIPS } from '@/lib/constants';
+import { supabase } from '@/lib/supabase/client';
 
 const employmentTypes = [
   { value: 'full-time', label: 'Pełen etat' },
@@ -47,6 +49,22 @@ export default function PostJobPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login?redirect=/dashboard/post-job');
+        return;
+      }
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    };
+    checkAuth();
+  }, [router]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -114,6 +132,23 @@ export default function PostJobPage() {
   const selectedRoleStacks = formData.role && JOB_ROLES[formData.role as keyof typeof JOB_ROLES]
     ? JOB_ROLES[formData.role as keyof typeof JOB_ROLES].stacks
     : [];
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Sprawdzanie autoryzacji...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (redirect will happen)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
