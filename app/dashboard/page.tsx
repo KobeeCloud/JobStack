@@ -105,17 +105,27 @@ export default async function DashboardPage() {
 
   // If profile doesn't exist, create it
   if (profileError && profileError.code === 'PGRST116') {
+    // Get role from user metadata or default to candidate
+    const role = (user.user_metadata?.role || 'candidate') as 'candidate' | 'employer';
+
     const { data: newProfile } = await supabase
       .from('profiles')
       .insert({
         id: user.id,
         email: user.email!,
-        role: 'candidate', // default role
+        role: role,
       })
       .select()
       .single();
 
     profile = newProfile;
+
+    // Create corresponding candidate or employer profile
+    if (role === 'candidate') {
+      await supabase.from('candidate_profiles').insert({ user_id: user.id });
+    } else if (role === 'employer') {
+      await supabase.from('employer_profiles').insert({ user_id: user.id });
+    }
   }
 
   const isEmployer = profile?.role === 'employer';

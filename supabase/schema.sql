@@ -1,10 +1,19 @@
 -- JobStack Database Schema
 -- Run this SQL in your Supabase SQL Editor
+-- UWAGA: Ten skrypt USUWA wszystkie tabele i tworzy je od nowa!
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Drop existing policies to allow re-running this script
+-- Drop existing triggers
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+-- Drop existing functions
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.generate_api_key();
+DROP FUNCTION IF EXISTS public.cleanup_expired_jobs();
+
+-- Drop existing policies
 DO $$
 BEGIN
     -- Profiles
@@ -29,6 +38,16 @@ EXCEPTION
     WHEN undefined_table THEN NULL;
     WHEN undefined_object THEN NULL;
 END $$;
+
+-- Drop existing tables (CASCADE usunie też wszystkie zależności)
+DROP TABLE IF EXISTS public.email_alerts CASCADE;
+DROP TABLE IF EXISTS public.saved_jobs CASCADE;
+DROP TABLE IF EXISTS public.applications CASCADE;
+DROP TABLE IF EXISTS public.jobs CASCADE;
+DROP TABLE IF EXISTS public.employer_profiles CASCADE;
+DROP TABLE IF EXISTS public.companies CASCADE;
+DROP TABLE IF EXISTS public.candidate_profiles CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
 
 -- Users table (extends Supabase auth.users)
 CREATE TABLE public.profiles (
@@ -260,14 +279,28 @@ CREATE POLICY "Users can manage own email alerts"
 -- Functions
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  user_role TEXT;
 BEGIN
+  -- Get role from metadata or default to 'candidate'
+  user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'candidate');
+
+  -- Insert into profiles
   INSERT INTO public.profiles (id, email, role)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'role', 'candidate')
-  )
+  VALUES (NEW.id, NEW.email, user_role)
   ON CONFLICT (id) DO NOTHING;
+
+  -- Create corresponding profile based on role
+  IF user_role = 'candidate' THEN
+    INSERT INTO public.candidate_profiles (user_id)
+    VALUES (NEW.id)
+    ON CONFLICT DO NOTHING;
+  ELSIF user_role = 'employer' THEN
+    INSERT INTO public.employer_profiles (user_id)
+    VALUES (NEW.id)
+    ON CONFLICT DO NOTHING;
+  END IF;
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
