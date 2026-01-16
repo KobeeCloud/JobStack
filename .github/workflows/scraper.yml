@@ -24,7 +24,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run scraper
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Run scraper directly
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -32,9 +35,9 @@ jobs:
           NODE_ENV: production
         run: |
           echo "🚀 Starting job scraper..."
-          curl -f -X GET "${{ secrets.VERCEL_DEPLOYMENT_URL }}/api/scrape" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            || echo "⚠️ Scraper failed but continuing..."
+          echo "📊 Supabase URL: $NEXT_PUBLIC_SUPABASE_URL"
+          npx tsx scripts/run-scraper.mjs
+          echo "✅ Scraper completed"
 
       - name: Notify on success
         if: success()
