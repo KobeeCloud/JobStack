@@ -26,15 +26,17 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow GET for manual testing in development
+// Allow GET for manual testing (temporary - remove after first successful scrape)
 export async function GET(request: NextRequest) {
-  if (process.env.NODE_ENV !== 'development') {
+  try {
+    console.log('Manual scraper trigger via GET');
+    const result = await fetchJustJoinItJobs();
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Scraper GET error:', error);
     return NextResponse.json(
-      { error: 'Not available in production' },
-      { status: 403 }
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
     );
   }
-
-  const result = await fetchJustJoinItJobs();
-  return NextResponse.json(result);
 }
