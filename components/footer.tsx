@@ -13,10 +13,11 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">J</span>
-              </div>
-              <span className="text-xl font-bold text-white">JobStack</span>
+              <span className="text-xl font-bold">
+                <span className="text-blue-400">Job</span>
+                <span className="text-indigo-400">Stack</span>
+                <span className="text-gray-500">.pl</span>
+              </span>
             </Link>
             <p className="text-sm text-gray-400">
               {t('footer.description')}

@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { JobSearch } from '@/components/job-search';
 import { JobCard } from '@/components/job-card';
+import { JobDetailModal, JobData } from '@/components/job-detail-modal';
+import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { type Job } from '@/types';
-import Link from 'next/link';
+import { useLocale } from '@/lib/i18n';
+import { Search, SlidersHorizontal, MapPin, Briefcase, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface JobsResponse {
   jobs: Job[];
@@ -20,9 +24,35 @@ interface JobsResponse {
   warning?: string;
 }
 
+// Transform Job to JobData for modal
+function jobToJobData(job: Job): JobData {
+  return {
+    id: job.id,
+    title: job.title,
+    company: job.company || job.company_name,
+    company_logo: job.companyLogo,
+    location: job.location,
+    salary_min: job.salary?.min,
+    salary_max: job.salary?.max,
+    salary_currency: job.salary?.currency,
+    work_type: job.remote ? 'remote' : 'onsite',
+    description: job.description,
+    requirements: job.requirements,
+    tech_stack: job.techStack,
+    benefits: job.benefits,
+    source: job.source,
+    source_url: job.sourceUrl,
+    created_at: job.publishedAt || job.createdAt,
+    expires_at: job.expiresAt,
+  };
+}
+
 export default function JobsPage() {
+  const { t } = useLocale();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -35,9 +65,10 @@ export default function JobsPage() {
     techStack: [] as string[],
     remote: false,
   });
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchJobs = async (page: number = 1) => {
+  const fetchJobs = useCallback(async (page: number = 1) => {
     setLoading(true);
     setError(null);
     try {
@@ -56,65 +87,31 @@ export default function JobsPage() {
       const response = await fetch(`/api/jobs?${params.toString()}`);
       const data: JobsResponse = await response.json();
 
-      // Handle API errors gracefully
       if (data.error) {
         console.warn('API returned error:', data.error);
         setError(data.error);
       }
 
-      // Always set jobs (API returns empty array on error now)
       setJobs(Array.isArray(data.jobs) ? data.jobs : []);
       setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
     } catch (error) {
       console.error('Error fetching jobs:', error);
-      setError('Failed to load jobs. Please try again later.');
+      setError('Nie udało się załadować ofert. Spróbuj ponownie później.');
       setJobs([]);
       setPagination({ page: 1, limit: 20, total: 0, totalPages: 0 });
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [fetchJobs]);
 
   const handleSearch = (newFilters: typeof filters) => {
     setFilters(newFilters);
     setError(null);
-    // Reset to page 1 when filters change
     setPagination(prev => ({ ...prev, page: 1 }));
-
-    // Fetch with new filters
-    const params = new URLSearchParams({
-      page: '1',
-      limit: '20',
-    });
-
-    if (newFilters.query) params.append('search', newFilters.query);
-    if (newFilters.location) params.append('location', newFilters.location);
-    if (newFilters.remote) params.append('remote', 'true');
-    if (newFilters.techStack.length > 0) {
-      params.append('techStack', newFilters.techStack.join(','));
-    }
-
-    setLoading(true);
-    fetch(`/api/jobs?${params.toString()}`)
-      .then(res => res.json())
-      .then((data: JobsResponse) => {
-        if (data.error) {
-          console.warn('API returned error:', data.error);
-          setError(data.error);
-        }
-        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
-        setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
-      })
-      .catch(err => {
-        console.error('Error fetching jobs:', err);
-        setError('Failed to load jobs. Please try again later.');
-        setJobs([]);
-      })
-      .finally(() => setLoading(false));
   };
 
   const handlePageChange = (newPage: number) => {
@@ -123,155 +120,209 @@ export default function JobsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleJobClick = (job: Job) => {
+    setSelectedJob(job);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedJob(null), 300);
+  };
+
+  const quickFilters = [
+    { id: 'all', label: 'Wszystkie', icon: Briefcase },
+    { id: 'remote', label: 'Tylko zdalne', icon: MapPin },
+    { id: 'featured', label: 'Wyróżnione', icon: TrendingUp },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Navigation */}
-      <nav className="border-b bg-white dark:bg-gray-800 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="text-2xl font-bold text-blue-600">
-              JobStack
-            </Link>
-            <div className="flex gap-4">
-              <Link href="/for-employers">
-                <Button variant="ghost">For Employers</Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="outline">Sign In</Button>
-              </Link>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
+      <Navbar />
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              {t('jobs.title')}
+            </h1>
+            <p className="text-lg text-blue-100">
+              {t('jobs.subtitle')}
+            </p>
+          </div>
+
+          {/* Search */}
+          <div className="max-w-4xl mx-auto">
+            <JobSearch onSearch={handleSearch} />
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+              <p className="text-red-600 dark:text-red-400">{error}</p>
+              <button
+                onClick={() => fetchJobs(pagination.page)}
+                className="mt-2 text-sm text-red-700 dark:text-red-300 underline hover:no-underline"
+              >
+                {t('common.retry')}
+              </button>
+            </div>
+          )}
+
+          {/* Quick Filters & Results Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            {/* Quick Filters */}
+            <div className="flex flex-wrap gap-2">
+              {quickFilters.map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => {
+                    setActiveFilter(activeFilter === filter.id ? null : filter.id);
+                    if (filter.id === 'remote') {
+                      setFilters(prev => ({ ...prev, remote: !prev.remote }));
+                    }
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    activeFilter === filter.id
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }`}
+                >
+                  <filter.icon className="w-4 h-4" />
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Results Count */}
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {loading ? (
+                  <span className="animate-pulse">{t('common.loading')}</span>
+                ) : (
+                  <span>
+                    <span className="font-bold text-gray-900 dark:text-white">{pagination.total}</span>
+                    {' '}ofert pracy
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Job Listings */}
+          {loading ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-64 bg-white dark:bg-gray-800 rounded-2xl animate-pulse"
+                />
+              ))}
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+              <div className="text-7xl mb-6">{error ? '😞' : '🔍'}</div>
+              <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                {t('jobs.noResults')}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Spróbuj zmienić filtry lub kryteria wyszukiwania
+              </p>
+              <Button
+                onClick={() => {
+                  setFilters({ query: '', location: '', techStack: [], remote: false });
+                  setActiveFilter(null);
+                }}
+                variant="outline"
+              >
+                Wyczyść filtry
+              </Button>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {jobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  onClick={() => handleJobClick(job)}
+                  isSelected={selectedJob?.id === job.id}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-10">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-xl"
+                disabled={pagination.page === 1}
+                onClick={() => handlePageChange(pagination.page - 1)}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pagination.page <= 3) {
+                    pageNum = i + 1;
+                  } else if (pagination.page >= pagination.totalPages - 2) {
+                    pageNum = pagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = pagination.page - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pagination.page === pageNum ? 'default' : 'ghost'}
+                      size="sm"
+                      className={`rounded-xl min-w-[40px] ${
+                        pagination.page === pageNum
+                          ? 'bg-blue-600 hover:bg-blue-700'
+                          : ''
+                      }`}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-xl"
+                disabled={pagination.page === pagination.totalPages}
+                onClick={() => handlePageChange(pagination.page + 1)}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+          )}
         </div>
-      </nav>
+      </section>
 
-      {/* Search Section */}
-      <div className="bg-white dark:bg-gray-800 border-b py-8">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-6">Find Your Next Job</h1>
-          <JobSearch onSearch={handleSearch} />
-        </div>
-      </div>
+      <Footer />
 
-      {/* Results Section */}
-      <div className="container mx-auto px-4 py-8">
-        {/* Error Banner */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
-            <button
-              onClick={() => fetchJobs(pagination.page)}
-              className="mt-2 text-sm text-red-700 dark:text-red-300 underline hover:no-underline"
-            >
-              Try again
-            </button>
-          </div>
-        )}
-
-        {/* Results Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl font-semibold">
-              {loading ? (
-                'Loading...'
-              ) : (
-                <>
-                  {pagination.total} job{pagination.total !== 1 ? 's' : ''} found
-                </>
-              )}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Page {pagination.page} of {pagination.totalPages || 1}
-            </p>
-          </div>
-
-          {/* Quick Filters */}
-          <div className="flex gap-2">
-            <Badge variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
-              All Sources
-            </Badge>
-            <Badge variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
-              Remote Only
-            </Badge>
-            <Badge variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
-              Featured
-            </Badge>
-          </div>
-        </div>
-
-        {/* Job Listings */}
-        {loading ? (
-          <div className="grid gap-4">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="h-48 bg-white dark:bg-gray-800 rounded-lg animate-pulse"
-              />
-            ))}
-          </div>
-        ) : jobs.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">{error ? '😞' : '🔍'}</div>
-            <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your filters or search terms
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
-            <Button
-              variant="outline"
-              disabled={pagination.page === 1}
-              onClick={() => handlePageChange(pagination.page - 1)}
-            >
-              Previous
-            </Button>
-
-            {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
-              const pageNum = i + 1;
-              return (
-                <Button
-                  key={pageNum}
-                  variant={pagination.page === pageNum ? 'default' : 'outline'}
-                  onClick={() => handlePageChange(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-
-            {pagination.totalPages > 5 && (
-              <>
-                <Button variant="ghost" disabled>
-                  ...
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(pagination.totalPages)}
-                >
-                  {pagination.totalPages}
-                </Button>
-              </>
-            )}
-
-            <Button
-              variant="outline"
-              disabled={pagination.page === pagination.totalPages}
-              onClick={() => handlePageChange(pagination.page + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-      </div>
+      {/* Job Detail Modal */}
+      <JobDetailModal
+        job={selectedJob ? jobToJobData(selectedJob) : null}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

@@ -1,33 +1,30 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
+import { ArrowLeft, FileText, Cookie, Shield } from 'lucide-react';
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Navigation */}
-      <nav className="border-b bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="text-2xl font-bold text-blue-600">
-              JobStack
-            </Link>
-            <div className="flex gap-4">
-              <Link href="/jobs">
-                <Button variant="ghost">Browse Jobs</Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="outline">Sign In</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800">
+      <Navbar />
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 prose prose-blue dark:prose-invert max-w-none">
-          <h1>Privacy Policy (Polityka Prywatności)</h1>
-          <p className="text-sm text-muted-foreground">Last Updated: January 16, 2026</p>
+      <main className="container mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6">
+            <ArrowLeft className="w-4 h-4" />
+            Powrót do strony głównej
+          </Link>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-8 md:p-12 prose prose-blue dark:prose-invert max-w-none">
+            <h1>Polityka Prywatności (Privacy Policy)</h1>
+            <p className="text-sm text-gray-500">Ostatnia aktualizacja: 16 stycznia 2026</p>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 my-4">
             <p className="font-bold">RODO/GDPR Compliance Statement</p>
@@ -259,19 +256,30 @@ export default function PrivacyPage() {
             <strong>Version:</strong> 1.0
           </p>
 
-          <div className="flex gap-4 justify-center mt-8">
+          <div className="flex flex-wrap gap-4 justify-center mt-8">
             <Link href="/terms">
-              <Button variant="outline">Terms of Service</Button>
+              <Button variant="outline" className="rounded-xl border-gray-300 dark:border-gray-600">
+                <FileText className="w-4 h-4 mr-2" />
+                Regulamin
+              </Button>
             </Link>
             <Link href="/cookies">
-              <Button variant="outline">Cookie Policy</Button>
+              <Button variant="outline" className="rounded-xl border-gray-300 dark:border-gray-600">
+                <Cookie className="w-4 h-4 mr-2" />
+                Polityka Cookies
+              </Button>
             </Link>
             <Link href="/">
-              <Button>Back to Home</Button>
+              <Button className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                Powrót do strony głównej
+              </Button>
             </Link>
           </div>
         </div>
       </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }
