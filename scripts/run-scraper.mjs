@@ -5,8 +5,8 @@
  * Runs scrapers without HTTP overhead
  */
 
-import { fetchNoFluffJobs } from '../lib/scrapers/nofluffjobs.js';
-import { cleanupExpiredJobs, cleanupStaleJobs } from '../lib/cleanup.js';
+import { fetchNoFluffJobs } from '../lib/scrapers/nofluffjobs.ts';
+import { cleanupExpiredJobs, cleanupStaleJobs } from '../lib/cleanup.ts';
 
 async function runScrapers() {
   console.log('🚀 Starting scraper run at', new Date().toISOString());
