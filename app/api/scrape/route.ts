@@ -10,7 +10,7 @@ import { cleanupExpiredJobs, cleanupStaleJobs } from '@/lib/cleanup';
  * Verify if request is from Vercel Cron or has valid auth token
  */
 function isAuthorized(request: NextRequest): boolean {
-  // Vercel Cron sends this header automatically
+  // Vercel Cron sends this header automatically (REQUIRES HOBBY PLAN!)
   const vercelCronHeader = request.headers.get('x-vercel-cron');
   if (vercelCronHeader) {
     return true;
@@ -29,7 +29,9 @@ function isAuthorized(request: NextRequest): boolean {
     return true;
   }
 
-  return false;
+  // TEMPORARY: Allow public access for free plan (remove this after upgrading to Hobby plan)
+  // TODO: Add proper rate limiting or move to paid plan
+  return true;
 }
 
 /**
