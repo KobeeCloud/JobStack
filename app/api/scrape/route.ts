@@ -29,9 +29,9 @@ function isAuthorized(request: NextRequest): boolean {
     return true;
   }
 
-  // TEMPORARY: Allow public access for free plan (remove this after upgrading to Hobby plan)
-  // TODO: Add proper rate limiting or move to paid plan
-  return true;
+  // SCRAPER DISABLED - uncomment line below to enable
+  return false;
+  // return true; // Enable this for public access (not recommended)
 }
 
 /**
