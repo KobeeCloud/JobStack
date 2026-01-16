@@ -57,7 +57,7 @@ export default function RegisterPage() {
         password,
         options: {
           data: {
-            role,
+            role, // This will be stored in raw_user_meta_data and used by the trigger
           },
         },
       });
@@ -65,18 +65,8 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError;
 
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email!,
-            role,
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-        }
-
+        // Profile is automatically created by database trigger
+        // No need to insert manually
         setSuccess(true);
         setTimeout(() => {
           router.push('/login');
