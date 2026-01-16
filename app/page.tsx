@@ -185,9 +185,9 @@ export default function HomePage() {
               </p>
               <p className="text-xs text-muted-foreground">
                 <strong>JobStack by KobeeCloud</strong><br />
-                Jednoosobowa Działalność Gospodarcza<br />
-                NIP: [Your NIP]<br />
-                REGON: [Your REGON]
+                Jakub Pospieszny - Jednoosobowa Działalność Gospodarcza<br />
+                NIP: 5882530612 | REGON: 541797979<br />
+                Mickiewicza 19, 84-242 Luzino, Poland
               </p>
             </div>
             <div>

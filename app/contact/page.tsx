@@ -86,11 +86,12 @@ export default function ContactPage() {
             <CardTitle>Business Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p><strong>Company:</strong> JobStack by KobeeCloud</p>
+            <p><strong>Company:</strong> JobStack by KobeCloud</p>
+            <p><strong>Owner:</strong> Jakub Pospieszny</p>
             <p><strong>Business Type:</strong> Jednoosobowa Działalność Gospodarcza (JDG)</p>
-            <p><strong>NIP:</strong> [Your NIP]</p>
-            <p><strong>REGON:</strong> [Your REGON]</p>
-            <p><strong>Address:</strong> [Your business address], Poland</p>
+            <p><strong>NIP:</strong> 5882530612</p>
+            <p><strong>REGON:</strong> 541797979</p>
+            <p><strong>Address:</strong> Mickiewicza 19, 84-242 Luzino, Poland</p>
           </CardContent>
         </Card>
 
