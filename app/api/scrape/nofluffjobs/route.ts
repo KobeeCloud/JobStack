@@ -26,9 +26,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Allow GET for manual testing
+// Allow GET for manual testing (but require auth to prevent abuse)
 export async function GET(request: NextRequest) {
   try {
+    // Same auth check as POST
+    const authHeader = request.headers.get('authorization');
+    const expectedToken = process.env.CRON_SECRET || 'dev-secret-token';
+
+    if (authHeader !== `Bearer ${expectedToken}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized - scraper requires authentication' },
+        { status: 401 }
+      );
+    }
+
     console.log('Manual NoFluffJobs scraper trigger via GET');
     const result = await fetchNoFluffJobs();
     return NextResponse.json(result);

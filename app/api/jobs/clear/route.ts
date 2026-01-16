@@ -16,11 +16,18 @@ export async function DELETE(request: NextRequest) {
 
     console.log('Clearing all jobs from database...');
 
-    // Delete all jobs
-    const { error, count } = await supabaseAdmin
+    // First, count how many jobs we have
+    const { count: initialCount } = await supabaseAdmin
+      .from('jobs')
+      .select('*', { count: 'exact', head: true });
+
+    console.log(`Found ${initialCount} jobs to delete`);
+
+    // Delete all jobs - use gt(id, empty UUID) to match all rows
+    const { error } = await supabaseAdmin
       .from('jobs')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (dummy condition)
+      .gte('created_at', '2020-01-01'); // Match all jobs (created after 2020)
 
     if (error) {
       console.error('Error deleting jobs:', error);
@@ -30,12 +37,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`Successfully deleted all jobs`);
+    console.log(`Successfully deleted ${initialCount} jobs`);
 
     return NextResponse.json({
       success: true,
       message: 'All jobs deleted successfully',
-      deleted_count: count || 0,
+      deleted_count: initialCount || 0,
     });
   } catch (error) {
     console.error('Clear jobs error:', error);
