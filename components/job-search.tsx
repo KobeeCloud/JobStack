@@ -21,32 +21,38 @@ import {
   Building2,
   Home,
   Filter,
-  Sparkles
+  Sparkles,
+  ArrowUpDown
 } from 'lucide-react';
 
 type WorkMode = 'remote' | 'hybrid' | 'onsite';
+type SortOption = 'newest' | 'oldest' | 'salary-high' | 'salary-low' | 'company-az' | 'company-za';
 
 interface JobSearchProps {
   onSearch: (filters: {
     query: string;
     location: string;
+    company?: string;
     techStack: string[];
     remote: boolean;
     workMode?: WorkMode;
     role?: string;
     voivodeship?: string;
     distance?: number;
+    sortBy?: SortOption;
   }) => void;
 }
 
 export function JobSearch({ onSearch }: JobSearchProps) {
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
+  const [company, setCompany] = useState('');
   const [selectedTech, setSelectedTech] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [workMode, setWorkMode] = useState<WorkMode | null>(null);
   const [voivodeship, setVoivodeship] = useState<string | null>(null);
   const [distance, setDistance] = useState<number>(50);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [showLocationOptions, setShowLocationOptions] = useState(false);
   const [showAllRoles, setShowAllRoles] = useState(false);
   const [suggestedStacks, setSuggestedStacks] = useState<string[]>([]);
@@ -67,12 +73,14 @@ export function JobSearch({ onSearch }: JobSearchProps) {
     onSearch({
       query: selectedRole ? `${selectedRole} ${query}`.trim() : query,
       location: workMode === 'remote' ? '' : location,
+      company,
       techStack: selectedTech,
       remote: workMode === 'remote',
       workMode: workMode || undefined,
       role: selectedRole || undefined,
       voivodeship: voivodeship || undefined,
       distance: workMode !== 'remote' ? distance : undefined,
+      sortBy,
     });
   };
 
@@ -91,11 +99,13 @@ export function JobSearch({ onSearch }: JobSearchProps) {
   const clearAllFilters = () => {
     setQuery('');
     setLocation('');
+    setCompany('');
     setSelectedTech([]);
     setSelectedRole(null);
     setWorkMode(null);
     setVoivodeship(null);
     setDistance(50);
+    setSortBy('newest');
   };
 
   const hasActiveFilters = selectedTech.length > 0 || query || location || workMode || selectedRole || voivodeship;
@@ -104,83 +114,123 @@ export function JobSearch({ onSearch }: JobSearchProps) {
     <div className="w-full space-y-6">
       {/* Main Search Bar */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
-        <div className="flex flex-col md:flex-row gap-3">
-          {/* Search Input */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Wpisz stanowisko, technologię lub firmę..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-12 h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl text-base"
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-
-          {/* Location Input (only if not remote) */}
-          {workMode !== 'remote' && (
-            <div className="md:w-56 relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="flex flex-col gap-3">
+          {/* First row: Search + Location + Button */}
+          <div className="flex flex-col md:flex-row gap-3">
+            {/* Search Input */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Lokalizacja"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Wpisz stanowisko lub technologię..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 className="pl-12 h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl text-base"
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                onFocus={() => setShowLocationOptions(true)}
-                onBlur={() => setTimeout(() => setShowLocationOptions(false), 200)}
               />
-
-              {/* Location Dropdown */}
-              {showLocationOptions && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-64 overflow-auto">
-                  <div className="p-2">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1 font-medium">Popularne miasta</div>
-                    {LOCATIONS.map(loc => (
-                      <button
-                        key={loc}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                        onClick={() => {
-                          setLocation(loc);
-                          setShowLocationOptions(false);
-                        }}
-                      >
-                        {loc}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="border-t border-gray-100 dark:border-gray-700 p-2">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1 font-medium">Województwa</div>
-                    {VOIVODESHIPS.slice(0, 5).map(v => (
-                      <button
-                        key={v}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm capitalize"
-                        onClick={() => {
-                          setVoivodeship(v);
-                          setLocation(`woj. ${v}`);
-                          setShowLocationOptions(false);
-                        }}
-                      >
-                        woj. {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          )}
 
-          {/* Search Button */}
-          <Button
-            onClick={handleSearch}
-            size="lg"
-            className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25"
-          >
-            <Search className="w-5 h-5 mr-2" />
-            Szukaj
-          </Button>
+            {/* Location Input (only if not remote) */}
+            {workMode !== 'remote' && (
+              <div className="md:w-56 relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Lokalizacja"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="pl-12 h-12 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl text-base"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  onFocus={() => setShowLocationOptions(true)}
+                  onBlur={() => setTimeout(() => setShowLocationOptions(false), 200)}
+                />
+
+                {/* Location Dropdown */}
+                {showLocationOptions && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-64 overflow-auto">
+                    <div className="p-2">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1 font-medium">Popularne miasta</div>
+                      {LOCATIONS.map(loc => (
+                        <button
+                          key={loc}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                          onClick={() => {
+                            setLocation(loc);
+                            setShowLocationOptions(false);
+                          }}
+                        >
+                          {loc}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="border-t border-gray-100 dark:border-gray-700 p-2">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1 font-medium">Województwa</div>
+                      {VOIVODESHIPS.slice(0, 5).map(v => (
+                        <button
+                          key={v}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm capitalize"
+                          onClick={() => {
+                            setVoivodeship(v);
+                            setLocation(`woj. ${v}`);
+                            setShowLocationOptions(false);
+                          }}
+                        >
+                          woj. {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Search Button */}
+            <Button
+              onClick={handleSearch}
+              size="lg"
+              className="h-12 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25"
+            >
+              <Search className="w-5 h-5 mr-2" />
+              Szukaj
+            </Button>
+          </div>
+
+          {/* Second row: Company + Sort */}
+          <div className="flex flex-col md:flex-row gap-3">
+            {/* Company Search */}
+            <div className="flex-1 relative">
+              <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Nazwa firmy (opcjonalnie)..."
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className="pl-11 h-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 rounded-xl text-sm"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="md:w-64 relative">
+              <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value as SortOption);
+                  handleSearch();
+                }}
+                className="w-full h-10 pl-10 pr-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm appearance-none cursor-pointer"
+              >
+                <option value="newest">Najnowsze</option>
+                <option value="oldest">Najstarsze</option>
+                <option value="salary-high">Wynagrodzenie: od najwyższego</option>
+                <option value="salary-low">Wynagrodzenie: od najniższego</option>
+                <option value="company-az">Firma: A-Z</option>
+                <option value="company-za">Firma: Z-A</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
         </div>
       </div>
 
