@@ -16,7 +16,7 @@ function isAuthorized(request: NextRequest): boolean {
     return true;
   }
 
-  // Also allow manual triggers with Authorization header
+  // GitHub Actions or manual triggers with Authorization header
   const authHeader = request.headers.get('authorization');
   const expectedToken = process.env.CRON_SECRET;
 
@@ -29,9 +29,8 @@ function isAuthorized(request: NextRequest): boolean {
     return true;
   }
 
-  // SCRAPER DISABLED - uncomment line below to enable
+  // PRODUCTION: Requires authentication
   return false;
-  // return true; // Enable this for public access (not recommended)
 }
 
 /**
