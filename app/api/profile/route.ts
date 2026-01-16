@@ -110,18 +110,44 @@ export async function PUT(request: NextRequest) {
       public_profile: false,
     };
 
-    let updateError = null;
-    const { error: extendedError } = await supabaseAdmin
+    const { data: existing } = await supabaseAdmin
       .from('candidate_profiles')
-      .upsert(extendedPayload, { onConflict: 'user_id' });
+      .select('id')
+      .eq('user_id', user.id);
 
-    if (extendedError && extendedError.code === '42703') {
-      const { error: baseError } = await supabaseAdmin
+    const hasProfile = (existing || []).length > 0;
+    const updatePayload = { ...basePayload };
+    delete (updatePayload as any).user_id;
+
+    let updateError = null;
+    if (hasProfile) {
+      const { error: extendedError } = await supabaseAdmin
         .from('candidate_profiles')
-        .upsert(basePayload, { onConflict: 'user_id' });
-      updateError = baseError;
+        .update({ ...extendedPayload, user_id: undefined })
+        .eq('user_id', user.id);
+
+      if (extendedError && extendedError.code === '42703') {
+        const { error: baseError } = await supabaseAdmin
+          .from('candidate_profiles')
+          .update(updatePayload)
+          .eq('user_id', user.id);
+        updateError = baseError;
+      } else {
+        updateError = extendedError;
+      }
     } else {
-      updateError = extendedError;
+      const { error: extendedError } = await supabaseAdmin
+        .from('candidate_profiles')
+        .insert(extendedPayload);
+
+      if (extendedError && extendedError.code === '42703') {
+        const { error: baseError } = await supabaseAdmin
+          .from('candidate_profiles')
+          .insert(basePayload);
+        updateError = baseError;
+      } else {
+        updateError = extendedError;
+      }
     }
 
     if (updateError) {

@@ -23,6 +23,19 @@ export async function GET(request: Request) {
             email: user.email || '',
             role: role === 'employer' ? 'employer' : 'candidate',
           }, { onConflict: 'id' });
+
+        const isEmployer = role === 'employer';
+        const table = isEmployer ? 'employer_profiles' : 'candidate_profiles';
+        const { data: existing } = await supabaseAdmin
+          .from(table)
+          .select('id')
+          .eq('user_id', user.id);
+
+        if (!existing || existing.length === 0) {
+          await supabaseAdmin
+            .from(table)
+            .insert({ user_id: user.id });
+        }
       }
     }
   }

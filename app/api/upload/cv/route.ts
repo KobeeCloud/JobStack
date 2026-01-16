@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const email = formData.get('email') as string;
 
     if (!file) {
       return NextResponse.json(
@@ -38,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const timestamp = Date.now();
-    const sanitizedEmail = email.replace(/[^a-zA-Z0-9]/g, '_');
+    const sanitizedEmail = (user.email || user.id).replace(/[^a-zA-Z0-9]/g, '_');
     const fileExt = file.name.split('.').pop();
     const filename = `cv_${sanitizedEmail}_${timestamp}.${fileExt}`;
 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { User, Mail, Briefcase, Github, Linkedin, Globe, Upload } from 'lucide-react';
+import { TECH_STACKS, JOB_ROLES } from '@/lib/constants';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   });
 
   const [newSkill, setNewSkill] = useState('');
+  const roleSuggestions = Object.keys(JOB_ROLES);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -249,6 +251,20 @@ export default function ProfilePage() {
                 ) : (
                   <p className="p-2">{profile.title || '-'}</p>
                 )}
+                {editing && roleSuggestions.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {roleSuggestions.slice(0, 10).map((roleName) => (
+                      <Badge
+                        key={roleName}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        onClick={() => setProfile({ ...profile, title: roleName })}
+                      >
+                        {roleName}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -315,6 +331,25 @@ export default function ProfilePage() {
                   <p className="text-muted-foreground">Brak dodanych umiejętności</p>
                 )}
               </div>
+              {editing && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Sugestie technologii:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {TECH_STACKS.filter((tech) => !profile.skills.includes(tech))
+                      .slice(0, 20)
+                      .map((tech) => (
+                        <Badge
+                          key={tech}
+                          variant="outline"
+                          className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          onClick={() => setProfile({ ...profile, skills: [...profile.skills, tech] })}
+                        >
+                          {tech}
+                        </Badge>
+                      ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
