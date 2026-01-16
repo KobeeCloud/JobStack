@@ -70,12 +70,35 @@ export async function fetchNoFluffJobs() {
     let updated = 0;
     let errors = 0;
 
+    // Deduplicate offers - NoFluffJobs returns same job for each location
+    const uniqueOffers = new Map<string, NoFluffJobsOffer>();
     for (const offer of offers) {
+      // Extract base ID without location suffix
+      const baseId = offer.url.split('/').pop()?.split('-').slice(0, -1).join('-') || offer.url;
+
+      if (!uniqueOffers.has(baseId)) {
+        uniqueOffers.set(baseId, offer);
+      } else {
+        // Merge locations if we already have this offer
+        const existing = uniqueOffers.get(baseId)!;
+        existing.location.places.push(...offer.location.places);
+      }
+    }
+
+    console.log(`Deduplicated to ${uniqueOffers.size} unique jobs`);
+
+    for (const [baseId, offer] of uniqueOffers) {
       try {
-        // Build location string
+        // Build location string with multiple cities
         const isRemote = offer.location.fullyRemote;
-        const city = offer.location.places[0]?.city || '';
-        const location = isRemote ? 'Remote' : city || 'Poland';
+        const cities = [...new Set(offer.location.places.map(p => p.city))].filter(Boolean);
+        const location = isRemote
+          ? 'Remote'
+          : cities.length > 0
+            ? cities.length > 3
+              ? `${cities.slice(0, 3).join(', ')} +${cities.length - 3} more`
+              : cities.join(', ')
+            : 'Poland';
 
         // Extract tech stack from requirements
         const techStack: string[] = [offer.technology];
@@ -104,6 +127,13 @@ export async function fetchNoFluffJobs() {
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 60);
 
+        // Fix source_url - offer.url already has / at the start
+        const sourceUrl = offer.url.startsWith('http')
+          ? offer.url
+          : offer.url.startsWith('/')
+            ? `https://nofluffjobs.com${offer.url}`
+            : `https://nofluffjobs.com/${offer.url}`;
+
         const jobData = {
           title: offer.title,
           company_name: offer.name,
@@ -117,8 +147,8 @@ export async function fetchNoFluffJobs() {
           description: `Seniority: ${seniorityLevel}. Technology: ${offer.technology}`,
           requirements: requirements.slice(0, 20), // Limit to 20 requirements
           source: 'nofluffjobs' as const,
-          source_url: `https://nofluffjobs.com${offer.url}`,
-          source_id: offer.id,
+          source_url: sourceUrl,
+          source_id: baseId, // Use base ID without location
           featured: false,
           published_at: new Date(offer.posted).toISOString(),
           expires_at: expiryDate.toISOString(),
@@ -133,7 +163,7 @@ export async function fetchNoFluffJobs() {
           });
 
         if (error) {
-          console.error(`Error upserting job ${offer.id}:`, {
+          console.error(`Error upserting job ${baseId}:`, {
             message: error.message,
             details: error.details,
             hint: error.hint,
@@ -145,7 +175,7 @@ export async function fetchNoFluffJobs() {
           inserted++;
         }
       } catch (err) {
-        console.error(`Error processing job ${offer.id}:`, err);
+        console.error(`Error processing job ${baseId}:`, err);
         errors++;
       }
     }
