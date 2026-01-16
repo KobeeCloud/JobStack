@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
+import { AnnouncementBanner } from '@/components/announcement-banner';
 import { HomeStats } from '@/components/home-stats';
 import { useLocale } from '@/lib/i18n';
 import { Search, Zap, Target, Bot, Mail, Briefcase, ArrowRight, Sparkles } from 'lucide-react';
@@ -66,6 +67,11 @@ export default function HomePage() {
         </div>
 
         <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+              <AnnouncementBanner />
+            </div>
+          </div>
           <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
             <Badge className="mb-6 px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-lg">

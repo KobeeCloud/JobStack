@@ -431,19 +431,6 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <input
-                  type="checkbox"
-                  id="publicProfile"
-                  checked={profile.publicProfile}
-                  onChange={(e) => setProfile({ ...profile, publicProfile: e.target.checked })}
-                  disabled={!editing}
-                  className="h-4 w-4"
-                />
-                <label htmlFor="publicProfile" className="text-sm cursor-pointer">
-                  Udostępnij mój profil publicznie (pracodawcy będą mogli Cię znaleźć)
-                </label>
-              </div>
             </CardContent>
           </Card>
         </div>

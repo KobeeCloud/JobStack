@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-Production: https://jobstack.vercel.app/api
+Production: https://jobstack.pl/api
 Development: http://localhost:3000/api
 ```
 
@@ -15,7 +15,7 @@ X-API-Key: jbs_your_api_key_here
 ```
 
 ### Getting an API Key
-1. Sign up at [JobStack](https://jobstack.vercel.app/register) as an Employer
+1. Sign up at [JobStack](https://jobstack.pl/register) as an Employer
 2. Go to Dashboard → Settings → API Keys
 3. Generate a new API key
 4. Copy and save it securely (it won't be shown again)
@@ -42,7 +42,7 @@ Get a list of job postings with filtering and pagination.
 
 **Example Request:**
 ```bash
-curl "https://jobstack.vercel.app/api/jobs?search=react&location=Warsaw&remote=true&page=1&limit=20"
+curl "https://jobstack.pl/api/jobs?search=react&location=Warsaw&remote=true&page=1&limit=20"
 ```
 
 **Example Response:**
@@ -87,7 +87,7 @@ Get details of a specific job posting.
 
 **Example Request:**
 ```bash
-curl "https://jobstack.vercel.app/api/jobs/uuid-here"
+curl "https://jobstack.pl/api/jobs/uuid-here"
 ```
 
 **Example Response:**
@@ -160,7 +160,7 @@ Content-Type: application/json
 
 **Example Request:**
 ```bash
-curl -X POST "https://jobstack.vercel.app/api/employer/jobs" \
+curl -X POST "https://jobstack.pl/api/employer/jobs" \
   -H "X-API-Key: jbs_your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{

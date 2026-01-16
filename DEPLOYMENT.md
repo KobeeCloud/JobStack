@@ -74,7 +74,7 @@ openssl rand -hex 32
 ### 2.3 Deploy
 1. Click "Deploy"
 2. Wait 2-3 minutes for build
-3. Your site will be live at `https://jobstack-xxx.vercel.app`
+3. Your site will be live at `https://jobstack.pl`
 
 ---
 
@@ -106,7 +106,7 @@ No additional configuration needed!
 
 ### 3.3 Test Cron Manually
 ```bash
-curl -X POST https://your-domain.vercel.app/api/scrape/justjoinit \
+curl -X POST https://jobstack.pl/api/scrape/justjoinit \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
@@ -140,10 +140,10 @@ curl -X POST https://your-domain.vercel.app/api/scrape/justjoinit \
 ### ✅ API Tests
 ```bash
 # Test public jobs API
-curl "https://your-domain.vercel.app/api/jobs?limit=5"
+curl "https://jobstack.pl/api/jobs?limit=5"
 
 # Test scraper (should return 401 without auth)
-curl "https://your-domain.vercel.app/api/scrape/justjoinit"
+curl "https://jobstack.pl/api/scrape/justjoinit"
 ```
 
 ### ✅ Database Checks

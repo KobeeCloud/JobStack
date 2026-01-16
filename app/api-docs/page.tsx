@@ -35,7 +35,7 @@ export default function ApiDocsPage() {
 
           <h2>Base URL</h2>
           <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-            <p className="font-mono text-sm mb-0">https://jobstack.vercel.app/api</p>
+            <p className="font-mono text-sm mb-0">https://jobstack.pl/api</p>
           </div>
 
           <h2>Endpoints</h2>
@@ -121,7 +121,7 @@ export default function ApiDocsPage() {
 
           <h4>Example Request:</h4>
           <pre className="bg-gray-950 text-green-400 p-4 rounded-lg overflow-x-auto">
-{`curl -X POST https://jobstack.vercel.app/api/employer/jobs \\
+{`curl -X POST https://jobstack.pl/api/employer/jobs \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"title":"Senior Backend Developer",...}'`}

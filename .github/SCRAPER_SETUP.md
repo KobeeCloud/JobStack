@@ -41,7 +41,7 @@ eyJ... (twój service_role key z Supabase - SECRET!)
 
 #### VERCEL_DEPLOYMENT_URL
 ```
-https://jobstack-page.vercel.app
+https://jobstack.pl
 ```
 
 ### 3. Dodaj CRON_SECRET w Vercel

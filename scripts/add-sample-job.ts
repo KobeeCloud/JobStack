@@ -83,7 +83,7 @@ JobStack - platforma agregująca oferty pracy z największych polskich portali r
       '🤝 Przyjazna atmosfera w małym zespole (5-8 osób)'
     ],
     source: 'native',
-    source_url: 'https://jobstack-page-naeyzapj1-kobeeps-projects.vercel.app',
+    source_url: 'https://jobstack.pl',
     source_id: 'sample-kobecloud-001',
     featured: true,
     published_at: new Date().toISOString(),
@@ -103,7 +103,7 @@ JobStack - platforma agregująca oferty pracy z największych polskich portali r
 
   console.log('✅ Sample job added successfully!');
   console.log('Job ID:', data.id);
-  console.log('View at: https://jobstack-page-naeyzapj1-kobeeps-projects.vercel.app/jobs/' + data.id);
+  console.log('View at: https://jobstack.pl/jobs/' + data.id);
   process.exit(0);
 }
 
