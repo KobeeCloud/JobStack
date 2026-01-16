@@ -50,12 +50,12 @@ export default function ForEmployersPage() {
       {/* Hero */}
       <section className="py-16 md:py-24 relative overflow-hidden">
         {/* Background decoration */}
-        <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
           <div className="absolute top-20 -right-20 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
           <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
         </div>
 
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 relative z-10">
           {/* Free Banner */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-full shadow-lg animate-pulse">
