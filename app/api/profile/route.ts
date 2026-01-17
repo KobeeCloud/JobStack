@@ -118,12 +118,14 @@ export async function PUT(request: NextRequest) {
     const hasProfile = (existing || []).length > 0;
     const updatePayload = { ...basePayload };
     delete (updatePayload as any).user_id;
+    const extendedUpdatePayload = { ...extendedPayload };
+    delete (extendedUpdatePayload as any).user_id;
 
     let updateError = null;
     if (hasProfile) {
       const { error: extendedError } = await supabaseAdmin
         .from('candidate_profiles')
-        .update({ ...extendedPayload, user_id: undefined })
+        .update(extendedUpdatePayload)
         .eq('user_id', user.id);
 
       if (extendedError && extendedError.code === '42703') {

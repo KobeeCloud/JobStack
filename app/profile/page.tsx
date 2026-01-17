@@ -15,6 +15,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [cvSignedUrl, setCvSignedUrl] = useState<string | null>(null);
+  const [cvFiles, setCvFiles] = useState<Array<{ path: string; name: string; updated_at?: string; signedUrl?: string | null }>>([]);
 
   const [profile, setProfile] = useState({
     firstName: '',
@@ -31,6 +33,19 @@ export default function ProfilePage() {
 
   const [newSkill, setNewSkill] = useState('');
   const roleSuggestions = Object.keys(JOB_ROLES);
+  const [showAllRoles, setShowAllRoles] = useState(false);
+  const [showAllTech, setShowAllTech] = useState(false);
+
+  const fetchCvFiles = async () => {
+    try {
+      const response = await fetch('/api/cv/list');
+      if (!response.ok) return;
+      const data = await response.json();
+      setCvFiles(data.files || []);
+    } catch (error) {
+      console.error('Error fetching CV list:', error);
+    }
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -60,6 +75,16 @@ export default function ProfilePage() {
           skills: candidateProfile.skills || [],
           cvUrl: candidateProfile.cv_url || '',
         });
+
+        if (candidateProfile.cv_url) {
+          const signedResponse = await fetch(`/api/cv/signed?path=${encodeURIComponent(candidateProfile.cv_url)}`);
+          if (signedResponse.ok) {
+            const signedData = await signedResponse.json();
+            setCvSignedUrl(signedData.signedUrl || null);
+          }
+        }
+
+        await fetchCvFiles();
       } catch (error) {
         console.error('Error loading profile:', error);
       } finally {
@@ -129,8 +154,10 @@ export default function ProfilePage() {
 
       if (!response.ok) throw new Error('Upload failed');
 
-      const { url } = await response.json();
-      setProfile({ ...profile, cvUrl: url });
+      const { url, path } = await response.json();
+      setProfile({ ...profile, cvUrl: path });
+      setCvSignedUrl(url || null);
+      await fetchCvFiles();
       alert('✅ CV zostało przesłane!');
     } catch (error) {
       console.error('Upload error:', error);
@@ -252,17 +279,28 @@ export default function ProfilePage() {
                   <p className="p-2">{profile.title || '-'}</p>
                 )}
                 {editing && roleSuggestions.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {roleSuggestions.slice(0, 10).map((roleName) => (
-                      <Badge
-                        key={roleName}
-                        variant="outline"
-                        className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                        onClick={() => setProfile({ ...profile, title: roleName })}
+                  <div className="mt-3">
+                    <div className="flex flex-wrap gap-2">
+                      {(showAllRoles ? roleSuggestions : roleSuggestions.slice(0, 12)).map((roleName) => (
+                        <Badge
+                          key={roleName}
+                          variant="outline"
+                          className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          onClick={() => setProfile({ ...profile, title: roleName })}
+                        >
+                          {roleName}
+                        </Badge>
+                      ))}
+                    </div>
+                    {roleSuggestions.length > 12 && (
+                      <button
+                        type="button"
+                        className="mt-2 text-xs text-blue-600 hover:underline"
+                        onClick={() => setShowAllRoles((prev) => !prev)}
                       >
-                        {roleName}
-                      </Badge>
-                    ))}
+                        {showAllRoles ? 'Pokaż mniej' : 'Pokaż wszystkie stanowiska'}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -339,7 +377,7 @@ export default function ProfilePage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Sugestie technologii:</p>
                   <div className="flex flex-wrap gap-2">
                     {TECH_STACKS.filter((tech) => !profile.skills.includes(tech))
-                      .slice(0, 20)
+                      .slice(0, showAllTech ? TECH_STACKS.length : 20)
                       .map((tech) => (
                         <Badge
                           key={tech}
@@ -351,6 +389,15 @@ export default function ProfilePage() {
                         </Badge>
                       ))}
                   </div>
+                  {TECH_STACKS.length > 20 && (
+                    <button
+                      type="button"
+                      className="mt-2 text-xs text-blue-600 hover:underline"
+                      onClick={() => setShowAllTech((prev) => !prev)}
+                    >
+                      {showAllTech ? 'Pokaż mniej' : 'Pokaż wszystkie technologie'}
+                    </button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -455,11 +502,46 @@ export default function ProfilePage() {
                     {profile.cvUrl && (
                       <p className="text-sm text-green-600">✅ CV przesłane</p>
                     )}
+                    {cvFiles.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Twoje wersje CV:</p>
+                        <div className="space-y-2">
+                          {cvFiles.map((file) => (
+                            <div key={file.path} className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2">
+                              <div className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                                {file.name}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {file.signedUrl && (
+                                  <a
+                                    href={file.signedUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:underline"
+                                  >
+                                    Podgląd
+                                  </a>
+                                )}
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-lg"
+                                  onClick={() => setProfile({ ...profile, cvUrl: file.path })}
+                                >
+                                  Ustaw jako główne
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="p-2">
                     {profile.cvUrl ? (
-                      <a href={profile.cvUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      <a href={cvSignedUrl || profile.cvUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                         Pobierz CV
                       </a>
                     ) : (

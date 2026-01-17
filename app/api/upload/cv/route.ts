@@ -57,15 +57,27 @@ export async function POST(request: NextRequest) {
     const hasBucket = buckets?.some((bucket) => bucket.name === 'cvs');
     if (!hasBucket) {
       await supabaseAdmin.storage.createBucket('cvs', {
-        public: true,
+        public: false,
         fileSizeLimit: '5MB',
       });
     }
 
+    const { data: candidateProfile } = await supabaseAdmin
+      .from('candidate_profiles')
+      .select('first_name, last_name')
+      .eq('user_id', user.id)
+      .single();
+
+    const namePart = [candidateProfile?.first_name, candidateProfile?.last_name]
+      .filter(Boolean)
+      .join('_') || 'profile';
+    const safeNamePart = namePart.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeOriginal = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
     // Upload to Supabase Storage
     const { data, error } = await supabaseAdmin.storage
       .from('cvs')
-      .upload(filename, buffer, {
+      .upload(`${user.id}/${safeNamePart}_${timestamp}_${safeOriginal}`, buffer, {
         contentType: file.type,
         cacheControl: '3600',
         upsert: false,
@@ -79,15 +91,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get public URL
-    const { data: urlData } = supabaseAdmin.storage
+    // Get signed URL
+    const { data: urlData } = await supabaseAdmin.storage
       .from('cvs')
-      .getPublicUrl(filename);
+      .createSignedUrl(data.path, 60 * 60);
 
     return NextResponse.json({
       success: true,
-      url: urlData.publicUrl,
-      filename: filename,
+      url: urlData?.signedUrl,
+      path: data.path,
     });
   } catch (error) {
     console.error('Upload error:', error);
