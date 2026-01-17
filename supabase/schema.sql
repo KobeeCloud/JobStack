@@ -143,15 +143,27 @@ CREATE TABLE public.jobs (
 CREATE TABLE public.applications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   job_id UUID REFERENCES public.jobs(id) ON DELETE CASCADE,
-  candidate_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  candidate_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  first_name TEXT,
+  last_name TEXT,
+  email TEXT,
+  phone TEXT,
+  years_experience INTEGER,
+  current_position TEXT,
+  expected_salary_min INTEGER,
+  expected_salary_max INTEGER,
+  available_from DATE,
+  linkedin_url TEXT,
+  github_url TEXT,
+  portfolio_url TEXT,
   cv_url TEXT,
   cover_letter TEXT,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'viewed', 'rejected', 'hired')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-  -- One application per job per candidate
-  UNIQUE(job_id, candidate_id)
+  -- One application per job per candidate or email
+  UNIQUE NULLS NOT DISTINCT (job_id, candidate_id, email)
 );
 
 -- Saved jobs
@@ -311,7 +323,7 @@ CREATE POLICY "Users can view own applications"
 
 CREATE POLICY "Candidates can create applications"
   ON public.applications FOR INSERT
-  WITH CHECK (auth.uid() = candidate_id);
+  WITH CHECK (auth.uid() = candidate_id OR candidate_id IS NULL);
 
 -- RLS Policies for saved_jobs
 CREATE POLICY "Users can manage own saved jobs"

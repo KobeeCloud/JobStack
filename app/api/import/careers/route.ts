@@ -59,7 +59,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No job postings found on the provided URL.' }, { status: 422 });
     }
 
-    const payload = jobs
+    const polandJobs = jobs.filter((job) => {
+      const location = (job.location || '').toLowerCase();
+      return location.includes('poland') || location.includes('polska') || location.includes('pl') || location.includes('warsaw') || location.includes('krak') || location.includes('wroc') || location.includes('pozn') || location.includes('gdansk') || location.includes('gdańsk') || location.includes('katow') || location.includes('lodz') || location.includes('łódź') || location.includes('remote poland') || location.includes('zdalnie');
+    });
+
+    if (polandJobs.length === 0) {
+      return NextResponse.json({ error: 'No job postings found on the provided URL (Poland only).' }, { status: 422 });
+    }
+
+    const payload = polandJobs
       .filter((job) => job.title && job.description)
       .map((job) => ({
         title: job.title,

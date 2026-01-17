@@ -40,12 +40,24 @@ export async function POST(request: NextRequest) {
       ? await supabaseAdmin.from('companies').select('name, logo_url').eq('id', companyId).single()
       : { data: null };
 
-    const jobs = provider === 'lever'
+    const rawJobs = provider === 'lever'
       ? await fetchLeverJobs(company)
       : await fetchGreenhouseJobs(company);
 
+    const jobs = rawJobs.filter((job) => {
+      const location = (job.location || '').toLowerCase();
+      return location.includes('poland') || location.includes('polska') || location.includes('pl') || location.includes('warsaw') || location.includes('krak') || location.includes('wroc') || location.includes('pozn') || location.includes('gdansk') || location.includes('gdańsk') || location.includes('katow') || location.includes('lodz') || location.includes('łódź') || location.includes('remote poland') || location.includes('zdalnie');
+    });
+
+    const prettyCompanyName = company
+      .replace(/[-_]+/g, ' ')
+      .trim()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
     if (jobs.length === 0) {
-      return NextResponse.json({ error: 'No job postings found for this ATS.' }, { status: 422 });
+      return NextResponse.json({ error: 'No job postings found for this ATS (Poland only).' }, { status: 422 });
     }
 
     const payload = jobs.map((job) => ({
@@ -54,14 +66,14 @@ export async function POST(request: NextRequest) {
       location: job.location || 'Zdalnie',
       remote: job.remote,
       company_id: companyId,
-      company_name: job.companyName || companyData?.name || company,
+      company_name: job.companyName || companyData?.name || prettyCompanyName,
       company_logo: companyData?.logo_url || null,
       source: 'native',
       source_url: job.url,
       source_id: job.url,
       tech_stack: [],
-      requirements: [],
-      benefits: [],
+      requirements: job.requirements || [],
+      benefits: job.benefits || [],
     }));
 
     const { data, error } = await supabaseAdmin
