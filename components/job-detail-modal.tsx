@@ -15,6 +15,10 @@ export interface JobData {
   salary_min?: number;
   salary_max?: number;
   salary_currency?: string;
+  salary_type?: 'monthly' | 'hourly';
+  salary_mode?: 'gross' | 'net';
+  hourly_min?: number | null;
+  hourly_max?: number | null;
   employment_type?: string;
   experience_level?: string;
   work_type?: string;
@@ -73,13 +77,26 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
   if (!isVisible || !job) return null;
 
   const formatSalary = () => {
+    if (job.salary_type === 'hourly') {
+      if (!job.hourly_min && !job.hourly_max) return null;
+      const currency = job.salary_currency || 'PLN';
+      const min = job.hourly_min;
+      const max = job.hourly_max;
+      const range = min && max
+        ? `${min.toLocaleString()} - ${max.toLocaleString()} ${currency}/h`
+        : min
+          ? `od ${min.toLocaleString()} ${currency}/h`
+          : `do ${max?.toLocaleString()} ${currency}/h`;
+      return `${range} ${job.salary_mode === 'net' ? 'netto' : 'brutto'}`.trim();
+    }
+
     if (!job.salary_min && !job.salary_max) return null;
     const currency = job.salary_currency || 'PLN';
     if (job.salary_min && job.salary_max) {
-      return `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ${currency}`;
+      return `${job.salary_min.toLocaleString()} - ${job.salary_max.toLocaleString()} ${currency} ${job.salary_mode === 'net' ? 'netto' : 'brutto'}`;
     }
-    if (job.salary_min) return `od ${job.salary_min.toLocaleString()} ${currency}`;
-    if (job.salary_max) return `do ${job.salary_max.toLocaleString()} ${currency}`;
+    if (job.salary_min) return `od ${job.salary_min.toLocaleString()} ${currency} ${job.salary_mode === 'net' ? 'netto' : 'brutto'}`;
+    if (job.salary_max) return `do ${job.salary_max.toLocaleString()} ${currency} ${job.salary_mode === 'net' ? 'netto' : 'brutto'}`;
     return null;
   };
 

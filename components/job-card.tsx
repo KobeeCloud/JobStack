@@ -105,15 +105,28 @@ export function JobCard({ job, onClick, isSelected, isSaved = false, onSaveToggl
   };
 
   const formatSalary = () => {
+    if (job.salaryType === 'hourly') {
+      if (!job.hourlyMin && !job.hourlyMax) return null;
+      const currency = job.salary?.currency || 'PLN';
+      const min = job.hourlyMin || null;
+      const max = job.hourlyMax || null;
+      const range = min && max
+        ? `${min.toLocaleString('pl-PL')} - ${max.toLocaleString('pl-PL')} ${currency}/h`
+        : min
+          ? `od ${min.toLocaleString('pl-PL')} ${currency}/h`
+          : `do ${max?.toLocaleString('pl-PL')} ${currency}/h`;
+      return `${range} ${job.salaryMode === 'net' ? 'netto' : 'brutto'}`.trim();
+    }
+
     if (!job.salary?.min && !job.salary?.max) return null;
     const currency = job.salary?.currency || 'PLN';
     const min = job.salary?.min;
     const max = job.salary?.max;
     if (min && max) {
-      return `${(min / 1000).toFixed(0)}k - ${(max / 1000).toFixed(0)}k ${currency}`;
+      return `${(min / 1000).toFixed(0)}k - ${(max / 1000).toFixed(0)}k ${currency} ${job.salaryMode === 'net' ? 'netto' : 'brutto'}`;
     }
-    if (min) return `od ${(min / 1000).toFixed(0)}k ${currency}`;
-    if (max) return `do ${(max / 1000).toFixed(0)}k ${currency}`;
+    if (min) return `od ${(min / 1000).toFixed(0)}k ${currency} ${job.salaryMode === 'net' ? 'netto' : 'brutto'}`;
+    if (max) return `do ${(max / 1000).toFixed(0)}k ${currency} ${job.salaryMode === 'net' ? 'netto' : 'brutto'}`;
     return null;
   };
 

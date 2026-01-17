@@ -6,6 +6,17 @@ export interface Job {
   companyLogo?: string;
   location: string;
   remote: boolean;
+  workMode?: 'remote' | 'hybrid' | 'onsite' | null;
+  contractType?: string | null;
+  seniority?: string | null;
+  requiredLanguage?: string | null;
+  languageLevel?: string | null;
+  recruitmentStages?: string[];
+  tags?: string[];
+  salaryType?: 'monthly' | 'hourly';
+  salaryMode?: 'gross' | 'net';
+  hourlyMin?: number | null;
+  hourlyMax?: number | null;
   salary?: {
     min: number;
     max: number;

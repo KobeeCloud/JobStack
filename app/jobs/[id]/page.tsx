@@ -20,6 +20,14 @@ interface ApplicationQuestion {
   order_index: number;
 }
 
+const CONTRACT_LABELS: Record<string, string> = {
+  uop: 'Umowa o pracę',
+  b2b: 'B2B / Kontrakt',
+  uz: 'Umowa zlecenie',
+  uod: 'Umowa o dzieło',
+  internship: 'Staż / praktyki',
+};
+
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -141,19 +149,19 @@ export default function JobDetailPage() {
           <Card className="mb-6">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div className="flex gap-3">
-                  {job.source === 'native' && !job.sourceUrl ? (
-                    <QuickApply
-                      jobId={job.id}
-                      jobTitle={job.title}
-                      companyName={job.company_name}
-                      questions={questions}
-                    />
-                  ) : (
-                    <Button size="lg" onClick={handleApply} className="flex-1">
-                      {job.source === 'native' ? 'Aplikuj na stronie firmy →' : `Apply on ${job.source} →`}
-                    </Button>
-                    /*...*/
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    {job.featured && (
+                      <Badge className="bg-yellow-500 hover:bg-yellow-600">
+                        ⭐ Featured
+                      </Badge>
+                    )}
+                    <Badge variant="outline">{job.source}</Badge>
+                  </div>
+                  <CardTitle className="text-3xl mb-2">{job.title}</CardTitle>
+                  <p className="text-xl text-muted-foreground mb-4">
+                    {job.company_name}
+                  </p>
 
                   <div className="flex flex-wrap gap-4 text-sm">
                     <span className="flex items-center gap-1">
@@ -164,9 +172,26 @@ export default function JobDetailPage() {
                         🏠 Remote
                       </span>
                     )}
-                    {job.salary && (
+                    {(job.salary || job.salaryType === 'hourly') && (
                       <span className="flex items-center gap-1 font-semibold text-green-600">
-                        💰 {formatSalary(job.salary.min, job.salary.max, job.salary.currency)}
+                        💰 {job.salaryType === 'hourly'
+                          ? `${job.hourlyMin ? job.hourlyMin.toLocaleString('pl-PL') : ''}${job.hourlyMin && job.hourlyMax ? ' - ' : ''}${job.hourlyMax ? job.hourlyMax.toLocaleString('pl-PL') : ''} ${job.salary?.currency || 'PLN'} / h ${job.salaryMode === 'net' ? 'netto' : 'brutto'}`.trim()
+                          : `${formatSalary(job.salary?.min, job.salary?.max, job.salary?.currency || 'PLN')} ${job.salaryMode === 'net' ? 'netto' : 'brutto'}`}
+                      </span>
+                    )}
+                    {job.contractType && (
+                      <span className="flex items-center gap-1">
+                        📄 {CONTRACT_LABELS[job.contractType] || job.contractType}
+                      </span>
+                    )}
+                    {job.seniority && (
+                      <span className="flex items-center gap-1">
+                        🧭 {job.seniority}
+                      </span>
+                    )}
+                    {job.requiredLanguage && (
+                      <span className="flex items-center gap-1">
+                        🌐 {job.requiredLanguage}{job.languageLevel ? ` (${job.languageLevel})` : ''}
                       </span>
                     )}
                     <span className="text-muted-foreground">
@@ -261,6 +286,38 @@ export default function JobDetailPage() {
                     </li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recruitment Stages */}
+          {job.recruitmentStages && job.recruitmentStages.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Etapy rekrutacji</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ol className="space-y-2 list-decimal list-inside">
+                  {job.recruitmentStages.map((stage, i) => (
+                    <li key={i}>{stage}</li>
+                  ))}
+                </ol>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Tags */}
+          {job.tags && job.tags.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Tagi</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {job.tags.map((tag, i) => (
+                  <Badge key={i} variant="secondary" className="rounded-full">
+                    #{tag}
+                  </Badge>
+                ))}
               </CardContent>
             </Card>
           )}

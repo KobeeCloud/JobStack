@@ -39,6 +39,24 @@ const experienceLevels = [
   { value: 'lead', label: 'Lead / Architect' },
 ];
 
+const contractTypes = [
+  { value: 'uop', label: 'Umowa o pracę' },
+  { value: 'b2b', label: 'B2B / Kontrakt' },
+  { value: 'uz', label: 'Umowa zlecenie' },
+  { value: 'uod', label: 'Umowa o dzieło' },
+  { value: 'internship', label: 'Staże / praktyki' },
+];
+
+const languageLevels = [
+  { value: 'A1', label: 'A1' },
+  { value: 'A2', label: 'A2' },
+  { value: 'B1', label: 'B1' },
+  { value: 'B2', label: 'B2' },
+  { value: 'C1', label: 'C1' },
+  { value: 'C2', label: 'C2' },
+  { value: 'native', label: 'Native' },
+];
+
 const workTypes = [
   { value: 'remote', label: 'Praca zdalna' },
   { value: 'hybrid', label: 'Hybrydowo' },
@@ -86,19 +104,29 @@ export default function PostJobPage() {
     workType: 'hybrid',
     employmentType: 'full-time',
     experienceLevel: 'mid',
+    contractType: 'b2b',
+    salaryType: 'monthly',
+    salaryMode: 'gross',
     salaryMin: '',
     salaryMax: '',
+    hourlyMin: '',
+    hourlyMax: '',
     currency: 'PLN',
+    requiredLanguage: '',
+    languageLevel: 'B2',
     techStack: [] as string[],
+    tags: [] as string[],
     description: '',
     requirements: '',
     niceToHave: '',
     benefits: '',
+    recruitmentStages: '',
     applyUrl: '',
     expiresInDays: '30',
   });
 
   const [techInput, setTechInput] = useState('');
+  const [tagInput, setTagInput] = useState('');
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -131,6 +159,23 @@ export default function PostJobPage() {
     }));
   };
 
+  const addTag = (tag: string) => {
+    if (tag && !formData.tags.includes(tag)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, tag],
+      }));
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(t => t !== tag),
+    }));
+  };
+
   const splitLines = (value: string) =>
     value
       .split(/\n|,/)
@@ -146,6 +191,7 @@ export default function PostJobPage() {
       const requirements = splitLines(formData.requirements);
       const niceToHave = splitLines(formData.niceToHave).map((item) => `Mile widziane: ${item}`);
       const benefits = splitLines(formData.benefits);
+      const recruitmentStages = splitLines(formData.recruitmentStages);
       const resolvedLocation = formData.workType === 'remote' ? 'Zdalnie' : formData.location;
 
       const response = await fetch('/api/employer/jobs', {
@@ -160,8 +206,19 @@ export default function PostJobPage() {
           remote: formData.workType === 'remote',
           salary_min: formData.salaryMin ? Number(formData.salaryMin) : null,
           salary_max: formData.salaryMax ? Number(formData.salaryMax) : null,
+          hourly_min: formData.hourlyMin ? Number(formData.hourlyMin) : null,
+          hourly_max: formData.hourlyMax ? Number(formData.hourlyMax) : null,
           salary_currency: formData.currency,
+          salary_type: formData.salaryType,
+          salary_mode: formData.salaryMode,
           tech_stack: formData.techStack,
+          contract_type: formData.contractType,
+          work_mode: formData.workType,
+          seniority: formData.experienceLevel,
+          required_language: formData.requiredLanguage || null,
+          language_level: formData.requiredLanguage ? formData.languageLevel : null,
+          recruitment_stages: recruitmentStages,
+          tags: formData.tags,
           description: formData.description,
           requirements: [...requirements, ...niceToHave],
           benefits,
@@ -433,7 +490,7 @@ export default function PostJobPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="experienceLevel">Poziom doświadczenia *</Label>
+                      <Label htmlFor="experienceLevel">Poziom seniority *</Label>
                       <select
                         id="experienceLevel"
                         value={formData.experienceLevel}
@@ -447,24 +504,68 @@ export default function PostJobPage() {
                     </div>
                   </div>
 
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="contractType">Typ umowy *</Label>
+                      <select
+                        id="contractType"
+                        value={formData.contractType}
+                        onChange={(e) => handleInputChange('contractType', e.target.value)}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        {contractTypes.map(type => (
+                          <option key={type.value} value={type.value}>{type.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="requiredLanguage">Wymagany język</Label>
+                      <Input
+                        id="requiredLanguage"
+                        value={formData.requiredLanguage}
+                        onChange={(e) => handleInputChange('requiredLanguage', e.target.value)}
+                        placeholder="np. angielski"
+                        className="rounded-xl"
+                      />
+                    </div>
+                  </div>
+
+                  {formData.requiredLanguage && (
+                    <div className="space-y-2">
+                      <Label htmlFor="languageLevel">Poziom języka</Label>
+                      <select
+                        id="languageLevel"
+                        value={formData.languageLevel}
+                        onChange={(e) => handleInputChange('languageLevel', e.target.value)}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        {languageLevels.map(level => (
+                          <option key={level.value} value={level.value}>{level.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
-                    <Label>Widełki płacowe (miesięcznie, brutto)</Label>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        type="number"
-                        value={formData.salaryMin}
-                        onChange={(e) => handleInputChange('salaryMin', e.target.value)}
-                        placeholder="Od"
-                        className="rounded-xl"
-                      />
-                      <span className="text-gray-500">-</span>
-                      <Input
-                        type="number"
-                        value={formData.salaryMax}
-                        onChange={(e) => handleInputChange('salaryMax', e.target.value)}
-                        placeholder="Do"
-                        className="rounded-xl"
-                      />
+                    <Label>Widełki płacowe</Label>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <select
+                        value={formData.salaryType}
+                        onChange={(e) => handleInputChange('salaryType', e.target.value)}
+                        className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="monthly">Miesięcznie</option>
+                        <option value="hourly">Godzinowo</option>
+                      </select>
+                      <select
+                        value={formData.salaryMode}
+                        onChange={(e) => handleInputChange('salaryMode', e.target.value)}
+                        className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="gross">Brutto</option>
+                        <option value="net">Netto</option>
+                      </select>
                       <select
                         value={formData.currency}
                         onChange={(e) => handleInputChange('currency', e.target.value)}
@@ -475,6 +576,43 @@ export default function PostJobPage() {
                         <option value="USD">USD</option>
                       </select>
                     </div>
+                    {formData.salaryType === 'monthly' ? (
+                      <div className="flex items-center gap-4 mt-3">
+                        <Input
+                          type="number"
+                          value={formData.salaryMin}
+                          onChange={(e) => handleInputChange('salaryMin', e.target.value)}
+                          placeholder="Od"
+                          className="rounded-xl"
+                        />
+                        <span className="text-gray-500">-</span>
+                        <Input
+                          type="number"
+                          value={formData.salaryMax}
+                          onChange={(e) => handleInputChange('salaryMax', e.target.value)}
+                          placeholder="Do"
+                          className="rounded-xl"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-4 mt-3">
+                        <Input
+                          type="number"
+                          value={formData.hourlyMin}
+                          onChange={(e) => handleInputChange('hourlyMin', e.target.value)}
+                          placeholder="Od"
+                          className="rounded-xl"
+                        />
+                        <span className="text-gray-500">-</span>
+                        <Input
+                          type="number"
+                          value={formData.hourlyMax}
+                          onChange={(e) => handleInputChange('hourlyMax', e.target.value)}
+                          placeholder="Do"
+                          className="rounded-xl"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -564,6 +702,44 @@ export default function PostJobPage() {
                     </div>
                   </div>
 
+                    <div className="space-y-3">
+                      <Label>Tagi (np. AI, FinTech, Startup)</Label>
+                      <div className="flex flex-wrap gap-2 min-h-[40px] p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                        {formData.tags.length === 0 ? (
+                          <span className="text-gray-400 text-sm">Dodaj tagi, które opisują ofertę...</span>
+                        ) : (
+                          formData.tags.map((tag) => (
+                            <Badge
+                              key={tag}
+                              className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-3 py-1 cursor-pointer hover:bg-red-100 hover:text-red-700"
+                              onClick={() => removeTag(tag)}
+                            >
+                              {tag}
+                              <X className="w-3 h-3 ml-2" />
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Input
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag(tagInput))}
+                          placeholder="Dodaj tag..."
+                          className="rounded-xl"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => addTag(tagInput)}
+                          className="rounded-xl"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
                   <div className="flex justify-between">
                     <Button
                       type="button"
@@ -636,6 +812,17 @@ export default function PostJobPage() {
                       onChange={(e) => handleInputChange('benefits', e.target.value)}
                       placeholder="Opisz co oferujesz kandydatom (benefity, rozwój, atmosfera)..."
                       className="w-full min-h-[100px] px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-y"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="recruitmentStages">Etapy rekrutacji</Label>
+                    <textarea
+                      id="recruitmentStages"
+                      value={formData.recruitmentStages}
+                      onChange={(e) => handleInputChange('recruitmentStages', e.target.value)}
+                      placeholder="np. CV → rozmowa HR → task → rozmowa techniczna → decyzja"
+                      className="w-full min-h-[90px] px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-y"
                     />
                   </div>
 
@@ -762,17 +949,20 @@ export default function PostJobPage() {
                       )}
                     </div>
                   </div>
-                  {(formData.salaryMin || formData.salaryMax) && (
+                  {(formData.salaryMin || formData.salaryMax || formData.hourlyMin || formData.hourlyMax) && (
                     <div className="text-right">
                       <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {formData.salaryMin && formData.salaryMax
-                          ? `${Number(formData.salaryMin).toLocaleString()} - ${Number(formData.salaryMax).toLocaleString()}`
-                          : formData.salaryMin
-                            ? `od ${Number(formData.salaryMin).toLocaleString()}`
-                            : `do ${Number(formData.salaryMax).toLocaleString()}`
-                        }
+                        {formData.salaryType === 'hourly'
+                          ? `${formData.hourlyMin ? Number(formData.hourlyMin).toLocaleString() : ''}${formData.hourlyMin && formData.hourlyMax ? ' - ' : ''}${formData.hourlyMax ? Number(formData.hourlyMax).toLocaleString() : ''}`
+                          : formData.salaryMin && formData.salaryMax
+                            ? `${Number(formData.salaryMin).toLocaleString()} - ${Number(formData.salaryMax).toLocaleString()}`
+                            : formData.salaryMin
+                              ? `od ${Number(formData.salaryMin).toLocaleString()}`
+                              : `do ${Number(formData.salaryMax).toLocaleString()}`}
                       </p>
-                      <p className="text-sm text-gray-500">{formData.currency} / mies. brutto</p>
+                      <p className="text-sm text-gray-500">
+                        {formData.currency} / {formData.salaryType === 'hourly' ? 'h' : 'mies.'} {formData.salaryMode === 'net' ? 'netto' : 'brutto'}
+                      </p>
                     </div>
                   )}
                 </div>

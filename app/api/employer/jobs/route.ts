@@ -88,7 +88,18 @@ export async function POST(request: NextRequest) {
       salary_min,
       salary_max,
       salary_currency = 'PLN',
+      salary_type = 'monthly',
+      salary_mode = 'gross',
+      hourly_min,
+      hourly_max,
       tech_stack = [],
+      contract_type,
+      work_mode,
+      seniority,
+      required_language,
+      language_level,
+      recruitment_stages = [],
+      tags = [],
       description,
       requirements = [],
       benefits = [],
@@ -191,29 +202,62 @@ export async function POST(request: NextRequest) {
     const resolvedCompanyName = company_name || company?.name || 'Unknown Company';
     const resolvedCompanyLogo = company_logo || company?.logo_url || null;
 
-    const { data: job, error: insertError } = await supabaseAdmin
+    const basePayload = {
+      company_id: companyId,
+      company_name: resolvedCompanyName,
+      company_logo: resolvedCompanyLogo,
+      title,
+      location,
+      remote,
+      salary_min,
+      salary_max,
+      salary_currency,
+      tech_stack,
+      description,
+      requirements,
+      benefits,
+      source: 'native',
+      source_url: apply_url,
+      featured,
+      expires_at: expiresAt.toISOString(),
+    };
+
+    const extendedPayload = {
+      ...basePayload,
+      salary_type,
+      salary_mode,
+      hourly_min,
+      hourly_max,
+      contract_type,
+      work_mode,
+      seniority,
+      required_language,
+      language_level,
+      recruitment_stages,
+      tags,
+    };
+
+    let insertError = null;
+    let job = null as any;
+
+    const { data: extendedJob, error: extendedError } = await supabaseAdmin
       .from('jobs')
-      .insert({
-        company_id: companyId,
-        company_name: resolvedCompanyName,
-        company_logo: resolvedCompanyLogo,
-        title,
-        location,
-        remote,
-        salary_min,
-        salary_max,
-        salary_currency,
-        tech_stack,
-        description,
-        requirements,
-        benefits,
-        source: 'native',
-        source_url: apply_url,
-        featured,
-        expires_at: expiresAt.toISOString(),
-      })
+      .insert(extendedPayload)
       .select()
       .single();
+
+    if (extendedError && extendedError.code === '42703') {
+      const { data: baseJob, error: baseError } = await supabaseAdmin
+        .from('jobs')
+        .insert(basePayload)
+        .select()
+        .single();
+      insertError = baseError;
+      job = baseJob;
+    } else {
+      insertError = extendedError;
+      job = extendedJob;
+    }
 
     if (insertError) {
       console.error('Job creation error:', insertError);
