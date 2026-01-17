@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { createHash } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const emailFromForm = (formData.get('email') as string | null) || null;
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!file) {
       return NextResponse.json(
@@ -45,9 +43,8 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const timestamp = Date.now();
-    const sanitizedEmail = (user.email || user.id).replace(/[^a-zA-Z0-9]/g, '_');
     const fileExt = file.name.split('.').pop();
-    const filename = `cv_${sanitizedEmail}_${timestamp}.${fileExt}`;
+    const filename = `cv_${timestamp}.${fileExt}`;
 
     // Convert File to ArrayBuffer then to Buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -62,22 +59,35 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { data: candidateProfile } = await supabaseAdmin
-      .from('candidate_profiles')
-      .select('first_name, last_name')
-      .eq('user_id', user.id)
-      .single();
+    let ownerFolder = 'guest';
+    let safeNamePart = 'profile';
 
-    const namePart = [candidateProfile?.first_name, candidateProfile?.last_name]
-      .filter(Boolean)
-      .join('_') || 'profile';
-    const safeNamePart = namePart.replace(/[^a-zA-Z0-9_-]/g, '_');
+    if (user) {
+      ownerFolder = user.id;
+      const { data: candidateProfile } = await supabaseAdmin
+        .from('candidate_profiles')
+        .select('first_name, last_name')
+        .eq('user_id', user.id)
+        .single();
+
+      const namePart = [candidateProfile?.first_name, candidateProfile?.last_name]
+        .filter(Boolean)
+        .join('_') || 'profile';
+      safeNamePart = namePart.replace(/[^a-zA-Z0-9_-]/g, '_');
+    } else if (emailFromForm) {
+      const hash = createHash('sha256').update(emailFromForm).digest('hex').slice(0, 12);
+      ownerFolder = `guest/${hash}`;
+      safeNamePart = emailFromForm.replace(/[^a-zA-Z0-9_-]/g, '_');
+    } else {
+      return NextResponse.json({ error: 'Email is required for CV upload' }, { status: 400 });
+    }
+
     const safeOriginal = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
     // Upload to Supabase Storage
     const { data, error } = await supabaseAdmin.storage
       .from('cvs')
-      .upload(`${user.id}/${safeNamePart}_${timestamp}_${safeOriginal}`, buffer, {
+      .upload(`${ownerFolder}/${safeNamePart}_${timestamp}_${safeOriginal}`, buffer, {
         contentType: file.type,
         cacheControl: '3600',
         upsert: false,

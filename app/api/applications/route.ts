@@ -83,29 +83,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create application
-    const { data: application, error: applicationError } = await supabaseAdmin
+    const basePayload = {
+      job_id: jobId,
+      cv_url: cvUrl || null,
+      cover_letter: coverLetter || null,
+      status: 'pending',
+    };
+
+    const extendedPayload = {
+      ...basePayload,
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      phone,
+      linkedin_url: linkedinUrl,
+      github_url: githubUrl,
+      portfolio_url: portfolioUrl,
+      years_experience: yearsExperience ? parseInt(yearsExperience) : null,
+      current_position: currentPosition,
+      expected_salary_min: expectedSalaryMin ? parseInt(expectedSalaryMin) : null,
+      expected_salary_max: expectedSalaryMax ? parseInt(expectedSalaryMax) : null,
+      available_from: availableFrom || null,
+    };
+
+    let applicationError = null;
+    let application = null as any;
+
+    const { data: extendedApp, error: extendedError } = await supabaseAdmin
       .from('applications')
-      .insert({
-        job_id: jobId,
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        phone,
-        linkedin_url: linkedinUrl,
-        github_url: githubUrl,
-        portfolio_url: portfolioUrl,
-        years_experience: yearsExperience ? parseInt(yearsExperience) : null,
-        current_position: currentPosition,
-        cover_letter: coverLetter,
-        expected_salary_min: expectedSalaryMin ? parseInt(expectedSalaryMin) : null,
-        expected_salary_max: expectedSalaryMax ? parseInt(expectedSalaryMax) : null,
-        available_from: availableFrom || null,
-        cv_url: cvUrl,
-        status: 'pending',
-      })
+      .insert(extendedPayload)
       .select()
       .single();
+
+    if (extendedError && extendedError.code === '42703') {
+      const { data: baseApp, error: baseError } = await supabaseAdmin
+        .from('applications')
+        .insert(basePayload)
+        .select()
+        .single();
+      applicationError = baseError;
+      application = baseApp;
+    } else {
+      applicationError = extendedError;
+      application = extendedApp;
+    }
 
     if (applicationError) {
       console.error('Error creating application:', applicationError);

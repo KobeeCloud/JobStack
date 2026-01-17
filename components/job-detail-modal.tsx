@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, MapPin, Building2, Clock, Banknote, ExternalLink, Bookmark, Share2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { QuickApply } from '@/components/quick-apply';
 import { useLocale } from '@/lib/i18n';
 
 export interface JobData {
@@ -337,17 +338,25 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
             >
               <Share2 className="w-5 h-5" />
             </Button>
-            <Button
-              className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold"
-              onClick={() => {
-                if (job.source_url) {
-                  window.open(job.source_url, '_blank');
-                }
-              }}
-            >
-              <ExternalLink className="w-5 h-5 mr-2" />
-              Aplikuj na stronie źródłowej
-            </Button>
+            {job.source === 'native' && !job.source_url ? (
+              <QuickApply
+                jobId={job.id}
+                jobTitle={job.title}
+                companyName={job.company}
+              />
+            ) : (
+              <Button
+                className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold"
+                onClick={() => {
+                  if (job.source_url) {
+                    window.open(job.source_url, '_blank');
+                  }
+                }}
+              >
+                <ExternalLink className="w-5 h-5 mr-2" />
+                Aplikuj na stronie źródłowej
+              </Button>
+            )}
           </div>
         </div>
       </div>
