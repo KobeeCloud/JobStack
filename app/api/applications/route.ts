@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { sendEmployerNotification } from '@/lib/email';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,15 +69,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already applied
-    const { data: existingApplication } = await supabaseAdmin
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const candidateId = user?.id || null;
+
+    // Check if user already applied (prefer email, fallback to candidate_id)
+    let alreadyApplied = false;
+    const { data: existingByEmail, error: existingByEmailError } = await supabaseAdmin
       .from('applications')
       .select('id')
       .eq('job_id', jobId)
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
-    if (existingApplication) {
+    if (existingByEmailError && existingByEmailError.code !== '42703' && existingByEmailError.code !== 'PGRST116') {
+      console.error('Duplicate check error:', existingByEmailError);
+    }
+
+    if (existingByEmail) {
+      alreadyApplied = true;
+    } else if (candidateId) {
+      const { data: existingByCandidate, error: existingByCandidateError } = await supabaseAdmin
+        .from('applications')
+        .select('id')
+        .eq('job_id', jobId)
+        .eq('candidate_id', candidateId)
+        .maybeSingle();
+
+      if (existingByCandidateError && existingByCandidateError.code !== 'PGRST116') {
+        console.error('Duplicate check error:', existingByCandidateError);
+      }
+
+      if (existingByCandidate) {
+        alreadyApplied = true;
+      }
+    }
+
+    if (alreadyApplied) {
       return NextResponse.json(
         { error: 'You have already applied to this job' },
         { status: 409 }
@@ -85,6 +114,7 @@ export async function POST(request: NextRequest) {
 
     const basePayload = {
       job_id: jobId,
+      candidate_id: candidateId,
       cv_url: cvUrl || null,
       cover_letter: coverLetter || null,
       status: 'pending',
@@ -106,6 +136,13 @@ export async function POST(request: NextRequest) {
       available_from: availableFrom || null,
     };
 
+    const emailOnlyPayload = {
+      ...basePayload,
+      first_name: firstName,
+      last_name: lastName,
+      email,
+    };
+
     let applicationError = null;
     let application = null as any;
 
@@ -116,13 +153,24 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (extendedError && extendedError.code === '42703') {
-      const { data: baseApp, error: baseError } = await supabaseAdmin
+      const { data: emailOnlyApp, error: emailOnlyError } = await supabaseAdmin
         .from('applications')
-        .insert(basePayload)
+        .insert(emailOnlyPayload)
         .select()
         .single();
-      applicationError = baseError;
-      application = baseApp;
+
+      if (emailOnlyError && emailOnlyError.code === '42703') {
+        const { data: baseApp, error: baseError } = await supabaseAdmin
+          .from('applications')
+          .insert(basePayload)
+          .select()
+          .single();
+        applicationError = baseError;
+        application = baseApp;
+      } else {
+        applicationError = emailOnlyError;
+        application = emailOnlyApp;
+      }
     } else {
       applicationError = extendedError;
       application = extendedApp;
@@ -131,7 +179,7 @@ export async function POST(request: NextRequest) {
     if (applicationError) {
       console.error('Error creating application:', applicationError);
       return NextResponse.json(
-        { error: 'Failed to submit application' },
+        { error: 'Failed to submit application', details: applicationError?.message || applicationError },
         { status: 500 }
       );
     }
@@ -197,7 +245,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Application submission error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

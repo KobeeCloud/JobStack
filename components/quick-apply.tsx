@@ -129,8 +129,15 @@ export function QuickApply({ jobId, jobTitle, companyName, questions = [] }: Qui
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to submit application');
+        let errorMessage = 'Failed to submit application';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || error.details || errorMessage;
+        } catch (parseError) {
+          const text = await response.text().catch(() => '');
+          if (text) errorMessage = text;
+        }
+        throw new Error(errorMessage);
       }
 
       toast({
