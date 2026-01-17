@@ -85,11 +85,10 @@ export default function RegisterPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${siteUrl}/auth/callback`,
+          redirectTo: `${siteUrl}/auth/callback?role=${role}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-            role,
           },
         },
       });

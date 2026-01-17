@@ -85,7 +85,9 @@ export function AtsImporter() {
       </div>
 
       <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-        Wykorzystywane są oficjalne publiczne endpointy ATS. Szanujemy warunki dostawców.
+        Wykorzystywane są oficjalne publiczne endpointy ATS. Przykład: lever → api.lever.co/v0/postings/
+        <span className="font-semibold">spotify</span> lub greenhouse → boards-api.greenhouse.io/v1/boards/
+        <span className="font-semibold">airbnb</span>/jobs. Szanujemy warunki dostawców.
       </div>
 
       {result && (

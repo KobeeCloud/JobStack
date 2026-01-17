@@ -153,6 +153,8 @@ export default async function DashboardPage() {
     }
   }
 
+  const isProfileComplete = Boolean(candidateProfile?.first_name && candidateProfile?.last_name);
+
   const handleSignOut = async () => {
     'use server';
     const supabase = await createClient();
@@ -208,6 +210,24 @@ export default async function DashboardPage() {
                 Znajdź swoją wymarzoną pracę
               </p>
             </div>
+
+            {!isProfileComplete && (
+              <Card className="mb-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-blue-100/70 dark:border-blue-900/40">
+                <CardContent className="py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Uzupełnij profil, aby zwiększyć widoczność</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Dodaj podstawowe dane i technologie — pracodawcy szybciej Cię znajdą.
+                    </p>
+                  </div>
+                  <Link href="/profile">
+                    <Button className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                      Uzupełnij profil
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Stats Cards */}
             <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -366,6 +386,24 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
+          {employerJobs.length === 0 && (
+            <Card className="mb-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-indigo-100/70 dark:border-indigo-900/40">
+              <CardContent className="py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Zacznij od publikacji pierwszej oferty</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Dodaj ofertę ręcznie lub skorzystaj z importu ATS/strony kariery poniżej.
+                  </p>
+                </div>
+                <Link href="/dashboard/post-job">
+                  <Button className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                    Opublikuj ofertę
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
@@ -434,6 +472,32 @@ export default async function DashboardPage() {
               <div className="mb-6">
                 <AtsImporter />
               </div>
+              <Card className="mb-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
+                <CardHeader>
+                  <CardTitle>Szybkie akcje</CardTitle>
+                  <CardDescription>Najczęściej używane funkcje w jednym miejscu</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-3">
+                  <Link href="/dashboard/post-job">
+                    <Button className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Dodaj ofertę
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/applications">
+                    <Button variant="outline" className="rounded-xl">
+                      <Users className="w-4 h-4 mr-2" />
+                      Zobacz aplikacje
+                    </Button>
+                  </Link>
+                  <Link href="/api-docs">
+                    <Button variant="outline" className="rounded-xl">
+                      <Settings className="w-4 h-4 mr-2" />
+                      API & Integracje
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
               <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-gray-200/50 dark:border-gray-700/50">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>

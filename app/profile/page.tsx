@@ -276,6 +276,9 @@ export default function ProfilePage() {
                 <Briefcase className="h-5 w-5" />
                 Doświadczenie i opis
               </CardTitle>
+              <CardDescription>
+                Dodaj krótki opis projektów, osiągnięć i preferencji — to zwiększa szanse na kontakt.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>

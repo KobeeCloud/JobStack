@@ -53,6 +53,15 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+    const hasBucket = buckets?.some((bucket) => bucket.name === 'cvs');
+    if (!hasBucket) {
+      await supabaseAdmin.storage.createBucket('cvs', {
+        public: true,
+        fileSizeLimit: '5MB',
+      });
+    }
+
     // Upload to Supabase Storage
     const { data, error } = await supabaseAdmin.storage
       .from('cvs')
