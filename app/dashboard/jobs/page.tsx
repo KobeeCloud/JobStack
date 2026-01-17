@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Briefcase, Calendar, ExternalLink, MapPin } from 'lucide-react';
+import { ArrowLeft, Briefcase, Calendar, ExternalLink, MapPin, Trash2 } from 'lucide-react';
 
 interface EmployerJob {
   id: string;
@@ -21,6 +21,7 @@ export default function EmployerJobsPage() {
   const [jobs, setJobs] = useState<EmployerJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -42,6 +43,24 @@ export default function EmployerJobsPage() {
 
     fetchJobs();
   }, []);
+
+  const handleDelete = async (jobId: string) => {
+    if (!confirm('Usunąć ofertę? Ta operacja jest nieodwracalna.')) return;
+    setDeletingId(jobId);
+    try {
+      const response = await fetch(`/api/employer/jobs?jobId=${jobId}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Nie udało się usunąć oferty');
+      }
+      setJobs(prev => prev.filter(job => job.id !== jobId));
+    } catch (err) {
+      console.error('Delete job error:', err);
+      setError(err instanceof Error ? err.message : 'Nie udało się usunąć oferty');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const isActive = (expiresAt?: string | null) => {
     if (!expiresAt) return true;
@@ -131,6 +150,15 @@ export default function EmployerJobsPage() {
                           Podgląd
                         </Button>
                       </Link>
+                      <Button
+                        variant="outline"
+                        className="rounded-xl text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => handleDelete(job.id)}
+                        disabled={deletingId === job.id}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deletingId === job.id ? 'Usuwanie...' : 'Usuń'}
+                      </Button>
                       {job.source_url && (
                         <Button
                           variant="outline"

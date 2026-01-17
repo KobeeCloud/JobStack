@@ -355,3 +355,74 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// DELETE /api/employer/jobs?jobId=... - Delete employer's job
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const jobId = request.nextUrl.searchParams.get('jobId');
+    if (!jobId) {
+      return NextResponse.json({ error: 'jobId is required' }, { status: 400 });
+    }
+
+    const { data: employerProfile } = await supabase
+      .from('employer_profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+
+    let resolvedCompanyId = employerProfile?.company_id || null;
+    if (!resolvedCompanyId) {
+      const { data: companyByOwner } = await supabaseAdmin
+        .from('companies')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+      resolvedCompanyId = companyByOwner?.id || null;
+    }
+
+    if (!resolvedCompanyId) {
+      return NextResponse.json({ error: 'Employer profile not found' }, { status: 404 });
+    }
+
+    const { data: job } = await supabaseAdmin
+      .from('jobs')
+      .select('id, company_id')
+      .eq('id', jobId)
+      .single();
+
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
+    if (job.company_id !== resolvedCompanyId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from('jobs')
+      .delete()
+      .eq('id', jobId);
+
+    if (error) {
+      console.error('Delete job error:', error);
+      return NextResponse.json({ error: 'Failed to delete job' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

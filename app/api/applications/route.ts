@@ -5,6 +5,13 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: 'Supabase admin client not configured' },
+        { status: 500 }
+      );
+    }
+
     const body = await request.json();
 
     const {
