@@ -103,14 +103,7 @@ export async function PUT(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    // Try extended payload first (if columns exist), fallback to base schema
-    const extendedPayload = {
-      ...basePayload,
-      resume_url: cvUrl || null,
-      public_profile: false,
-    };
-
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await supabase
       .from('candidate_profiles')
       .select('id')
       .eq('user_id', user.id);
@@ -118,38 +111,19 @@ export async function PUT(request: NextRequest) {
     const hasProfile = (existing || []).length > 0;
     const updatePayload = { ...basePayload };
     delete (updatePayload as any).user_id;
-    const extendedUpdatePayload = { ...extendedPayload };
-    delete (extendedUpdatePayload as any).user_id;
 
     let updateError = null;
     if (hasProfile) {
-      const { error: extendedError } = await supabaseAdmin
+      const { error } = await supabase
         .from('candidate_profiles')
-        .update(extendedUpdatePayload)
+        .update(updatePayload)
         .eq('user_id', user.id);
-
-      if (extendedError && extendedError.code === '42703') {
-        const { error: baseError } = await supabaseAdmin
-          .from('candidate_profiles')
-          .update(updatePayload)
-          .eq('user_id', user.id);
-        updateError = baseError;
-      } else {
-        updateError = extendedError;
-      }
+      updateError = error;
     } else {
-      const { error: extendedError } = await supabaseAdmin
+      const { error } = await supabase
         .from('candidate_profiles')
-        .insert(extendedPayload);
-
-      if (extendedError && extendedError.code === '42703') {
-        const { error: baseError } = await supabaseAdmin
-          .from('candidate_profiles')
-          .insert(basePayload);
-        updateError = baseError;
-      } else {
-        updateError = extendedError;
-      }
+        .insert(basePayload);
+      updateError = error;
     }
 
     if (updateError) {
