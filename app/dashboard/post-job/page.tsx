@@ -79,6 +79,8 @@ export default function PostJobPage() {
     title: '',
     role: '',
     company: '',
+    companyWebsite: '',
+    companyLogo: '',
     location: '',
     voivodeship: '',
     workType: 'hybrid',
@@ -93,6 +95,7 @@ export default function PostJobPage() {
     niceToHave: '',
     benefits: '',
     applyUrl: '',
+    expiresInDays: '30',
   });
 
   const [techInput, setTechInput] = useState('');
@@ -150,6 +153,9 @@ export default function PostJobPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
+          company_name: formData.company,
+          company_website: formData.companyWebsite || null,
+          company_logo: formData.companyLogo || null,
           location: resolvedLocation,
           remote: formData.workType === 'remote',
           salary_min: formData.salaryMin ? Number(formData.salaryMin) : null,
@@ -160,6 +166,7 @@ export default function PostJobPage() {
           requirements: [...requirements, ...niceToHave],
           benefits,
           apply_url: formData.applyUrl || null,
+          expires_in_days: formData.expiresInDays ? Number(formData.expiresInDays) : 30,
         }),
       });
 
@@ -305,6 +312,31 @@ export default function PostJobPage() {
                       className="rounded-xl"
                       required
                     />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="companyWebsite">Strona firmy</Label>
+                      <Input
+                        id="companyWebsite"
+                        value={formData.companyWebsite}
+                        onChange={(e) => handleInputChange('companyWebsite', e.target.value)}
+                        placeholder="https://twojafirma.pl"
+                        className="rounded-xl"
+                        type="url"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyLogo">Logo firmy (URL)</Label>
+                      <Input
+                        id="companyLogo"
+                        value={formData.companyLogo}
+                        onChange={(e) => handleInputChange('companyLogo', e.target.value)}
+                        placeholder="https://twojafirma.pl/logo.png"
+                        className="rounded-xl"
+                        type="url"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
@@ -619,6 +651,23 @@ export default function PostJobPage() {
                     />
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Jeśli podasz link, kandydaci będą mogli aplikować bezpośrednio na Twojej stronie.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="expiresInDays">Czas publikacji (dni)</Label>
+                    <Input
+                      id="expiresInDays"
+                      type="number"
+                      min={1}
+                      max={120}
+                      value={formData.expiresInDays}
+                      onChange={(e) => handleInputChange('expiresInDays', e.target.value)}
+                      placeholder="30"
+                      className="rounded-xl"
+                    />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Po tym czasie oferta automatycznie wygaśnie.
                     </p>
                   </div>
 

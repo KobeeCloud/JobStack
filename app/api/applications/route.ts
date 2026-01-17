@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { sendEmployerNotification } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Check if job exists
     const { data: job, error: jobError } = await supabaseAdmin
       .from('jobs')
-      .select('id, title, company_name, source')
+      .select('id, title, company_name, source, source_url, company_id')
       .eq('id', jobId)
       .single();
 
@@ -52,6 +53,16 @@ export async function POST(request: NextRequest) {
         {
           error: 'This job is from an external source. Please apply directly on their website.',
           source_url: job.source
+        },
+        { status: 400 }
+      );
+    }
+
+    if (job.source_url) {
+      return NextResponse.json(
+        {
+          error: 'This job requires applying on the company website.',
+          source_url: job.source_url,
         },
         { status: 400 }
       );
@@ -122,7 +133,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // TODO: Send email notification to employer
+    // Send email notification to employer (only for Quick Apply)
+    if (!job.source_url && job.company_id) {
+      const { data: company } = await supabaseAdmin
+        .from('companies')
+        .select('owner_id, name')
+        .eq('id', job.company_id)
+        .single();
+
+      if (company?.owner_id) {
+        const { data: ownerProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('email')
+          .eq('id', company.owner_id)
+          .single();
+
+        if (ownerProfile?.email) {
+          try {
+            await sendEmployerNotification({
+              to: ownerProfile.email,
+              jobTitle: job.title,
+              companyName: company.name || job.company_name,
+              candidateName: `${firstName} ${lastName}`.trim(),
+              candidateEmail: email,
+              candidatePhone: phone || null,
+              cvUrl: cvUrl || null,
+              coverLetter: coverLetter || null,
+            });
+          } catch (emailError) {
+            console.error('Employer email error:', emailError);
+          }
+        }
+      }
+    }
     // TODO: Send confirmation email to applicant
 
     return NextResponse.json({

@@ -80,6 +80,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       title,
+      company_name,
+      company_website,
+      company_logo,
       location,
       remote = false,
       salary_min,
@@ -102,6 +105,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!companyId) {
+      const { data: existingCompany } = await supabaseAdmin
+        .from('companies')
+        .select('id, name, logo_url, website')
+        .eq('owner_id', userId)
+        .maybeSingle();
+
+      if (existingCompany?.id) {
+        companyId = existingCompany.id;
+        const { error: profileUpdateError } = await supabaseAdmin
+          .from('employer_profiles')
+          .update({ company_id: companyId })
+          .eq('user_id', userId);
+
+        if (profileUpdateError) {
+          console.error('Employer profile update error:', profileUpdateError);
+        }
+      } else if (userId && company_name) {
+        const { data: newCompany, error: companyError } = await supabaseAdmin
+          .from('companies')
+          .insert({
+            name: company_name,
+            website: company_website || null,
+            logo_url: company_logo || null,
+            owner_id: userId,
+          })
+          .select('id')
+          .single();
+
+        if (companyError || !newCompany) {
+          console.error('Company creation error:', companyError);
+          return NextResponse.json(
+            { error: 'Failed to create company profile' },
+            { status: 500 }
+          );
+        }
+
+        companyId = newCompany.id;
+        const { error: profileUpdateError } = await supabaseAdmin
+          .from('employer_profiles')
+          .update({ company_id: companyId })
+          .eq('user_id', userId);
+
+        if (profileUpdateError) {
+          console.error('Employer profile update error:', profileUpdateError);
+        }
+      }
+    }
+
+    if (!companyId) {
+      return NextResponse.json(
+        { error: 'Company profile missing. Please add company details.' },
+        { status: 400 }
+      );
+    }
+
     // Get company name
     const { data: company } = await supabaseAdmin
       .from('companies')
@@ -109,17 +168,35 @@ export async function POST(request: NextRequest) {
       .eq('id', companyId)
       .single();
 
+    if (company_name || company_logo || company_website) {
+      const { error: companyUpdateError } = await supabaseAdmin
+        .from('companies')
+        .update({
+          name: company_name || company?.name,
+          logo_url: company_logo || company?.logo_url,
+          website: company_website || null,
+        })
+        .eq('id', companyId);
+
+      if (companyUpdateError) {
+        console.error('Company update error:', companyUpdateError);
+      }
+    }
+
     // Calculate expiry date
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expires_in_days);
 
     // Create job
+    const resolvedCompanyName = company_name || company?.name || 'Unknown Company';
+    const resolvedCompanyLogo = company_logo || company?.logo_url || null;
+
     const { data: job, error: insertError } = await supabaseAdmin
       .from('jobs')
       .insert({
         company_id: companyId,
-        company_name: company?.name || 'Unknown Company',
-        company_logo: company?.logo_url,
+        company_name: resolvedCompanyName,
+        company_logo: resolvedCompanyLogo,
         title,
         location,
         remote,
@@ -185,11 +262,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    let resolvedCompanyId = employerProfile.company_id || null;
+    if (!resolvedCompanyId) {
+      const { data: companyByOwner } = await supabaseAdmin
+        .from('companies')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+      if (companyByOwner?.id) {
+        resolvedCompanyId = companyByOwner.id;
+        const { error: profileUpdateError } = await supabaseAdmin
+          .from('employer_profiles')
+          .update({ company_id: resolvedCompanyId })
+          .eq('user_id', user.id);
+
+        if (profileUpdateError) {
+          console.error('Employer profile update error:', profileUpdateError);
+        }
+      }
+    }
+
+    if (!resolvedCompanyId) {
+      return NextResponse.json({ jobs: [] });
+    }
+
     // Get company's jobs
     const { data: jobs, error } = await supabaseAdmin
       .from('jobs')
       .select('*')
-      .eq('company_id', employerProfile.company_id)
+      .eq('company_id', resolvedCompanyId)
       .order('created_at', { ascending: false });
 
     if (error) {

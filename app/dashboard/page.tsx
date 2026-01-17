@@ -126,18 +126,37 @@ export default async function DashboardPage() {
       .eq('user_id', user.id)
       .single();
 
-    if (employerProfile?.company_id) {
+    let resolvedCompanyId = employerProfile?.company_id || null;
+
+    if (!resolvedCompanyId) {
+      const { data: companyByOwner } = await supabaseAdmin
+        .from('companies')
+        .select('id, name')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+      if (companyByOwner?.id) {
+        resolvedCompanyId = companyByOwner.id;
+        employerCompanyName = companyByOwner.name || '';
+        await supabaseAdmin
+          .from('employer_profiles')
+          .update({ company_id: resolvedCompanyId })
+          .eq('user_id', user.id);
+      }
+    }
+
+    if (resolvedCompanyId) {
       const { data: company } = await supabaseAdmin
         .from('companies')
         .select('name')
-        .eq('id', employerProfile.company_id)
+        .eq('id', resolvedCompanyId)
         .single();
-      employerCompanyName = company?.name || '';
+      employerCompanyName = company?.name || employerCompanyName || '';
 
       const { data: jobs } = await supabaseAdmin
         .from('jobs')
         .select('id, title, expires_at')
-        .eq('company_id', employerProfile.company_id)
+        .eq('company_id', resolvedCompanyId)
         .order('created_at', { ascending: false });
       employerJobs = jobs || [];
 

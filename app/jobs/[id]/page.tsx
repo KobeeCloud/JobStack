@@ -141,19 +141,19 @@ export default function JobDetailPage() {
           <Card className="mb-6">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {job.featured && (
-                      <Badge className="bg-yellow-500 hover:bg-yellow-600">
-                        ⭐ Featured
-                      </Badge>
-                    )}
-                    <Badge variant="outline">{job.source}</Badge>
-                  </div>
-                  <CardTitle className="text-3xl mb-2">{job.title}</CardTitle>
-                  <p className="text-xl text-muted-foreground mb-4">
-                    {job.company_name}
-                  </p>
+                <div className="flex gap-3">
+                  {job.source === 'native' && !job.sourceUrl ? (
+                    <QuickApply
+                      jobId={job.id}
+                      jobTitle={job.title}
+                      companyName={job.company_name}
+                      questions={questions}
+                    />
+                  ) : (
+                    <Button size="lg" onClick={handleApply} className="flex-1">
+                      {job.source === 'native' ? 'Aplikuj na stronie firmy →' : `Apply on ${job.source} →`}
+                    </Button>
+                    /*...*/
 
                   <div className="flex flex-wrap gap-4 text-sm">
                     <span className="flex items-center gap-1">
@@ -187,18 +187,6 @@ export default function JobDetailPage() {
 
             <CardContent>
               <div className="flex gap-3">
-                {job.source === 'native' ? (
-                  <QuickApply
-                    jobId={job.id}
-                    jobTitle={job.title}
-                    companyName={job.company_name}
-                    questions={questions}
-                  />
-                ) : (
-                  <Button size="lg" onClick={handleApply} className="flex-1">
-                    Apply on {job.source} →
-                  </Button>
-                )}
                 <Button size="lg" variant="outline">
                   💾 Save Job
                 </Button>
@@ -280,18 +268,31 @@ export default function JobDetailPage() {
           {/* Apply CTA */}
           <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-0 text-white">
             <CardContent className="p-8 text-center">
-              <h3 className="text-2xl font-bold mb-4">Ready to apply?</h3>
+              <h3 className="text-2xl font-bold mb-4">Gotowy do aplikowania?</h3>
               <p className="mb-6 opacity-90">
-                Click below to apply on the company's website
+                {job.source === 'native' && !job.sourceUrl
+                  ? 'Wyślij szybkie zgłoszenie bezpośrednio do pracodawcy'
+                  : 'Kliknij poniżej i aplikuj na stronie pracodawcy'}
               </p>
-              <Button
-                size="lg"
-                variant="secondary"
-                onClick={handleApply}
-                className="text-lg px-8"
-              >
-                Apply on {job.source} →
-              </Button>
+              {job.source === 'native' && !job.sourceUrl ? (
+                <div className="max-w-sm mx-auto">
+                  <QuickApply
+                    jobId={job.id}
+                    jobTitle={job.title}
+                    companyName={job.company_name}
+                    questions={questions}
+                  />
+                </div>
+              ) : (
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={handleApply}
+                  className="text-lg px-8"
+                >
+                  {job.source === 'native' ? 'Aplikuj na stronie firmy →' : `Apply on ${job.source} →`}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
