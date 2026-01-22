@@ -334,4 +334,15 @@ open http://localhost:3000
 
 ---
 
+## 📄 License & Legal
+
+© 2026 **KobeCloud Jakub Pospieszny**. All rights reserved.
+
+- **Privacy Policy**: [/privacy](./app/privacy/page.tsx)
+- **Terms of Service**: [/terms](./app/terms/page.tsx)
+- **Contact**: kuba.pospieszny@gmail.com
+- **NIP**: 5882530612 | **REGON**: 541797979
+
+---
+
 Made with ❤️ for DevOps teams and cloud architects

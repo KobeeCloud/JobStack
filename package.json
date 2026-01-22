@@ -1,6 +1,9 @@
 {
   "name": "jobstack",
   "version": "1.0.0",
+  "description": "Visual Infrastructure Planning and Job Matching Platform",
+  "author": "KobeCloud Jakub Pospieszny <kuba.pospieszny@gmail.com>",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "next dev",

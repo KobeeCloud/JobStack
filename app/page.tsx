@@ -82,11 +82,11 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2"><Boxes className="h-5 w-5 text-primary" /><span className="font-semibold">JobStack</span></div>
-            <p className="text-sm text-muted-foreground">© 2024 JobStack. Visual Infrastructure Planning Tool.</p>
+            <p className="text-sm text-muted-foreground">© 2026 KobeCloud Jakub Pospieszny. All rights reserved.</p>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="/docs" className="hover:text-foreground">Docs</Link>
-              <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
-              <Link href="/contact" className="hover:text-foreground">Contact</Link>
+              <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+              <Link href="/terms" className="hover:text-foreground">Terms</Link>
+              <Link href="https://github.com/KobeeCloud/JobStack" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">GitHub</Link>
             </div>
           </div>
         </div>
