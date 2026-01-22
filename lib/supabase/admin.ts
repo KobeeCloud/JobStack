@@ -1,17 +1,31 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Create a lazy-initialized admin client to avoid throwing at module load time
-let _supabaseAdmin: SupabaseClient | null = null;
 
-function getSupabaseAdmin(): SupabaseClient {
-  if (_supabaseAdmin) {
-    return _supabaseAdmin;
-  }
+export function createAdminClient() {const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  return createClient(const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,// Create a lazy-initialized admin client to avoid throwing at module load time
+
+    {let _supabaseAdmin: SupabaseClient | null = null;
+
+      auth: {
+
+        autoRefreshToken: false,function getSupabaseAdmin(): SupabaseClient {
+
+        persistSession: false  if (_supabaseAdmin) {
+
+      }    return _supabaseAdmin;
+
+    }  }
+
+  )
+
+}  if (!supabaseUrl || !supabaseServiceKey) {
+
     console.error('Missing Supabase environment variables for admin client');
     // Return a dummy client that will fail gracefully
     throw new Error('Supabase admin client not configured - check SUPABASE_SERVICE_ROLE_KEY');

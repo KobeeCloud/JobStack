@@ -1,241 +1,96 @@
-'use client';
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Boxes, Code, DollarSign, Zap, Users, Shield, ArrowRight, Check, Sparkles } from 'lucide-react'
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Navbar } from '@/components/navbar';
-import { Footer } from '@/components/footer';
-import { AnnouncementBanner } from '@/components/announcement-banner';
-import { HomeStats } from '@/components/home-stats';
-import { useLocale } from '@/lib/i18n';
-import { Search, Zap, Target, Bot, Mail, Briefcase, ArrowRight, Sparkles } from 'lucide-react';
-
-export default function HomePage() {
-  const { t } = useLocale();
-
-  const features = [
-    {
-      icon: Search,
-      titleKey: 'home.features.aggregation.title' as const,
-      descKey: 'home.features.aggregation.desc' as const,
-      color: 'from-blue-500 to-cyan-500',
-    },
-    {
-      icon: Zap,
-      titleKey: 'home.features.realtime.title' as const,
-      descKey: 'home.features.realtime.desc' as const,
-      color: 'from-yellow-500 to-orange-500',
-    },
-    {
-      icon: Target,
-      titleKey: 'home.features.filters.title' as const,
-      descKey: 'home.features.filters.desc' as const,
-      color: 'from-green-500 to-emerald-500',
-    },
-    {
-      icon: Bot,
-      titleKey: 'home.features.api.title' as const,
-      descKey: 'home.features.api.desc' as const,
-      color: 'from-purple-500 to-pink-500',
-    },
-    {
-      icon: Mail,
-      titleKey: 'home.features.alerts.title' as const,
-      descKey: 'home.features.alerts.desc' as const,
-      color: 'from-red-500 to-rose-500',
-    },
-    {
-      icon: Briefcase,
-      titleKey: 'home.features.employers.title' as const,
-      descKey: 'home.features.employers.desc' as const,
-      color: 'from-indigo-500 to-violet-500',
-    },
-  ];
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/20 via-background to-background dark:from-blue-900/20">
-      <Navbar />
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-300 dark:bg-blue-600 rounded-full mix-blend-multiply filter blur-[96px] opacity-30 animate-blob" />
-          <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-300 dark:bg-indigo-600 rounded-full mix-blend-multiply filter blur-[96px] opacity-30 animate-blob animation-delay-2000" />
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-violet-300 dark:bg-violet-600 rounded-full mix-blend-multiply filter blur-[96px] opacity-30 animate-blob animation-delay-4000" />
-        </div>
-
-        <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <AnnouncementBanner />
-            </div>
+    <div className="flex flex-col min-h-screen">
+      <nav className="border-b">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Boxes className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl">JobStack</span>
           </div>
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Badge */}
-            <Badge className="mb-6 px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-lg">
-              <Sparkles className="w-4 h-4 mr-2" />
-              {t('home.badge')}
-            </Badge>
-
-            {/* Title */}
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-              {t('home.title')}
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-                {t('home.subtitle')}
-              </span>
-            </h1>
-
-            {/* Description */}
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-              {t('home.description')}
-            </p>
-
-            <div className="mb-10">
-              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-white/70 dark:bg-gray-900/60 border border-blue-100 dark:border-blue-900/40 shadow-sm">
-                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Start 2026</span>
-                <span className="h-4 w-px bg-blue-200 dark:bg-blue-900/60" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Przez długi czas bez opłat — korzystaj bez ograniczeń
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                Dołącz do JobStack i rozwijaj karierę lub zespół od pierwszego dnia.
-              </p>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link href="/jobs">
-                <Button size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 group">
-                  <Search className="w-5 h-5 mr-2" />
-                  {t('home.searchButton')}
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link href="/for-employers">
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300">
-                  <Briefcase className="w-5 h-5 mr-2" />
-                  {t('home.postJobButton')}
-                </Button>
-              </Link>
-            </div>
-
-            {/* Stats - Dynamic */}
-            <HomeStats />
+          <div className="flex items-center gap-4">
+            <Link href="/login"><Button variant="ghost">Sign In</Button></Link>
+            <Link href="/register"><Button>Get Started</Button></Link>
           </div>
         </div>
-      </section>
+      </nav>
 
-      {/* Job Boards Section */}
-      <section className="py-16 bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <p className="text-center text-gray-500 dark:text-gray-400 mb-8 font-medium">
-            {t('home.trustedBy')}
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 hover:opacity-100 transition-opacity">
-            {['NoFluffJobs', 'Pracuj.pl', 'Bulldogjob', 'RocketJobs', 'JustJoin.it'].map((board) => (
-              <div key={board} className="text-xl md:text-2xl font-bold text-gray-400 dark:text-gray-500">
-                {board}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
       <section className="py-20 md:py-32">
+        <div className="container mx-auto px-4 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-muted/50 mb-6">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm">Visual Infrastructure Planning</span>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            Design Infrastructure<br />
+            <span className="text-primary">Like Drawing a Diagram</span>
+          </h1>
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Drag-and-drop visual editor for cloud architecture. Generate production-ready Terraform code and estimate costs in real-time.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register"><Button size="lg">Start Building Free<ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+            <Link href="/login"><Button size="lg" variant="outline">View Demo</Button></Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <Badge className="mb-4" variant="outline">
-              {t('home.featuresLabel')}
-            </Badge>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              {t('home.whyJobStack')}
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              {t('home.featuresSubtitle')}
-            </p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need to Plan Infrastructure</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">From visual design to production deployment</p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <Card
-                key={index}
-                className="group border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
-              >
-                <CardHeader>
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <feature.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <CardTitle className="text-xl font-bold">{t(feature.titleKey)}</CardTitle>
-                  <CardDescription className="text-base leading-relaxed">
-                    {t(feature.descKey)}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card><CardHeader><Boxes className="h-10 w-10 text-primary mb-2" /><CardTitle>Visual Diagram Builder</CardTitle><CardDescription>Drag and drop components to design your infrastructure. Connect services with simple clicks.</CardDescription></CardHeader></Card>
+            <Card><CardHeader><Code className="h-10 w-10 text-primary mb-2" /><CardTitle>Terraform Code Generation</CardTitle><CardDescription>Export production-ready Terraform code instantly. Supports AWS, GCP, Azure, and more.</CardDescription></CardHeader></Card>
+            <Card><CardHeader><DollarSign className="h-10 w-10 text-primary mb-2" /><CardTitle>Real-Time Cost Estimation</CardTitle><CardDescription>See monthly costs as you build. Make informed decisions before deployment.</CardDescription></CardHeader></Card>
+            <Card><CardHeader><Zap className="h-10 w-10 text-primary mb-2" /><CardTitle>30+ Cloud Components</CardTitle><CardDescription>Pre-configured templates for AWS Lambda, ECS, RDS, Cloud Run, and all major services.</CardDescription></CardHeader></Card>
+            <Card><CardHeader><Users className="h-10 w-10 text-primary mb-2" /><CardTitle>Team Collaboration</CardTitle><CardDescription>Share projects with your team. Real-time editing and version control.</CardDescription></CardHeader></Card>
+            <Card><CardHeader><Shield className="h-10 w-10 text-primary mb-2" /><CardTitle>Best Practices Built-In</CardTitle><CardDescription>Security groups, IAM roles, and networking configured automatically.</CardDescription></CardHeader></Card>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-2xl">
-            {/* Background pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute inset-0" style={{
-                backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                backgroundSize: '32px 32px'
-              }} />
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <p className="text-xl text-muted-foreground">Start free, upgrade as you grow</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <Card><CardHeader><CardTitle>Free</CardTitle><CardDescription className="mt-4"><span className="text-4xl font-bold text-foreground">$0</span><span className="text-muted-foreground">/month</span></CardDescription></CardHeader><CardContent><ul className="space-y-3"><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>3 projects</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>10 diagrams</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Terraform export</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Cost estimation</span></li></ul><Link href="/register"><Button className="w-full mt-6" variant="outline">Get Started</Button></Link></CardContent></Card>
+            <Card className="border-primary shadow-lg scale-105"><CardHeader><div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium w-fit mb-2">POPULAR</div><CardTitle>Pro</CardTitle><CardDescription className="mt-4"><span className="text-4xl font-bold text-foreground">$29</span><span className="text-muted-foreground">/month</span></CardDescription></CardHeader><CardContent><ul className="space-y-3"><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Unlimited projects</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Unlimited diagrams</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>All export formats</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Priority support</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Custom templates</span></li></ul><Link href="/register"><Button className="w-full mt-6">Start Pro Trial</Button></Link></CardContent></Card>
+            <Card><CardHeader><CardTitle>Team</CardTitle><CardDescription className="mt-4"><span className="text-4xl font-bold text-foreground">$99</span><span className="text-muted-foreground">/month</span></CardDescription></CardHeader><CardContent><ul className="space-y-3"><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Everything in Pro</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Up to 10 team members</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Real-time collaboration</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Version history</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>SSO integration</span></li></ul><Link href="/register"><Button className="w-full mt-6" variant="outline">Contact Sales</Button></Link></CardContent></Card>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Build Your Infrastructure?</h2>
+          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">Join thousands of developers and DevOps teams using JobStack</p>
+          <Link href="/register"><Button size="lg" variant="secondary">Start Free Today<ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+        </div>
+      </section>
+
+      <footer className="border-t py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2"><Boxes className="h-5 w-5 text-primary" /><span className="font-semibold">JobStack</span></div>
+            <p className="text-sm text-muted-foreground">© 2024 JobStack. Visual Infrastructure Planning Tool.</p>
+            <div className="flex gap-6 text-sm text-muted-foreground">
+              <Link href="/docs" className="hover:text-foreground">Docs</Link>
+              <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
+              <Link href="/contact" className="hover:text-foreground">Contact</Link>
             </div>
-
-            <CardContent className="relative p-8 md:p-16 text-center text-white">
-              <Sparkles className="w-12 h-12 mx-auto mb-6 opacity-80" />
-              <h2 className="text-3xl md:text-5xl font-bold mb-4">
-                {t('home.ctaTitle')}
-              </h2>
-              <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto">
-                {t('home.ctaSubtitle')}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register">
-                  <Button size="lg" variant="secondary" className="text-lg px-8 py-6 font-semibold shadow-lg hover:shadow-xl transition-all group">
-                    {t('home.getStartedFree')}
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-                <Link href="/jobs">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-lg px-8 py-6 text-white border-white/50 hover:bg-white/20 backdrop-blur-sm transition-all"
-                  >
-                    {t('home.browseJobs')}
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
-      </section>
-
-      {/* Free Banner */}
-      <section className="py-12 bg-gradient-to-r from-green-500 to-emerald-500">
-        <div className="container mx-auto px-4 text-center text-white">
-          <h3 className="text-2xl md:text-3xl font-bold mb-2">
-            🎉 {t('home.freeBanner.title')}
-          </h3>
-          <p className="text-lg opacity-90">
-            {t('home.freeBanner.subtitle')}
-          </p>
-        </div>
-      </section>
-
-      <Footer />
+      </footer>
     </div>
-  );
+  )
 }
