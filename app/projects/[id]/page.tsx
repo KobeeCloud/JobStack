@@ -161,10 +161,15 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   )
 }
 
-export default function ProjectPage({ params }: { params: { id: string } }) {
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
   return (
     <ReactFlowProvider>
-      <DiagramCanvas projectId={params.id} />
+      <DiagramCanvas projectId={id} />
     </ReactFlowProvider>
   )
 }
