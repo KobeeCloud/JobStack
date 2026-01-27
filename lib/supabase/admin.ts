@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { log } from '../logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -11,7 +12,7 @@ function getSupabaseAdmin(): SupabaseClient {
   }
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing Supabase environment variables for admin client')
+    log.error('Missing Supabase environment variables for admin client')
     throw new Error('Supabase admin client not configured - check environment variables')
   }
 

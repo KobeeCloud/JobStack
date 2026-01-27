@@ -1,65 +1,134 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createApiHandler, getAuthenticatedUser, applyRateLimit } from '@/lib/api-helpers'
+import { updateProjectSchema, uuidSchema } from '@/lib/validation/schemas'
+import { handleApiError, ApiError } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const params = await context.params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+async function verifyProjectAccess(supabase: any, projectId: string, userId: string): Promise<void> {
   const { data: project, error } = await supabase
     .from('projects')
-    .select('*')
-    .eq('id', params.id)
-    .eq('user_id', user.id)
+    .select('id, user_id')
+    .eq('id', projectId)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(project)
+  if (error || !project) {
+    throw new ApiError(404, 'Project not found', 'PROJECT_NOT_FOUND')
+  }
+
+  // Check if user owns the project or has shared access
+  if (project.user_id !== userId) {
+    // Check for shared access
+    const { data: share } = await supabase
+      .from('project_shares')
+      .select('id')
+      .eq('project_id', projectId)
+      .eq('shared_with_email', (await supabase.auth.getUser()).data.user?.email)
+      .single()
+
+    if (!share) {
+      throw new ApiError(403, 'Forbidden - You do not have access to this project', 'FORBIDDEN')
+    }
+  }
 }
 
-export async function PUT(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const params = await context.params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const GET = createApiHandler(
+  async (request: NextRequest, { auth }, context?: { params: Promise<{ id: string }> }) => {
+    if (!context) {
+      throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
+    }
 
-  const body = await request.json()
-  const { name, description } = body
+    const params = await context.params
+    const projectId = uuidSchema.parse(params.id)
 
-  const { data: project, error } = await supabase
-    .from('projects')
-    .update({ name, description, updated_at: new Date().toISOString() })
-    .eq('id', params.id)
-    .eq('user_id', user.id)
-    .select()
-    .single()
+    await verifyProjectAccess(auth.supabase, projectId, auth.user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(project)
-}
+    const { data: project, error } = await auth.supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single()
 
-export async function DELETE(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const params = await context.params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (error) {
+      logger.error('Failed to fetch project', error, { projectId, userId: auth.user.id })
+      throw error
+    }
 
-  const { error } = await supabase
-    .from('projects')
-    .delete()
-    .eq('id', params.id)
-    .eq('user_id', user.id)
+    if (!project) {
+      throw new ApiError(404, 'Project not found', 'PROJECT_NOT_FOUND')
+    }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
-}
+    return NextResponse.json(project)
+  },
+  { requireAuth: true, method: 'GET' }
+)
+
+export const PUT = createApiHandler(
+  async (request: NextRequest, { auth, body }, context?: { params: Promise<{ id: string }> }) => {
+    if (!context) {
+      throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
+    }
+
+    const params = await context.params
+    const projectId = uuidSchema.parse(params.id)
+
+    await verifyProjectAccess(auth.supabase, projectId, auth.user.id)
+
+    const { data: project, error } = await auth.supabase
+      .from('projects')
+      .update({
+        ...body,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', projectId)
+      .eq('user_id', auth.user.id)
+      .select()
+      .single()
+
+    if (error) {
+      logger.error('Failed to update project', error, { projectId, userId: auth.user.id })
+      throw error
+    }
+
+    if (!project) {
+      throw new ApiError(404, 'Project not found', 'PROJECT_NOT_FOUND')
+    }
+
+    logger.info('Project updated', { projectId, userId: auth.user.id })
+
+    return NextResponse.json(project)
+  },
+  {
+    requireAuth: true,
+    validateBody: updateProjectSchema,
+    method: 'PUT',
+  }
+)
+
+export const DELETE = createApiHandler(
+  async (request: NextRequest, { auth }, context?: { params: Promise<{ id: string }> }) => {
+    if (!context) {
+      throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
+    }
+
+    const params = await context.params
+    const projectId = uuidSchema.parse(params.id)
+
+    await verifyProjectAccess(auth.supabase, projectId, auth.user.id)
+
+    const { error } = await auth.supabase
+      .from('projects')
+      .delete()
+      .eq('id', projectId)
+      .eq('user_id', auth.user.id)
+
+    if (error) {
+      logger.error('Failed to delete project', error, { projectId, userId: auth.user.id })
+      throw error
+    }
+
+    logger.info('Project deleted', { projectId, userId: auth.user.id })
+
+    return NextResponse.json({ success: true })
+  },
+  { requireAuth: true, method: 'DELETE' }
+)

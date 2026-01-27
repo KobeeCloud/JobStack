@@ -1,16 +1,22 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
+import { estimateCostSchema } from '@/lib/validation/schemas'
 import { calculateInfrastructureCost } from '@/lib/cost-calculator'
+import { logger } from '@/lib/logger'
 
-export async function POST(request: Request) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const body = await request.json()
-  const { nodes } = body
-
-  const costEstimate = calculateInfrastructureCost(nodes)
-
-  return NextResponse.json(costEstimate)
-}
+export const POST = createApiHandler(
+  async (request: NextRequest, { auth, body }) => {
+    try {
+      const costEstimate = calculateInfrastructureCost(body.nodes)
+      return NextResponse.json(costEstimate)
+    } catch (error) {
+      logger.error('Failed to estimate cost', error, { userId: auth.user.id })
+      throw error
+    }
+  },
+  {
+    requireAuth: true,
+    validateBody: estimateCostSchema,
+    method: 'POST',
+  }
+)

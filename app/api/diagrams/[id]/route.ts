@@ -1,59 +1,141 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
+import { updateDiagramSchema, uuidSchema } from '@/lib/validation/schemas'
+import { ApiError } from '@/lib/api-error'
+import { logger } from '@/lib/logger'
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const params = await context.params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { data: diagram, error } = await supabase
+async function verifyDiagramAccess(
+  supabase: any,
+  diagramId: string,
+  userId: string,
+  requireEdit: boolean = false
+): Promise<{ diagram: any; project: any }> {
+  const { data: diagram, error: diagramError } = await supabase
     .from('diagrams')
     .select('*, project:projects(*)')
-    .eq('id', params.id)
+    .eq('id', diagramId)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(diagram)
-}
+  if (diagramError || !diagram || !diagram.project) {
+    throw new ApiError(404, 'Diagram not found', 'DIAGRAM_NOT_FOUND')
+  }
 
-export async function PUT(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const params = await context.params
-  const supabase = await createClient()
+  const project = diagram.project
+
+  // Check if user owns the project
+  if (project.user_id === userId) {
+    return { diagram, project }
+  }
+
+  // Check for shared access
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const body = await request.json()
-  const { name, data, thumbnail_url } = body
-
-  const { data: diagram, error } = await supabase
-    .from('diagrams')
-    .update({ name, data, thumbnail_url, updated_at: new Date().toISOString() })
-    .eq('id', params.id)
-    .select()
+  const { data: share } = await supabase
+    .from('project_shares')
+    .select('permission')
+    .eq('project_id', project.id)
+    .eq('shared_with_email', user?.email)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(diagram)
+  if (!share) {
+    throw new ApiError(403, 'Forbidden - You do not have access to this diagram', 'FORBIDDEN')
+  }
+
+  // For PUT/DELETE, require edit permission
+  if (requireEdit && share.permission !== 'edit') {
+    throw new ApiError(403, 'Forbidden - You do not have edit permission for this diagram', 'FORBIDDEN')
+  }
+
+  return { diagram, project }
 }
 
-export async function DELETE(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const params = await context.params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const GET = createApiHandler(
+  async (request: NextRequest, { auth }, context?: { params: Promise<{ id: string }> }) => {
+    if (!context) {
+      throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
+    }
 
-  const { error } = await supabase.from('diagrams').delete().eq('id', params.id)
+    const params = await context.params
+    const diagramId = uuidSchema.parse(params.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
-}
+    const { diagram } = await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, false)
+
+    return NextResponse.json(diagram)
+  },
+  { requireAuth: true, method: 'GET' }
+)
+
+export const PUT = createApiHandler(
+  async (request: NextRequest, { auth, body }, context?: { params: Promise<{ id: string }> }) => {
+    if (!context) {
+      throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
+    }
+
+    const params = await context.params
+    const diagramId = uuidSchema.parse(params.id)
+
+    await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, true)
+
+    // Check payload size (max 10MB)
+    if (body.data) {
+      const payloadSize = JSON.stringify(body.data).length
+      if (payloadSize > 10 * 1024 * 1024) {
+        throw new ApiError(413, 'Payload too large - maximum 10MB', 'PAYLOAD_TOO_LARGE')
+      }
+    }
+
+    const { data: diagram, error } = await auth.supabase
+      .from('diagrams')
+      .update({
+        ...(body.name && { name: body.name }),
+        ...(body.data && { data: body.data }),
+        ...(body.thumbnail_url !== undefined && { thumbnail_url: body.thumbnail_url }),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', diagramId)
+      .select()
+      .single()
+
+    if (error) {
+      logger.error('Failed to update diagram', error, { diagramId, userId: auth.user.id })
+      throw error
+    }
+
+    if (!diagram) {
+      throw new ApiError(404, 'Diagram not found', 'DIAGRAM_NOT_FOUND')
+    }
+
+    logger.info('Diagram updated', { diagramId, userId: auth.user.id })
+
+    return NextResponse.json(diagram)
+  },
+  {
+    requireAuth: true,
+    validateBody: updateDiagramSchema,
+    method: 'PUT',
+  }
+)
+
+export const DELETE = createApiHandler(
+  async (request: NextRequest, { auth }, context?: { params: Promise<{ id: string }> }) => {
+    if (!context) {
+      throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
+    }
+
+    const params = await context.params
+    const diagramId = uuidSchema.parse(params.id)
+
+    await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, true)
+
+    const { error } = await auth.supabase.from('diagrams').delete().eq('id', diagramId)
+
+    if (error) {
+      logger.error('Failed to delete diagram', error, { diagramId, userId: auth.user.id })
+      throw error
+    }
+
+    logger.info('Diagram deleted', { diagramId, userId: auth.user.id })
+
+    return NextResponse.json({ success: true })
+  },
+  { requireAuth: true, method: 'DELETE' }
+)

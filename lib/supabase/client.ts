@@ -1,5 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { createMockSupabaseClient } from './mock-client'
+import { log } from '../logger'
 
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -7,7 +8,7 @@ export function createClient() {
 
   // Use mock client if env vars not configured
   if (!url || !key || url.includes('your-project') || key.includes('your-')) {
-    console.warn('⚠️  Using mock Supabase client - configure .env.local for real backend')
+    log.warn('Using mock Supabase client - configure .env.local for real backend')
     return createMockSupabaseClient() as any
   }
 

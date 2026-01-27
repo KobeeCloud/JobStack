@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createMockSupabaseClient } from './mock-client'
+import { log } from '../logger'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -9,7 +10,7 @@ export async function createClient() {
 
   // Use mock client if env vars not configured
   if (!url || !key || url.includes('your-project') || key.includes('your-')) {
-    console.warn('⚠️  Using mock Supabase server client')
+    log.warn('Using mock Supabase server client')
     return createMockSupabaseClient() as any
   }
 

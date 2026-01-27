@@ -59,13 +59,54 @@ export default function Home() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-xl text-muted-foreground">Start free, upgrade as you grow</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">100% Free Forever</h2>
+            <p className="text-xl text-muted-foreground">No credit card required. No hidden fees. No limits.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Card><CardHeader><CardTitle>Free</CardTitle><CardDescription className="mt-4"><span className="text-4xl font-bold text-foreground">$0</span><span className="text-muted-foreground">/month</span></CardDescription></CardHeader><CardContent><ul className="space-y-3"><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>3 projects</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>10 diagrams</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Terraform export</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Cost estimation</span></li></ul><Link href="/register"><Button className="w-full mt-6" variant="outline">Get Started</Button></Link></CardContent></Card>
-            <Card className="border-primary shadow-lg scale-105"><CardHeader><div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium w-fit mb-2">POPULAR</div><CardTitle>Pro</CardTitle><CardDescription className="mt-4"><span className="text-4xl font-bold text-foreground">$29</span><span className="text-muted-foreground">/month</span></CardDescription></CardHeader><CardContent><ul className="space-y-3"><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Unlimited projects</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Unlimited diagrams</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>All export formats</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Priority support</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Custom templates</span></li></ul><Link href="/register"><Button className="w-full mt-6">Start Pro Trial</Button></Link></CardContent></Card>
-            <Card><CardHeader><CardTitle>Team</CardTitle><CardDescription className="mt-4"><span className="text-4xl font-bold text-foreground">$99</span><span className="text-muted-foreground">/month</span></CardDescription></CardHeader><CardContent><ul className="space-y-3"><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Everything in Pro</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Up to 10 team members</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Real-time collaboration</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>Version history</span></li><li className="flex items-start gap-2"><Check className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span>SSO integration</span></li></ul><Link href="/register"><Button className="w-full mt-6" variant="outline">Contact Sales</Button></Link></CardContent></Card>
+          <div className="max-w-2xl mx-auto">
+            <Card className="border-primary shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-center">Free Forever</CardTitle>
+                <CardDescription className="text-center mt-4">
+                  <span className="text-4xl font-bold text-foreground">$0</span>
+                  <span className="text-muted-foreground">/month</span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>Unlimited projects</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>Unlimited diagrams</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>Terraform code generation</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>Real-time cost estimation</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>All export formats (JSON, PNG, SVG)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>Pre-built templates</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>Project sharing & collaboration</span>
+                  </li>
+                </ul>
+                <Link href="/register">
+                  <Button className="w-full" size="lg">Get Started Free</Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

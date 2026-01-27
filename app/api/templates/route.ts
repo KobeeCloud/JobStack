@@ -1,15 +1,29 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
+import { logger } from '@/lib/logger'
 
-export async function GET() {
-  const supabase = await createClient()
+export const GET = createApiHandler(
+  async (request: NextRequest, { auth }) => {
+    const { searchParams } = new URL(request.url)
+    const category = searchParams.get('category')
 
-  const { data: templates, error } = await supabase
-    .from('templates')
-    .select('*')
-    .eq('is_public', true)
-    .order('created_at', { ascending: false })
+    let query = auth.supabase
+      .from('templates')
+      .select('*')
+      .eq('is_public', true)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(templates)
-}
+    if (category) {
+      query = query.eq('category', category)
+    }
+
+    const { data: templates, error } = await query.order('created_at', { ascending: false })
+
+    if (error) {
+      logger.error('Failed to fetch templates', error)
+      throw error
+    }
+
+    return NextResponse.json(templates || [])
+  },
+  { requireAuth: false, method: 'GET' }
+)
