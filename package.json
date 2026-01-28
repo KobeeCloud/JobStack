@@ -15,8 +15,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch",
-
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
