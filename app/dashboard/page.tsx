@@ -15,60 +15,78 @@ interface Project {
 }
 
 async function ProjectsList() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
 
-  const { data: projects, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
-    .limit(50) // Pagination limit
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(50) // Pagination limit
 
-  if (error) {
-    throw new Error('Failed to load projects')
-  }
-
-  return (
-    <>
-      {!projects || projects.length === 0 ? (
+    if (error) {
+      return (
         <Card className="p-12">
           <div className="text-center">
-            <FolderOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
-            <h3 className="text-xl font-semibold mb-2">No projects yet</h3>
-            <p className="text-muted-foreground mb-6">Create your first infrastructure project</p>
-            <Link href="/projects/new">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-                Create Project
-              </Button>
-            </Link>
+            <h3 className="text-xl font-semibold mb-2 text-red-600">Błąd ładowania projektów</h3>
+            <p className="text-muted-foreground mb-6">{error.message || 'Failed to load projects'}</p>
           </div>
         </Card>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project: Project) => (
-            <Link key={project.id} href={`/projects/${project.id}`} aria-label={`Open project ${project.name}`}>
-              <Card className="hover:border-primary transition-colors cursor-pointer h-full">
-                <CardHeader>
-                  <CardTitle>{project.name}</CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {project.description || 'No description'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-xs text-muted-foreground">
-                    Updated {new Date(project.updated_at).toLocaleDateString()}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+      )
+    }
+
+    return (
+      <>
+        {!projects || projects.length === 0 ? (
+          <Card className="p-12">
+            <div className="text-center">
+              <FolderOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
+              <h3 className="text-xl font-semibold mb-2">No projects yet</h3>
+              <p className="text-muted-foreground mb-6">Create your first infrastructure project</p>
+              <Link href="/projects/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Create Project
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project: Project) => (
+              <Link key={project.id} href={`/projects/${project.id}`} aria-label={`Open project ${project.name}`}>
+                <Card className="hover:border-primary transition-colors cursor-pointer h-full">
+                  <CardHeader>
+                    <CardTitle>{project.name}</CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {project.description || 'No description'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xs text-muted-foreground">
+                      Updated {new Date(project.updated_at).toLocaleDateString()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </>
+    )
+  } catch (err: any) {
+    return (
+      <Card className="p-12">
+        <div className="text-center">
+          <h3 className="text-xl font-semibold mb-2 text-red-600">Błąd renderowania Dashboardu</h3>
+          <p className="text-muted-foreground mb-6">{err?.message || 'Unknown error'}</p>
         </div>
-      )}
-    </>
-  )
+      </Card>
+    )
+  }
 }
 
 function ProjectsListSkeleton() {
