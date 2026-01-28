@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
-import { logger } from './logger'
+import { logger, log } from './logger'
 
 export class ApiError extends Error {
   constructor(
@@ -17,7 +17,7 @@ export class ApiError extends Error {
 export function handleApiError(error: unknown): NextResponse {
   // Log error server-side
   if (error instanceof ApiError) {
-    logger.error('API Error', error, {
+    log.error('API Error', error, {
       statusCode: error.statusCode,
       code: error.code,
       details: error.details,
@@ -34,7 +34,7 @@ export function handleApiError(error: unknown): NextResponse {
   }
 
   if (error instanceof ZodError) {
-    logger.warn('Validation Error', { errors: error.errors })
+    log.warn('Validation Error', { errors: error.errors })
 
     return NextResponse.json(
       {
@@ -47,7 +47,7 @@ export function handleApiError(error: unknown): NextResponse {
   }
 
   // Unknown error - don't expose internal details in production
-  logger.error('Unknown API Error', error)
+  log.error('Unknown API Error', error)
 
   return NextResponse.json(
     {

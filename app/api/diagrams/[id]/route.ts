@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
 import { updateDiagramSchema, uuidSchema } from '@/lib/validation/schemas'
 import { ApiError } from '@/lib/api-error'
-import { logger } from '@/lib/logger'
+import { logger, log } from '@/lib/logger'
 
 async function verifyDiagramAccess(
   supabase: any,
@@ -75,8 +75,9 @@ export const PUT = createApiHandler(
 
     await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, true)
 
+
     // Check payload size (max 10MB)
-    if (body.data) {
+    if (body && body.data) {
       const payloadSize = JSON.stringify(body.data).length
       if (payloadSize > 10 * 1024 * 1024) {
         throw new ApiError(413, 'Payload too large - maximum 10MB', 'PAYLOAD_TOO_LARGE')
@@ -85,12 +86,12 @@ export const PUT = createApiHandler(
 
     const { data: diagram, error } = await auth.supabase
       .from('diagrams')
-      .update({
+      .update(body ? {
         ...(body.name && { name: body.name }),
         ...(body.data && { data: body.data }),
         ...(body.thumbnail_url !== undefined && { thumbnail_url: body.thumbnail_url }),
         updated_at: new Date().toISOString(),
-      })
+      } : { updated_at: new Date().toISOString() })
       .eq('id', diagramId)
       .select()
       .single()
@@ -104,7 +105,7 @@ export const PUT = createApiHandler(
       throw new ApiError(404, 'Diagram not found', 'DIAGRAM_NOT_FOUND')
     }
 
-    logger.info('Diagram updated', { diagramId, userId: auth.user.id })
+    log.info('Diagram updated', { diagramId, userId: auth.user.id })
 
     return NextResponse.json(diagram)
   },
@@ -133,7 +134,7 @@ export const DELETE = createApiHandler(
       throw error
     }
 
-    logger.info('Diagram deleted', { diagramId, userId: auth.user.id })
+    log.info('Diagram deleted', { diagramId, userId: auth.user.id })
 
     return NextResponse.json({ success: true })
   },

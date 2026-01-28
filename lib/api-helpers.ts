@@ -50,7 +50,7 @@ export async function applyRateLimit(
   limiter: typeof checkRateLimit = checkRateLimit
 ): Promise<void> {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-  const result = await limiter(ip, limiter === authRateLimit ? authRateLimit : undefined)
+  const result = await limiter(ip)
 
   if (!result.success) {
     throw new ApiError(

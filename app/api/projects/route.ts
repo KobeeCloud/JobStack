@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler, getAuthenticatedUser, applyRateLimit } from '@/lib/api-helpers'
 import { createProjectSchema, paginationSchema } from '@/lib/validation/schemas'
 import { handleApiError } from '@/lib/api-error'
-import { logger } from '@/lib/logger'
+import { logger, log } from '@/lib/logger'
 
 export const GET = createApiHandler(
   async (request: NextRequest, { auth }) => {
@@ -20,7 +20,7 @@ export const GET = createApiHandler(
       .range((pagination.page - 1) * pagination.limit, pagination.page * pagination.limit - 1)
 
     if (error) {
-      logger.error('Failed to fetch projects', error)
+      log.error('Failed to fetch projects', error)
       throw error
     }
 
@@ -39,6 +39,9 @@ export const GET = createApiHandler(
 
 export const POST = createApiHandler(
   async (request: NextRequest, { auth, body }) => {
+    if (!body) {
+      throw new Error('Missing request body')
+    }
     const { data: project, error } = await auth.supabase
       .from('projects')
       .insert({
@@ -50,11 +53,11 @@ export const POST = createApiHandler(
       .single()
 
     if (error) {
-      logger.error('Failed to create project', error, { userId: auth.user.id })
+      log.error('Failed to create project', error, { userId: auth.user.id })
       throw error
     }
 
-    logger.info('Project created', { projectId: project.id, userId: auth.user.id })
+    log.info('Project created', { projectId: project.id, userId: auth.user.id })
 
     return NextResponse.json(project, { status: 201 })
   },

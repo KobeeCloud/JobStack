@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
 import { createDiagramSchema, uuidSchema, paginationSchema } from '@/lib/validation/schemas'
 import { ApiError } from '@/lib/api-error'
-import { logger } from '@/lib/logger'
+import { logger, log } from '@/lib/logger'
 
 async function verifyProjectAccess(supabase: any, projectId: string, userId: string): Promise<void> {
   const { data: project, error } = await supabase
@@ -74,6 +74,9 @@ export const GET = createApiHandler(
 
 export const POST = createApiHandler(
   async (request: NextRequest, { auth, body }) => {
+    if (!body) {
+      throw new ApiError(400, 'Missing request body', 'MISSING_BODY')
+    }
     await verifyProjectAccess(auth.supabase, body.project_id, auth.user.id)
 
     // Check payload size (max 10MB for diagram data)
@@ -98,7 +101,7 @@ export const POST = createApiHandler(
       throw error
     }
 
-    logger.info('Diagram created', { diagramId: diagram.id, projectId: body.project_id, userId: auth.user.id })
+    log.info('Diagram created', { diagramId: diagram.id, projectId: body.project_id, userId: auth.user.id })
 
     return NextResponse.json(diagram, { status: 201 })
   },

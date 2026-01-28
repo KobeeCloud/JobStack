@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler, getAuthenticatedUser, applyRateLimit } from '@/lib/api-helpers'
 import { updateProjectSchema, uuidSchema } from '@/lib/validation/schemas'
 import { handleApiError, ApiError } from '@/lib/api-error'
-import { logger } from '@/lib/logger'
+import { logger, log } from '@/lib/logger'
 
 async function verifyProjectAccess(supabase: any, projectId: string, userId: string): Promise<void> {
   const { data: project, error } = await supabase
@@ -49,7 +49,7 @@ export const GET = createApiHandler(
       .single()
 
     if (error) {
-      logger.error('Failed to fetch project', error, { projectId, userId: auth.user.id })
+      log.error('Failed to fetch project', error, { projectId, userId: auth.user.id })
       throw error
     }
 
@@ -85,7 +85,7 @@ export const PUT = createApiHandler(
       .single()
 
     if (error) {
-      logger.error('Failed to update project', error, { projectId, userId: auth.user.id })
+      log.error('Failed to update project', error, { projectId, userId: auth.user.id })
       throw error
     }
 
@@ -93,7 +93,7 @@ export const PUT = createApiHandler(
       throw new ApiError(404, 'Project not found', 'PROJECT_NOT_FOUND')
     }
 
-    logger.info('Project updated', { projectId, userId: auth.user.id })
+    log.info('Project updated', { projectId, userId: auth.user.id })
 
     return NextResponse.json(project)
   },
@@ -122,11 +122,11 @@ export const DELETE = createApiHandler(
       .eq('user_id', auth.user.id)
 
     if (error) {
-      logger.error('Failed to delete project', error, { projectId, userId: auth.user.id })
+      log.error('Failed to delete project', error, { projectId, userId: auth.user.id })
       throw error
     }
 
-    logger.info('Project deleted', { projectId, userId: auth.user.id })
+    log.info('Project deleted', { projectId, userId: auth.user.id })
 
     return NextResponse.json({ success: true })
   },

@@ -60,7 +60,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const router = useRouter()
   const { toast } = useToast()
-  const saveTimerRef = useRef<NodeJS.Timeout>()
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const hasUnsavedChanges = useRef(false)
 
   // Load project and diagram
@@ -75,7 +75,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const projectRes = await fetchWithTimeout(`/api/projects/${projectId}`, {}, 10000)
         if (!projectRes.ok) {
           if (projectRes.status === 404) {
-            toast({ title: 'Project not found', description: 'This project does not exist', variant: 'destructive' })
+            toast({ title: 'Project not found', description: 'This project does not exist' })
             router.push('/dashboard')
             return
           }
@@ -106,7 +106,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           toast({
             title: 'Error',
             description: error instanceof Error ? error.message : 'Failed to load project',
-            variant: 'destructive',
           })
         }
       } finally {
@@ -236,7 +235,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         toast({
           title: 'Error',
           description: 'Failed to add component',
-          variant: 'destructive',
         })
       }
     },
@@ -277,7 +275,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to save diagram',
-        variant: 'destructive',
       })
     } finally {
       setSaving(false)
@@ -314,7 +311,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to generate Terraform code',
-        variant: 'destructive',
       })
     }
   }
@@ -333,7 +329,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       toast({
         title: 'Error',
         description: 'Failed to export diagram',
-        variant: 'destructive',
       })
     }
   }
@@ -429,7 +424,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 toast({
                   title: 'Error',
                   description: `Failed to export as ${format.toUpperCase()}`,
-                  variant: 'destructive',
                 })
               }
             }}
@@ -441,13 +435,17 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   )
 }
 
-export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+// Next.js page component, pobiera projectId z params
+interface PageProps {
+  params: { id: string }
+}
+
+export default function ProjectPage({ params }: PageProps) {
   return (
-    <ErrorBoundary>
-      <ReactFlowProvider>
-        <DiagramCanvas projectId={id} />
-      </ReactFlowProvider>
-    </ErrorBoundary>
+    <ReactFlowProvider>
+      <ErrorBoundary>
+        <DiagramCanvas projectId={params.id} />
+      </ErrorBoundary>
+    </ReactFlowProvider>
   )
 }

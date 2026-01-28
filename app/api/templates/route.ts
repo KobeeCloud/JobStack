@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
-import { logger } from '@/lib/logger'
+import { logger, log } from '@/lib/logger'
 
 export const GET = createApiHandler(
   async (request: NextRequest, { auth }) => {
@@ -19,7 +19,7 @@ export const GET = createApiHandler(
     const { data: templates, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
-      logger.error('Failed to fetch templates', error)
+      log.error('Failed to fetch templates', error)
       throw error
     }
 

@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
 import { generateTerraformSchema } from '@/lib/validation/schemas'
 import { generateTerraform, generateTerraformReadme } from '@/lib/generators/terraform'
-import { logger } from '@/lib/logger'
+import { logger, log } from '@/lib/logger'
 
 export const POST = createApiHandler(
   async (request: NextRequest, { auth, body }) => {
     try {
+      if (!body) {
+        throw new Error('Missing request body')
+      }
       const terraformFiles = generateTerraform(body.nodes, body.edges)
       const readme = generateTerraformReadme(body.nodes)
 
@@ -28,13 +31,13 @@ export const POST = createApiHandler(
             code_content: JSON.stringify(allFiles),
           })
 
-          logger.info('Terraform export saved', { diagramId: body.diagram_id, userId: auth.user.id })
+          log.info('Terraform export saved', { diagramId: body.diagram_id, userId: auth.user.id })
         }
       }
 
       return NextResponse.json({ files: allFiles })
     } catch (error) {
-      logger.error('Failed to generate Terraform', error, { userId: auth.user.id })
+      log.error('Failed to generate Terraform', error, { userId: auth.user.id })
       throw error
     }
   },

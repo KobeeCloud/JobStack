@@ -16,7 +16,11 @@ import { useToast } from '@/hooks/use-toast'
 import { TemplateDialog } from '@/components/diagram/template-dialog'
 import type { Node, Edge } from '@xyflow/react'
 
-export default function NewProjectPage() {
+
+import { Suspense } from 'react'
+
+
+function NewProjectPageInner() {
   const [loading, setLoading] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const router = useRouter()
@@ -56,7 +60,6 @@ export default function NewProjectPage() {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to create project',
-        variant: 'destructive',
       })
       setLoading(false)
     }
@@ -75,7 +78,6 @@ export default function NewProjectPage() {
       toast({
         title: 'Error',
         description: 'Please enter a project name first',
-        variant: 'destructive',
       })
       return
     }
@@ -129,7 +131,6 @@ export default function NewProjectPage() {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to create project',
-        variant: 'destructive',
       })
       setLoading(false)
     }
@@ -225,5 +226,13 @@ export default function NewProjectPage() {
         onApply={handleApplyTemplate}
       />
     </div>
+  )
+}
+
+export default function NewProjectPageWrapper() {
+  return (
+    <Suspense>
+      <NewProjectPageInner />
+    </Suspense>
   )
 }
