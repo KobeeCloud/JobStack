@@ -55,7 +55,12 @@ function NewProjectPageInner() {
 
       const project = await res.json()
       toast({ title: 'Project Created', description: 'Your project has been created successfully' })
-      router.push(`/projects/${project.id || project.data?.id}`)
+      const projectId = project.id ?? project.data?.id;
+      if (!projectId) {
+        toast({ title: 'Error', description: 'Project ID not found after creation' });
+        return;
+      }
+      router.push(`/projects/${projectId}`)
     } catch (error) {
       toast({
         title: 'Error',

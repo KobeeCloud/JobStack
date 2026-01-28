@@ -65,6 +65,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
   // Load project and diagram
   useEffect(() => {
+    if (!projectId) {
+      toast({ title: 'Error', description: 'Project ID is missing' });
+      router.push('/dashboard');
+      return;
+    }
     let cancelled = false
 
     async function loadData() {
