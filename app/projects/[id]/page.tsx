@@ -446,6 +446,7 @@ interface PageProps {
 }
 
 export default function ProjectPage({ params }: PageProps) {
+  console.log('ProjectPage params:', params);
   return (
     <ReactFlowProvider>
       <ErrorBoundary>
