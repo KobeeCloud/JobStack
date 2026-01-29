@@ -155,21 +155,10 @@ CREATE POLICY "Users can delete own profile"
 -- RLS POLICIES - Projects
 -- =====================================================
 
+
 CREATE POLICY "Users can view own projects"
   ON public.projects FOR SELECT
   USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can view shared projects"
-  ON public.projects FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.project_shares
-      WHERE project_shares.project_id = projects.id
-      AND project_shares.shared_with_email = (
-        SELECT email FROM auth.users WHERE id = auth.uid()
-      )
-    )
-  );
 
 CREATE POLICY "Users can create own projects"
   ON public.projects FOR INSERT

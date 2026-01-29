@@ -54,8 +54,9 @@ function NewProjectPageInner() {
       }
 
       const project = await res.json()
+      console.log('API response:', project)
       toast({ title: 'Project Created', description: 'Your project has been created successfully' })
-      const projectId = project.id ?? project.data?.id;
+      const projectId = project.id;
       if (!projectId) {
         toast({ title: 'Error', description: 'Project ID not found after creation' });
         return;
