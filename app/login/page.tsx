@@ -4,17 +4,20 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Boxes, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema, type LoginInput } from '@/lib/validation/schemas'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setAuthError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -29,6 +32,8 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginInput) => {
     setLoading(true)
+    setAuthError(null)
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -36,14 +41,21 @@ export default function LoginPage() {
       })
 
       if (error) {
-        setError('root', { message: error.message })
+        const errorMessage = error.message === 'Invalid login credentials'
+          ? 'Invalid email or password. Please check your credentials and try again.'
+          : error.message
+        setAuthError(errorMessage)
+        toast.error('Sign in failed', { description: errorMessage })
         setLoading(false)
         return
       }
 
+      toast.success('Welcome back!', { description: 'Redirecting to dashboard...' })
       router.push('/dashboard')
-    } catch (error: any) {
-      setError('root', { message: error.message || 'An unexpected error occurred' })
+    } catch (err: any) {
+      const errorMessage = err?.message || 'An unexpected error occurred. Please try again.'
+      setAuthError(errorMessage)
+      toast.error('Sign in failed', { description: errorMessage })
       setLoading(false)
     }
   }
@@ -105,10 +117,11 @@ export default function LoginPage() {
                 </p>
               )}
             </div>
-            {errors.root && (
-              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md" role="alert">
-                {errors.root.message}
-              </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (

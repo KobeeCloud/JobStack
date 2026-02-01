@@ -8,15 +8,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Boxes, Loader2, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { registerSchema, type RegisterInput } from '@/lib/validation/schemas'
-import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
+import { toast } from 'sonner'
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -33,20 +36,49 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterInput) => {
     setLoading(true)
+    setError(null)
+    setSuccess(false)
+
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
       })
 
-      if (error) {
-        throw error
+      if (authError) {
+        // Handle specific error messages
+        if (authError.message.includes('already registered')) {
+          setError('This email is already registered. Please sign in instead.')
+        } else if (authError.message.includes('Invalid email')) {
+          setError('Please enter a valid email address.')
+        } else if (authError.message.includes('Password')) {
+          setError('Password does not meet requirements.')
+        } else {
+          setError(authError.message)
+        }
+        return
       }
 
-      router.push('/dashboard')
-    } catch (error: any) {
-      // Error will be shown via form validation
-      console.error('Registration error:', error)
+      // Check if email confirmation is required
+      if (authData.user && !authData.session) {
+        // Email confirmation required
+        setSuccess(true)
+        toast.success('Check your email to confirm your account!')
+      } else if (authData.session) {
+        // No email confirmation needed, redirect directly
+        toast.success('Account created successfully!')
+        router.push('/dashboard')
+      } else {
+        // Fallback for mock mode or other cases
+        toast.success('Account created!')
+        router.push('/dashboard')
+      }
+    } catch (err: any) {
+      console.error('Registration error:', err)
+      setError(err?.message || 'An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -64,12 +96,33 @@ export default function RegisterPage() {
           <CardDescription>Start building infrastructure</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Success message */}
+          {success && (
+            <Alert className="mb-4 border-green-500 bg-green-50 dark:bg-green-950">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-700 dark:text-green-300">
+                <strong>Check your email!</strong> We&apos;ve sent you a confirmation link.
+                Please click it to activate your account.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Error message */}
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
+                placeholder="you@example.com"
+                disabled={loading || success}
                 {...register('email')}
                 aria-invalid={errors.email ? 'true' : 'false'}
                 aria-describedby={errors.email ? 'email-error' : undefined}
@@ -86,6 +139,7 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  disabled={loading || success}
                   {...register('password')}
                   aria-invalid={errors.password ? 'true' : 'false'}
                   aria-describedby={errors.password ? 'password-error' : undefined}
