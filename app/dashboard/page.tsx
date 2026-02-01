@@ -3,9 +3,18 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, Plus, FolderOpen, Loader2 } from 'lucide-react'
+import { Boxes, Plus, FolderOpen, LogOut, Settings, User, MoreVertical, Trash2, Edit, Copy } from 'lucide-react'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Suspense } from 'react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ProjectCard } from '@/components/project-card'
 
 interface Project {
   id: string
@@ -57,21 +66,7 @@ async function ProjectsList() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project: Project) => (
-              <Link key={project.id} href={`/projects/${project.id}`} aria-label={`Open project ${project.name}`}>
-                <Card className="hover:border-primary transition-colors cursor-pointer h-full">
-                  <CardHeader>
-                    <CardTitle>{project.name}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {project.description || 'No description'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-xs text-muted-foreground">
-                      Updated {new Date(project.updated_at).toLocaleDateString()}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ProjectCard key={project.id} project={project} />
             ))}
           </div>
         )}
@@ -115,13 +110,47 @@ export default async function DashboardPage() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen flex flex-col">
-        <nav className="border-b">
+        <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2" aria-label="JobStack Home">
               <Boxes className="h-6 w-6 text-primary" aria-hidden="true" />
               <span className="font-bold text-xl">JobStack</span>
             </Link>
-            <span className="text-sm text-muted-foreground">{user.email}</span>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">{user.email}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Account</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <form action="/auth/signout" method="post" className="w-full">
+                    <button type="submit" className="flex w-full items-center text-destructive">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </button>
+                  </form>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </nav>
         <div className="container mx-auto px-4 py-8">

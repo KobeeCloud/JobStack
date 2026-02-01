@@ -1,7 +1,16 @@
 import { z } from 'zod'
 
-// UUID validation
-export const uuidSchema = z.string().uuid('Invalid UUID format')
+// UUID validation - also accepts mock IDs for development
+export const uuidSchema = z.string().min(1, 'ID is required').refine(
+  (val) => {
+    // Accept standard UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    // Also accept mock IDs like "pro-1234567-abcdef" or "demo-project-001"
+    const mockIdRegex = /^[a-z]{3,}-[a-z0-9-]+$/i
+    return uuidRegex.test(val) || mockIdRegex.test(val)
+  },
+  'Invalid ID format'
+)
 
 // Project schemas
 export const createProjectSchema = z.object({
