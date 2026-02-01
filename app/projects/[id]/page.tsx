@@ -123,7 +123,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     return () => {
       cancelled = true
     }
-  }, [projectId, setNodes, setEdges, toast, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]) // Only re-run when projectId changes
 
   // Auto-save every 30 seconds
   useEffect(() => {

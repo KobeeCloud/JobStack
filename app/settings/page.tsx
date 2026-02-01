@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, ArrowLeft, User, Shield, Bell, Palette } from 'lucide-react'
+import { Boxes, ArrowLeft, User, Shield, Bell, Palette, Key } from 'lucide-react'
 import { ErrorBoundary } from '@/components/error-boundary'
-import { SettingsForm } from './settings-form'
+import { SettingsForm, DeleteAccountButton } from './settings-form'
+import { ChangePasswordForm } from './change-password-form'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -64,24 +65,19 @@ export default async function SettingsPage() {
                   Manage your account security settings
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Email Address</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
-                  <Button variant="outline" disabled>
-                    Change Email
-                  </Button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Password</p>
-                    <p className="text-sm text-muted-foreground">••••••••</p>
+                <div className="border-t pt-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Key className="h-4 w-4 text-muted-foreground" />
+                    <p className="font-medium">Change Password</p>
                   </div>
-                  <Button variant="outline" disabled>
-                    Change Password
-                  </Button>
+                  <ChangePasswordForm />
                 </div>
               </CardContent>
             </Card>
@@ -159,9 +155,7 @@ export default async function SettingsPage() {
                       Permanently delete your account and all data
                     </p>
                   </div>
-                  <Button variant="destructive" disabled>
-                    Delete Account
-                  </Button>
+                  <DeleteAccountButton user={user} />
                 </div>
               </CardContent>
             </Card>

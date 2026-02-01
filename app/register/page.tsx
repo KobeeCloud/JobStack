@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Boxes, Loader2, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { Boxes, Loader2, Eye, EyeOff, AlertCircle, CheckCircle, Github } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { registerSchema, type RegisterInput } from '@/lib/validation/schemas'
 import { toast } from 'sonner'
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,6 +34,31 @@ export default function RegisterPage() {
   })
 
   const password = watch('password')
+
+  const handleOAuthSignIn = async (provider: 'github' | 'google') => {
+    setOauthLoading(provider)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+        toast.error('Sign in failed', { description: error.message })
+      }
+    } catch (err: any) {
+      const errorMessage = err?.message || 'An unexpected error occurred.'
+      setError(errorMessage)
+      toast.error('Sign in failed', { description: errorMessage })
+    } finally {
+      setOauthLoading(null)
+    }
+  }
 
   const onSubmit = async (data: RegisterInput) => {
     setLoading(true)
@@ -200,6 +226,30 @@ export default function RegisterPage() {
               ) : (
                 'Create Account'
               )}
+            </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => handleOAuthSignIn('github')}
+              disabled={!!oauthLoading || loading || success}
+            >
+              {oauthLoading === 'github' ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Github className="mr-2 h-4 w-4" />
+              )}
+              Continue with GitHub
             </Button>
           </form>
           <div className="mt-6 text-center text-sm">

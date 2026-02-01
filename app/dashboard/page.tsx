@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, Plus, FolderOpen, LogOut, Settings, User, MoreVertical, Trash2, Edit, Copy } from 'lucide-react'
+import { Boxes, Plus, FolderOpen, LogOut, Settings, User, MoreVertical, Trash2, Edit, Copy, Building2 } from 'lucide-react'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Suspense } from 'react'
 import {
@@ -134,6 +134,12 @@ export default async function DashboardPage() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/organizations">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Organizations
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4" />
