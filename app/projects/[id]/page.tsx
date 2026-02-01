@@ -440,17 +440,20 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   )
 }
 
-// Next.js page component, pobiera projectId z params
+// Next.js page component - params is now a Promise in Next.js 15+
+import { use } from 'react'
+
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default function ProjectPage({ params }: PageProps) {
-  console.log('ProjectPage params:', params);
+  const resolvedParams = use(params)
+  console.log('ProjectPage params:', resolvedParams);
   return (
     <ReactFlowProvider>
       <ErrorBoundary>
-        <DiagramCanvas projectId={params.id} />
+        <DiagramCanvas projectId={resolvedParams.id} />
       </ErrorBoundary>
     </ReactFlowProvider>
   )

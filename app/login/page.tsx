@@ -17,7 +17,7 @@ import { loginSchema, type LoginInput } from '@/lib/validation/schemas'
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setAuthError] = useState<string | null>(null)
+  const [authError, setAuthError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -25,7 +25,6 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-    setError,
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   })
@@ -117,10 +116,10 @@ export default function LoginPage() {
                 </p>
               )}
             </div>
-            {error && (
+            {authError && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{authError}</AlertDescription>
               </Alert>
             )}
             <Button type="submit" className="w-full" disabled={loading}>

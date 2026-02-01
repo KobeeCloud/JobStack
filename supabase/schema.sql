@@ -1,422 +1,841 @@
--- =====================================================-- JobStack - Visual Infrastructure Planning Tool
+-- =====================================================-- =====================================================-- JobStack - Visual Infrastructure Planning Tool
 
--- JobStack - Visual Infrastructure Planning Tool-- Database Schema for Supabase
+-- JobStack - Visual Infrastructure Planning Tool
 
--- Database Schema for Supabase-- Run this SQL in your Supabase SQL Editor
+-- Database Schema for Supabase-- JobStack - Visual Infrastructure Planning Tool-- Database Schema for Supabase
 
 -- =====================================================
 
--- -- Enable UUID extension
+-- -- Database Schema for Supabase-- Run this SQL in your Supabase SQL Editor
+
+-- INSTRUCTIONS:
+
+-- 1. Go to Supabase Dashboard → SQL Editor-- =====================================================
+
+-- 2. Copy and paste this entire file
+
+-- 3. Click "Run" to execute-- -- Enable UUID extension
+
+-- =====================================================
 
 -- INSTRUCTIONS:CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Go to Supabase Dashboard → SQL Editor
+-- Enable required extensions
 
--- 2. Copy and paste this entire file-- =====================================================
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";-- 1. Go to Supabase Dashboard → SQL Editor
 
--- 3. Click "Run" to execute-- CLEAN UP (Safe - no errors if objects don't exist)
+
+
+-- =====================================================-- 2. Copy and paste this entire file-- =====================================================
+
+-- COMPLETE CLEANUP
+
+-- Drop everything in correct order (dependencies first)-- 3. Click "Run" to execute-- CLEAN UP (Safe - no errors if objects don't exist)
+
+-- =====================================================
 
 -- -- =====================================================
 
--- This script will:
+-- Drop all policies first
 
--- - Drop ALL existing tables, policies, triggers, functions-- Drop triggers (safe - IF EXISTS prevents errors)
+DO $$-- This script will:
 
--- - Create fresh tables with proper structureDO $$
+DECLARE
 
--- - Set up RLS (Row Level Security) policiesBEGIN
+    pol RECORD;-- - Drop ALL existing tables, policies, triggers, functions-- Drop triggers (safe - IF EXISTS prevents errors)
 
--- - Insert seed data (templates)    DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+BEGIN
 
--- =====================================================    DROP TRIGGER IF EXISTS set_projects_updated_at ON public.projects;
+    FOR pol IN -- - Create fresh tables with proper structureDO $$
 
-    DROP TRIGGER IF EXISTS set_diagrams_updated_at ON public.diagrams;
+        SELECT schemaname, tablename, policyname
 
--- Enable required extensions    DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
+        FROM pg_policies -- - Set up RLS (Row Level Security) policiesBEGIN
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";EXCEPTION
+        WHERE schemaname = 'public'
 
-    WHEN undefined_table THEN NULL;
+    LOOP-- - Insert seed data (templates)    DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
--- =====================================================    WHEN undefined_object THEN NULL;
+        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I',
 
--- COMPLETE CLEANUPEND $$;
+            pol.policyname, pol.schemaname, pol.tablename);-- =====================================================    DROP TRIGGER IF EXISTS set_projects_updated_at ON public.projects;
 
--- Drop everything in correct order (dependencies first)
+    END LOOP;
 
--- =====================================================-- Drop functions
+END $$;    DROP TRIGGER IF EXISTS set_diagrams_updated_at ON public.diagrams;
 
-DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
--- Step 1: Drop all policies first (they depend on tables)DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
+
+-- Drop triggers safely-- Enable required extensions    DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
 
 DO $$
 
-DECLARE-- Drop tables
+BEGINCREATE EXTENSION IF NOT EXISTS "uuid-ossp";EXCEPTION
 
-    pol RECORD;DROP TABLE IF EXISTS public.exports CASCADE;
+    DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
-BEGINDROP TABLE IF EXISTS public.project_shares CASCADE;
+EXCEPTION    WHEN undefined_table THEN NULL;
 
-    FOR pol IN DROP TABLE IF EXISTS public.templates CASCADE;
+    WHEN undefined_table THEN NULL;
 
-        SELECT schemaname, tablename, policyname DROP TABLE IF EXISTS public.diagrams CASCADE;
-
-        FROM pg_policies DROP TABLE IF EXISTS public.projects CASCADE;
-
-        WHERE schemaname = 'public'DROP TABLE IF EXISTS public.profiles CASCADE;
-
-    LOOP
-
-        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', -- =====================================================
-
-            pol.policyname, pol.schemaname, pol.tablename);-- CREATE TABLES
-
-    END LOOP;-- =====================================================
+    WHEN undefined_object THEN NULL;-- =====================================================    WHEN undefined_object THEN NULL;
 
 END $$;
 
--- Profiles table (extends Supabase auth.users)
+-- COMPLETE CLEANUPEND $$;
 
--- Step 2: Drop all triggersCREATE TABLE public.profiles (
+DROP TRIGGER IF EXISTS set_projects_updated_at ON public.projects;
 
-DO $$  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+DROP TRIGGER IF EXISTS set_diagrams_updated_at ON public.diagrams;-- Drop everything in correct order (dependencies first)
 
-DECLARE  email TEXT NOT NULL,
+DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
+
+-- =====================================================-- Drop functions
+
+-- Drop functions
+
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+
+DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
+
+-- Step 1: Drop all policies first (they depend on tables)DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
+
+-- Drop tables in correct order (children first)
+
+DROP TABLE IF EXISTS public.exports CASCADE;DO $$
+
+DROP TABLE IF EXISTS public.project_shares CASCADE;
+
+DROP TABLE IF EXISTS public.template_nodes CASCADE;DECLARE-- Drop tables
+
+DROP TABLE IF EXISTS public.templates CASCADE;
+
+DROP TABLE IF EXISTS public.diagrams CASCADE;    pol RECORD;DROP TABLE IF EXISTS public.exports CASCADE;
+
+DROP TABLE IF EXISTS public.projects CASCADE;
+
+DROP TABLE IF EXISTS public.profiles CASCADE;BEGINDROP TABLE IF EXISTS public.project_shares CASCADE;
+
+
+
+-- =====================================================    FOR pol IN DROP TABLE IF EXISTS public.templates CASCADE;
+
+-- CREATE TABLES
+
+-- =====================================================        SELECT schemaname, tablename, policyname DROP TABLE IF EXISTS public.diagrams CASCADE;
+
+
+
+-- Profiles table (extends Supabase auth.users)        FROM pg_policies DROP TABLE IF EXISTS public.projects CASCADE;
+
+CREATE TABLE public.profiles (
+
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,        WHERE schemaname = 'public'DROP TABLE IF EXISTS public.profiles CASCADE;
+
+    email TEXT NOT NULL,
+
+    full_name TEXT,    LOOP
+
+    avatar_url TEXT,
+
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', -- =====================================================
+
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+
+);            pol.policyname, pol.schemaname, pol.tablename);-- CREATE TABLES
+
+
+
+-- Projects table    END LOOP;-- =====================================================
+
+CREATE TABLE public.projects (
+
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,END $$;
+
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+
+    name TEXT NOT NULL,-- Profiles table (extends Supabase auth.users)
+
+    description TEXT,
+
+    cloud_provider TEXT DEFAULT 'aws' CHECK (cloud_provider IN ('aws', 'azure', 'gcp', 'multi')),-- Step 2: Drop all triggersCREATE TABLE public.profiles (
+
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'archived')),
+
+    settings JSONB DEFAULT '{}',DO $$  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()DECLARE  email TEXT NOT NULL,
+
+);
 
     trig RECORD;  full_name TEXT,
 
-BEGIN  avatar_url TEXT,
+-- Diagrams table (stores React Flow diagram data)
 
-    FOR trig IN   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+CREATE TABLE public.diagrams (BEGIN  avatar_url TEXT,
 
-        SELECT trigger_name, event_object_table   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 
-        FROM information_schema.triggers );
+    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,    FOR trig IN   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-        WHERE trigger_schema = 'public'
+    name TEXT NOT NULL DEFAULT 'Main Diagram',
+
+    nodes JSONB DEFAULT '[]',        SELECT trigger_name, event_object_table   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+
+    edges JSONB DEFAULT '[]',
+
+    viewport JSONB DEFAULT '{"x": 0, "y": 0, "zoom": 1}',        FROM information_schema.triggers );
+
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()        WHERE trigger_schema = 'public'
+
+);
 
     LOOP-- Projects table
 
-        EXECUTE format('DROP TRIGGER IF EXISTS %I ON public.%I', CREATE TABLE public.projects (
+-- Templates table
 
-            trig.trigger_name, trig.event_object_table);  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE public.templates (        EXECUTE format('DROP TRIGGER IF EXISTS %I ON public.%I', CREATE TABLE public.projects (
 
-    END LOOP;  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 
-END $$;  name TEXT NOT NULL,
+    name TEXT NOT NULL,            trig.trigger_name, trig.event_object_table);  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-  description TEXT,
+    description TEXT,
 
--- Also drop auth trigger if exists  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    category TEXT NOT NULL,    END LOOP;  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+
+    cloud_provider TEXT NOT NULL CHECK (cloud_provider IN ('aws', 'azure', 'gcp', 'multi')),
+
+    nodes JSONB DEFAULT '[]',END $$;  name TEXT NOT NULL,
+
+    edges JSONB DEFAULT '[]',
+
+    is_public BOOLEAN DEFAULT true,  description TEXT,
+
+    created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()-- Also drop auth trigger if exists  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+);
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 
+-- Project shares table (for collaboration)
+
+CREATE TABLE public.project_shares ();
+
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+
+    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,-- Step 3: Drop all functions
+
+    shared_with_email TEXT NOT NULL,
+
+    permission TEXT DEFAULT 'view' CHECK (permission IN ('view', 'edit', 'admin')),DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;-- Diagrams table (stores React Flow diagram state)
+
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    UNIQUE(project_id, shared_with_email)DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;CREATE TABLE public.diagrams (
+
 );
-
--- Step 3: Drop all functions
-
-DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;-- Diagrams table (stores React Flow diagram state)
-
-DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;CREATE TABLE public.diagrams (
 
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
--- Step 4: Drop all tables (CASCADE handles foreign keys)  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
+-- Exports table (track generated exports)
 
-DROP TABLE IF EXISTS public.exports CASCADE;  name TEXT NOT NULL DEFAULT 'Untitled Diagram',
+CREATE TABLE public.exports (-- Step 4: Drop all tables (CASCADE handles foreign keys)  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
 
-DROP TABLE IF EXISTS public.project_shares CASCADE;  data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 
-DROP TABLE IF EXISTS public.templates CASCADE;  thumbnail_url TEXT,
+    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,DROP TABLE IF EXISTS public.exports CASCADE;  name TEXT NOT NULL DEFAULT 'Untitled Diagram',
+
+    export_type TEXT NOT NULL CHECK (export_type IN ('terraform', 'cloudformation', 'pulumi', 'png', 'svg', 'json')),
+
+    file_url TEXT,DROP TABLE IF EXISTS public.project_shares CASCADE;  data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,
+
+    metadata JSONB DEFAULT '{}',
+
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()DROP TABLE IF EXISTS public.templates CASCADE;  thumbnail_url TEXT,
+
+);
 
 DROP TABLE IF EXISTS public.diagrams CASCADE;  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-DROP TABLE IF EXISTS public.projects CASCADE;  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- =====================================================
+
+-- INDEXESDROP TABLE IF EXISTS public.projects CASCADE;  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+
+-- =====================================================
 
 DROP TABLE IF EXISTS public.profiles CASCADE;);
 
+CREATE INDEX idx_projects_user_id ON public.projects(user_id);
 
+CREATE INDEX idx_diagrams_project_id ON public.diagrams(project_id);
 
--- =====================================================-- Templates table (pre-built architecture templates)
+CREATE INDEX idx_templates_category ON public.templates(category);
 
--- CREATE TABLESCREATE TABLE public.templates (
+CREATE INDEX idx_templates_cloud_provider ON public.templates(cloud_provider);-- =====================================================-- Templates table (pre-built architecture templates)
 
--- =====================================================  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE INDEX idx_project_shares_project_id ON public.project_shares(project_id);
 
-  name TEXT NOT NULL,
+CREATE INDEX idx_exports_project_id ON public.exports(project_id);-- CREATE TABLESCREATE TABLE public.templates (
 
--- Profiles table (extends Supabase auth.users)  description TEXT,
 
-CREATE TABLE public.profiles (  category TEXT NOT NULL CHECK (category IN ('startup', 'enterprise', 'microservices', 'side-project', 'gaming')),
 
-    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,  data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,
+-- =====================================================-- =====================================================  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-    email TEXT NOT NULL,  thumbnail_url TEXT,
+-- ROW LEVEL SECURITY (RLS)
 
-    full_name TEXT DEFAULT '',  is_public BOOLEAN DEFAULT true,
+-- =====================================================  name TEXT NOT NULL,
 
-    avatar_url TEXT DEFAULT '',  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
 
-    created_at TIMESTAMPTZ DEFAULT NOW(),  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 
-    updated_at TIMESTAMPTZ DEFAULT NOW());
+-- Enable RLS on all tables-- Profiles table (extends Supabase auth.users)  description TEXT,
 
-);
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Project shares table (for collaboration)
-
--- Projects tableCREATE TABLE public.project_shares (
-
-CREATE TABLE public.projects (  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
-
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,  shared_with_email TEXT NOT NULL,
-
-    name TEXT NOT NULL,  permission TEXT NOT NULL CHECK (permission IN ('view', 'edit')),
-
-    description TEXT,  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-    created_at TIMESTAMPTZ DEFAULT NOW(),  UNIQUE(project_id, shared_with_email)
-
-    updated_at TIMESTAMPTZ DEFAULT NOW());
-
-);
-
--- Exports table (track generated Terraform/Pulumi code exports)
-
--- Diagrams table (stores React Flow diagram state)CREATE TABLE public.exports (
-
-CREATE TABLE public.diagrams (  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),  diagram_id UUID REFERENCES public.diagrams(id) ON DELETE CASCADE NOT NULL,
-
-    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,  export_type TEXT NOT NULL CHECK (export_type IN ('terraform', 'pulumi', 'cloudformation')),
-
-    name TEXT NOT NULL DEFAULT 'Untitled Diagram',  code_content TEXT NOT NULL,
-
-    data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-
-    thumbnail_url TEXT,);
-
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-
-    updated_at TIMESTAMPTZ DEFAULT NOW()-- =====================================================
-
-);-- INDEXES FOR PERFORMANCE
-
--- =====================================================
-
--- Templates table (pre-built architecture templates)
-
-CREATE TABLE public.templates (CREATE INDEX idx_projects_user_id ON public.projects(user_id);
-
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),CREATE INDEX idx_projects_created_at ON public.projects(created_at DESC);
-
-    name TEXT NOT NULL,
-
-    description TEXT,CREATE INDEX idx_diagrams_project_id ON public.diagrams(project_id);
-
-    category TEXT NOT NULL,CREATE INDEX idx_diagrams_created_at ON public.diagrams(created_at DESC);
-
-    data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,
-
-    thumbnail_url TEXT,CREATE INDEX idx_templates_category ON public.templates(category);
-
-    is_public BOOLEAN DEFAULT true,CREATE INDEX idx_templates_is_public ON public.templates(is_public);
-
-    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,CREATE INDEX idx_templates_created_by ON public.templates(created_by);
-
-    created_at TIMESTAMPTZ DEFAULT NOW()
-
-);CREATE INDEX idx_project_shares_project_id ON public.project_shares(project_id);
-
-CREATE INDEX idx_project_shares_email ON public.project_shares(shared_with_email);
-
--- Project shares table (for collaboration)
-
-CREATE TABLE public.project_shares (CREATE INDEX idx_exports_diagram_id ON public.exports(diagram_id);
-
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),CREATE INDEX idx_exports_created_at ON public.exports(created_at DESC);
-
-    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
-
-    shared_with_email TEXT NOT NULL,-- =====================================================
-
-    permission TEXT NOT NULL DEFAULT 'view',-- ENABLE ROW LEVEL SECURITY (RLS)
-
-    created_at TIMESTAMPTZ DEFAULT NOW(),-- =====================================================
-
-    UNIQUE(project_id, shared_with_email)
-
-);ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
-
--- Exports table (track generated Terraform/Pulumi code exports)ALTER TABLE public.diagrams ENABLE ROW LEVEL SECURITY;
-
-CREATE TABLE public.exports (ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
-
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),ALTER TABLE public.project_shares ENABLE ROW LEVEL SECURITY;
-
-    diagram_id UUID REFERENCES public.diagrams(id) ON DELETE CASCADE NOT NULL,ALTER TABLE public.exports ENABLE ROW LEVEL SECURITY;
-
-    export_type TEXT NOT NULL DEFAULT 'terraform',
-
-    code_content TEXT NOT NULL,-- =====================================================
-
-    created_at TIMESTAMPTZ DEFAULT NOW()-- RLS POLICIES - Profiles
-
-);-- =====================================================
-
-
-
--- =====================================================CREATE POLICY "Public profiles are viewable by everyone"
-
--- INDEXES FOR PERFORMANCE  ON public.profiles FOR SELECT
-
--- =====================================================  USING (true);
-
-
-
-CREATE INDEX IF NOT EXISTS idx_projects_user_id ON public.projects(user_id);CREATE POLICY "Users can insert own profile"
-
-CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON public.projects(updated_at DESC);  ON public.profiles FOR INSERT
-
-CREATE INDEX IF NOT EXISTS idx_diagrams_project_id ON public.diagrams(project_id);  WITH CHECK (auth.uid() = id);
-
-CREATE INDEX IF NOT EXISTS idx_templates_is_public ON public.templates(is_public);
-
-CREATE INDEX IF NOT EXISTS idx_templates_category ON public.templates(category);CREATE POLICY "Users can update own profile"
-
-CREATE INDEX IF NOT EXISTS idx_project_shares_project_id ON public.project_shares(project_id);  ON public.profiles FOR UPDATE
-
-CREATE INDEX IF NOT EXISTS idx_project_shares_email ON public.project_shares(shared_with_email);  USING (auth.uid() = id);
-
-CREATE INDEX IF NOT EXISTS idx_exports_diagram_id ON public.exports(diagram_id);
-
-CREATE POLICY "Users can delete own profile"
-
--- =====================================================  ON public.profiles FOR DELETE
-
--- ROW LEVEL SECURITY (RLS)  USING (auth.uid() = id);
-
--- =====================================================
-
--- =====================================================
-
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;-- RLS POLICIES - Projects
-
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;-- =====================================================
+ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;CREATE TABLE public.profiles (  category TEXT NOT NULL CHECK (category IN ('startup', 'enterprise', 'microservices', 'side-project', 'gaming')),
 
 ALTER TABLE public.diagrams ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,  data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,
 
-ALTER TABLE public.project_shares ENABLE ROW LEVEL SECURITY;CREATE POLICY "Users can view own projects"
+ALTER TABLE public.project_shares ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.exports ENABLE ROW LEVEL SECURITY;  ON public.projects FOR SELECT
+ALTER TABLE public.exports ENABLE ROW LEVEL SECURITY;    email TEXT NOT NULL,  thumbnail_url TEXT,
 
-  USING (auth.uid() = user_id);
 
--- =====================================================
 
--- RLS POLICIESCREATE POLICY "Users can create own projects"
+-- Profiles policies    full_name TEXT DEFAULT '',  is_public BOOLEAN DEFAULT true,
 
--- =====================================================  ON public.projects FOR INSERT
+CREATE POLICY "Users can view own profile" ON public.profiles
 
-  WITH CHECK (auth.uid() = user_id);
+    FOR SELECT USING (auth.uid() = id);    avatar_url TEXT DEFAULT '',  created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
 
--- Profiles policies
 
-CREATE POLICY "profiles_select" ON public.profilesCREATE POLICY "Users can update own projects"
 
-    FOR SELECT USING (true);  ON public.projects FOR UPDATE
-
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "profiles_insert" ON public.profiles
-
-    FOR INSERT WITH CHECK (auth.uid() = id);CREATE POLICY "Users can delete own projects"
-
-  ON public.projects FOR DELETE
-
-CREATE POLICY "profiles_update" ON public.profiles  USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own profile" ON public.profiles    created_at TIMESTAMPTZ DEFAULT NOW(),  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 
     FOR UPDATE USING (auth.uid() = id);
 
--- =====================================================
+    updated_at TIMESTAMPTZ DEFAULT NOW());
 
-CREATE POLICY "profiles_delete" ON public.profiles-- RLS POLICIES - Diagrams
+CREATE POLICY "Users can insert own profile" ON public.profiles
 
-    FOR DELETE USING (auth.uid() = id);-- =====================================================
-
-
-
--- Projects policiesCREATE POLICY "Users can view diagrams in own projects"
-
-CREATE POLICY "projects_select" ON public.projects  ON public.diagrams FOR SELECT
-
-    FOR SELECT USING (auth.uid() = user_id);  USING (
-
-    EXISTS (
-
-CREATE POLICY "projects_insert" ON public.projects      SELECT 1 FROM public.projects
-
-    FOR INSERT WITH CHECK (auth.uid() = user_id);      WHERE projects.id = diagrams.project_id
-
-      AND projects.user_id = auth.uid()
-
-CREATE POLICY "projects_update" ON public.projects    )
-
-    FOR UPDATE USING (auth.uid() = user_id);  );
+    FOR INSERT WITH CHECK (auth.uid() = id););
 
 
 
-CREATE POLICY "projects_delete" ON public.projectsCREATE POLICY "Users can view diagrams in shared projects"
+-- Projects policies-- Project shares table (for collaboration)
 
-    FOR DELETE USING (auth.uid() = user_id);  ON public.diagrams FOR SELECT
+CREATE POLICY "Users can view own projects" ON public.projects
 
-  USING (
-
--- Diagrams policies    EXISTS (
-
-CREATE POLICY "diagrams_select" ON public.diagrams      SELECT 1 FROM public.project_shares ps
-
-    FOR SELECT USING (      JOIN public.projects p ON p.id = ps.project_id
-
-        EXISTS (      WHERE p.id = diagrams.project_id
-
-            SELECT 1 FROM public.projects p      AND ps.shared_with_email = (
-
-            WHERE p.id = diagrams.project_id        SELECT email FROM auth.users WHERE id = auth.uid()
-
-            AND p.user_id = auth.uid()      )
-
-        )    )
-
-    );  );
+    FOR SELECT USING (auth.uid() = user_id);-- Projects tableCREATE TABLE public.project_shares (
 
 
 
-CREATE POLICY "diagrams_insert" ON public.diagramsCREATE POLICY "Users can create diagrams in own projects"
+CREATE POLICY "Users can create projects" ON public.projectsCREATE TABLE public.projects (  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-    FOR INSERT WITH CHECK (  ON public.diagrams FOR INSERT
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
+
+CREATE POLICY "Users can update own projects" ON public.projects
+
+    FOR UPDATE USING (auth.uid() = user_id);    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,  shared_with_email TEXT NOT NULL,
+
+
+
+CREATE POLICY "Users can delete own projects" ON public.projects    name TEXT NOT NULL,  permission TEXT NOT NULL CHECK (permission IN ('view', 'edit')),
+
+    FOR DELETE USING (auth.uid() = user_id);
+
+    description TEXT,  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+-- Diagrams policies
+
+CREATE POLICY "Users can view diagrams of own projects" ON public.diagrams    created_at TIMESTAMPTZ DEFAULT NOW(),  UNIQUE(project_id, shared_with_email)
+
+    FOR SELECT USING (
+
+        EXISTS (    updated_at TIMESTAMPTZ DEFAULT NOW());
+
+            SELECT 1 FROM public.projects
+
+            WHERE projects.id = diagrams.project_id );
+
+            AND projects.user_id = auth.uid()
+
+        )-- Exports table (track generated Terraform/Pulumi code exports)
+
+    );
+
+-- Diagrams table (stores React Flow diagram state)CREATE TABLE public.exports (
+
+CREATE POLICY "Users can create diagrams in own projects" ON public.diagrams
+
+    FOR INSERT WITH CHECK (CREATE TABLE public.diagrams (  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+        EXISTS (
+
+            SELECT 1 FROM public.projects     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),  diagram_id UUID REFERENCES public.diagrams(id) ON DELETE CASCADE NOT NULL,
+
+            WHERE projects.id = diagrams.project_id
+
+            AND projects.user_id = auth.uid()    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,  export_type TEXT NOT NULL CHECK (export_type IN ('terraform', 'pulumi', 'cloudformation')),
+
+        )
+
+    );    name TEXT NOT NULL DEFAULT 'Untitled Diagram',  code_content TEXT NOT NULL,
+
+
+
+CREATE POLICY "Users can update diagrams in own projects" ON public.diagrams    data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+
+    FOR UPDATE USING (
+
+        EXISTS (    thumbnail_url TEXT,);
+
+            SELECT 1 FROM public.projects
+
+            WHERE projects.id = diagrams.project_id     created_at TIMESTAMPTZ DEFAULT NOW(),
+
+            AND projects.user_id = auth.uid()
+
+        )    updated_at TIMESTAMPTZ DEFAULT NOW()-- =====================================================
+
+    );
+
+);-- INDEXES FOR PERFORMANCE
+
+CREATE POLICY "Users can delete diagrams in own projects" ON public.diagrams
+
+    FOR DELETE USING (-- =====================================================
+
+        EXISTS (
+
+            SELECT 1 FROM public.projects -- Templates table (pre-built architecture templates)
+
+            WHERE projects.id = diagrams.project_id
+
+            AND projects.user_id = auth.uid()CREATE TABLE public.templates (CREATE INDEX idx_projects_user_id ON public.projects(user_id);
+
+        )
+
+    );    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),CREATE INDEX idx_projects_created_at ON public.projects(created_at DESC);
+
+
+
+-- Templates policies    name TEXT NOT NULL,
+
+CREATE POLICY "Anyone can view public templates" ON public.templates
+
+    FOR SELECT USING (is_public = true OR created_by = auth.uid());    description TEXT,CREATE INDEX idx_diagrams_project_id ON public.diagrams(project_id);
+
+
+
+CREATE POLICY "Users can create templates" ON public.templates    category TEXT NOT NULL,CREATE INDEX idx_diagrams_created_at ON public.diagrams(created_at DESC);
+
+    FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+    data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}'::jsonb,
+
+CREATE POLICY "Users can update own templates" ON public.templates
+
+    FOR UPDATE USING (auth.uid() = created_by);    thumbnail_url TEXT,CREATE INDEX idx_templates_category ON public.templates(category);
+
+
+
+CREATE POLICY "Users can delete own templates" ON public.templates    is_public BOOLEAN DEFAULT true,CREATE INDEX idx_templates_is_public ON public.templates(is_public);
+
+    FOR DELETE USING (auth.uid() = created_by);
+
+    created_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,CREATE INDEX idx_templates_created_by ON public.templates(created_by);
+
+-- Project shares policies
+
+CREATE POLICY "Project owners can manage shares" ON public.project_shares    created_at TIMESTAMPTZ DEFAULT NOW()
+
+    FOR ALL USING (
+
+        EXISTS ();CREATE INDEX idx_project_shares_project_id ON public.project_shares(project_id);
+
+            SELECT 1 FROM public.projects
+
+            WHERE projects.id = project_shares.project_id CREATE INDEX idx_project_shares_email ON public.project_shares(shared_with_email);
+
+            AND projects.user_id = auth.uid()
+
+        )-- Project shares table (for collaboration)
+
+    );
+
+CREATE TABLE public.project_shares (CREATE INDEX idx_exports_diagram_id ON public.exports(diagram_id);
+
+-- Exports policies
+
+CREATE POLICY "Users can view own exports" ON public.exports    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),CREATE INDEX idx_exports_created_at ON public.exports(created_at DESC);
+
+    FOR SELECT USING (
+
+        EXISTS (    project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
+
+            SELECT 1 FROM public.projects
+
+            WHERE projects.id = exports.project_id     shared_with_email TEXT NOT NULL,-- =====================================================
+
+            AND projects.user_id = auth.uid()
+
+        )    permission TEXT NOT NULL DEFAULT 'view',-- ENABLE ROW LEVEL SECURITY (RLS)
+
+    );
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),-- =====================================================
+
+CREATE POLICY "Users can create exports for own projects" ON public.exports
+
+    FOR INSERT WITH CHECK (    UNIQUE(project_id, shared_with_email)
+
+        EXISTS (
+
+            SELECT 1 FROM public.projects );ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+            WHERE projects.id = exports.project_id
+
+            AND projects.user_id = auth.uid()ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+
+        )
+
+    );-- Exports table (track generated Terraform/Pulumi code exports)ALTER TABLE public.diagrams ENABLE ROW LEVEL SECURITY;
+
+
+
+-- =====================================================CREATE TABLE public.exports (ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
+
+-- FUNCTIONS
+
+-- =====================================================    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),ALTER TABLE public.project_shares ENABLE ROW LEVEL SECURITY;
+
+
+
+-- Function to handle updated_at timestamp    diagram_id UUID REFERENCES public.diagrams(id) ON DELETE CASCADE NOT NULL,ALTER TABLE public.exports ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+
+RETURNS TRIGGER AS $$    export_type TEXT NOT NULL DEFAULT 'terraform',
+
+BEGIN
+
+    NEW.updated_at = NOW();    code_content TEXT NOT NULL,-- =====================================================
+
+    RETURN NEW;
+
+END;    created_at TIMESTAMPTZ DEFAULT NOW()-- RLS POLICIES - Profiles
+
+$$ LANGUAGE plpgsql;
+
+);-- =====================================================
+
+-- Function to create profile on user signup
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+
+RETURNS TRIGGER AS $$
+
+BEGIN-- =====================================================CREATE POLICY "Public profiles are viewable by everyone"
+
+    INSERT INTO public.profiles (id, email, full_name, avatar_url)
+
+    VALUES (-- INDEXES FOR PERFORMANCE  ON public.profiles FOR SELECT
+
+        NEW.id,
+
+        NEW.email,-- =====================================================  USING (true);
+
+        COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+
+        COALESCE(NEW.raw_user_meta_data->>'avatar_url', '')
+
+    );
+
+    RETURN NEW;CREATE INDEX IF NOT EXISTS idx_projects_user_id ON public.projects(user_id);CREATE POLICY "Users can insert own profile"
+
+END;
+
+$$ LANGUAGE plpgsql SECURITY DEFINER;CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON public.projects(updated_at DESC);  ON public.profiles FOR INSERT
+
+
+
+-- =====================================================CREATE INDEX IF NOT EXISTS idx_diagrams_project_id ON public.diagrams(project_id);  WITH CHECK (auth.uid() = id);
+
+-- TRIGGERS
+
+-- =====================================================CREATE INDEX IF NOT EXISTS idx_templates_is_public ON public.templates(is_public);
+
+
+
+-- Updated_at triggersCREATE INDEX IF NOT EXISTS idx_templates_category ON public.templates(category);CREATE POLICY "Users can update own profile"
+
+CREATE TRIGGER set_profiles_updated_at
+
+    BEFORE UPDATE ON public.profilesCREATE INDEX IF NOT EXISTS idx_project_shares_project_id ON public.project_shares(project_id);  ON public.profiles FOR UPDATE
+
+    FOR EACH ROW
+
+    EXECUTE FUNCTION public.handle_updated_at();CREATE INDEX IF NOT EXISTS idx_project_shares_email ON public.project_shares(shared_with_email);  USING (auth.uid() = id);
+
+
+
+CREATE TRIGGER set_projects_updated_atCREATE INDEX IF NOT EXISTS idx_exports_diagram_id ON public.exports(diagram_id);
+
+    BEFORE UPDATE ON public.projects
+
+    FOR EACH ROWCREATE POLICY "Users can delete own profile"
+
+    EXECUTE FUNCTION public.handle_updated_at();
+
+-- =====================================================  ON public.profiles FOR DELETE
+
+CREATE TRIGGER set_diagrams_updated_at
+
+    BEFORE UPDATE ON public.diagrams-- ROW LEVEL SECURITY (RLS)  USING (auth.uid() = id);
+
+    FOR EACH ROW
+
+    EXECUTE FUNCTION public.handle_updated_at();-- =====================================================
+
+
+
+-- Auto-create profile on signup-- =====================================================
+
+CREATE TRIGGER on_auth_user_created
+
+    AFTER INSERT ON auth.usersALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;-- RLS POLICIES - Projects
+
+    FOR EACH ROW
+
+    EXECUTE FUNCTION public.handle_new_user();ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;-- =====================================================
+
+
+
+-- =====================================================ALTER TABLE public.diagrams ENABLE ROW LEVEL SECURITY;
+
+-- SEED DATA - Default Templates
+
+-- =====================================================ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
+
+
+
+INSERT INTO public.templates (name, description, category, cloud_provider, nodes, edges, is_public) VALUESALTER TABLE public.project_shares ENABLE ROW LEVEL SECURITY;CREATE POLICY "Users can view own projects"
+
+(
+
+    'Basic Web Application',ALTER TABLE public.exports ENABLE ROW LEVEL SECURITY;  ON public.projects FOR SELECT
+
+    'Simple web app with load balancer, web servers, and database',
+
+    'web',  USING (auth.uid() = user_id);
+
+    'aws',
+
+    '[-- =====================================================
+
+        {"id": "alb-1", "type": "awsNode", "position": {"x": 250, "y": 50}, "data": {"label": "Application Load Balancer", "service": "alb", "provider": "aws"}},
+
+        {"id": "ec2-1", "type": "awsNode", "position": {"x": 100, "y": 200}, "data": {"label": "Web Server 1", "service": "ec2", "provider": "aws"}},-- RLS POLICIESCREATE POLICY "Users can create own projects"
+
+        {"id": "ec2-2", "type": "awsNode", "position": {"x": 400, "y": 200}, "data": {"label": "Web Server 2", "service": "ec2", "provider": "aws"}},
+
+        {"id": "rds-1", "type": "awsNode", "position": {"x": 250, "y": 350}, "data": {"label": "PostgreSQL Database", "service": "rds", "provider": "aws"}}-- =====================================================  ON public.projects FOR INSERT
+
+    ]',
+
+    '[  WITH CHECK (auth.uid() = user_id);
+
+        {"id": "e1", "source": "alb-1", "target": "ec2-1"},
+
+        {"id": "e2", "source": "alb-1", "target": "ec2-2"},-- Profiles policies
+
+        {"id": "e3", "source": "ec2-1", "target": "rds-1"},
+
+        {"id": "e4", "source": "ec2-2", "target": "rds-1"}CREATE POLICY "profiles_select" ON public.profilesCREATE POLICY "Users can update own projects"
+
+    ]',
+
+    true    FOR SELECT USING (true);  ON public.projects FOR UPDATE
+
+),
+
+(  USING (auth.uid() = user_id);
+
+    'Serverless API',
+
+    'API Gateway with Lambda functions and DynamoDB',CREATE POLICY "profiles_insert" ON public.profiles
+
+    'serverless',
+
+    'aws',    FOR INSERT WITH CHECK (auth.uid() = id);CREATE POLICY "Users can delete own projects"
+
+    '[
+
+        {"id": "apigw-1", "type": "awsNode", "position": {"x": 250, "y": 50}, "data": {"label": "API Gateway", "service": "apigateway", "provider": "aws"}},  ON public.projects FOR DELETE
+
+        {"id": "lambda-1", "type": "awsNode", "position": {"x": 100, "y": 200}, "data": {"label": "Auth Function", "service": "lambda", "provider": "aws"}},
+
+        {"id": "lambda-2", "type": "awsNode", "position": {"x": 400, "y": 200}, "data": {"label": "API Function", "service": "lambda", "provider": "aws"}},CREATE POLICY "profiles_update" ON public.profiles  USING (auth.uid() = user_id);
+
+        {"id": "dynamo-1", "type": "awsNode", "position": {"x": 250, "y": 350}, "data": {"label": "DynamoDB Table", "service": "dynamodb", "provider": "aws"}}
+
+    ]',    FOR UPDATE USING (auth.uid() = id);
+
+    '[
+
+        {"id": "e1", "source": "apigw-1", "target": "lambda-1"},-- =====================================================
+
+        {"id": "e2", "source": "apigw-1", "target": "lambda-2"},
+
+        {"id": "e3", "source": "lambda-2", "target": "dynamo-1"}CREATE POLICY "profiles_delete" ON public.profiles-- RLS POLICIES - Diagrams
+
+    ]',
+
+    true    FOR DELETE USING (auth.uid() = id);-- =====================================================
+
+),
+
+(
+
+    'Microservices with Kubernetes',
+
+    'EKS cluster with multiple services',-- Projects policiesCREATE POLICY "Users can view diagrams in own projects"
+
+    'containers',
+
+    'aws',CREATE POLICY "projects_select" ON public.projects  ON public.diagrams FOR SELECT
+
+    '[
+
+        {"id": "alb-1", "type": "awsNode", "position": {"x": 250, "y": 50}, "data": {"label": "Application Load Balancer", "service": "alb", "provider": "aws"}},    FOR SELECT USING (auth.uid() = user_id);  USING (
+
+        {"id": "eks-1", "type": "awsNode", "position": {"x": 250, "y": 200}, "data": {"label": "EKS Cluster", "service": "eks", "provider": "aws"}},
+
+        {"id": "ecr-1", "type": "awsNode", "position": {"x": 500, "y": 200}, "data": {"label": "Container Registry", "service": "ecr", "provider": "aws"}},    EXISTS (
+
+        {"id": "rds-1", "type": "awsNode", "position": {"x": 250, "y": 350}, "data": {"label": "PostgreSQL Database", "service": "rds", "provider": "aws"}}
+
+    ]',CREATE POLICY "projects_insert" ON public.projects      SELECT 1 FROM public.projects
+
+    '[
+
+        {"id": "e1", "source": "alb-1", "target": "eks-1"},    FOR INSERT WITH CHECK (auth.uid() = user_id);      WHERE projects.id = diagrams.project_id
+
+        {"id": "e2", "source": "ecr-1", "target": "eks-1"},
+
+        {"id": "e3", "source": "eks-1", "target": "rds-1"}      AND projects.user_id = auth.uid()
+
+    ]',
+
+    trueCREATE POLICY "projects_update" ON public.projects    )
+
+),
+
+(    FOR UPDATE USING (auth.uid() = user_id);  );
+
+    'Static Website with CDN',
+
+    'S3 hosted website with CloudFront distribution',
+
+    'web',
+
+    'aws',CREATE POLICY "projects_delete" ON public.projectsCREATE POLICY "Users can view diagrams in shared projects"
+
+    '[
+
+        {"id": "cf-1", "type": "awsNode", "position": {"x": 250, "y": 50}, "data": {"label": "CloudFront CDN", "service": "cloudfront", "provider": "aws"}},    FOR DELETE USING (auth.uid() = user_id);  ON public.diagrams FOR SELECT
+
+        {"id": "s3-1", "type": "awsNode", "position": {"x": 250, "y": 200}, "data": {"label": "S3 Bucket", "service": "s3", "provider": "aws"}},
+
+        {"id": "r53-1", "type": "awsNode", "position": {"x": 500, "y": 50}, "data": {"label": "Route 53", "service": "route53", "provider": "aws"}}  USING (
+
+    ]',
+
+    '[-- Diagrams policies    EXISTS (
+
+        {"id": "e1", "source": "r53-1", "target": "cf-1"},
+
+        {"id": "e2", "source": "cf-1", "target": "s3-1"}CREATE POLICY "diagrams_select" ON public.diagrams      SELECT 1 FROM public.project_shares ps
+
+    ]',
+
+    true    FOR SELECT USING (      JOIN public.projects p ON p.id = ps.project_id
+
+),
+
+(        EXISTS (      WHERE p.id = diagrams.project_id
+
+    'Data Pipeline',
+
+    'ETL pipeline with S3, Lambda, and Redshift',            SELECT 1 FROM public.projects p      AND ps.shared_with_email = (
+
+    'data',
+
+    'aws',            WHERE p.id = diagrams.project_id        SELECT email FROM auth.users WHERE id = auth.uid()
+
+    '[
+
+        {"id": "s3-1", "type": "awsNode", "position": {"x": 100, "y": 100}, "data": {"label": "Raw Data Bucket", "service": "s3", "provider": "aws"}},            AND p.user_id = auth.uid()      )
+
+        {"id": "lambda-1", "type": "awsNode", "position": {"x": 250, "y": 100}, "data": {"label": "Transform Function", "service": "lambda", "provider": "aws"}},
+
+        {"id": "s3-2", "type": "awsNode", "position": {"x": 400, "y": 100}, "data": {"label": "Processed Bucket", "service": "s3", "provider": "aws"}},        )    )
+
+        {"id": "redshift-1", "type": "awsNode", "position": {"x": 550, "y": 100}, "data": {"label": "Redshift Cluster", "service": "redshift", "provider": "aws"}}
+
+    ]',    );  );
+
+    '[
+
+        {"id": "e1", "source": "s3-1", "target": "lambda-1"},
+
+        {"id": "e2", "source": "lambda-1", "target": "s3-2"},
+
+        {"id": "e3", "source": "s3-2", "target": "redshift-1"}CREATE POLICY "diagrams_insert" ON public.diagramsCREATE POLICY "Users can create diagrams in own projects"
+
+    ]',
+
+    true    FOR INSERT WITH CHECK (  ON public.diagrams FOR INSERT
+
+);
 
         EXISTS (  WITH CHECK (
 
-            SELECT 1 FROM public.projects p    EXISTS (
+-- =====================================================
+
+-- GRANT PERMISSIONS            SELECT 1 FROM public.projects p    EXISTS (
+
+-- =====================================================
 
             WHERE p.id = diagrams.project_id      SELECT 1 FROM public.projects
 
-            AND p.user_id = auth.uid()      WHERE projects.id = diagrams.project_id
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
 
-        )      AND projects.user_id = auth.uid()
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;            AND p.user_id = auth.uid()      WHERE projects.id = diagrams.project_id
 
-    );    )
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 
-  );
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;        )      AND projects.user_id = auth.uid()
+
+
+
+-- =====================================================    );    )
+
+-- DONE!
+
+-- =====================================================  );
+
 
 CREATE POLICY "diagrams_update" ON public.diagrams
 
