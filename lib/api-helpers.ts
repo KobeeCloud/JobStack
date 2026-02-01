@@ -66,7 +66,7 @@ export async function applyRateLimit(
  * Wrapper for API route handlers with authentication, validation, and error handling
  */
 export function createApiHandler<T = unknown>(
-  handler: (req: NextRequest, context: { auth: AuthenticatedRequest; body?: T }) => Promise<NextResponse>,
+  handler: (req: NextRequest, context: { auth: AuthenticatedRequest; body?: T }, routeContext?: any) => Promise<NextResponse>,
   options?: {
     requireAuth?: boolean
     validateBody?: ZodSchema<T>
@@ -74,7 +74,7 @@ export function createApiHandler<T = unknown>(
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   }
 ) {
-  return async (request: NextRequest, context?: any): Promise<NextResponse> => {
+  return async (request: NextRequest, routeContext?: any): Promise<NextResponse> => {
     try {
       // Check HTTP method
       if (options?.method && request.method !== options.method) {
@@ -108,8 +108,8 @@ export function createApiHandler<T = unknown>(
         body = await validateRequestBody(request, options.validateBody)
       }
 
-      // Call handler - auth can be null for public endpoints
-      return await handler(request, { auth: auth as any, body })
+      // Call handler - pass routeContext for dynamic routes
+      return await handler(request, { auth: auth as any, body }, routeContext)
     } catch (error) {
       return handleApiError(error)
     }

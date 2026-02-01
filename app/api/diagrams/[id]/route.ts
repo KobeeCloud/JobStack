@@ -49,8 +49,8 @@ async function verifyDiagramAccess(
 }
 
 export const GET = createApiHandler(
-  async (request: NextRequest, { auth }, context?: { params: Promise<{ id: string }> }) => {
-    if (!context) {
+  async (request: NextRequest, { auth }, context?: any) => {
+    if (!context?.params) {
       throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
     }
 
@@ -65,8 +65,8 @@ export const GET = createApiHandler(
 )
 
 export const PUT = createApiHandler(
-  async (request: NextRequest, { auth, body }, context?: { params: Promise<{ id: string }> }) => {
-    if (!context) {
+  async (request: NextRequest, { auth, body }, context?: any) => {
+    if (!context?.params) {
       throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
     }
 
@@ -117,8 +117,8 @@ export const PUT = createApiHandler(
 )
 
 export const DELETE = createApiHandler(
-  async (request: NextRequest, { auth }, context?: { params: Promise<{ id: string }> }) => {
-    if (!context) {
+  async (request: NextRequest, { auth }, context?: any) => {
+    if (!context?.params) {
       throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
     }
 

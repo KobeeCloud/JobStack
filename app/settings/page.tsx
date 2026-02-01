@@ -83,9 +83,6 @@ export default async function SettingsPage() {
                     Change Password
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Security settings require a real Supabase backend. Configure your environment variables to enable these features.
-                </p>
               </CardContent>
             </Card>
 
@@ -166,9 +163,6 @@ export default async function SettingsPage() {
                     Delete Account
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Account deletion requires a real Supabase backend.
-                </p>
               </CardContent>
             </Card>
           </div>
