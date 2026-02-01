@@ -28,7 +28,7 @@ CREATE TABLE public.profiles (
 
 CREATE TABLE public.projects (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
     cloud_provider TEXT DEFAULT 'aws',
@@ -138,12 +138,6 @@ CREATE TRIGGER set_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH
 CREATE TRIGGER set_projects_updated_at BEFORE UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER set_diagrams_updated_at BEFORE UPDATE ON public.diagrams FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Seed templates
-INSERT INTO public.templates (name, description, category, cloud_provider, nodes, edges, is_public) VALUES
-('Basic Web App', 'Web app with load balancer and database', 'web', 'aws', '[]', '[]', true),
-('Serverless API', 'API Gateway with Lambda and DynamoDB', 'serverless', 'aws', '[]', '[]', true),
-('Microservices', 'EKS cluster with services', 'containers', 'aws', '[]', '[]', true);
 
 -- Permissions
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
