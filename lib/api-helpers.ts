@@ -92,6 +92,14 @@ export function createApiHandler<T = unknown>(
       let auth: AuthenticatedRequest | null = null
       if (options?.requireAuth !== false) {
         auth = await getAuthenticatedUser(request)
+      } else {
+        // For optional auth endpoints, try to get user but don't fail
+        try {
+          auth = await getAuthenticatedUser(request)
+        } catch {
+          // User not logged in - that's ok for public endpoints
+          auth = null
+        }
       }
 
       // Validate request body if schema provided
@@ -100,8 +108,8 @@ export function createApiHandler<T = unknown>(
         body = await validateRequestBody(request, options.validateBody)
       }
 
-      // Call handler
-      return await handler(request, { auth: auth!, body })
+      // Call handler - auth can be null for public endpoints
+      return await handler(request, { auth: auth as any, body })
     } catch (error) {
       return handleApiError(error)
     }

@@ -140,6 +140,15 @@ export const GET = createApiHandler(
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
 
+    // If no auth/supabase (mock mode or not logged in), return default templates
+    if (!auth?.supabase) {
+      log.info('Using default templates (no auth)')
+      const filteredDefaults = category
+        ? defaultTemplates.filter(t => t.category === category)
+        : defaultTemplates
+      return NextResponse.json(filteredDefaults)
+    }
+
     let query = auth.supabase
       .from('templates')
       .select('*')
