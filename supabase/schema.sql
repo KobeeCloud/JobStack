@@ -167,30 +167,32 @@ CREATE POLICY "orgs_update" ON public.organizations FOR UPDATE USING (
 );
 CREATE POLICY "orgs_delete" ON public.organizations FOR DELETE USING (owner_id = auth.uid());
 
--- Organization members policies
+-- Organization members policies (avoid recursive queries by using organizations table directly)
 CREATE POLICY "org_members_select" ON public.organization_members FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.organization_members om WHERE om.organization_id = organization_id AND om.user_id = auth.uid())
+    user_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
 );
 CREATE POLICY "org_members_insert" ON public.organization_members FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid()) OR
-    EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = organization_members.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
+    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
+);
+CREATE POLICY "org_members_update" ON public.organization_members FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
 );
 CREATE POLICY "org_members_delete" ON public.organization_members FOR DELETE USING (
     user_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid()) OR
-    EXISTS (SELECT 1 FROM public.organization_members om WHERE om.organization_id = organization_id AND om.user_id = auth.uid() AND om.role IN ('owner', 'admin'))
+    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
 );
 
--- Organization invites policies
+-- Organization invites policies (avoid recursive queries)
 CREATE POLICY "org_invites_select" ON public.organization_invites FOR SELECT USING (
     email = (SELECT email FROM auth.users WHERE id = auth.uid()) OR
-    EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = organization_invites.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
+    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
 );
 CREATE POLICY "org_invites_insert" ON public.organization_invites FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = organization_invites.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
+    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
 );
 CREATE POLICY "org_invites_delete" ON public.organization_invites FOR DELETE USING (
-    EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = organization_invites.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
+    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
 );
 
 -- Projects policies (personal + organization)
