@@ -150,120 +150,55 @@ ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_shares ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.exports ENABLE ROW LEVEL SECURITY;
 
--- Profiles policies
+-- Profiles policies (simple - user can only access their own profile)
 CREATE POLICY "profiles_select" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "profiles_update" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "profiles_insert" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Organizations policies
-CREATE POLICY "orgs_select" ON public.organizations FOR SELECT USING (
-    owner_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = id AND user_id = auth.uid())
-);
+-- Organizations policies (simple - based on owner_id only, no cross-table queries)
+CREATE POLICY "orgs_select" ON public.organizations FOR SELECT USING (owner_id = auth.uid());
 CREATE POLICY "orgs_insert" ON public.organizations FOR INSERT WITH CHECK (owner_id = auth.uid());
-CREATE POLICY "orgs_update" ON public.organizations FOR UPDATE USING (
-    owner_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = id AND user_id = auth.uid() AND role IN ('owner', 'admin'))
-);
+CREATE POLICY "orgs_update" ON public.organizations FOR UPDATE USING (owner_id = auth.uid());
 CREATE POLICY "orgs_delete" ON public.organizations FOR DELETE USING (owner_id = auth.uid());
 
--- Organization members policies (avoid recursive queries by using organizations table directly)
-CREATE POLICY "org_members_select" ON public.organization_members FOR SELECT USING (
-    user_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
-);
-CREATE POLICY "org_members_insert" ON public.organization_members FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
-);
-CREATE POLICY "org_members_update" ON public.organization_members FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
-);
-CREATE POLICY "org_members_delete" ON public.organization_members FOR DELETE USING (
-    user_id = auth.uid() OR
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
-);
+-- Organization members policies (simple - user can see their own memberships, owner can manage)
+CREATE POLICY "org_members_select" ON public.organization_members FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "org_members_insert" ON public.organization_members FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "org_members_update" ON public.organization_members FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "org_members_delete" ON public.organization_members FOR DELETE USING (user_id = auth.uid());
 
--- Organization invites policies (avoid recursive queries)
+-- Organization invites policies (simple)
 CREATE POLICY "org_invites_select" ON public.organization_invites FOR SELECT USING (
-    email = (SELECT email FROM auth.users WHERE id = auth.uid()) OR
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
+    email = (SELECT email FROM auth.users WHERE id = auth.uid())
 );
-CREATE POLICY "org_invites_insert" ON public.organization_invites FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
-);
-CREATE POLICY "org_invites_delete" ON public.organization_invites FOR DELETE USING (
-    EXISTS (SELECT 1 FROM public.organizations WHERE id = organization_id AND owner_id = auth.uid())
-);
+CREATE POLICY "org_invites_insert" ON public.organization_invites FOR INSERT WITH CHECK (invited_by = auth.uid());
+CREATE POLICY "org_invites_delete" ON public.organization_invites FOR DELETE USING (invited_by = auth.uid());
 
--- Projects policies (personal + organization)
-CREATE POLICY "projects_select" ON public.projects FOR SELECT USING (
-    user_id = auth.uid() OR
-    (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid()
-    ))
-);
-CREATE POLICY "projects_insert" ON public.projects FOR INSERT WITH CHECK (
-    user_id = auth.uid() AND (
-        organization_id IS NULL OR
-        EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid())
-    )
-);
-CREATE POLICY "projects_update" ON public.projects FOR UPDATE USING (
-    user_id = auth.uid() OR
-    (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin', 'member')
-    ))
-);
-CREATE POLICY "projects_delete" ON public.projects FOR DELETE USING (
-    user_id = auth.uid() OR
-    (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin')
-    ))
-);
+-- Projects policies (simple - user_id based only)
+CREATE POLICY "projects_select" ON public.projects FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "projects_insert" ON public.projects FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "projects_update" ON public.projects FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "projects_delete" ON public.projects FOR DELETE USING (user_id = auth.uid());
 
--- Diagrams policies
+-- Diagrams policies (through projects)
 CREATE POLICY "diagrams_select" ON public.diagrams FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND (
-        user_id = auth.uid() OR
-        (organization_id IS NOT NULL AND EXISTS (
-            SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid()
-        ))
-    ))
+    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
 );
 CREATE POLICY "diagrams_insert" ON public.diagrams FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND (
-        user_id = auth.uid() OR
-        (organization_id IS NOT NULL AND EXISTS (
-            SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid()
-        ))
-    ))
+    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
 );
 CREATE POLICY "diagrams_update" ON public.diagrams FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND (
-        user_id = auth.uid() OR
-        (organization_id IS NOT NULL AND EXISTS (
-            SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin', 'member')
-        ))
-    ))
+    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
 );
 CREATE POLICY "diagrams_delete" ON public.diagrams FOR DELETE USING (
-    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND (
-        user_id = auth.uid() OR
-        (organization_id IS NOT NULL AND EXISTS (
-            SELECT 1 FROM public.organization_members WHERE organization_id = projects.organization_id AND user_id = auth.uid() AND role IN ('owner', 'admin')
-        ))
-    ))
+    EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
 );
 
--- Templates policies
-CREATE POLICY "templates_select" ON public.templates FOR SELECT USING (
-    is_public = true OR
-    created_by = auth.uid() OR
-    (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members WHERE organization_id = templates.organization_id AND user_id = auth.uid()
-    ))
-);
-CREATE POLICY "templates_insert" ON public.templates FOR INSERT WITH CHECK (auth.uid() = created_by);
+-- Templates policies (public readable, owner writable)
+CREATE POLICY "templates_select" ON public.templates FOR SELECT USING (is_public = true OR created_by = auth.uid());
+CREATE POLICY "templates_insert" ON public.templates FOR INSERT WITH CHECK (created_by = auth.uid());
+CREATE POLICY "templates_update" ON public.templates FOR UPDATE USING (created_by = auth.uid());
+CREATE POLICY "templates_delete" ON public.templates FOR DELETE USING (created_by = auth.uid());
 
 -- Shares and exports policies
 CREATE POLICY "shares_all" ON public.project_shares FOR ALL USING (
