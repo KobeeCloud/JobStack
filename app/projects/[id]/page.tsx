@@ -264,6 +264,23 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     setConfigPanelOpen(true)
   }, [])
 
+  // Listen for configure button clicks from nodes
+  useEffect(() => {
+    const handleConfigureNode = (e: CustomEvent) => {
+      const { nodeId } = e.detail
+      const node = nodes.find(n => n.id === nodeId)
+      if (node) {
+        setSelectedNode(node)
+        setConfigPanelOpen(true)
+      }
+    }
+
+    window.addEventListener('configure-node', handleConfigureNode as EventListener)
+    return () => {
+      window.removeEventListener('configure-node', handleConfigureNode as EventListener)
+    }
+  }, [nodes])
+
   const handleConfigUpdate = useCallback((nodeId: string, config: NodeConfig) => {
     setNodes((nds) =>
       nds.map((node) =>
@@ -507,6 +524,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             fitViewOptions={{ padding: 0.2 }}
             deleteKeyCode={['Backspace', 'Delete']}
             multiSelectionKeyCode={['Control', 'Meta']}
+            panOnDrag={true}
+            panOnScroll={false}
+            zoomOnScroll={true}
+            zoomOnPinch={true}
+            zoomOnDoubleClick={false}
+            selectNodesOnDrag={false}
           >
             <Background gap={20} size={1} color="#e5e7eb" />
             <Controls showInteractive={false} />

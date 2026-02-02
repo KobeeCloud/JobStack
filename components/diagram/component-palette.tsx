@@ -34,11 +34,11 @@ export function ComponentPalette({
   const providerFilteredComponents = useMemo(() => {
     let filtered = components
 
-    // Filter by cloud provider
+    // Filter by cloud provider - STRICT filtering
     if (cloudProvider) {
       filtered = filtered.filter((c) => {
-        // Include generic components (no provider) and matching provider
-        if (!c.provider) return true
+        // Only include components without provider (generic) OR exact match
+        if (!c.provider || c.provider === 'generic') return true
         return c.provider === cloudProvider
       })
     }
@@ -46,7 +46,7 @@ export function ComponentPalette({
     // Filter by project types (iaas, paas, saas)
     if (projectTypes && projectTypes.length > 0) {
       filtered = filtered.filter((c) => {
-        // Include generic components
+        // Include generic components OR matching service type
         if (!c.serviceType || c.serviceType === 'generic') return true
         return projectTypes.includes(c.serviceType)
       })
@@ -101,8 +101,8 @@ export function ComponentPalette({
   }
 
   return (
-    <div className="w-72 border-r bg-muted/20 flex flex-col">
-      <div className="p-4 border-b space-y-3">
+    <div className="w-72 border-r bg-muted/20 flex flex-col h-full overflow-hidden">
+      <div className="p-4 border-b space-y-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Components</h3>
           {cloudProvider && (

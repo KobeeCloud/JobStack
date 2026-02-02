@@ -120,7 +120,7 @@ export default function NewOrganizationPage() {
       if (memberError) throw memberError
 
       toast.success('Organization created successfully!')
-      router.push(`/organizations/${data.slug}`)
+      router.push('/organizations')
     } catch (error: any) {
       toast.error('Failed to create organization', { description: error.message })
     } finally {
