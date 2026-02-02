@@ -24,11 +24,14 @@ import { ComponentPalette } from '@/components/diagram/component-palette'
 import { CustomNode } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
+import { NodeConfigPanel } from '@/components/diagram/node-config-panel'
 import { calculateInfrastructureCost } from '@/lib/cost-calculator'
 import { useToast } from '@/hooks/use-toast'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
 import { CloudProvider, ServiceType } from '@/lib/catalog'
+import type { NodeConfig } from '@/lib/node-config-schemas'
+import { createClient } from '@/lib/supabase/client'
 
 const nodeTypes = { custom: CustomNode }
 let nodeId = 0
@@ -62,6 +65,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [diagramId, setDiagramId] = useState<string | null>(null)
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null)
+  const [configPanelOpen, setConfigPanelOpen] = useState(false)
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const router = useRouter()
   const { toast } = useToast()
@@ -181,6 +186,45 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }, [nodes, edges, projectId, diagramId])
 
+  // Realtime collaboration
+  useEffect(() => {
+    if (!diagramId) return
+
+    const supabase = createClient()
+
+    const channel = supabase
+      .channel(`diagram:${diagramId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'diagrams',
+          filter: `id=eq.${diagramId}`,
+        },
+        (payload: any) => {
+          if (payload.eventType === 'UPDATE') {
+            const updatedDiagram = payload.new as Diagram
+            if (updatedDiagram.data?.nodes) {
+              setNodes(updatedDiagram.data.nodes)
+            }
+            if (updatedDiagram.data?.edges) {
+              setEdges(updatedDiagram.data.edges)
+            }
+            toast({
+              title: 'Diagram Updated',
+              description: 'Changes from another user',
+            })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [diagramId, setNodes, setEdges, toast])
+
   // Mark as changed when nodes/edges change
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
@@ -214,6 +258,23 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     },
     [setEdges]
   )
+
+  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setSelectedNode(node)
+    setConfigPanelOpen(true)
+  }, [])
+
+  const handleConfigUpdate = useCallback((nodeId: string, config: NodeConfig) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, config } }
+          : node
+      )
+    )
+    setConfigPanelOpen(false)
+    setSelectedNode(null)
+  }, [setNodes])
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault()
@@ -433,6 +494,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeDoubleClick={onNodeDoubleClick}
             onDrop={onDrop}
             onDragOver={onDragOver}
             nodeTypes={nodeTypes}
@@ -487,6 +549,16 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           />
         </div>
         <CostSidebar costData={costData} />
+        {configPanelOpen && (
+          <NodeConfigPanel
+            node={selectedNode}
+            onClose={() => {
+              setConfigPanelOpen(false)
+              setSelectedNode(null)
+            }}
+            onUpdate={handleConfigUpdate}
+          />
+        )}
       </div>
     </div>
   )
