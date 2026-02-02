@@ -63,6 +63,30 @@ export default function NewOrganizationPage() {
         return
       }
 
+      // Ensure the user's profile exists first (trigger should have created it, but check anyway)
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError || !profile) {
+        // If profile doesn't exist, create it
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email!,
+            full_name: user.user_metadata?.full_name || null,
+            avatar_url: user.user_metadata?.avatar_url || null,
+          })
+
+        if (createProfileError) {
+          toast.error('Failed to create user profile', { description: createProfileError.message })
+          return
+        }
+      }
+
       // Create the organization
       const { data: org, error: orgError } = await supabase
         .from('organizations')
