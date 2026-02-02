@@ -19,7 +19,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { Button } from '@/components/ui/button'
 import { Boxes, ArrowLeft, Loader2 } from 'lucide-react'
-import { COMPONENT_CATALOG } from '@/lib/catalog'
+import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
 import { CustomNode } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
@@ -224,16 +224,46 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       try {
         const component = JSON.parse(componentData)
         const reactFlowBounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
+
+        // Get the current viewport/transform to calculate correct position
+        const reactFlowInstance = document.querySelector('.react-flow__viewport')
+        const transform = reactFlowInstance ?
+          window.getComputedStyle(reactFlowInstance).transform : 'matrix(1, 0, 0, 1, 0, 0)'
+
+        // Parse transform matrix to get zoom and pan
+        let zoom = 1, panX = 0, panY = 0
+        if (transform && transform !== 'none') {
+          const matrix = transform.match(/matrix\(([^)]+)\)/)
+          if (matrix) {
+            const values = matrix[1].split(', ').map(Number)
+            zoom = values[0] || 1
+            panX = values[4] || 0
+            panY = values[5] || 0
+          }
+        }
+
+        // Calculate position accounting for zoom and pan
         const position = {
-          x: event.clientX - reactFlowBounds.left - 200,
-          y: event.clientY - reactFlowBounds.top - 100,
+          x: (event.clientX - reactFlowBounds.left - panX) / zoom,
+          y: (event.clientY - reactFlowBounds.top - panY) / zoom,
+        }
+
+        // Snap to grid (20px grid)
+        const snappedPosition = {
+          x: Math.round(position.x / 20) * 20,
+          y: Math.round(position.y / 20) * 20,
         }
 
         const newNode: Node = {
-          id: `node-${nodeId++}`,
+          id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: 'custom',
-          position,
-          data: { label: component.name, componentId: component.id },
+          position: snappedPosition,
+          data: {
+            label: component.name,
+            componentId: component.id,
+            provider: component.provider,
+            category: component.category,
+          },
         }
 
         setNodes((nds) => [...nds, newNode])
@@ -399,11 +429,25 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onDrop={onDrop}
             onDragOver={onDragOver}
             nodeTypes={nodeTypes}
+            snapToGrid={true}
+            snapGrid={[20, 20]}
+            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            minZoom={0.1}
+            maxZoom={2}
             fitView
+            fitViewOptions={{ padding: 0.2 }}
+            deleteKeyCode={['Backspace', 'Delete']}
+            multiSelectionKeyCode={['Control', 'Meta']}
           >
-            <Background />
-            <Controls />
-            <MiniMap />
+            <Background gap={20} size={1} color="#e5e7eb" />
+            <Controls showInteractive={false} />
+            <MiniMap
+              nodeColor={(node) => {
+                const component = node.data?.componentId ? getComponentById(node.data.componentId as string) : null
+                return component?.color || '#6366f1'
+              }}
+              maskColor="rgba(0, 0, 0, 0.1)"
+            />
           </ReactFlow>
           <DiagramToolbar
             onZoomIn={() => zoomIn()}
