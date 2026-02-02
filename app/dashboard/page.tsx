@@ -487,9 +487,8 @@ export default async function DashboardPage() {
           <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>© 2026 JobStack. All rights reserved.</p>
             <div className="flex items-center gap-4">
-              <Link href="/docs" className="hover:text-foreground transition-colors">Documentation</Link>
-              <Link href="/support" className="hover:text-foreground transition-colors">Support</Link>
-              <Link href="/changelog" className="hover:text-foreground transition-colors">Changelog</Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
             </div>
           </div>
         </footer>

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, Code, DollarSign, Zap, Users, Shield, ArrowRight, Check, Sparkles, LayoutDashboard, LogOut, Building2, Github, Cloud, Database, Server, Globe, Container, Lock } from 'lucide-react'
+import { Boxes, Code, DollarSign, Zap, Users, Shield, ArrowRight, Check, Sparkles, LayoutDashboard, LogOut, Building2, Cloud, Database, Server, Globe, Container, Lock, AlertTriangle, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { AnimatedDiagramDemo } from '@/components/animated-diagram-demo'
 
@@ -11,6 +11,16 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Beta Testing Banner */}
+      <div className="bg-amber-500 text-amber-950 py-2 px-4">
+        <div className="container mx-auto flex items-center justify-center gap-2 text-sm font-medium">
+          <AlertTriangle className="h-4 w-4" />
+          <span>
+            🚧 This application is currently in <strong>beta testing</strong>. Please do not create real accounts or enter sensitive data.
+          </span>
+        </div>
+      </div>
+
       <nav className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -260,12 +270,6 @@ export default async function Home() {
           <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">Join developers and DevOps teams using JobStack</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register"><Button size="lg" variant="secondary">Start Free Today<ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
-            <Link href="https://github.com/KobeeCloud/JobStack" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-                <Github className="mr-2 h-4 w-4" />
-                Star on GitHub
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -278,7 +282,6 @@ export default async function Home() {
             <div className="flex gap-6 text-sm text-muted-foreground">
               <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
               <Link href="/terms" className="hover:text-foreground">Terms</Link>
-              <Link href="https://github.com/KobeeCloud/JobStack" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">GitHub</Link>
             </div>
           </div>
         </div>

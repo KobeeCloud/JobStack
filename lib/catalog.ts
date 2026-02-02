@@ -37,11 +37,16 @@ import {
   Package,
 } from 'lucide-react'
 
+export type ComponentCategory = 'frontend' | 'backend' | 'database' | 'cloud' | 'service' | 'devops' | 'security' | 'analytics' | 'networking' | 'compute' | 'storage' | 'identity' | 'containers' | 'ai' | 'monitoring'
+export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare' | 'vercel' | 'generic'
+export type ServiceType = 'iaas' | 'paas' | 'saas' | 'generic'
+
 export interface ComponentConfig {
   id: string
   name: string
-  category: 'frontend' | 'backend' | 'database' | 'cloud' | 'service' | 'devops' | 'security' | 'analytics'
-  provider?: 'aws' | 'gcp' | 'azure' | 'cloudflare' | 'vercel' | 'generic'
+  category: ComponentCategory
+  provider?: CloudProvider
+  serviceType?: ServiceType
   icon: any
   color: string
   description: string
@@ -54,14 +59,859 @@ export interface ComponentConfig {
     resource: string
     defaultConfig: Record<string, any>
   }
+  // For IaaS components - can contain children
+  canContain?: string[] // IDs of components that can be children
+  // For configurable components
+  configurable?: {
+    replicas?: boolean // VMs can have replicas
+    size?: boolean // VM size selection
+    osImage?: boolean // OS selection
+    attachments?: string[] // What can attach to this (e.g., NSG to NIC or Subnet)
+  }
 }
 
 export const COMPONENT_CATALOG: ComponentConfig[] = [
+  // ==========================================
+  // AZURE IaaS - Networking
+  // ==========================================
+  {
+    id: 'azure-resource-group',
+    name: 'Resource Group',
+    category: 'cloud',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Box,
+    color: '#0078D4',
+    description: 'Azure Resource Group - container for related resources',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['azure-vnet', 'azure-vm', 'azure-storage', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql'],
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_resource_group',
+      defaultConfig: { location: 'westeurope' }
+    }
+  },
+  {
+    id: 'azure-vnet',
+    name: 'Virtual Network',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure Virtual Network (VNet) - isolated network in Azure',
+    estimatedCost: { min: 0, max: 5 },
+    canContain: ['azure-subnet'],
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_virtual_network',
+      defaultConfig: { address_space: ['10.0.0.0/16'] }
+    }
+  },
+  {
+    id: 'azure-subnet',
+    name: 'Subnet',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure Subnet - network segment within VNet',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['azure-vm', 'azure-nic'],
+    configurable: { attachments: ['azure-nsg', 'azure-route-table'] },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_subnet',
+      defaultConfig: { address_prefixes: ['10.0.1.0/24'] }
+    }
+  },
+  {
+    id: 'azure-nsg',
+    name: 'Network Security Group',
+    category: 'security',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Shield,
+    color: '#0078D4',
+    description: 'Azure NSG - firewall rules for VNet/Subnet/NIC',
+    estimatedCost: { min: 0, max: 0 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_network_security_group',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'azure-nic',
+    name: 'Network Interface',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure NIC - network interface for VMs',
+    estimatedCost: { min: 0, max: 0 },
+    configurable: { attachments: ['azure-nsg'] },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_network_interface',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'azure-public-ip',
+    name: 'Public IP',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Globe,
+    color: '#0078D4',
+    description: 'Azure Public IP address',
+    estimatedCost: { min: 3, max: 5 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_public_ip',
+      defaultConfig: { allocation_method: 'Static', sku: 'Standard' }
+    }
+  },
+  {
+    id: 'azure-route-table',
+    name: 'Route Table',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure Route Table - custom routing for subnets',
+    estimatedCost: { min: 0, max: 0 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_route_table',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'azure-nat-gateway',
+    name: 'NAT Gateway',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure NAT Gateway - outbound internet connectivity',
+    estimatedCost: { min: 32, max: 45 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_nat_gateway',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'azure-vpn-gateway',
+    name: 'VPN Gateway',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Lock,
+    color: '#0078D4',
+    description: 'Azure VPN Gateway - site-to-site/point-to-site VPN',
+    estimatedCost: { min: 140, max: 600 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_virtual_network_gateway',
+      defaultConfig: { type: 'Vpn', vpn_type: 'RouteBased' }
+    }
+  },
+  {
+    id: 'azure-express-route',
+    name: 'ExpressRoute',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure ExpressRoute - private connection to Azure',
+    estimatedCost: { min: 55, max: 5000 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_express_route_circuit',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'azure-bastion',
+    name: 'Azure Bastion',
+    category: 'security',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Shield,
+    color: '#0078D4',
+    description: 'Secure RDP/SSH access to VMs without public IP',
+    estimatedCost: { min: 140, max: 700 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_bastion_host',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'azure-firewall',
+    name: 'Azure Firewall',
+    category: 'security',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Shield,
+    color: '#0078D4',
+    description: 'Managed firewall service for VNet',
+    estimatedCost: { min: 912, max: 1500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_firewall',
+      defaultConfig: { sku_tier: 'Standard' }
+    }
+  },
+  {
+    id: 'azure-ddos-protection',
+    name: 'DDoS Protection',
+    category: 'security',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Shield,
+    color: '#0078D4',
+    description: 'Azure DDoS Protection Plan',
+    estimatedCost: { min: 2944, max: 2944 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_network_ddos_protection_plan',
+      defaultConfig: {}
+    }
+  },
+  // ==========================================
+  // AZURE IaaS - Compute
+  // ==========================================
+  {
+    id: 'azure-vm',
+    name: 'Virtual Machine',
+    category: 'compute',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Server,
+    color: '#0078D4',
+    description: 'Azure Virtual Machine - IaaS compute',
+    estimatedCost: { min: 15, max: 2000 },
+    configurable: {
+      replicas: true,
+      size: true,
+      osImage: true,
+      attachments: ['azure-nic', 'azure-managed-disk']
+    },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_linux_virtual_machine',
+      defaultConfig: { size: 'Standard_B2s' }
+    }
+  },
+  {
+    id: 'azure-vmss',
+    name: 'VM Scale Set',
+    category: 'compute',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Server,
+    color: '#0078D4',
+    description: 'Azure VM Scale Set - auto-scaling VMs',
+    estimatedCost: { min: 30, max: 5000 },
+    configurable: { size: true, osImage: true },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_linux_virtual_machine_scale_set',
+      defaultConfig: { instances: 2, sku: 'Standard_B2s' }
+    }
+  },
+  {
+    id: 'azure-availability-set',
+    name: 'Availability Set',
+    category: 'compute',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Server,
+    color: '#0078D4',
+    description: 'Azure Availability Set - HA for VMs',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['azure-vm'],
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_availability_set',
+      defaultConfig: { platform_fault_domain_count: 2, platform_update_domain_count: 5 }
+    }
+  },
+  // ==========================================
+  // AZURE IaaS - Storage
+  // ==========================================
+  {
+    id: 'azure-storage-account',
+    name: 'Storage Account',
+    category: 'storage',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#0078D4',
+    description: 'Azure Storage Account - blobs, files, queues, tables',
+    estimatedCost: { min: 1, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_storage_account',
+      defaultConfig: { account_tier: 'Standard', account_replication_type: 'LRS' }
+    }
+  },
+  {
+    id: 'azure-managed-disk',
+    name: 'Managed Disk',
+    category: 'storage',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#0078D4',
+    description: 'Azure Managed Disk - persistent storage for VMs',
+    estimatedCost: { min: 2, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_managed_disk',
+      defaultConfig: { storage_account_type: 'Premium_LRS', disk_size_gb: 128 }
+    }
+  },
+  {
+    id: 'azure-file-share',
+    name: 'File Share',
+    category: 'storage',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#0078D4',
+    description: 'Azure Files - SMB file share',
+    estimatedCost: { min: 5, max: 200 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_storage_share',
+      defaultConfig: { quota: 100 }
+    }
+  },
+  // ==========================================
+  // AZURE IaaS - Load Balancing
+  // ==========================================
+  {
+    id: 'azure-lb',
+    name: 'Load Balancer',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure Load Balancer - L4 load balancing',
+    estimatedCost: { min: 18, max: 100 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_lb',
+      defaultConfig: { sku: 'Standard' }
+    }
+  },
+  {
+    id: 'azure-app-gw',
+    name: 'Application Gateway',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#0078D4',
+    description: 'Azure Application Gateway - L7 load balancer with WAF',
+    estimatedCost: { min: 175, max: 700 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_application_gateway',
+      defaultConfig: { sku: { name: 'Standard_v2', tier: 'Standard_v2' } }
+    }
+  },
+  {
+    id: 'azure-front-door',
+    name: 'Front Door',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'paas',
+    icon: Globe,
+    color: '#0078D4',
+    description: 'Azure Front Door - global load balancer with CDN',
+    estimatedCost: { min: 35, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_frontdoor',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'azure-traffic-manager',
+    name: 'Traffic Manager',
+    category: 'networking',
+    provider: 'azure',
+    serviceType: 'paas',
+    icon: Globe,
+    color: '#0078D4',
+    description: 'Azure Traffic Manager - DNS-based traffic routing',
+    estimatedCost: { min: 0.50, max: 50 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_traffic_manager_profile',
+      defaultConfig: { traffic_routing_method: 'Performance' }
+    }
+  },
+  // ==========================================
+  // AWS IaaS - Networking
+  // ==========================================
+  {
+    id: 'aws-vpc',
+    name: 'VPC',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#FF9900',
+    description: 'AWS Virtual Private Cloud - isolated network',
+    estimatedCost: { min: 0, max: 5 },
+    canContain: ['aws-subnet'],
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_vpc',
+      defaultConfig: { cidr_block: '10.0.0.0/16' }
+    }
+  },
+  {
+    id: 'aws-subnet',
+    name: 'Subnet',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#FF9900',
+    description: 'AWS Subnet - network segment in VPC',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['aws-ec2'],
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_subnet',
+      defaultConfig: { cidr_block: '10.0.1.0/24' }
+    }
+  },
+  {
+    id: 'aws-security-group',
+    name: 'Security Group',
+    category: 'security',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Shield,
+    color: '#FF9900',
+    description: 'AWS Security Group - virtual firewall',
+    estimatedCost: { min: 0, max: 0 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_security_group',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'aws-internet-gateway',
+    name: 'Internet Gateway',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Globe,
+    color: '#FF9900',
+    description: 'AWS Internet Gateway - connect VPC to internet',
+    estimatedCost: { min: 0, max: 0 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_internet_gateway',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'aws-nat-gateway',
+    name: 'NAT Gateway',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#FF9900',
+    description: 'AWS NAT Gateway - outbound internet for private subnets',
+    estimatedCost: { min: 32, max: 100 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_nat_gateway',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'aws-route-table',
+    name: 'Route Table',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#FF9900',
+    description: 'AWS Route Table - routing for subnets',
+    estimatedCost: { min: 0, max: 0 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_route_table',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'aws-elastic-ip',
+    name: 'Elastic IP',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Globe,
+    color: '#FF9900',
+    description: 'AWS Elastic IP - static public IP',
+    estimatedCost: { min: 3.6, max: 5 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_eip',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'aws-alb',
+    name: 'Application Load Balancer',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#FF9900',
+    description: 'AWS ALB - L7 load balancer',
+    estimatedCost: { min: 16, max: 200 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_lb',
+      defaultConfig: { load_balancer_type: 'application' }
+    }
+  },
+  {
+    id: 'aws-nlb',
+    name: 'Network Load Balancer',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#FF9900',
+    description: 'AWS NLB - L4 load balancer',
+    estimatedCost: { min: 16, max: 200 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_lb',
+      defaultConfig: { load_balancer_type: 'network' }
+    }
+  },
+  {
+    id: 'aws-cloudfront',
+    name: 'CloudFront',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'paas',
+    icon: Globe,
+    color: '#FF9900',
+    description: 'AWS CloudFront - CDN',
+    estimatedCost: { min: 0, max: 500 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_cloudfront_distribution',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'aws-route53',
+    name: 'Route 53',
+    category: 'networking',
+    provider: 'aws',
+    serviceType: 'paas',
+    icon: Globe,
+    color: '#FF9900',
+    description: 'AWS Route 53 - DNS service',
+    estimatedCost: { min: 0.50, max: 50 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_route53_zone',
+      defaultConfig: {}
+    }
+  },
+  // ==========================================
+  // AWS IaaS - Compute
+  // ==========================================
+  {
+    id: 'aws-ec2',
+    name: 'EC2 Instance',
+    category: 'compute',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Server,
+    color: '#FF9900',
+    description: 'AWS EC2 - virtual servers',
+    estimatedCost: { min: 8, max: 2000 },
+    configurable: { replicas: true, size: true, osImage: true },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_instance',
+      defaultConfig: { instance_type: 't3.micro' }
+    }
+  },
+  {
+    id: 'aws-auto-scaling',
+    name: 'Auto Scaling Group',
+    category: 'compute',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: Server,
+    color: '#FF9900',
+    description: 'AWS Auto Scaling - automatically scale EC2',
+    estimatedCost: { min: 0, max: 0 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_autoscaling_group',
+      defaultConfig: { min_size: 1, max_size: 10 }
+    }
+  },
+  // ==========================================
+  // AWS IaaS - Storage
+  // ==========================================
+  {
+    id: 'aws-s3',
+    name: 'S3 Bucket',
+    category: 'storage',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#FF9900',
+    description: 'AWS S3 - object storage',
+    estimatedCost: { min: 0, max: 500 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_s3_bucket',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'aws-ebs',
+    name: 'EBS Volume',
+    category: 'storage',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#FF9900',
+    description: 'AWS EBS - block storage for EC2',
+    estimatedCost: { min: 2, max: 500 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_ebs_volume',
+      defaultConfig: { type: 'gp3', size: 100 }
+    }
+  },
+  {
+    id: 'aws-efs',
+    name: 'EFS File System',
+    category: 'storage',
+    provider: 'aws',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#FF9900',
+    description: 'AWS EFS - managed NFS',
+    estimatedCost: { min: 5, max: 300 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_efs_file_system',
+      defaultConfig: {}
+    }
+  },
+  // ==========================================
+  // GCP IaaS - Networking
+  // ==========================================
+  {
+    id: 'gcp-vpc',
+    name: 'VPC Network',
+    category: 'networking',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#4285F4',
+    description: 'GCP VPC - virtual private cloud',
+    estimatedCost: { min: 0, max: 5 },
+    canContain: ['gcp-subnet'],
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_network',
+      defaultConfig: { auto_create_subnetworks: false }
+    }
+  },
+  {
+    id: 'gcp-subnet',
+    name: 'Subnetwork',
+    category: 'networking',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#4285F4',
+    description: 'GCP Subnet - regional subnet in VPC',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['gcp-compute-instance'],
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_subnetwork',
+      defaultConfig: { ip_cidr_range: '10.0.1.0/24' }
+    }
+  },
+  {
+    id: 'gcp-firewall',
+    name: 'Firewall Rule',
+    category: 'security',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: Shield,
+    color: '#4285F4',
+    description: 'GCP Firewall - network-level firewall',
+    estimatedCost: { min: 0, max: 0 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_firewall',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'gcp-cloud-nat',
+    name: 'Cloud NAT',
+    category: 'networking',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#4285F4',
+    description: 'GCP Cloud NAT - managed NAT gateway',
+    estimatedCost: { min: 32, max: 100 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_router_nat',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'gcp-cloud-lb',
+    name: 'Cloud Load Balancer',
+    category: 'networking',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: Network,
+    color: '#4285F4',
+    description: 'GCP Load Balancer - global/regional LB',
+    estimatedCost: { min: 18, max: 200 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_global_forwarding_rule',
+      defaultConfig: {}
+    }
+  },
+  {
+    id: 'gcp-cloud-cdn',
+    name: 'Cloud CDN',
+    category: 'networking',
+    provider: 'gcp',
+    serviceType: 'paas',
+    icon: Globe,
+    color: '#4285F4',
+    description: 'GCP Cloud CDN - content delivery',
+    estimatedCost: { min: 0, max: 200 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_backend_service',
+      defaultConfig: { enable_cdn: true }
+    }
+  },
+  // ==========================================
+  // GCP IaaS - Compute
+  // ==========================================
+  {
+    id: 'gcp-compute-instance',
+    name: 'Compute Engine',
+    category: 'compute',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: Server,
+    color: '#4285F4',
+    description: 'GCP VM - virtual machine',
+    estimatedCost: { min: 5, max: 2000 },
+    configurable: { replicas: true, size: true, osImage: true },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_instance',
+      defaultConfig: { machine_type: 'e2-medium' }
+    }
+  },
+  {
+    id: 'gcp-instance-group',
+    name: 'Instance Group',
+    category: 'compute',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: Server,
+    color: '#4285F4',
+    description: 'GCP Managed Instance Group - auto-scaling',
+    estimatedCost: { min: 10, max: 5000 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_instance_group_manager',
+      defaultConfig: { target_size: 2 }
+    }
+  },
+  // ==========================================
+  // GCP IaaS - Storage
+  // ==========================================
+  {
+    id: 'gcp-cloud-storage',
+    name: 'Cloud Storage',
+    category: 'storage',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#4285F4',
+    description: 'GCP Cloud Storage - object storage',
+    estimatedCost: { min: 0, max: 500 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_storage_bucket',
+      defaultConfig: { location: 'EU' }
+    }
+  },
+  {
+    id: 'gcp-persistent-disk',
+    name: 'Persistent Disk',
+    category: 'storage',
+    provider: 'gcp',
+    serviceType: 'iaas',
+    icon: HardDrive,
+    color: '#4285F4',
+    description: 'GCP Persistent Disk - block storage',
+    estimatedCost: { min: 2, max: 500 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_compute_disk',
+      defaultConfig: { type: 'pd-ssd', size: 100 }
+    }
+  },
+  // ==========================================
   // Frontend Components
+  // ==========================================
   {
     id: 'react-app',
     name: 'React Application',
     category: 'frontend',
+    serviceType: 'generic',
     icon: Code,
     color: '#61DAFB',
     description: 'Single Page Application built with React',
