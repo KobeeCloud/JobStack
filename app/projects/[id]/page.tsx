@@ -28,6 +28,7 @@ import { calculateInfrastructureCost } from '@/lib/cost-calculator'
 import { useToast } from '@/hooks/use-toast'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
+import { CloudProvider, ServiceType } from '@/lib/catalog'
 
 const nodeTypes = { custom: CustomNode }
 let nodeId = 0
@@ -37,6 +38,10 @@ interface Project {
   name: string
   description: string | null
   updated_at: string
+  cloud_provider?: CloudProvider
+  settings?: {
+    project_types?: ServiceType[]
+  }
 }
 
 interface Diagram {
@@ -414,6 +419,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       <div className="flex-1 flex">
         <ComponentPalette
           components={COMPONENT_CATALOG}
+          cloudProvider={project?.cloud_provider}
+          projectTypes={project?.settings?.project_types}
           onDragStart={(e, component) => {
             e.dataTransfer.effectAllowed = 'move'
             e.dataTransfer.setData('application/reactflow', JSON.stringify(component))

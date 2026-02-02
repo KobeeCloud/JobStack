@@ -137,7 +137,7 @@ function NewProjectPageContent() {
   const { toast } = useToast()
 
   const [step, setStep] = useState(1)
-  const [selectedType, setSelectedType] = useState<ProjectType | null>(null)
+  const [selectedTypes, setSelectedTypes] = useState<ProjectType[]>([])
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -151,15 +151,28 @@ function NewProjectPageContent() {
     }
   })
 
-  const availableProviders = selectedType
-    ? providers.filter(p => p.forTypes.includes(selectedType))
+  // Toggle type selection (multi-select)
+  const toggleType = (type: ProjectType) => {
+    setSelectedTypes(prev => {
+      if (prev.includes(type)) {
+        return prev.filter(t => t !== type)
+      } else {
+        return [...prev, type]
+      }
+    })
+    // Reset provider when types change
+    setSelectedProvider(null)
+  }
+
+  // Get available providers based on selected types
+  const availableProviders = selectedTypes.length > 0
+    ? providers.filter(p => selectedTypes.some(t => p.forTypes.includes(t)))
     : []
 
-  const selectedTypeConfig = projectTypes.find(t => t.id === selectedType)
   const selectedProviderConfig = providers.find(p => p.id === selectedProvider)
 
   const onSubmit = async (data: CreateProjectInput) => {
-    if (!selectedType || !selectedProvider) return
+    if (selectedTypes.length === 0 || !selectedProvider) return
 
     setIsSubmitting(true)
     try {
@@ -168,8 +181,8 @@ function NewProjectPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          projectType: selectedType,
-          cloudProvider: selectedProvider,
+          cloud_provider: selectedProvider,
+          project_types: selectedTypes,
           templateId
         })
       })
@@ -197,7 +210,7 @@ function NewProjectPageContent() {
     }
   }
 
-  const canProceedToStep2 = selectedType !== null
+  const canProceedToStep2 = selectedTypes.length > 0
   const canProceedToStep3 = selectedProvider !== null
 
   return (
@@ -252,7 +265,7 @@ function NewProjectPageContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {projectTypes.map((type) => {
                   const Icon = type.icon
-                  const isSelected = selectedType === type.id
+                  const isSelected = selectedTypes.includes(type.id)
 
                   return (
                     <Card
@@ -260,7 +273,7 @@ function NewProjectPageContent() {
                       className={'cursor-pointer transition-all hover:border-primary ' +
                         (isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary' : '')
                       }
-                      onClick={() => setSelectedType(type.id)}
+                      onClick={() => toggleType(type.id)}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between">
@@ -310,7 +323,7 @@ function NewProjectPageContent() {
               <div className="text-center">
                 <h1 className="text-3xl font-bold">Choose your cloud</h1>
                 <p className="text-muted-foreground mt-2">
-                  Select the cloud provider for your {selectedTypeConfig?.name}
+                  Select the cloud provider for your {selectedTypes.map(t => projectTypes.find(pt => pt.id === t)?.name).filter(Boolean).join(' + ')} project
                 </p>
               </div>
 
@@ -386,10 +399,12 @@ function NewProjectPageContent() {
                     <ProviderLogo provider={selectedProvider!} />
                     <div>
                       <p className="font-medium">{selectedProviderConfig?.name}</p>
-                      <p className="text-sm text-muted-foreground">{selectedTypeConfig?.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedTypes.map(t => projectTypes.find(pt => pt.id === t)?.name).filter(Boolean).join(' + ')}
+                      </p>
                     </div>
                     <div className="ml-auto flex flex-wrap gap-1.5 max-w-[300px] justify-end">
-                      {selectedTypeConfig?.features.slice(0, 4).map((feature) => (
+                      {selectedTypes.flatMap(t => projectTypes.find(pt => pt.id === t)?.features || []).slice(0, 4).map((feature: string) => (
                         <Badge key={feature} variant="secondary" className="text-xs">
                           {feature}
                         </Badge>

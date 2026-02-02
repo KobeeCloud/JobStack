@@ -128,6 +128,18 @@ export function generateTerraform(nodes: Node<NodeData>[], edges: Edge[]): Terra
     variablesTf += '  default     = "us-central1"\n'
     variablesTf += '}\n\n'
   }
+  if (providers.has('azure')) {
+    variablesTf += 'variable "azure_location" {\n'
+    variablesTf += '  description = "Azure region/location"\n'
+    variablesTf += '  type        = string\n'
+    variablesTf += '  default     = "westeurope"\n'
+    variablesTf += '}\n\n'
+    variablesTf += 'variable "azure_resource_group" {\n'
+    variablesTf += '  description = "Azure Resource Group name"\n'
+    variablesTf += '  type        = string\n'
+    variablesTf += '  default     = "rg-jobstack"\n'
+    variablesTf += '}\n\n'
+  }
   if (providers.has('vercel')) {
     variablesTf += 'variable "vercel_api_token" {\n'
     variablesTf += '  description = "Vercel API token"\n'
@@ -135,6 +147,19 @@ export function generateTerraform(nodes: Node<NodeData>[], edges: Edge[]): Terra
     variablesTf += '  sensitive   = true\n'
     variablesTf += '}\n\n'
   }
+
+  // Always add environment variable
+  variablesTf += 'variable "environment" {\n'
+  variablesTf += '  description = "Environment name (e.g., dev, staging, prod)"\n'
+  variablesTf += '  type        = string\n'
+  variablesTf += '  default     = "dev"\n'
+  variablesTf += '}\n\n'
+
+  variablesTf += 'variable "project_name" {\n'
+  variablesTf += '  description = "Project name for resource naming"\n'
+  variablesTf += '  type        = string\n'
+  variablesTf += '  default     = "jobstack"\n'
+  variablesTf += '}\n\n'
 
   outputs.push({
     code: variablesTf,
@@ -144,6 +169,18 @@ export function generateTerraform(nodes: Node<NodeData>[], edges: Edge[]): Terra
 
   // Generate resources for each node
   let resourcesTf = '# Resources\n\n'
+
+  // Resources that support tags
+  const resourcesWithTags = [
+    'aws_', 'azurerm_', 'google_'
+  ]
+
+  // Resources that don't support tags block
+  const noTagsResources = [
+    'azurerm_subnet', 'azurerm_network_interface', 'aws_subnet',
+    'aws_security_group_rule', 'aws_route', 'google_compute_subnetwork',
+    'google_compute_firewall', 'vercel_', 'cloudflare_'
+  ]
 
   nodes.forEach(node => {
     const component = getComponentById(node.data.componentId)
@@ -155,25 +192,44 @@ export function generateTerraform(nodes: Node<NodeData>[], edges: Edge[]): Terra
 
     resourcesTf += `resource "${resourceType}" "${resourceName}" {\n`
 
+    // Add name/display_name based on provider
+    if (resourceType.startsWith('azurerm_')) {
+      resourcesTf += `  name                = "\${var.project_name}-${resourceName}"\n`
+      resourcesTf += `  location            = var.azure_location\n`
+      resourcesTf += `  resource_group_name = var.azure_resource_group\n`
+    } else if (resourceType.startsWith('aws_')) {
+      // AWS resources typically use name in tags, not as attribute
+    } else if (resourceType.startsWith('google_')) {
+      resourcesTf += `  name    = "\${var.project_name}-${resourceName}"\n`
+      resourcesTf += `  project = var.gcp_project\n`
+    }
+
     // Add configuration properties
     Object.entries(config).forEach(([key, value]) => {
-      if (typeof value === 'object' && !Array.isArray(value)) {
+      if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
         resourcesTf += `  ${key} {\n`
         Object.entries(value).forEach(([subKey, subValue]) => {
           resourcesTf += `    ${subKey} = ${JSON.stringify(subValue)}\n`
         })
         resourcesTf += `  }\n`
-      } else {
+      } else if (Array.isArray(value)) {
+        resourcesTf += `  ${key} = ${JSON.stringify(value)}\n`
+      } else if (value !== null && value !== undefined) {
         resourcesTf += `  ${key} = ${JSON.stringify(value)}\n`
       }
     })
 
-    // Add tags
-    resourcesTf += '  tags = {\n'
-    resourcesTf += '    Name        = "' + node.data.label + '"\n'
-    resourcesTf += '    Environment = var.environment\n'
-    resourcesTf += '    ManagedBy   = "JobStack"\n'
-    resourcesTf += '  }\n'
+    // Add tags only for resources that support them
+    const supportsTags = resourcesWithTags.some(prefix => resourceType.startsWith(prefix))
+    const excludeTags = noTagsResources.some(prefix => resourceType.startsWith(prefix))
+
+    if (supportsTags && !excludeTags) {
+      resourcesTf += '  tags = {\n'
+      resourcesTf += `    Name        = "\${var.project_name}-${resourceName}"\n`
+      resourcesTf += '    Environment = var.environment\n'
+      resourcesTf += '    ManagedBy   = "JobStack"\n'
+      resourcesTf += '  }\n'
+    }
 
     resourcesTf += '}\n\n'
   })

@@ -42,12 +42,21 @@ export const POST = createApiHandler(
     if (!body) {
       throw new Error('Missing request body')
     }
+
+    // Build settings object with project types
+    const settings: Record<string, unknown> = {}
+    if (body.project_types && Array.isArray(body.project_types)) {
+      settings.project_types = body.project_types
+    }
+
     const { data: project, error } = await auth.supabase
       .from('projects')
       .insert({
         user_id: auth.user.id,
         name: body.name,
         description: body.description || null,
+        cloud_provider: body.cloud_provider || 'azure',
+        settings: settings,
       })
       .select()
       .single()

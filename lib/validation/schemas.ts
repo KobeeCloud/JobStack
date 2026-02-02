@@ -12,10 +12,16 @@ export const uuidSchema = z.string().min(1, 'ID is required').refine(
   'Invalid ID format'
 )
 
+// Cloud provider and project type enums
+export const cloudProviderSchema = z.enum(['azure', 'aws', 'gcp', 'vercel', 'netlify', 'cloudflare'])
+export const projectTypeSchema = z.enum(['iaas', 'paas', 'saas', 'hosting'])
+
 // Project schemas
 export const createProjectSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
   description: z.string().max(1000, 'Description must be less than 1000 characters').optional().nullable(),
+  cloud_provider: cloudProviderSchema.optional(),
+  project_types: z.array(projectTypeSchema).optional(), // Allow multiple types: ['iaas', 'paas']
 })
 
 export const updateProjectSchema = z.object({
