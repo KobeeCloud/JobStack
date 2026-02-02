@@ -138,10 +138,10 @@ export default async function OrganizationsPage() {
                       <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary capitalize">
                         {org.subscription_tier}
                       </span>
-                      <Link href={`/organizations/${org.slug}`}>
+                      <Link href={`/dashboard?org=${org.id}`}>
                         <Button variant="outline" size="sm">
                           <Settings className="mr-2 h-4 w-4" />
-                          Manage
+                          View Projects
                         </Button>
                       </Link>
                     </div>
