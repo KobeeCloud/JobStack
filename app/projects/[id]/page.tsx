@@ -280,23 +280,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     setConfigPanelOpen(true)
   }, [])
 
-  // Listen for configure button clicks from nodes
-  useEffect(() => {
-    const handleConfigureNode = (e: CustomEvent) => {
-      const { nodeId } = e.detail
-      const node = nodes.find(n => n.id === nodeId)
-      if (node) {
-        setSelectedNode(node)
-        setConfigPanelOpen(true)
-      }
-    }
-
-    window.addEventListener('configure-node', handleConfigureNode as EventListener)
-    return () => {
-      window.removeEventListener('configure-node', handleConfigureNode as EventListener)
-    }
-  }, [nodes])
-
   const handleConfigUpdate = useCallback((nodeId: string, config: NodeConfig) => {
     setNodes((nds) =>
       nds.map((node) =>

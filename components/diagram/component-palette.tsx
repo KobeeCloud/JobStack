@@ -34,8 +34,6 @@ export function ComponentPalette({
   const providerFilteredComponents = useMemo(() => {
     let filtered = components
 
-    console.log('[ComponentPalette] Filtering:', { cloudProvider, projectTypes, totalComponents: components.length })
-
     // Filter by cloud provider - STRICT filtering
     if (cloudProvider) {
       filtered = filtered.filter((c) => {
@@ -43,7 +41,6 @@ export function ComponentPalette({
         if (!c.provider || c.provider === 'generic') return true
         return c.provider === cloudProvider
       })
-      console.log('[ComponentPalette] After provider filter:', filtered.length)
     }
 
     // Filter by project types (iaas, paas, saas)
@@ -53,7 +50,6 @@ export function ComponentPalette({
         if (!c.serviceType || c.serviceType === 'generic') return true
         return projectTypes.includes(c.serviceType)
       })
-      console.log('[ComponentPalette] After type filter:', filtered.length)
     }
 
     return filtered
