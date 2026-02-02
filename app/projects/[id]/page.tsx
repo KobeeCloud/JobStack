@@ -67,7 +67,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const [diagramId, setDiagramId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [configPanelOpen, setConfigPanelOpen] = useState(false)
-  const { zoomIn, zoomOut, fitView } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, screenToFlowPosition } = useReactFlow()
   const router = useRouter()
   const { toast } = useToast()
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -225,6 +225,22 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }, [diagramId, setNodes, setEdges, toast])
 
+  // Handle configure node event from custom nodes
+  useEffect(() => {
+    const handleConfigureNode = (e: Event) => {
+      const customEvent = e as CustomEvent<{ nodeId: string }>
+      const { nodeId } = customEvent.detail
+      const node = nodes.find((n) => n.id === nodeId)
+      if (node) {
+        setSelectedNode(node)
+        setConfigPanelOpen(true)
+      }
+    }
+
+    window.addEventListener('configure-node', handleConfigureNode)
+    return () => window.removeEventListener('configure-node', handleConfigureNode)
+  }, [nodes])
+
   // Mark as changed when nodes/edges change
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
@@ -308,28 +324,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const component = JSON.parse(componentData)
         const reactFlowBounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
 
-        // Get the current viewport/transform to calculate correct position
-        const reactFlowInstance = document.querySelector('.react-flow__viewport')
-        const transform = reactFlowInstance ?
-          window.getComputedStyle(reactFlowInstance).transform : 'matrix(1, 0, 0, 1, 0, 0)'
-
-        // Parse transform matrix to get zoom and pan
-        let zoom = 1, panX = 0, panY = 0
-        if (transform && transform !== 'none') {
-          const matrix = transform.match(/matrix\(([^)]+)\)/)
-          if (matrix) {
-            const values = matrix[1].split(', ').map(Number)
-            zoom = values[0] || 1
-            panX = values[4] || 0
-            panY = values[5] || 0
-          }
-        }
-
-        // Calculate position accounting for zoom and pan
-        const position = {
-          x: (event.clientX - reactFlowBounds.left - panX) / zoom,
-          y: (event.clientY - reactFlowBounds.top - panY) / zoom,
-        }
+        // Use ReactFlow's API to convert screen coordinates to flow coordinates
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        })
 
         // Snap to grid (20px grid)
         const snappedPosition = {
@@ -466,8 +465,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <nav className="border-b">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <nav className="border-b flex-shrink-0">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
@@ -494,7 +493,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           </div>
         </div>
       </nav>
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         <ComponentPalette
           components={COMPONENT_CATALOG}
           cloudProvider={project?.cloud_provider}
@@ -504,7 +503,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             e.dataTransfer.setData('application/reactflow', JSON.stringify(component))
           }}
         />
-        <div className="flex-1 relative">
+        <div className="flex-1 relative overflow-hidden">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -521,15 +520,18 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             minZoom={0.1}
             maxZoom={2}
             fitView
-            fitViewOptions={{ padding: 0.2 }}
+            fitViewOptions={{ padding: 0.2, includeHiddenNodes: false }}
             deleteKeyCode={['Backspace', 'Delete']}
             multiSelectionKeyCode={['Control', 'Meta']}
-            panOnDrag={true}
+            panOnDrag={[1, 2]}
             panOnScroll={false}
             zoomOnScroll={true}
             zoomOnPinch={true}
             zoomOnDoubleClick={false}
-            selectNodesOnDrag={false}
+            selectNodesOnDrag={true}
+            elementsSelectable={true}
+            nodesConnectable={true}
+            nodesDraggable={true}
           >
             <Background gap={20} size={1} color="#e5e7eb" />
             <Controls showInteractive={false} />
