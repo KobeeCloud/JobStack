@@ -9,7 +9,6 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export function ChangePasswordForm() {
-  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPasswords, setShowPasswords] = useState(false)
@@ -36,11 +35,10 @@ export function ChangePasswordForm() {
       if (error) throw error
 
       toast.success('Password changed successfully')
-      setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-    } catch (error: any) {
-      toast.error('Failed to change password', { description: error.message })
+    } catch (error: unknown) {
+      toast.error('Failed to change password', { description: (error as Error).message })
     } finally {
       setIsChanging(false)
     }

@@ -22,7 +22,6 @@ import {
   Download,
   Code,
   Save,
-  Image,
   Undo2,
   Redo2,
   Trash2,

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Save, Upload, Trash2 } from 'lucide-react'
+import { Loader2, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -38,7 +38,9 @@ export function SettingsForm({ user }: SettingsFormProps) {
   const [fullName, setFullName] = useState(user.user_metadata?.full_name || '')
   const [avatarUrl, setAvatarUrl] = useState(user.user_metadata?.avatar_url || '')
   const [isSaving, setIsSaving] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in JSX delete section
   const [isDeleting, setIsDeleting] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in JSX delete section
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const router = useRouter()
   const supabase = createClient()
@@ -72,6 +74,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in JSX delete section
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== user.email) {
       toast.error('Please type your email correctly to confirm deletion')
@@ -196,8 +199,8 @@ export function DeleteAccountButton({ user }: { user: User }) {
 
       toast.success('Account deleted successfully')
       router.push('/')
-    } catch (error: any) {
-      toast.error('Failed to delete account', { description: error.message })
+    } catch (error: unknown) {
+      toast.error('Failed to delete account', { description: (error as Error).message })
     } finally {
       setIsDeleting(false)
     }

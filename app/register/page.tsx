@@ -28,12 +28,9 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
   })
-
-  const password = watch('password')
 
   const handleOAuthSignIn = async (provider: 'github' | 'google') => {
     setOauthLoading(provider)
@@ -51,8 +48,8 @@ export default function RegisterPage() {
         setError(error.message)
         toast.error('Sign in failed', { description: error.message })
       }
-    } catch (err: any) {
-      const errorMessage = err?.message || 'An unexpected error occurred.'
+    } catch (err: unknown) {
+      const errorMessage = (err as Error)?.message || 'An unexpected error occurred.'
       setError(errorMessage)
       toast.error('Sign in failed', { description: errorMessage })
     } finally {
@@ -102,9 +99,9 @@ export default function RegisterPage() {
         toast.success('Account created!')
         router.push('/dashboard')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err)
-      setError(err?.message || 'An unexpected error occurred. Please try again.')
+      setError((err as Error)?.message || 'An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)
     }

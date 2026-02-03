@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
-import { logger, log } from './logger'
+import { log } from './logger'
 
 export class ApiError extends Error {
   constructor(

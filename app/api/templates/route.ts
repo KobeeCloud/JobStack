@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
-import { logger, log } from '@/lib/logger'
+import { createApiHandler } from '@/lib/api-helpers'
+import { log } from '@/lib/logger'
 
 // Default templates for when database is empty or in mock mode
 const defaultTemplates = [

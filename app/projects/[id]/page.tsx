@@ -34,7 +34,6 @@ import type { NodeConfig } from '@/lib/node-config-schemas'
 import { createClient } from '@/lib/supabase/client'
 
 const nodeTypes = { custom: CustomNode }
-let nodeId = 0
 
 interface Project {
   id: string
@@ -305,7 +304,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
       try {
         const component = JSON.parse(componentData)
-        const reactFlowBounds = (event.currentTarget as HTMLElement).getBoundingClientRect()
 
         // Use ReactFlow's API to convert screen coordinates to flow coordinates
         const position = screenToFlowPosition({
@@ -332,14 +330,14 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         }
 
         setNodes((nds) => [...nds, newNode])
-      } catch (error) {
+      } catch {
         toast({
           title: 'Error',
           description: 'Failed to add component',
         })
       }
     },
-    [setNodes, toast]
+    [setNodes, toast, screenToFlowPosition]
   )
 
   const handleSave = async () => {
@@ -426,7 +424,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       a.click()
       URL.revokeObjectURL(url)
       toast({ title: 'Exported', description: 'Diagram exported successfully' })
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to export diagram',
@@ -547,7 +545,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 a.download = `diagram.${format}`
                 a.click()
                 toast({ title: 'Exported', description: `Diagram exported as ${format.toUpperCase()}` })
-              } catch (error) {
+              } catch {
                 toast({
                   title: 'Error',
                   description: `Failed to export as ${format.toUpperCase()}`,
@@ -557,8 +555,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           />
         </div>
         <CostSidebar costData={costData} />
-        {configPanelOpen && (
+        {configPanelOpen && selectedNode && (
           <NodeConfigPanel
+            key={selectedNode.id} // Force reset when node changes
             node={selectedNode}
             onClose={() => {
               setConfigPanelOpen(false)
@@ -581,7 +580,6 @@ interface PageProps {
 
 export default function ProjectPage({ params }: PageProps) {
   const resolvedParams = use(params)
-  console.log('ProjectPage params:', resolvedParams);
   return (
     <ReactFlowProvider>
       <ErrorBoundary>

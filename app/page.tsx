@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, Code, DollarSign, Zap, Users, Shield, ArrowRight, Check, Sparkles, LayoutDashboard, LogOut, Building2, Cloud, Database, Server, Globe, Container, Lock, AlertTriangle, X } from 'lucide-react'
+import { Boxes, Code, DollarSign, Users, ArrowRight, Check, Sparkles, LayoutDashboard, LogOut, Building2, Cloud, Server, Globe, Container, Lock, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { AnimatedDiagramDemo } from '@/components/animated-diagram-demo'
 

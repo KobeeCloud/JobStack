@@ -208,7 +208,7 @@ export function createMockSupabaseClient() {
       }
 
       // Create a query builder with chaining support
-      const createQueryBuilder = (initialData: any[], selectedColumns?: string): QueryBuilder => {
+      const createQueryBuilder = (initialData: any[], _selectedColumns?: string): QueryBuilder => {
         let filteredData = [...initialData]
         let filters: Array<{ column: string; value: any; op: 'eq' | 'neq' }> = []
 
@@ -277,12 +277,12 @@ export function createMockSupabaseClient() {
       }
 
       return {
-        select: (columns?: string) => {
-          return createQueryBuilder(getTableData(), columns)
+        select: (_columns?: string) => {
+          return createQueryBuilder(getTableData(), _columns)
         },
 
         insert: (data: any | any[]) => ({
-          select: (columns?: string) => ({
+          select: (_columns?: string) => ({
             single: async () => {
               const newItem = Array.isArray(data) ? data[0] : data
               const id = generateId(table.slice(0, 3) + '-')
@@ -311,7 +311,7 @@ export function createMockSupabaseClient() {
 
         update: (updates: any) => ({
           eq: (column: string, value: any) => ({
-            select: (columns?: string) => ({
+            select: (_columns?: string) => ({
               single: async () => {
                 const now = new Date().toISOString()
 
@@ -356,7 +356,7 @@ export function createMockSupabaseClient() {
             }),
             // Support chained .eq() for multiple conditions
             eq: (column2: string, value2: any) => ({
-              select: (columns?: string) => ({
+              select: (_columns?: string) => ({
                 single: async () => {
                   const now = new Date().toISOString()
 
@@ -390,7 +390,7 @@ export function createMockSupabaseClient() {
         }),
 
         upsert: (data: any | any[]) => ({
-          select: (columns?: string) => ({
+          select: (_columns?: string) => ({
             single: async () => {
               const item = Array.isArray(data) ? data[0] : data
               const now = new Date().toISOString()

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createApiHandler, getAuthenticatedUser, applyRateLimit } from '@/lib/api-helpers'
+import { createApiHandler } from '@/lib/api-helpers'
 import { updateProjectSchema, uuidSchema } from '@/lib/validation/schemas'
-import { handleApiError, ApiError } from '@/lib/api-error'
-import { logger, log } from '@/lib/logger'
+import { ApiError } from '@/lib/api-error'
+import { log } from '@/lib/logger'
 
 async function verifyProjectAccess(supabase: any, projectId: string, userId: string): Promise<void> {
   const { data: project, error } = await supabase

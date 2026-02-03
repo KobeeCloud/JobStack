@@ -33,11 +33,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Boxes, ArrowLeft, Building2, Users, Settings, Crown, Shield, User,
+  Boxes, ArrowLeft, Building2, Users, Crown, Shield, User,
   Plus, Trash2, Mail, Loader2, Copy, Check
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
+import Image from 'next/image'
 
 interface Organization {
   id: string
@@ -96,6 +97,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
 
   useEffect(() => {
     loadOrganizationData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedParams.id])
 
   const loadOrganizationData = async () => {
@@ -370,10 +372,12 @@ export default function OrganizationManagePage({ params }: PageProps) {
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                           {member.profiles.avatar_url ? (
-                            <img
+                            <Image
                               src={member.profiles.avatar_url}
                               alt=""
-                              className="h-8 w-8 rounded-full"
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 rounded-full object-cover"
                             />
                           ) : (
                             <User className="h-4 w-4" />

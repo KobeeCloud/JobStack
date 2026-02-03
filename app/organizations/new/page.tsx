@@ -36,12 +36,9 @@ export default function NewOrganizationPage() {
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<CreateOrgInput>({
     resolver: zodResolver(createOrgSchema),
   })
-
-  const name = watch('name')
 
   // Auto-generate slug from name
   const generateSlug = (name: string) => {
@@ -121,8 +118,8 @@ export default function NewOrganizationPage() {
 
       toast.success('Organization created successfully!')
       router.push('/organizations')
-    } catch (error: any) {
-      toast.error('Failed to create organization', { description: error.message })
+    } catch (error: unknown) {
+      toast.error('Failed to create organization', { description: (error as Error).message })
     } finally {
       setLoading(false)
     }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createApiHandler, getAuthenticatedUser, applyRateLimit } from '@/lib/api-helpers'
+import { createApiHandler } from '@/lib/api-helpers'
 import { createProjectSchema, paginationSchema } from '@/lib/validation/schemas'
-import { handleApiError } from '@/lib/api-error'
-import { logger, log } from '@/lib/logger'
+import { log } from '@/lib/logger'
 
 export const GET = createApiHandler(
   async (request: NextRequest, { auth }) => {

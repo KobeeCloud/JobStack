@@ -52,8 +52,8 @@ export default function LoginPage() {
 
       toast.success('Welcome back!', { description: 'Redirecting to dashboard...' })
       router.push('/dashboard')
-    } catch (err: any) {
-      const errorMessage = err?.message || 'An unexpected error occurred. Please try again.'
+    } catch (err: unknown) {
+      const errorMessage = (err as Error)?.message || 'An unexpected error occurred. Please try again.'
       setAuthError(errorMessage)
       toast.error('Sign in failed', { description: errorMessage })
       setLoading(false)
@@ -76,8 +76,8 @@ export default function LoginPage() {
         setAuthError(error.message)
         toast.error('Sign in failed', { description: error.message })
       }
-    } catch (err: any) {
-      const errorMessage = err?.message || 'An unexpected error occurred.'
+    } catch (err: unknown) {
+      const errorMessage = (err as Error)?.message || 'An unexpected error occurred.'
       setAuthError(errorMessage)
       toast.error('Sign in failed', { description: errorMessage })
     } finally {
@@ -184,7 +184,7 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
+            <span className="text-muted-foreground">Don&apos;t have an account? </span>
             <Link href="/register" className="text-primary hover:underline font-medium">
               Sign up
             </Link>

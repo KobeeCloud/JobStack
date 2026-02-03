@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler } from '@/lib/api-helpers'
 import { ApiError } from '@/lib/api-error'
-import { logger, log } from '@/lib/logger'
+import { log } from '@/lib/logger'
 
 interface RouteContext {
   params: Promise<{ id: string }>

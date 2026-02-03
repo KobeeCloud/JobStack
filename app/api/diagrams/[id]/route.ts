@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
+import { createApiHandler } from '@/lib/api-helpers'
 import { updateDiagramSchema, uuidSchema } from '@/lib/validation/schemas'
 import { ApiError } from '@/lib/api-error'
 import { logger, log } from '@/lib/logger'

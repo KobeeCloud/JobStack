@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Boxes, ArrowLeft, Building2, Plus, Users, Settings, Crown, Shield, User } from 'lucide-react'
@@ -29,7 +30,7 @@ export default async function OrganizationsPage() {
   if (!user) redirect('/login')
 
   // Get organizations the user is a member of
-  const { data: memberships, error } = await supabase
+  const { data: memberships } = await supabase
     .from('organization_members')
     .select(`
       organization_id,
@@ -113,13 +114,19 @@ export default async function OrganizationsPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {organizations.map((org: any) => (
+              {organizations.map((org) => (
                 <Card key={org.id} className="hover:border-primary/50 transition-colors">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div className="flex items-center gap-4">
                       <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                         {org.logo_url ? (
-                          <img src={org.logo_url} alt={org.name} className="h-10 w-10 rounded" />
+                          <Image
+                            src={org.logo_url}
+                            alt={org.name}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 rounded object-cover"
+                          />
                         ) : (
                           <Building2 className="h-6 w-6 text-primary" />
                         )}

@@ -1,6 +1,6 @@
 'use client'
 import { memo } from 'react'
-import { Handle, Position, useReactFlow } from '@xyflow/react'
+import { Handle, Position } from '@xyflow/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +11,6 @@ interface CustomNodeData {
   label?: string
   componentId: string
   config?: any
-  onConfigure?: (nodeId: string) => void
 }
 
 interface CustomNodeProps {
@@ -21,7 +20,6 @@ interface CustomNodeProps {
 
 export const CustomNode = memo(({ id, data }: CustomNodeProps) => {
   const component = getComponentById(data.componentId)
-  const { setNodes } = useReactFlow()
 
   if (!component) return null
 

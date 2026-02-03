@@ -14,10 +14,9 @@ interface NodeData {
   [key: string]: unknown
 }
 
-export function generateTerraform(nodes: Node<NodeData>[], edges: Edge[]): TerraformOutput[] {
+export function generateTerraform(nodes: Node<NodeData>[], _edges: Edge[]): TerraformOutput[] {
   const outputs: TerraformOutput[] = []
   const providers = new Set<string>()
-  const resources: string[] = []
 
   // Group nodes by provider
   const nodesByProvider: Record<string, Node<NodeData>[]> = {}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Node } from '@xyflow/react'
 import { X, Plus, Trash2, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,24 +19,13 @@ interface NodeConfigPanelProps {
 }
 
 export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProps) {
-  const [config, setConfig] = useState<any>({})
-  const [tags, setTags] = useState<Record<string, string>>({})
-  const [labels, setLabels] = useState<Record<string, string>>({})
-
   const componentInfo = node ? COMPONENT_CATALOG.find(c => c.id === node.data.component) : null
 
-  useEffect(() => {
-    if (node?.data?.config) {
-      const nodeConfig = node.data.config as any
-      setConfig(nodeConfig)
-      setTags(nodeConfig.tags || {})
-      setLabels(nodeConfig.labels || {})
-    } else {
-      setConfig({})
-      setTags({})
-      setLabels({})
-    }
-  }, [node])
+  // Initialize state from node data - no useEffect needed because parent uses key={node.id}
+  const initialConfig = node?.data?.config || {}
+  const [config, setConfig] = useState<any>(initialConfig)
+  const [tags, setTags] = useState<Record<string, string>>((initialConfig as any).tags || {})
+  const [labels, setLabels] = useState<Record<string, string>>((initialConfig as any).labels || {})
 
   if (!node || !componentInfo) return null
 

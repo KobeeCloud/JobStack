@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Boxes, Plus, FolderOpen, LogOut, Settings, User,
   Building2, Activity, Clock, TrendingUp, Layers,
-  Zap, FileCode, GitBranch, Star, ArrowRight, Sparkles
+  FileCode, Star, ArrowRight, Sparkles
 } from 'lucide-react'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Suspense } from 'react'
@@ -29,12 +30,6 @@ interface Project {
   created_at: string
   status: string
   cloud_provider: string
-}
-
-interface Profile {
-  full_name: string | null
-  subscription_tier: string
-  avatar_url: string | null
 }
 
 // Stats component
@@ -184,8 +179,9 @@ async function RecentActivity() {
 
   if (!recentProjects || recentProjects.length === 0) return null
 
+  // Calculate relative time during render (server-side)
   const getTimeAgo = (date: string) => {
-    const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
+    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000)
     if (seconds < 60) return 'just now'
     const minutes = Math.floor(seconds / 60)
     if (minutes < 60) return `${minutes}m ago`
@@ -388,9 +384,11 @@ export default async function DashboardPage() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     {profile?.avatar_url ? (
-                      <img
+                      <Image
                         src={profile.avatar_url}
                         alt=""
+                        width={32}
+                        height={32}
                         className="h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
@@ -446,7 +444,7 @@ export default async function DashboardPage() {
               {greeting()}, {displayName}! 👋
             </h1>
             <p className="text-muted-foreground">
-              Here's what's happening with your infrastructure projects.
+              Here&apos;s what&apos;s happening with your infrastructure projects.
             </p>
           </div>
 

@@ -21,7 +21,7 @@ export async function GET() {
 
     health.services.database = 'ok'
     return NextResponse.json(health)
-  } catch (error) {
+  } catch {
     health.services.database = 'error'
     return NextResponse.json(health, { status: 503 })
   }

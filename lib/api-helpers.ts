@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from './supabase/server'
-import { checkRateLimit, authRateLimit } from './rate-limit'
+import { checkRateLimit } from './rate-limit'
 import { handleApiError, ApiError } from './api-error'
-import { logger } from './logger'
 import { ZodSchema } from 'zod'
 
 export interface AuthenticatedRequest {
@@ -13,7 +12,7 @@ export interface AuthenticatedRequest {
 /**
  * Get authenticated user from request
  */
-export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedRequest> {
+export async function getAuthenticatedUser(_request: NextRequest): Promise<AuthenticatedRequest> {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
 

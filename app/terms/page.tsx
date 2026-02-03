@@ -46,7 +46,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold text-foreground mb-4">4. Intellectual Property</h2>
             <p>
-              You retain all rights to the content you create. The JobStack platform is owned by 
+              You retain all rights to the content you create. The JobStack platform is owned by
               KobeCloud Jakub Pospieszny and protected by intellectual property laws.
             </p>
           </section>
@@ -54,7 +54,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-semibold text-foreground mb-4">5. Disclaimer</h2>
             <p>
-              THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. Generated code should 
+              THE SERVICE IS PROVIDED &quot;AS IS&quot; WITHOUT WARRANTIES OF ANY KIND. Generated code should
               be reviewed before deployment. We are not responsible for cloud resource costs.
             </p>
           </section>

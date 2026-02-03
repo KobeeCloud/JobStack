@@ -21,7 +21,7 @@ try {
       analytics: true,
     })
   }
-} catch (error) {
+} catch {
   // Fallback to no rate limiting if Redis is not configured
   // This is fine for free tier - rate limiting is optional
 }

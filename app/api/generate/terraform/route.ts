@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createApiHandler, applyRateLimit } from '@/lib/api-helpers'
+import { createApiHandler } from '@/lib/api-helpers'
 import { generateTerraformSchema } from '@/lib/validation/schemas'
 import { generateTerraform, generateTerraformReadme } from '@/lib/generators/terraform'
-import { logger, log } from '@/lib/logger'
+import { log } from '@/lib/logger'
 
 export const POST = createApiHandler(
   async (request: NextRequest, { auth, body }) => {

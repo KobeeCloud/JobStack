@@ -8,9 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
-  Boxes, ArrowLeft, Layers, Search, Cloud, Server,
+  Boxes, ArrowLeft, Layers, Search, Server,
   Database, Shield, Globe, Cpu, HardDrive, Network,
-  Box, Copy, ExternalLink
+  Box, Copy
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -257,10 +257,10 @@ export default function TemplatesPage() {
 
       // Redirect to the new project
       window.location.href = `/projects/${project.id}`
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create project from template',
+        description: (error as Error).message || 'Failed to create project from template',
         variant: 'destructive',
       })
     }
