@@ -31,6 +31,10 @@ import {
   FileImage,
   FileCode,
   Upload,
+  Sparkles,
+  Shield,
+  FlaskConical,
+  Cloud,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -57,6 +61,14 @@ interface DiagramToolbarProps {
   canUndo?: boolean
   canRedo?: boolean
   saving?: boolean
+  // New feature handlers
+  onAIAnalysis?: () => void
+  onComplianceScan?: () => void
+  onRunTests?: () => void
+  onMultiCloud?: () => void
+  aiAnalyzing?: boolean
+  complianceScanning?: boolean
+  testing?: boolean
 }
 
 const keyboardShortcuts = [
@@ -87,6 +99,13 @@ export function DiagramToolbar({
   canUndo = false,
   canRedo = false,
   saving = false,
+  onAIAnalysis,
+  onComplianceScan,
+  onRunTests,
+  onMultiCloud,
+  aiAnalyzing = false,
+  complianceScanning = false,
+  testing = false,
 }: DiagramToolbarProps) {
   const [showShortcuts, setShowShortcuts] = useState(false)
 
@@ -194,6 +213,86 @@ export function DiagramToolbar({
           </TooltipTrigger>
           <TooltipContent>Save (Ctrl+S)</TooltipContent>
         </Tooltip>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* AI & Analysis Features */}
+        {onAIAnalysis && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onAIAnalysis}
+                disabled={aiAnalyzing}
+                aria-label="AI Analysis"
+              >
+                <Sparkles className={`h-4 w-4 mr-1.5 ${aiAnalyzing ? 'animate-pulse' : ''}`} />
+                {aiAnalyzing ? 'Analyzing...' : 'AI'}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>AI Architecture Analysis</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onComplianceScan && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onComplianceScan}
+                disabled={complianceScanning}
+                aria-label="Compliance Scan"
+              >
+                <Shield className={`h-4 w-4 mr-1.5 ${complianceScanning ? 'animate-pulse' : ''}`} />
+                Compliance
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Security & Compliance Scanning</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onRunTests && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onRunTests}
+                disabled={testing}
+                aria-label="Run Tests"
+              >
+                <FlaskConical className={`h-4 w-4 mr-1.5 ${testing ? 'animate-pulse' : ''}`} />
+                Tests
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Infrastructure Testing</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onMultiCloud && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onMultiCloud}
+                aria-label="Multi-Cloud"
+              >
+                <Cloud className="h-4 w-4 mr-1.5" />
+                Multi-Cloud
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Multi-Cloud Components</TooltipContent>
+          </Tooltip>
+        )}
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
 
         {/* Export Dropdown */}
         <DropdownMenu>

@@ -32,6 +32,16 @@ import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
 import { CloudProvider, ServiceType } from '@/lib/catalog'
 import type { NodeConfig } from '@/lib/node-config-schemas'
 import { createClient } from '@/lib/supabase/client'
+import { AIAssistantPanel } from '@/components/ai/ai-assistant-panel'
+import { ComplianceReportPanel } from '@/components/compliance/compliance-report-panel'
+import { TestResultsPanel } from '@/components/testing/test-results-panel'
+import { MultiCloudComparePanel } from '@/components/multi-cloud/multi-cloud-compare-panel'
+import { analyzeArchitecture } from '@/lib/ai/architecture-analyzer'
+import { runComplianceScan } from '@/lib/compliance/compliance-scanner'
+import { testDiagram } from '@/lib/testing/infrastructure-tester'
+import type { ArchitectureIssue } from '@/lib/ai/architecture-analyzer'
+import type { ComplianceReport } from '@/lib/compliance/compliance-scanner'
+import type { InfrastructureTest } from '@/lib/testing/infrastructure-tester'
 
 const nodeTypes = { custom: CustomNode }
 
@@ -66,6 +76,22 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const [diagramId, setDiagramId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [configPanelOpen, setConfigPanelOpen] = useState(false)
+
+  // Feature panels state
+  const [aiPanelOpen, setAiPanelOpen] = useState(false)
+  const [aiIssues, setAiIssues] = useState<ArchitectureIssue[]>([])
+  const [aiAnalyzing, setAiAnalyzing] = useState(false)
+
+  const [compliancePanelOpen, setCompliancePanelOpen] = useState(false)
+  const [complianceReport, setComplianceReport] = useState<ComplianceReport | null>(null)
+  const [complianceScanning, setComplianceScanning] = useState(false)
+
+  const [testingPanelOpen, setTestingPanelOpen] = useState(false)
+  const [testResults, setTestResults] = useState<InfrastructureTest[] | null>(null)
+  const [testing, setTesting] = useState(false)
+
+  const [multiCloudPanelOpen, setMultiCloudPanelOpen] = useState(false)
+
   const { zoomIn, zoomOut, fitView, screenToFlowPosition } = useReactFlow()
   const router = useRouter()
   const { toast } = useToast()
@@ -432,6 +458,119 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }
 
+  // AI Analysis
+  const handleAIAnalysis = async () => {
+    if (nodes.length === 0) {
+      toast({ title: 'No components', description: 'Add components to analyze' })
+      return
+    }
+
+    try {
+      setAiAnalyzing(true)
+      setAiPanelOpen(true)
+      const issues = await analyzeArchitecture(nodes, edges)
+      setAiIssues(issues)
+      toast({
+        title: 'Analysis Complete',
+        description: `Found ${issues.length} recommendations`
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to analyze architecture',
+      })
+    } finally {
+      setAiAnalyzing(false)
+    }
+  }
+
+  // Compliance Scanning
+  const handleComplianceScan = async (framework: 'cis' | 'gdpr' | 'soc2' | 'pci-dss' | 'hipaa') => {
+    if (nodes.length === 0) {
+      toast({ title: 'No components', description: 'Add components to scan' })
+      return
+    }
+
+    try {
+      setComplianceScanning(true)
+      const frameworkMap = {
+        'cis': 'CIS',
+        'gdpr': 'GDPR',
+        'soc2': 'SOC2',
+        'pci-dss': 'PCI-DSS',
+        'hipaa': 'HIPAA',
+      } as const
+
+      const report = await runComplianceScan(nodes, edges, frameworkMap[framework])
+      setComplianceReport(report)
+      toast({
+        title: 'Scan Complete',
+        description: `Score: ${report.score}% - ${report.findings.length} findings`
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to run compliance scan',
+      })
+    } finally {
+      setComplianceScanning(false)
+    }
+  }
+
+  // Infrastructure Testing
+  const handleRunTests = async () => {
+    if (nodes.length === 0) {
+      toast({ title: 'No components', description: 'Add components to test' })
+      return
+    }
+
+    try {
+      setTesting(true)
+      setTestingPanelOpen(true)
+      const results = await testDiagram(nodes, edges)
+      setTestResults(results)
+      const passed = results.filter(r => r.status === 'pass').length
+      toast({
+        title: 'Tests Complete',
+        description: `${passed}/${results.length} tests passed`
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to run tests',
+      })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  // Multi-Cloud Component Selection
+  const handleSelectMultiCloudComponent = useCallback((
+    genericId: string,
+    provider: 'aws' | 'azure' | 'gcp'
+  ) => {
+    const position = screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
+    const snappedPosition = {
+      x: Math.round(position.x / 20) * 20,
+      y: Math.round(position.y / 20) * 20,
+    }
+
+    const newNode: Node = {
+      id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: 'custom',
+      position: snappedPosition,
+      data: {
+        label: `${genericId} (${provider})`,
+        componentId: genericId,
+        provider,
+        category: 'compute',
+      },
+    }
+
+    setNodes((nds) => [...nds, newNode])
+    toast({ title: 'Component Added', description: `Added ${provider.toUpperCase()} component` })
+  }, [screenToFlowPosition, setNodes, toast])
+
   const costData = calculateInfrastructureCost(nodes)
 
   if (loading) {
@@ -531,6 +670,13 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onSave={handleSave}
             onExport={handleExport}
             onGenerateCode={handleGenerateCode}
+            onAIAnalysis={handleAIAnalysis}
+            onComplianceScan={() => setCompliancePanelOpen(true)}
+            onRunTests={handleRunTests}
+            onMultiCloud={() => setMultiCloudPanelOpen(true)}
+            aiAnalyzing={aiAnalyzing}
+            complianceScanning={complianceScanning}
+            testing={testing}
             onExportImage={async (format: 'png' | 'svg') => {
               try {
                 const { toPng, toSvg } = await import('html-to-image')
@@ -555,6 +701,94 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           />
         </div>
         <CostSidebar costData={costData} />
+
+        {/* AI Assistant Panel */}
+        {aiPanelOpen && (
+          <div className="absolute right-4 top-20 w-96 h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
+            <div className="h-full flex flex-col">
+              <div className="p-3 border-b flex items-center justify-between">
+                <h3 className="font-semibold">AI Assistant</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAiPanelOpen(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              <AIAssistantPanel
+                issues={aiIssues}
+                isAnalyzing={aiAnalyzing}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Compliance Panel */}
+        {compliancePanelOpen && (
+          <div className="absolute right-4 top-20 w-96 h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
+            <div className="h-full flex flex-col">
+              <div className="p-3 border-b flex items-center justify-between">
+                <h3 className="font-semibold">Compliance Scanning</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCompliancePanelOpen(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              <ComplianceReportPanel
+                report={complianceReport}
+                onRunScan={handleComplianceScan}
+                isScanning={complianceScanning}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Testing Panel */}
+        {testingPanelOpen && (
+          <div className="absolute right-4 top-20 w-96 h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
+            <div className="h-full flex flex-col">
+              <div className="p-3 border-b flex items-center justify-between">
+                <h3 className="font-semibold">Infrastructure Testing</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTestingPanelOpen(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              <TestResultsPanel
+                results={testResults}
+                onRunTests={handleRunTests}
+                isTesting={testing}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Multi-Cloud Panel */}
+        {multiCloudPanelOpen && (
+          <div className="absolute left-80 top-20 w-[500px] h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
+            <div className="h-full flex flex-col">
+              <div className="p-3 border-b flex items-center justify-between">
+                <h3 className="font-semibold">Multi-Cloud Components</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMultiCloudPanelOpen(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              <MultiCloudComparePanel onSelectComponent={handleSelectMultiCloudComponent} />
+            </div>
+          </div>
+        )}
+
         {configPanelOpen && selectedNode && (
           <NodeConfigPanel
             key={selectedNode.id} // Force reset when node changes
