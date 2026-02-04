@@ -34,9 +34,19 @@ export async function getAuthenticatedUser(_request: NextRequest): Promise<Authe
  */
 export async function validateRequestBody<T>(request: Request, schema: ZodSchema<T>): Promise<T> {
   try {
-    const body = await request.json()
+    const text = await request.text()
+    if (!text || text.trim() === '') {
+      throw new ApiError(400, 'Request body is required', 'MISSING_BODY')
+    }
+    const body = JSON.parse(text)
     return schema.parse(body)
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    if (error instanceof SyntaxError) {
+      throw new ApiError(400, 'Invalid JSON in request body', 'INVALID_JSON')
+    }
     throw error
   }
 }

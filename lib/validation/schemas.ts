@@ -32,9 +32,23 @@ export const updateProjectSchema = z.object({
 // Diagram node/edge schemas
 export const nodeDataSchema = z.object({
   label: z.string().optional(),
-  componentId: z.string().min(1, 'Component ID is required'),
+  componentId: z.string().optional(), // Main component identifier
+  component: z.string().optional(), // Alias for componentId (backward compatibility)
   config: z.record(z.any()).optional(),
-})
+  provider: z.string().optional(),
+  category: z.string().optional(),
+  isNew: z.boolean().optional(),
+  selected: z.boolean().optional(),
+  // Security indicators
+  nsg: z.boolean().optional(),
+  firewall: z.boolean().optional(),
+  waf: z.boolean().optional(),
+  ddos: z.boolean().optional(),
+  encryption: z.boolean().optional(),
+}).passthrough().refine(
+  (data) => data.componentId || data.component,
+  { message: 'Either componentId or component is required' }
+)
 
 export const nodeSchema = z.object({
   id: z.string().min(1, 'Node ID is required'),
@@ -44,14 +58,33 @@ export const nodeSchema = z.object({
     y: z.number(),
   }),
   data: nodeDataSchema,
-})
+  // React Flow additional properties
+  parentId: z.string().optional(),
+  extent: z.union([z.literal('parent'), z.tuple([z.tuple([z.number(), z.number()]), z.tuple([z.number(), z.number()])])]).optional(),
+  expandParent: z.boolean().optional(),
+  dragging: z.boolean().optional(),
+  selected: z.boolean().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  measured: z.object({
+    width: z.number().optional(),
+    height: z.number().optional(),
+  }).optional(),
+  style: z.record(z.any()).optional(),
+}).passthrough() // Allow additional React Flow properties
 
 export const edgeSchema = z.object({
   id: z.string().min(1, 'Edge ID is required'),
   source: z.string().min(1, 'Source is required'),
   target: z.string().min(1, 'Target is required'),
   type: z.string().optional(),
-})
+  sourceHandle: z.string().optional().nullable(),
+  targetHandle: z.string().optional().nullable(),
+  selected: z.boolean().optional(),
+  animated: z.boolean().optional(),
+  style: z.record(z.any()).optional(),
+  data: z.record(z.any()).optional(),
+}).passthrough() // Allow additional React Flow properties
 
 export const diagramDataSchema = z.object({
   nodes: z.array(nodeSchema),

@@ -595,6 +595,15 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   }
 
   const handleGenerateCode = async () => {
+    if (nodes.length === 0) {
+      toast({
+        title: 'No Components',
+        description: 'Add cloud components (AWS, Azure, GCP) to generate Terraform code.',
+        variant: 'destructive'
+      })
+      return
+    }
+
     try {
       const res = await fetchWithTimeout(
         '/api/generate/terraform',
@@ -606,24 +615,58 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         30000
       )
 
-      if (res.ok) {
-        const data = await res.json()
-        const blob = new Blob([JSON.stringify(data.files, null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'terraform-code.json'
-        a.click()
-        URL.revokeObjectURL(url)
-        toast({ title: 'Generated', description: 'Terraform code generated' })
-      } else {
-        const errorData = await res.json()
-        throw new Error(errorData.error || 'Failed to generate code')
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        // Show detailed error with list of problems
+        const errorMessage = data.error || 'Failed to generate Terraform'
+        const warnings = data.warnings || []
+
+        toast({
+          title: 'Cannot Generate Terraform',
+          description: (
+            <div className="space-y-2">
+              <p>{errorMessage}</p>
+              {warnings.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  <p>Warnings:</p>
+                  <ul className="list-disc list-inside">
+                    {warnings.slice(0, 3).map((w: string, i: number) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                    {warnings.length > 3 && <li>...and {warnings.length - 3} more</li>}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) as any,
+          variant: 'destructive',
+        })
+        return
       }
+
+      // Success - download the files
+      const blob = new Blob([JSON.stringify(data.files, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'terraform-code.json'
+      a.click()
+      URL.revokeObjectURL(url)
+
+      const successMessage = data.skippedCount > 0
+        ? `Generated ${data.files.length} files (${data.skippedCount} components skipped)`
+        : `Generated ${data.files.length} Terraform files`
+
+      toast({
+        title: 'Terraform Generated',
+        description: successMessage
+      })
     } catch (error) {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to generate Terraform code',
+        variant: 'destructive'
       })
     }
   }
