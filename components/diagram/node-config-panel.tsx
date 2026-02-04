@@ -19,7 +19,9 @@ interface NodeConfigPanelProps {
 }
 
 export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProps) {
-  const componentInfo = node ? COMPONENT_CATALOG.find(c => c.id === node.data.component) : null
+  // Support both 'componentId' (new) and 'component' (old) for backward compatibility
+  const componentId = node?.data?.componentId || node?.data?.component
+  const componentInfo = componentId ? COMPONENT_CATALOG.find(c => c.id === componentId) : null
 
   // Initialize state from node data - no useEffect needed because parent uses key={node.id}
   const initialConfig = node?.data?.config || {}

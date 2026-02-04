@@ -76,7 +76,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
 
   // CIS 1.1: Ensure encryption at rest is enabled
   const unencryptedStorage = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     const isStorage =
       component.includes('storage') ||
       component.includes('s3') ||
@@ -107,7 +107,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
 
   // CIS 1.2: Ensure databases are not publicly accessible
   const publicDatabases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     const isDatabase =
       component.includes('database') ||
       component.includes('sql') ||
@@ -138,12 +138,12 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
 
   // CIS 2.1: Ensure network security groups are configured
   const vms = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vm') || component.includes('ec2') || component.includes('compute')
   })
 
   const nsgs = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return (
       component.includes('nsg') ||
       component.includes('security-group') ||
@@ -170,7 +170,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
 
   // CIS 3.1: Ensure TLS/SSL is enabled for load balancers
   const loadBalancers = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('lb') || component.includes('load-balancer')
   })
 
@@ -197,12 +197,12 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
 
   // CIS 4.1: Ensure backups are configured
   const databases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
   const backups = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('backup') || component.includes('vault')
   })
 
@@ -230,7 +230,7 @@ async function runGDPRScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
 
   // GDPR Art. 32: Encryption of personal data
   const databases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
@@ -284,7 +284,7 @@ async function runGDPRScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
 
   // GDPR Art. 32: Logging and monitoring
   const monitoringComponents = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('monitor') || component.includes('log')
   })
 
@@ -311,7 +311,7 @@ async function runSOC2Scan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
 
   // SOC2 CC6.1: Logical access controls
   const identityComponents = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return (
       component.includes('auth') ||
       component.includes('identity') ||
@@ -334,7 +334,7 @@ async function runSOC2Scan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
 
   // SOC2 CC7.2: System monitoring
   const monitoringComponents = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('monitor') || component.includes('application-insights')
   })
 
@@ -360,7 +360,7 @@ async function runPCIDSSScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceF
 
   // PCI-DSS 3.4: Encryption of cardholder data
   const databases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
@@ -384,7 +384,7 @@ async function runPCIDSSScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceF
 
   // PCI-DSS 1.3: Network segmentation
   const vnets = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vnet') || component.includes('vpc')
   })
 
@@ -409,7 +409,7 @@ async function runHIPAAScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFi
 
   // HIPAA: Encryption of ePHI
   const databases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
@@ -434,7 +434,7 @@ async function runHIPAAScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFi
 
   // HIPAA: Audit controls
   const monitoringComponents = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('monitor') || component.includes('log')
   })
 

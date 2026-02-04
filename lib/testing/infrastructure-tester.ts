@@ -27,7 +27,7 @@ async function testConnectivity(nodes: Node[], edges: Edge[]): Promise<Infrastru
 
   // Test 1: Frontend can reach backend
   const frontendNodes = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return (
       component.includes('frontend') ||
       component.includes('web-app') ||
@@ -36,7 +36,7 @@ async function testConnectivity(nodes: Node[], edges: Edge[]): Promise<Infrastru
   })
 
   const backendNodes = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return (
       component.includes('backend') ||
       component.includes('api') ||
@@ -73,7 +73,7 @@ async function testConnectivity(nodes: Node[], edges: Edge[]): Promise<Infrastru
 
   // Test 2: Backend can reach database
   const databases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql') || component.includes('postgres')
   })
 
@@ -105,12 +105,12 @@ async function testConnectivity(nodes: Node[], edges: Edge[]): Promise<Infrastru
 
   // Test 3: Load balancer distributes to VMs
   const loadBalancers = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('lb') || component.includes('load-balancer')
   })
 
   const vms = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vm') || component.includes('ec2')
   })
 
@@ -143,7 +143,7 @@ async function testConnectivity(nodes: Node[], edges: Edge[]): Promise<Infrastru
   // Test 4: Orphaned resources (no connections)
   const orphaned = nodes.filter((n) => {
     const hasConnection = edges.some((e) => e.source === n.id || e.target === n.id)
-    return !hasConnection && n.data.component !== 'azure-resource-group'
+    return !hasConnection && (n.data.componentId || n.data.component) !== 'azure-resource-group'
   })
 
   if (orphaned.length > 0) {
@@ -174,7 +174,7 @@ async function testSecurity(nodes: Node[], _edges: Edge[]): Promise<Infrastructu
 
   // Test 1: Storage encryption
   const storageAccounts = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('storage') || component.includes('s3') || component.includes('blob')
   })
 
@@ -205,7 +205,7 @@ async function testSecurity(nodes: Node[], _edges: Edge[]): Promise<Infrastructu
 
   // Test 2: Public database access
   const databases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
@@ -236,12 +236,12 @@ async function testSecurity(nodes: Node[], _edges: Edge[]): Promise<Infrastructu
 
   // Test 3: NSG/Security Group presence
   const vms = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vm') || component.includes('ec2')
   })
 
   const securityGroups = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('nsg') || component.includes('security-group')
   })
 
@@ -267,7 +267,7 @@ async function testSecurity(nodes: Node[], _edges: Edge[]): Promise<Infrastructu
 
   // Test 4: HTTPS/TLS on load balancers
   const loadBalancers = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('lb') || component.includes('load-balancer')
   })
 
@@ -306,7 +306,7 @@ async function testCostLimits(nodes: Node[], _edges: Edge[]): Promise<Infrastruc
   let totalEstimatedCost = 0
 
   for (const node of nodes) {
-    const component = node.data.component as string
+    const component = (node.data.componentId || node.data.component) as string
     // Simplified cost estimation - in real implementation, use COMPONENT_CATALOG
     const baseCost = 100 // Default $100/month per resource
     const replicas = (node.data.config as any)?.replicas || 1
@@ -335,7 +335,7 @@ async function testCostLimits(nodes: Node[], _edges: Edge[]): Promise<Infrastruc
 
   // Test 2: Check for oversized VMs
   const vms = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vm') || component.includes('ec2')
   })
 
@@ -372,7 +372,7 @@ async function testConfiguration(nodes: Node[], _edges: Edge[]): Promise<Infrast
 
   // Test 1: VM replicas for high availability
   const vms = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vm') || component.includes('ec2')
   })
 
@@ -403,7 +403,7 @@ async function testConfiguration(nodes: Node[], _edges: Edge[]): Promise<Infrast
 
   // Test 2: Database replication
   const databases = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
@@ -434,7 +434,7 @@ async function testConfiguration(nodes: Node[], _edges: Edge[]): Promise<Infrast
 
   // Test 3: Backup configuration
   const backups = nodes.filter((n) => {
-    const component = String(n.data.component || '')
+    const component = String(n.data.componentId || n.data.component || '')
     return component.includes('backup')
   })
 

@@ -21,12 +21,14 @@ import { Button } from '@/components/ui/button'
 import { Boxes, ArrowLeft, Loader2 } from 'lucide-react'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
-import { CustomNode, ContainerNode } from '@/components/diagram/custom-nodes'
+import { CustomNode, ContainerNode, isValidConnection, getComponentCategory } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
+import { DiagramSearch } from '@/components/diagram/diagram-search'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
 import { NodeConfigPanel } from '@/components/diagram/node-config-panel'
 import { calculateInfrastructureCost } from '@/lib/cost-calculator'
 import { useToast } from '@/hooks/use-toast'
+import { useHistory } from '@/hooks/use-history'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
 import { CloudProvider, ServiceType } from '@/lib/catalog'
@@ -98,12 +100,121 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const [testing, setTesting] = useState(false)
 
   const [multiCloudPanelOpen, setMultiCloudPanelOpen] = useState(false)
+  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null)
 
-  const { zoomIn, zoomOut, fitView, screenToFlowPosition } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, screenToFlowPosition, getNodes, setCenter } = useReactFlow()
   const router = useRouter()
   const { toast } = useToast()
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const hasUnsavedChanges = useRef(false)
+
+  // History for undo/redo
+  const { canUndo, canRedo, undo, redo, pushState } = useHistory()
+  const isUndoRedoAction = useRef(false)
+
+  // Push state to history when nodes/edges change (but not during undo/redo)
+  useEffect(() => {
+    if (isUndoRedoAction.current) {
+      isUndoRedoAction.current = false
+      return
+    }
+    if (nodes.length > 0 || edges.length > 0) {
+      pushState(nodes, edges)
+    }
+  }, [nodes, edges, pushState])
+
+  // Undo handler
+  const handleUndo = useCallback(() => {
+    const state = undo()
+    if (state) {
+      isUndoRedoAction.current = true
+      setNodes(state.nodes)
+      setEdges(state.edges)
+      toast({ title: 'Undo', description: 'Restored previous state' })
+    }
+  }, [undo, setNodes, setEdges, toast])
+
+  // Redo handler
+  const handleRedo = useCallback(() => {
+    const state = redo()
+    if (state) {
+      isUndoRedoAction.current = true
+      setNodes(state.nodes)
+      setEdges(state.edges)
+      toast({ title: 'Redo', description: 'Restored next state' })
+    }
+  }, [redo, setNodes, setEdges, toast])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+      const modKey = isMac ? e.metaKey : e.ctrlKey
+
+      // Ctrl/Cmd + S - Save
+      if (modKey && e.key === 's') {
+        e.preventDefault()
+        handleSave()
+        return
+      }
+
+      // Ctrl/Cmd + Z - Undo
+      if (modKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        handleUndo()
+        return
+      }
+
+      // Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z - Redo
+      if ((modKey && e.key === 'y') || (modKey && e.shiftKey && e.key === 'z')) {
+        e.preventDefault()
+        handleRedo()
+        return
+      }
+
+      // Ctrl/Cmd + D - Duplicate selected nodes
+      if (modKey && e.key === 'd') {
+        e.preventDefault()
+        const selectedNodes = nodes.filter(n => n.selected)
+        if (selectedNodes.length > 0) {
+          const newNodes = selectedNodes.map((node, idx) => ({
+            ...node,
+            id: `node-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 9)}`,
+            position: {
+              x: node.position.x + 30,
+              y: node.position.y + 30,
+            },
+            selected: false,
+          }))
+          setNodes(nds => [...nds, ...newNodes])
+          toast({ title: 'Duplicated', description: `${newNodes.length} node(s) duplicated` })
+        }
+        return
+      }
+
+      // Ctrl/Cmd + A - Select all
+      if (modKey && e.key === 'a') {
+        e.preventDefault()
+        setNodes(nds => nds.map(n => ({ ...n, selected: true })))
+        return
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [nodes, setNodes, handleUndo, handleRedo, toast])
+
+  // Fit view to a specific node
+  const handleFitNode = useCallback((nodeId: string) => {
+    const node = getNodes().find(n => n.id === nodeId)
+    if (node) {
+      const x = node.position.x + ((node.measured?.width || 150) / 2)
+      const y = node.position.y + ((node.measured?.height || 60) / 2)
+      setCenter(x, y, { zoom: 1.5, duration: 500 })
+      // Also select the node
+      setNodes(nds => nds.map(n => ({ ...n, selected: n.id === nodeId })))
+    }
+  }, [getNodes, setCenter, setNodes])
 
   // Load project and diagram
   useEffect(() => {
@@ -262,7 +373,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     const handleConfigureNode = (e: Event) => {
       const customEvent = e as CustomEvent<{ nodeId: string }>
       const { nodeId } = customEvent.detail
-      const node = nodes.find((n) => n.id === nodeId)
+      // Use getNodes() to always get current nodes state
+      const currentNodes = getNodes()
+      const node = currentNodes.find((n) => n.id === nodeId)
       if (node) {
         setSelectedNode(node)
         setConfigPanelOpen(true)
@@ -271,7 +384,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
     window.addEventListener('configure-node', handleConfigureNode)
     return () => window.removeEventListener('configure-node', handleConfigureNode)
-  }, [nodes])
+  }, [getNodes])
 
   // Mark as changed when nodes/edges change
   useEffect(() => {
@@ -302,9 +415,32 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
   const onConnect = useCallback(
     (params: Connection) => {
+      // Validate connection based on component categories
+      if (params.source && params.target) {
+        const currentNodes = getNodes()
+        const sourceNode = currentNodes.find(n => n.id === params.source)
+        const targetNode = currentNodes.find(n => n.id === params.target)
+
+        if (sourceNode && targetNode) {
+          const sourceComponentId = (sourceNode.data as any).componentId || (sourceNode.data as any).component || ''
+          const targetComponentId = (targetNode.data as any).componentId || (targetNode.data as any).component || ''
+
+          if (sourceComponentId && targetComponentId && !isValidConnection(sourceComponentId, targetComponentId)) {
+            const sourceCategory = getComponentCategory(sourceComponentId)
+            const targetCategory = getComponentCategory(targetComponentId)
+            toast({
+              title: 'Invalid Connection',
+              description: `${sourceCategory} components typically cannot connect directly to ${targetCategory} components`,
+              variant: 'destructive'
+            })
+            return // Don't create the connection
+          }
+        }
+      }
+
       setEdges((eds) => addEdge(params, eds))
     },
-    [setEdges]
+    [setEdges, getNodes, toast]
   )
 
   const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
@@ -715,6 +851,14 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
               maskColor="rgba(0, 0, 0, 0.1)"
             />
           </ReactFlow>
+
+          {/* Search Component */}
+          <DiagramSearch
+            nodes={nodes}
+            onHighlightNode={setHighlightedNodeId}
+            onFitNode={handleFitNode}
+          />
+
           <DiagramToolbar
             onZoomIn={() => zoomIn()}
             onZoomOut={() => zoomOut()}
@@ -726,9 +870,14 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onComplianceScan={() => setCompliancePanelOpen(true)}
             onRunTests={handleRunTests}
             onMultiCloud={() => setMultiCloudPanelOpen(true)}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
             aiAnalyzing={aiAnalyzing}
             complianceScanning={complianceScanning}
             testing={testing}
+            saving={saving}
             onExportImage={async (format: 'png' | 'svg') => {
               try {
                 const { toPng, toSvg } = await import('html-to-image')
