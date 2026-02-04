@@ -34,8 +34,20 @@ import {
 } from '@/components/ui/table'
 import {
   Boxes, ArrowLeft, Building2, Users, Crown, Shield, User,
-  Plus, Trash2, Mail, Loader2, Copy, Check
+  Plus, Trash2, Mail, Loader2, Copy, Check, Settings, Pencil
 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
 import Image from 'next/image'
@@ -94,6 +106,13 @@ export default function OrganizationManagePage({ params }: PageProps) {
   const [inviteRole, setInviteRole] = useState<string>('member')
   const [inviting, setInviting] = useState(false)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+
+  // Edit organization state
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     loadOrganizationData()
@@ -216,6 +235,70 @@ export default function OrganizationManagePage({ params }: PageProps) {
     toast({ title: 'Copied', description: 'Invite link copied to clipboard' })
   }
 
+  const handleEditOrganization = async () => {
+    if (!editName.trim()) return
+
+    setSaving(true)
+    try {
+      const res = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDescription.trim() || null,
+        }),
+      }, 10000)
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to update organization')
+      }
+
+      const data = await res.json()
+      setOrganization(data.organization)
+      setEditDialogOpen(false)
+      toast({ title: 'Updated', description: 'Organization updated successfully' })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update organization',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteOrganization = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}`, {
+        method: 'DELETE',
+      }, 10000)
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to delete organization')
+      }
+
+      toast({ title: 'Deleted', description: 'Organization has been deleted' })
+      router.push('/organizations')
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete organization',
+      })
+      setDeleting(false)
+    }
+  }
+
+  const openEditDialog = () => {
+    if (organization) {
+      setEditName(organization.name)
+      setEditDescription(organization.description || '')
+      setEditDialogOpen(true)
+    }
+  }
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'owner': return <Crown className="h-4 w-4 text-yellow-500" />
@@ -276,6 +359,83 @@ export default function OrganizationManagePage({ params }: PageProps) {
                 <Badge variant="secondary" className="capitalize">
                   {userRole}
                 </Badge>
+                {/* Edit and Delete buttons for owner/admin */}
+                {(userRole === 'owner' || userRole === 'admin') && (
+                  <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" onClick={openEditDialog}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit Organization</DialogTitle>
+                        <DialogDescription>
+                          Update your organization&apos;s name and description
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="org-name">Organization Name</Label>
+                          <Input
+                            id="org-name"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder="My Organization"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="org-description">Description</Label>
+                          <Textarea
+                            id="org-description"
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            placeholder="A brief description of your organization"
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleEditOrganization} disabled={saving || !editName.trim()}>
+                          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Save Changes
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                {userRole === 'owner' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Organization</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete &quot;{organization.name}&quot;? This action cannot be undone.
+                          All members will be removed and all data associated with this organization will be permanently deleted.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteOrganization}
+                          disabled={deleting}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Delete Organization
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </div>
           </CardHeader>

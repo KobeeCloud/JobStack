@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Boxes, ArrowLeft, Loader2 } from 'lucide-react'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
-import { CustomNode } from '@/components/diagram/custom-nodes'
+import { CustomNode, ContainerNode } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
 import { NodeConfigPanel } from '@/components/diagram/node-config-panel'
@@ -43,7 +43,14 @@ import type { ArchitectureIssue } from '@/lib/ai/architecture-analyzer'
 import type { ComplianceReport } from '@/lib/compliance/compliance-scanner'
 import type { InfrastructureTest } from '@/lib/testing/infrastructure-tester'
 
-const nodeTypes = { custom: CustomNode }
+const nodeTypes = { custom: CustomNode, container: ContainerNode }
+
+// Container component IDs that should use ContainerNode
+const CONTAINER_COMPONENTS = [
+  'azure-vnet', 'azure-subnet',
+  'aws-vpc', 'aws-subnet',
+  'gcp-vpc', 'gcp-subnet',
+]
 
 interface Project {
   id: string
@@ -343,16 +350,61 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           y: Math.round(position.y / 20) * 20,
         }
 
+        // Check if this is a container component (VNet, Subnet, VPC)
+        const isContainer = CONTAINER_COMPONENTS.includes(component.id)
+
+        // Check if dropped inside a container node
+        let parentId: string | undefined
+        let relativePosition = snappedPosition
+
+        if (!isContainer) {
+          // Find container node at drop position
+          const currentNodes = nodes
+          const containerNode = currentNodes.find(node => {
+            if (node.type !== 'container') return false
+
+            const nodeX = node.position.x
+            const nodeY = node.position.y
+            const nodeWidth = (node.style?.width as number) || (node.measured?.width as number) || 300
+            const nodeHeight = (node.style?.height as number) || (node.measured?.height as number) || 200
+
+            return (
+              snappedPosition.x >= nodeX &&
+              snappedPosition.x <= nodeX + nodeWidth &&
+              snappedPosition.y >= nodeY &&
+              snappedPosition.y <= nodeY + nodeHeight
+            )
+          })
+
+          if (containerNode) {
+            parentId = containerNode.id
+            // Calculate position relative to container
+            relativePosition = {
+              x: snappedPosition.x - containerNode.position.x,
+              y: snappedPosition.y - containerNode.position.y,
+            }
+          }
+        }
+
         const newNode: Node = {
           id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          type: 'custom',
-          position: snappedPosition,
+          type: isContainer ? 'container' : 'custom',
+          position: relativePosition,
+          parentId,
+          extent: parentId ? 'parent' : undefined,
+          expandParent: parentId ? true : undefined,
           data: {
             label: component.name,
             componentId: component.id,
             provider: component.provider,
             category: component.category,
           },
+          ...(isContainer && {
+            style: {
+              width: 400,
+              height: 300,
+            },
+          }),
         }
 
         setNodes((nds) => [...nds, newNode])
@@ -363,7 +415,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         })
       }
     },
-    [setNodes, toast, screenToFlowPosition]
+    [setNodes, toast, screenToFlowPosition, nodes]
   )
 
   const handleSave = async () => {

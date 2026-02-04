@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { ComponentConfig, CloudProvider, ServiceType } from '@/lib/catalog'
 import { LucideIcon, Search, X, Filter } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -29,6 +29,34 @@ export function ComponentPalette({
 }: ComponentPaletteProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const dragImageRef = useRef<HTMLDivElement>(null)
+
+  // Custom drag start handler with proper drag image
+  const handleDragStart = useCallback((e: React.DragEvent, component: ComponentConfig) => {
+    // Create custom drag image
+    const dragImage = document.createElement('div')
+    dragImage.className = 'fixed pointer-events-none bg-background border rounded-lg shadow-lg p-3 flex items-center gap-2 z-50'
+    dragImage.style.width = '180px'
+    dragImage.innerHTML = `
+      <span class="text-sm font-medium">${component.name}</span>
+    `
+    document.body.appendChild(dragImage)
+
+    // Position off-screen initially
+    dragImage.style.top = '-1000px'
+    dragImage.style.left = '-1000px'
+
+    // Set as drag image
+    e.dataTransfer.setDragImage(dragImage, 90, 20)
+
+    // Clean up after drag ends
+    setTimeout(() => {
+      document.body.removeChild(dragImage)
+    }, 0)
+
+    // Call the original onDragStart
+    onDragStart(e, component)
+  }, [onDragStart])
 
   // Filter components by provider and service type
   const providerFilteredComponents = useMemo(() => {
@@ -184,7 +212,7 @@ export function ComponentPalette({
                         key={component.id}
                         className="p-3 cursor-grab active:cursor-grabbing hover:border-primary transition-colors group"
                         draggable
-                        onDragStart={(e) => onDragStart(e, component)}
+                        onDragStart={(e) => handleDragStart(e, component)}
                         role="button"
                         tabIndex={0}
                         aria-label={`Drag ${component.name} component`}
