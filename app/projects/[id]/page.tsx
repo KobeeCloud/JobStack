@@ -460,6 +460,183 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     setSelectedNode(null)
   }, [setNodes])
 
+  // Handle node reparenting when dragged into/out of containers
+  const onNodeDragStop = useCallback(
+    (_event: React.MouseEvent, draggedNode: Node) => {
+      // Skip if the dragged node is a container (VNet/Subnet/VPC)
+      const isContainer = CONTAINER_COMPONENTS.includes(draggedNode.data?.componentId as string)
+      if (isContainer) {
+        // Handle container hierarchy (e.g., Subnet into VNet)
+        const allNodes = getNodes()
+        const potentialParent = allNodes.find(node => {
+          if (node.id === draggedNode.id) return false
+          if (node.type !== 'container') return false
+
+          // Only VNet/VPC can contain Subnet
+          const nodeComponent = node.data?.componentId as string
+          const draggedComponent = draggedNode.data?.componentId as string
+
+          // Check if the dragged node can be a child of this node
+          const canContainMapping: Record<string, string[]> = {
+            'azure-vnet': ['azure-subnet'],
+            'aws-vpc': ['aws-subnet'],
+            'gcp-vpc': ['gcp-subnet'],
+          }
+
+          if (!canContainMapping[nodeComponent]?.includes(draggedComponent)) {
+            return false
+          }
+
+          const nodeX = node.position.x
+          const nodeY = node.position.y
+          const nodeWidth = (node.style?.width as number) || (node.measured?.width as number) || 400
+          const nodeHeight = (node.style?.height as number) || (node.measured?.height as number) || 300
+
+          // Get absolute position of dragged node
+          const draggedAbsX = draggedNode.position.x
+          const draggedAbsY = draggedNode.position.y
+
+          return (
+            draggedAbsX >= nodeX &&
+            draggedAbsX <= nodeX + nodeWidth &&
+            draggedAbsY >= nodeY &&
+            draggedAbsY <= nodeY + nodeHeight
+          )
+        })
+
+        if (potentialParent && potentialParent.id !== draggedNode.parentId) {
+          setNodes((nds) =>
+            nds.map((node) => {
+              if (node.id === draggedNode.id) {
+                return {
+                  ...node,
+                  parentId: potentialParent.id,
+                  extent: 'parent' as const,
+                  expandParent: true,
+                  position: {
+                    x: draggedNode.position.x - potentialParent.position.x,
+                    y: draggedNode.position.y - potentialParent.position.y,
+                  },
+                }
+              }
+              return node
+            })
+          )
+          toast({
+            title: 'Node Reparented',
+            description: `${draggedNode.data?.label} moved into ${potentialParent.data?.label}`,
+          })
+        }
+        return
+      }
+
+      // For non-container nodes, check if dropped into a container
+      const allNodes = getNodes()
+      const containerNode = allNodes.find(node => {
+        if (node.id === draggedNode.id) return false
+        if (node.type !== 'container') return false
+
+        const nodeX = node.parentId
+          ? (allNodes.find(n => n.id === node.parentId)?.position.x || 0) + node.position.x
+          : node.position.x
+        const nodeY = node.parentId
+          ? (allNodes.find(n => n.id === node.parentId)?.position.y || 0) + node.position.y
+          : node.position.y
+        const nodeWidth = (node.style?.width as number) || (node.measured?.width as number) || 400
+        const nodeHeight = (node.style?.height as number) || (node.measured?.height as number) || 300
+
+        // Get absolute position of dragged node
+        const draggedAbsX = draggedNode.parentId
+          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.x || 0) + draggedNode.position.x
+          : draggedNode.position.x
+        const draggedAbsY = draggedNode.parentId
+          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.y || 0) + draggedNode.position.y
+          : draggedNode.position.y
+
+        return (
+          draggedAbsX >= nodeX &&
+          draggedAbsX <= nodeX + nodeWidth &&
+          draggedAbsY >= nodeY &&
+          draggedAbsY <= nodeY + nodeHeight
+        )
+      })
+
+      // If dropped into a container, set parentId
+      if (containerNode && containerNode.id !== draggedNode.parentId) {
+        // Calculate position relative to container
+        const containerAbsX = containerNode.parentId
+          ? (allNodes.find(n => n.id === containerNode.parentId)?.position.x || 0) + containerNode.position.x
+          : containerNode.position.x
+        const containerAbsY = containerNode.parentId
+          ? (allNodes.find(n => n.id === containerNode.parentId)?.position.y || 0) + containerNode.position.y
+          : containerNode.position.y
+
+        const draggedAbsX = draggedNode.parentId
+          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.x || 0) + draggedNode.position.x
+          : draggedNode.position.x
+        const draggedAbsY = draggedNode.parentId
+          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.y || 0) + draggedNode.position.y
+          : draggedNode.position.y
+
+        setNodes((nds) =>
+          nds.map((node) => {
+            if (node.id === draggedNode.id) {
+              return {
+                ...node,
+                parentId: containerNode.id,
+                extent: 'parent' as const,
+                expandParent: true,
+                position: {
+                  x: draggedAbsX - containerAbsX,
+                  y: draggedAbsY - containerAbsY,
+                },
+              }
+            }
+            return node
+          })
+        )
+        toast({
+          title: 'Node Reparented',
+          description: `${draggedNode.data?.label} moved into ${containerNode.data?.label}`,
+        })
+      } else if (!containerNode && draggedNode.parentId) {
+        // If dragged out of container, remove parentId
+        const oldParent = allNodes.find(n => n.id === draggedNode.parentId)
+        if (oldParent) {
+          const parentAbsX = oldParent.parentId
+            ? (allNodes.find(n => n.id === oldParent.parentId)?.position.x || 0) + oldParent.position.x
+            : oldParent.position.x
+          const parentAbsY = oldParent.parentId
+            ? (allNodes.find(n => n.id === oldParent.parentId)?.position.y || 0) + oldParent.position.y
+            : oldParent.position.y
+
+          setNodes((nds) =>
+            nds.map((node) => {
+              if (node.id === draggedNode.id) {
+                return {
+                  ...node,
+                  parentId: undefined,
+                  extent: undefined,
+                  expandParent: undefined,
+                  position: {
+                    x: parentAbsX + draggedNode.position.x,
+                    y: parentAbsY + draggedNode.position.y,
+                  },
+                }
+              }
+              return node
+            })
+          )
+          toast({
+            title: 'Node Removed',
+            description: `${draggedNode.data?.label} removed from ${oldParent.data?.label}`,
+          })
+        }
+      }
+    },
+    [getNodes, setNodes, toast]
+  )
+
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
@@ -862,6 +1039,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeDoubleClick={onNodeDoubleClick}
+            onNodeDragStop={onNodeDragStop}
             onDrop={onDrop}
             onDragOver={onDragOver}
             nodeTypes={nodeTypes}

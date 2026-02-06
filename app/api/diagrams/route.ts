@@ -59,8 +59,14 @@ export const GET = createApiHandler(
       throw error
     }
 
+    // Transform to include data wrapper for compatibility
+    const transformedDiagrams = (diagrams || []).map((d: any) => ({
+      ...d,
+      data: { nodes: d.nodes || [], edges: d.edges || [] }
+    }))
+
     return NextResponse.json({
-      data: diagrams || [],
+      data: transformedDiagrams,
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
@@ -85,13 +91,14 @@ export const POST = createApiHandler(
       throw new ApiError(413, 'Payload too large - maximum 10MB', 'PAYLOAD_TOO_LARGE')
     }
 
+    // Database has separate nodes/edges columns, not a single data column
     const { data: diagram, error } = await auth.supabase
       .from('diagrams')
       .insert({
         project_id: body.project_id,
         name: body.name,
-        data: body.data,
-        thumbnail_url: body.thumbnail_url || null,
+        nodes: body.data.nodes || [],
+        edges: body.data.edges || [],
       })
       .select()
       .single()
@@ -101,9 +108,15 @@ export const POST = createApiHandler(
       throw error
     }
 
+    // Return with data wrapper for compatibility
+    const responseData = {
+      ...diagram,
+      data: { nodes: diagram.nodes, edges: diagram.edges }
+    }
+
     log.info('Diagram created', { diagramId: diagram.id, projectId: body.project_id, userId: auth.user.id })
 
-    return NextResponse.json(diagram, { status: 201 })
+    return NextResponse.json(responseData, { status: 201 })
   },
   {
     requireAuth: true,

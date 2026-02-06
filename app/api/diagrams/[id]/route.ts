@@ -59,7 +59,13 @@ export const GET = createApiHandler(
 
     const { diagram } = await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, false)
 
-    return NextResponse.json(diagram)
+    // Return with data wrapper for compatibility
+    const responseData = {
+      ...diagram,
+      data: { nodes: diagram.nodes || [], edges: diagram.edges || [] }
+    }
+
+    return NextResponse.json(responseData)
   },
   { requireAuth: true, method: 'GET' }
 )
@@ -75,7 +81,6 @@ export const PUT = createApiHandler(
 
     await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, true)
 
-
     // Check payload size (max 10MB)
     if (body && body.data) {
       const payloadSize = JSON.stringify(body.data).length
@@ -84,14 +89,22 @@ export const PUT = createApiHandler(
       }
     }
 
+    // Database has separate nodes/edges columns, not a single data column
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    }
+
+    if (body?.name) {
+      updateData.name = body.name
+    }
+    if (body?.data) {
+      updateData.nodes = body.data.nodes || []
+      updateData.edges = body.data.edges || []
+    }
+
     const { data: diagram, error } = await auth.supabase
       .from('diagrams')
-      .update(body ? {
-        ...(body.name && { name: body.name }),
-        ...(body.data && { data: body.data }),
-        ...(body.thumbnail_url !== undefined && { thumbnail_url: body.thumbnail_url }),
-        updated_at: new Date().toISOString(),
-      } : { updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('id', diagramId)
       .select()
       .single()
@@ -105,9 +118,15 @@ export const PUT = createApiHandler(
       throw new ApiError(404, 'Diagram not found', 'DIAGRAM_NOT_FOUND')
     }
 
+    // Return with data wrapper for compatibility
+    const responseData = {
+      ...diagram,
+      data: { nodes: diagram.nodes || [], edges: diagram.edges || [] }
+    }
+
     log.info('Diagram updated', { diagramId, userId: auth.user.id })
 
-    return NextResponse.json(diagram)
+    return NextResponse.json(responseData)
   },
   {
     requireAuth: true,
