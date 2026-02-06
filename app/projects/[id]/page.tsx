@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Boxes, ArrowLeft, Loader2 } from 'lucide-react'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
-import { CustomNode, ContainerNode, isValidConnection, getComponentCategory } from '@/components/diagram/custom-nodes'
+import { CustomNode, ContainerNode, isValidConnection, getComponentCategory, shouldUseParentChild } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { DiagramSearch } from '@/components/diagram/diagram-search'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
@@ -425,6 +425,16 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           const sourceComponentId = (sourceNode.data as any).componentId || (sourceNode.data as any).component || ''
           const targetComponentId = (targetNode.data as any).componentId || (targetNode.data as any).component || ''
 
+          // Check if these components should use parent-child relationship instead
+          if (sourceComponentId && targetComponentId && shouldUseParentChild(sourceComponentId, targetComponentId)) {
+            toast({
+              title: 'Use Drag & Drop Instead',
+              description: 'These components should be nested (parent-child), not connected with an edge. Drag the child component into the container.',
+              variant: 'destructive'
+            })
+            return // Don't create the connection
+          }
+
           if (sourceComponentId && targetComponentId && !isValidConnection(sourceComponentId, targetComponentId)) {
             const sourceCategory = getComponentCategory(sourceComponentId)
             const targetCategory = getComponentCategory(targetComponentId)
@@ -478,9 +488,16 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
           // Check if the dragged node can be a child of this node
           const canContainMapping: Record<string, string[]> = {
+            // Azure
+            'azure-resource-group': ['azure-vnet', 'azure-vm', 'azure-storage', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql', 'azure-cosmos', 'azure-function', 'azure-aks', 'azure-acr'],
             'azure-vnet': ['azure-subnet'],
+            'azure-subnet': ['azure-vm', 'azure-nic', 'azure-aks'],
+            // AWS
             'aws-vpc': ['aws-subnet'],
+            'aws-subnet': ['aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
+            // GCP
             'gcp-vpc': ['gcp-subnet'],
+            'gcp-subnet': ['gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
           }
 
           if (!canContainMapping[nodeComponent]?.includes(draggedComponent)) {
@@ -532,9 +549,31 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
       // For non-container nodes, check if dropped into a container
       const allNodes = getNodes()
+      const draggedComponent = draggedNode.data?.componentId as string
+
+      // Define what containers can hold which child nodes
+      const canContainChildMapping: Record<string, string[]> = {
+        // Azure
+        'azure-resource-group': ['azure-vnet', 'azure-vm', 'azure-storage', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql', 'azure-cosmos', 'azure-function', 'azure-aks', 'azure-acr', 'azure-subnet'],
+        'azure-vnet': ['azure-subnet', 'azure-vm', 'azure-nic'],
+        'azure-subnet': ['azure-vm', 'azure-nic', 'azure-aks'],
+        // AWS
+        'aws-vpc': ['aws-subnet', 'aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
+        'aws-subnet': ['aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
+        // GCP
+        'gcp-vpc': ['gcp-subnet', 'gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
+        'gcp-subnet': ['gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
+      }
+
       const containerNode = allNodes.find(node => {
         if (node.id === draggedNode.id) return false
         if (node.type !== 'container') return false
+
+        // Check if this container can hold the dragged component
+        const containerComponent = node.data?.componentId as string
+        if (!canContainChildMapping[containerComponent]?.includes(draggedComponent)) {
+          return false
+        }
 
         const nodeX = node.parentId
           ? (allNodes.find(n => n.id === node.parentId)?.position.x || 0) + node.position.x
@@ -796,17 +835,26 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
       if (!res.ok || !data.success) {
         // Show detailed error with list of problems
-        const errorMessage = data.error || 'Failed to generate Terraform'
+        const errors = data.errors || []
         const warnings = data.warnings || []
+        const errorMessage = data.error || 'Failed to generate Terraform'
+
+        // Create detailed error list
+        const errorList = errors.length > 0
+          ? errors.map((e: { nodeLabel: string; error: string }) => `• ${e.nodeLabel}: ${e.error}`).join('\n')
+          : errorMessage
 
         toast({
           title: 'Cannot Generate Terraform',
           description: (
-            <div className="space-y-2">
-              <p>{errorMessage}</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              <p className="font-medium text-sm">Please fix the following issues:</p>
+              <div className="text-xs space-y-1 whitespace-pre-wrap">
+                {errorList}
+              </div>
               {warnings.length > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  <p>Warnings:</p>
+                <div className="text-xs text-muted-foreground mt-2 border-t pt-2">
+                  <p className="font-medium">Warnings:</p>
                   <ul className="list-disc list-inside">
                     {warnings.slice(0, 3).map((w: string, i: number) => (
                       <li key={i}>{w}</li>
@@ -822,12 +870,22 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         return
       }
 
-      // Success - download the files
-      const blob = new Blob([JSON.stringify(data.files, null, 2)], { type: 'application/json' })
+      // Success - create ZIP with .tf files
+      // Dynamically import JSZip to avoid SSR issues
+      const JSZip = (await import('jszip')).default
+      const zip = new JSZip()
+
+      // Add each file to the zip
+      for (const file of data.files) {
+        zip.file(file.filename, file.code)
+      }
+
+      // Generate the zip file
+      const blob = await zip.generateAsync({ type: 'blob' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'terraform-code.json'
+      a.download = 'terraform-infrastructure.zip'
       a.click()
       URL.revokeObjectURL(url)
 

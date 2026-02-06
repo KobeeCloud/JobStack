@@ -52,7 +52,39 @@ export function getComponentCategory(componentId: string): string {
   return component?.category || 'compute'
 }
 
+// Components that should use parent-child relationship, not edge connections
+const CONTAINER_HIERARCHY: Record<string, string[]> = {
+  // Azure
+  'azure-resource-group': ['azure-vnet', 'azure-subnet', 'azure-vm', 'azure-storage', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql', 'azure-cosmos', 'azure-function', 'azure-aks', 'azure-acr'],
+  'azure-vnet': ['azure-subnet', 'azure-vm', 'azure-nic'],
+  'azure-subnet': ['azure-vm', 'azure-nic', 'azure-aks'],
+  // AWS
+  'aws-vpc': ['aws-subnet', 'aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
+  'aws-subnet': ['aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
+  // GCP
+  'gcp-vpc': ['gcp-subnet', 'gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
+  'gcp-subnet': ['gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
+}
+
+// Check if two components should use parent-child relationship instead of edge
+export function shouldUseParentChild(sourceComponentId: string, targetComponentId: string): boolean {
+  // Check if source is a container that can contain target
+  if (CONTAINER_HIERARCHY[sourceComponentId]?.includes(targetComponentId)) {
+    return true
+  }
+  // Check if target is a container that can contain source
+  if (CONTAINER_HIERARCHY[targetComponentId]?.includes(sourceComponentId)) {
+    return true
+  }
+  return false
+}
+
 export function isValidConnection(sourceComponentId: string, targetComponentId: string): boolean {
+  // Block edge connections between components that should use parent-child
+  if (shouldUseParentChild(sourceComponentId, targetComponentId)) {
+    return false
+  }
+
   const sourceCategory = getComponentCategory(sourceComponentId)
   const targetCategory = getComponentCategory(targetComponentId)
   const allowedTargets = CONNECTION_RULES[sourceCategory]
@@ -238,9 +270,10 @@ interface ContainerNodeProps {
     security?: { nsg?: boolean; firewall?: boolean; waf?: boolean; ddos?: boolean; encryption?: boolean }
   }
   selected: boolean
+  style?: React.CSSProperties
 }
 
-export const ContainerNode = memo(function ContainerNode({ id, data, selected }: ContainerNodeProps) {
+export const ContainerNode = memo(function ContainerNode({ id, data, selected, style }: ContainerNodeProps) {
   const { deleteElements, setNodes, getNodes } = useReactFlow()
   const componentId = data.componentId || data.component || ''
   const category = getComponentCategory(componentId)
@@ -275,10 +308,17 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected }:
 
   const CategoryIcon = getCategoryIcon(category)
 
+  // Get dimensions from style or use defaults
+  const width = style?.width || 400
+  const height = style?.height || 300
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <div className={`min-w-[300px] min-h-[200px] rounded-lg border-2 border-dashed relative group ${selected ? 'ring-2 ring-primary ring-offset-2' : ''} ${getProviderBg()}`}>
+        <div
+          className={`rounded-lg border-2 border-dashed relative group ${selected ? 'ring-2 ring-primary ring-offset-2' : ''} ${getProviderBg()}`}
+          style={{ width, height, minWidth: 250, minHeight: 150 }}
+        >
           <NodeResizer minWidth={250} minHeight={150} isVisible={selected} lineClassName="border-primary" handleClassName="h-3 w-3 bg-primary border-2 border-background rounded" />
 
           {data.security?.nsg && <SecurityIndicator type="nsg" />}

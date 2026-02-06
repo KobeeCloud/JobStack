@@ -308,9 +308,50 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
     </div>
   )
 
+  // Resource Group config - Azure specific
+  const renderResourceGroupConfig = () => (
+    <>
+      <div className="space-y-2">
+        <Label>Resource Group Name</Label>
+        <Input
+          placeholder="rg-my-project"
+          value={config.name || ''}
+          onChange={(e) => updateConfig('name', e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">Used to group and manage related Azure resources</p>
+      </div>
+      <div className="space-y-2">
+        <Label>Location</Label>
+        <Select value={config.location || 'westeurope'} onValueChange={(v) => updateConfig('location', v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="westeurope">West Europe</SelectItem>
+            <SelectItem value="northeurope">North Europe</SelectItem>
+            <SelectItem value="eastus">East US</SelectItem>
+            <SelectItem value="eastus2">East US 2</SelectItem>
+            <SelectItem value="westus">West US</SelectItem>
+            <SelectItem value="westus2">West US 2</SelectItem>
+            <SelectItem value="centralus">Central US</SelectItem>
+            <SelectItem value="uksouth">UK South</SelectItem>
+            <SelectItem value="ukwest">UK West</SelectItem>
+            <SelectItem value="germanywestcentral">Germany West Central</SelectItem>
+            <SelectItem value="japaneast">Japan East</SelectItem>
+            <SelectItem value="southeastasia">Southeast Asia</SelectItem>
+            <SelectItem value="australiaeast">Australia East</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  )
+
   const renderConfigForm = () => {
     if (!componentInfo) return null
     const category = componentInfo.category
+
+    // Resource Group config
+    if (componentInfo.id.includes('resource-group')) {
+      return renderResourceGroupConfig()
+    }
 
     if (componentInfo.id.includes('vm') || componentInfo.id.includes('ec2') || componentInfo.id.includes('compute')) {
       return renderComputeConfig()
