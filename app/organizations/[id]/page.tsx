@@ -33,9 +33,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Boxes, ArrowLeft, Building2, Users, Crown, Shield, User,
+  ArrowLeft, Building2, Users, Crown, Shield, User,
   Plus, Trash2, Mail, Loader2, Copy, Check, Settings, Pencil
 } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -326,7 +327,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Boxes className="h-6 w-6 text-primary" />
+            <LogoIcon size={24} />
             <span className="font-bold text-xl">JobStack</span>
           </Link>
           <Link href="/organizations">

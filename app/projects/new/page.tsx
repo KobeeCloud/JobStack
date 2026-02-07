@@ -12,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  Boxes, ArrowLeft, ArrowRight, Loader2, Server,
-  Cloud, Globe, Check, ChevronRight
+  ArrowLeft, ArrowRight, Loader2, Server,
+  Cloud, Globe, Check, ChevronRight, Boxes
 } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import { createProjectSchema, type CreateProjectInput } from '@/lib/validation/schemas'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
 import { useToast } from '@/hooks/use-toast'

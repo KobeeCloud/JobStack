@@ -18,7 +18,8 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { Button } from '@/components/ui/button'
-import { Boxes, ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
 import { CustomNode, ContainerNode, isValidConnection, getComponentCategory, shouldUseParentChild } from '@/components/diagram/custom-nodes'
@@ -1061,7 +1062,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 Dashboard
               </Button>
             </Link>
-            <Boxes className="h-6 w-6 text-primary" />
+            <LogoIcon size={24} />
             <span className="font-bold text-xl">{project?.name || 'Project'}</span>
           </div>
           <div className="flex items-center gap-4">

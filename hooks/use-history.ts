@@ -27,8 +27,12 @@ export function useHistory(initialNodes: Node[] = [], initialEdges: Edge[] = [])
     { nodes: initialNodes, edges: initialEdges, timestamp: Date.now() }
   ])
   const [currentIndex, setCurrentIndex] = useState(0)
+  const currentIndexRef = useRef(0)
   const lastPushTime = useRef(0)
   const DEBOUNCE_MS = 300 // Debounce rapid changes
+
+  // Keep ref in sync with state
+  currentIndexRef.current = currentIndex
 
   const pushState = useCallback((nodes: Node[], edges: Edge[]) => {
     const now = Date.now()
@@ -41,7 +45,7 @@ export function useHistory(initialNodes: Node[] = [], initialEdges: Edge[] = [])
 
     setHistory(prev => {
       // Remove any future states if we're not at the end
-      const newHistory = prev.slice(0, currentIndex + 1)
+      const newHistory = prev.slice(0, currentIndexRef.current + 1)
 
       // Add new state
       const newState: HistoryState = { nodes, edges, timestamp: now }
@@ -57,7 +61,7 @@ export function useHistory(initialNodes: Node[] = [], initialEdges: Edge[] = [])
     })
 
     setCurrentIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1))
-  }, [currentIndex])
+  }, [])
 
   const undo = useCallback(() => {
     if (currentIndex <= 0) return null

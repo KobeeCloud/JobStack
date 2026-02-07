@@ -5,10 +5,11 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Boxes, Plus, FolderOpen, LogOut, Settings, User,
+  Plus, FolderOpen, LogOut, Settings, User,
   Building2, Activity, Clock, TrendingUp, Layers,
   FileCode, Star, ArrowRight, Sparkles
 } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Suspense } from 'react'
 import {
@@ -368,7 +369,7 @@ export default async function DashboardPage() {
         <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2" aria-label="JobStack Home">
-              <Boxes className="h-6 w-6 text-primary" aria-hidden="true" />
+              <LogoIcon size={24} />
               <span className="font-bold text-xl">JobStack</span>
             </Link>
 
@@ -485,8 +486,8 @@ export default async function DashboardPage() {
           <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>© 2026 JobStack. All rights reserved.</p>
             <div className="flex items-center gap-4">
-              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">Polityka Prywatności</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">Regulamin</Link>
             </div>
           </div>
         </footer>

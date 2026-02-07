@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="url(#bg-grad)" />
+  <!-- Stack layers (3 rectangles representing infrastructure layers) -->
+  <!-- Bottom layer -->
+  <rect x="96" y="320" width="320" height="64" rx="12" fill="white" opacity="0.3" />
+  <!-- Middle layer -->
+  <rect x="96" y="232" width="320" height="64" rx="12" fill="white" opacity="0.5" />
+  <!-- Top layer -->
+  <rect x="96" y="144" width="320" height="64" rx="12" fill="white" opacity="0.85" />
+  <!-- Connection dots on layers -->
+  <circle cx="160" cy="176" r="10" fill="url(#accent-grad)" />
+  <circle cx="256" cy="176" r="10" fill="url(#accent-grad)" />
+  <circle cx="352" cy="176" r="10" fill="url(#accent-grad)" />
+  <!-- Connecting lines between layers -->
+  <line x1="160" y1="186" x2="192" y2="232" stroke="white" stroke-width="3" opacity="0.6" />
+  <line x1="256" y1="186" x2="256" y2="232" stroke="white" stroke-width="3" opacity="0.6" />
+  <line x1="352" y1="186" x2="320" y2="232" stroke="white" stroke-width="3" opacity="0.6" />
+  <line x1="192" y1="296" x2="224" y2="320" stroke="white" stroke-width="3" opacity="0.4" />
+  <line x1="256" y1="296" x2="256" y2="320" stroke="white" stroke-width="3" opacity="0.4" />
+  <line x1="320" y1="296" x2="288" y2="320" stroke="white" stroke-width="3" opacity="0.4" />
+  <!-- "J" letter hint in the top-left of the top layer -->
+  <text x="120" y="192" font-family="Inter, system-ui, sans-serif" font-weight="800" font-size="40" fill="url(#bg-grad)">J</text>
+  <!-- Cloud icon suggestion at top -->
+  <path d="M 230 108 C 218 80 248 58 272 68 C 280 52 308 48 320 64 C 340 56 362 72 356 92 C 372 92 380 112 368 124 L 220 124 C 204 124 200 108 216 100 Z" fill="white" opacity="0.25" />
+</svg>

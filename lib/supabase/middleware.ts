@@ -31,11 +31,23 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user && !request.nextUrl.pathname.startsWith('/login') &&
-      !request.nextUrl.pathname.startsWith('/register') &&
-      request.nextUrl.pathname.startsWith('/dashboard')) {
+  // Protected routes that require authentication
+  const protectedPaths = ['/dashboard', '/projects', '/organizations', '/settings', '/templates']
+  const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
+
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect authenticated users away from auth pages
+  const authPaths = ['/login', '/register']
+  const isAuthRoute = authPaths.some(path => request.nextUrl.pathname.startsWith(path))
+
+  if (user && isAuthRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

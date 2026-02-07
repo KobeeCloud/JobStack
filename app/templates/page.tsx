@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
-  Boxes, ArrowLeft, Layers, Search, Server,
+  ArrowLeft, Layers, Search, Server,
   Database, Shield, Globe, Cpu, HardDrive, Network,
   Box, Copy
 } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import { useToast } from '@/hooks/use-toast'
 
 interface Template {
@@ -282,7 +283,7 @@ export default function TemplatesPage() {
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Boxes className="h-6 w-6 text-primary" />
+            <LogoIcon size={24} />
             <span className="font-bold text-xl">JobStack</span>
           </Link>
           <Link href="/dashboard">

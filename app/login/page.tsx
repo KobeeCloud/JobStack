@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Boxes, Loader2, Eye, EyeOff, AlertCircle, Github } from 'lucide-react'
+import { Loader2, Eye, EyeOff, AlertCircle, Github } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema, type LoginInput } from '@/lib/validation/schemas'
 
@@ -88,7 +89,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/50 p-4">
       <Link href="/" className="flex items-center gap-2 mb-8" aria-label="JobStack Home">
-        <Boxes className="h-8 w-8 text-primary" />
+        <LogoIcon size={32} className="text-primary" />
         <span className="text-2xl font-bold">JobStack</span>
       </Link>
       <Card className="w-full max-w-md">

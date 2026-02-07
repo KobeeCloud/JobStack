@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler } from '@/lib/api-helpers'
 import { createDiagramSchema, uuidSchema, paginationSchema } from '@/lib/validation/schemas'
 import { ApiError } from '@/lib/api-error'
-import { logger, log } from '@/lib/logger'
+import { log } from '@/lib/logger'
 
 async function verifyProjectAccess(supabase: any, projectId: string, userId: string): Promise<void> {
   const { data: project, error } = await supabase
@@ -55,7 +55,7 @@ export const GET = createApiHandler(
       .range((pagination.page - 1) * pagination.limit, pagination.page * pagination.limit - 1)
 
     if (error) {
-      logger.error('Failed to fetch diagrams', error, { projectId, userId: auth.user.id })
+      log.error('Failed to fetch diagrams', error, { projectId, userId: auth.user.id })
       throw error
     }
 
@@ -104,7 +104,7 @@ export const POST = createApiHandler(
       .single()
 
     if (error) {
-      logger.error('Failed to create diagram', error, { projectId: body.project_id, userId: auth.user.id })
+      log.error('Failed to create diagram', error, { projectId: body.project_id, userId: auth.user.id })
       throw error
     }
 

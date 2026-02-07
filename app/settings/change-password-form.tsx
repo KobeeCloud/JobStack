@@ -26,6 +26,26 @@ export function ChangePasswordForm() {
       return
     }
 
+    if (!/[A-Z]/.test(newPassword)) {
+      toast.error('Password must contain at least one uppercase letter')
+      return
+    }
+
+    if (!/[a-z]/.test(newPassword)) {
+      toast.error('Password must contain at least one lowercase letter')
+      return
+    }
+
+    if (!/[0-9]/.test(newPassword)) {
+      toast.error('Password must contain at least one number')
+      return
+    }
+
+    if (!/[^A-Za-z0-9]/.test(newPassword)) {
+      toast.error('Password must contain at least one special character')
+      return
+    }
+
     setIsChanging(true)
     try {
       const { error } = await supabase.auth.updateUser({

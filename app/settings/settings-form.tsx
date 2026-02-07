@@ -38,11 +38,6 @@ export function SettingsForm({ user }: SettingsFormProps) {
   const [fullName, setFullName] = useState(user.user_metadata?.full_name || '')
   const [avatarUrl, setAvatarUrl] = useState(user.user_metadata?.avatar_url || '')
   const [isSaving, setIsSaving] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in JSX delete section
-  const [isDeleting, setIsDeleting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in JSX delete section
-  const [deleteConfirmation, setDeleteConfirmation] = useState('')
-  const router = useRouter()
   const supabase = createClient()
 
   const handleSave = async () => {
@@ -67,35 +62,10 @@ export function SettingsForm({ user }: SettingsFormProps) {
         .eq('id', user.id)
 
       toast.success('Profile updated successfully')
-    } catch (error: any) {
-      toast.error('Failed to update profile', { description: error.message })
+    } catch (error: unknown) {
+      toast.error('Failed to update profile', { description: (error as Error).message })
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in JSX delete section
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmation !== user.email) {
-      toast.error('Please type your email correctly to confirm deletion')
-      return
-    }
-
-    setIsDeleting(true)
-    try {
-      // Delete user data first (RLS will cascade)
-      await supabase.from('projects').delete().eq('user_id', user.id)
-      await supabase.from('profiles').delete().eq('id', user.id)
-
-      // Sign out
-      await supabase.auth.signOut()
-
-      toast.success('Account deleted successfully')
-      router.push('/')
-    } catch (error: any) {
-      toast.error('Failed to delete account', { description: error.message })
-    } finally {
-      setIsDeleting(false)
     }
   }
 
@@ -188,10 +158,10 @@ export function DeleteAccountButton({ user }: { user: User }) {
 
     setIsDeleting(true)
     try {
-      // Delete user data
-      await supabase.from('exports').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-      await supabase.from('diagrams').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      // Delete user data — cascading FKs will handle related records
+      // Delete projects (diagrams, exports, shares cascade via FK)
       await supabase.from('projects').delete().eq('user_id', user.id)
+      await supabase.from('organization_members').delete().eq('user_id', user.id)
       await supabase.from('profiles').delete().eq('id', user.id)
 
       // Sign out

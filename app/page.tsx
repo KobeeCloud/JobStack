@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
-  Boxes, Code, DollarSign, Users, ArrowRight, Check, Sparkles, 
+import {
+  Boxes, Code, DollarSign, Users, ArrowRight, Check, Sparkles,
   LayoutDashboard, LogOut, Building2, Cloud, Server, Globe, Container, Lock, AlertTriangle,
   Undo2, Redo2, Search, Shield, Zap, BrainCircuit, TestTube2, FileCode2, Network
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { LogoIcon } from '@/components/logo'
 import { AnimatedDiagramDemo } from '@/components/animated-diagram-demo'
 
 export default async function Home() {
@@ -28,7 +29,7 @@ export default async function Home() {
       <nav className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Boxes className="h-6 w-6 text-primary" />
+            <LogoIcon size={28} />
             <span className="font-bold text-xl">JobStack</span>
           </div>
           <div className="flex items-center gap-4">
@@ -383,11 +384,11 @@ export default async function Home() {
       <footer className="border-t py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2"><Boxes className="h-5 w-5 text-primary" /><span className="font-semibold">JobStack</span></div>
+            <div className="flex items-center gap-2"><LogoIcon size={20} /><span className="font-semibold">JobStack</span></div>
             <p className="text-sm text-muted-foreground">© 2026 KobeCloud Jakub Pospieszny. All rights reserved.</p>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
-              <Link href="/terms" className="hover:text-foreground">Terms</Link>
+              <Link href="/privacy" className="hover:text-foreground">Polityka Prywatności</Link>
+              <Link href="/terms" className="hover:text-foreground">Regulamin</Link>
             </div>
           </div>
         </div>

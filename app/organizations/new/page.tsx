@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, ArrowLeft, Building2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Building2, Loader2 } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -130,7 +131,7 @@ export default function NewOrganizationPage() {
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2" aria-label="JobStack Home">
-            <Boxes className="h-6 w-6 text-primary" aria-hidden="true" />
+            <LogoIcon size={24} />
             <span className="font-bold text-xl">JobStack</span>
           </Link>
           <Link href="/organizations">

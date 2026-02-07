@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Boxes, ArrowLeft, Building2, Plus, Users, Settings, Crown, Shield, User } from 'lucide-react'
+import { ArrowLeft, Building2, Plus, Users, Settings, Crown, Shield, User } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 interface Organization {
@@ -67,7 +68,7 @@ export default async function OrganizationsPage() {
         <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2" aria-label="JobStack Home">
-              <Boxes className="h-6 w-6 text-primary" aria-hidden="true" />
+              <LogoIcon size={24} />
               <span className="font-bold text-xl">JobStack</span>
             </Link>
             <Link href="/dashboard">
