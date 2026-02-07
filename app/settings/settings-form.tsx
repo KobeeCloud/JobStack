@@ -146,11 +146,27 @@ export function SettingsForm({ user }: SettingsFormProps) {
 
 export function DeleteAccountButton({ user }: { user: User }) {
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [deletionScheduledFor, setDeletionScheduledFor] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
-  const handleDeleteAccount = async () => {
+  // Check if deletion is already scheduled
+  useState(() => {
+    supabase
+      .from('profiles')
+      .select('deletion_scheduled_for')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }: { data: { deletion_scheduled_for: string | null } | null }) => {
+        if (data?.deletion_scheduled_for) {
+          setDeletionScheduledFor(data.deletion_scheduled_for)
+        }
+      })
+  })
+
+  const handleScheduleDeletion = async () => {
     if (deleteConfirmation !== user.email) {
       toast.error('Please type your email correctly to confirm deletion')
       return
@@ -158,22 +174,66 @@ export function DeleteAccountButton({ user }: { user: User }) {
 
     setIsDeleting(true)
     try {
-      // Delete user data — cascading FKs will handle related records
-      // Delete projects (diagrams, exports, shares cascade via FK)
-      await supabase.from('projects').delete().eq('user_id', user.id)
-      await supabase.from('organization_members').delete().eq('user_id', user.id)
-      await supabase.from('profiles').delete().eq('id', user.id)
+      const res = await fetch('/api/user/delete', { method: 'POST' })
+      const body = await res.json()
 
-      // Sign out
-      await supabase.auth.signOut()
+      if (!res.ok) throw new Error(body.error)
 
-      toast.success('Account deleted successfully')
-      router.push('/')
+      setDeletionScheduledFor(body.deletion_scheduled_for)
+      setDeleteConfirmation('')
+      toast.success('Account deletion scheduled', {
+        description: `Your account will be permanently deleted on ${new Date(body.deletion_scheduled_for).toLocaleDateString()}. You can cancel at any time before that.`,
+      })
     } catch (error: unknown) {
-      toast.error('Failed to delete account', { description: (error as Error).message })
+      toast.error('Failed to schedule deletion', { description: (error as Error).message })
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  const handleCancelDeletion = async () => {
+    setIsCancelling(true)
+    try {
+      const res = await fetch('/api/user/delete', { method: 'DELETE' })
+      const body = await res.json()
+
+      if (!res.ok) throw new Error(body.error)
+
+      setDeletionScheduledFor(null)
+      toast.success('Account deletion cancelled', {
+        description: 'Your account will remain active.',
+      })
+      router.refresh()
+    } catch (error: unknown) {
+      toast.error('Failed to cancel deletion', { description: (error as Error).message })
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  if (deletionScheduledFor) {
+    const scheduledDate = new Date(deletionScheduledFor)
+    return (
+      <div className="flex flex-col items-end gap-2">
+        <p className="text-sm text-destructive font-medium">
+          Deletion scheduled for {scheduledDate.toLocaleDateString()}
+        </p>
+        <Button
+          variant="outline"
+          onClick={handleCancelDeletion}
+          disabled={isCancelling}
+        >
+          {isCancelling ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Cancelling...
+            </>
+          ) : (
+            'Cancel Deletion'
+          )}
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -188,8 +248,9 @@ export function DeleteAccountButton({ user }: { user: User }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your account
-            and remove all your data including projects, diagrams, and settings.
+            Your account will be scheduled for deletion with a <strong>7-day grace period</strong>.
+            During this time you can cancel the deletion. After 7 days your account and all data
+            (projects, diagrams, settings) will be permanently removed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="py-4">
@@ -207,17 +268,17 @@ export function DeleteAccountButton({ user }: { user: User }) {
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => setDeleteConfirmation('')}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDeleteAccount}
+            onClick={handleScheduleDeletion}
             disabled={isDeleting || deleteConfirmation !== user.email}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                Scheduling...
               </>
             ) : (
-              'Delete Account'
+              'Schedule Deletion'
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

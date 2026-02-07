@@ -1,0 +1,208 @@
+{
+  "common": {
+    "appName": "JobStack",
+    "loading": "Ładowanie...",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "create": "Utwórz",
+    "back": "Wróć",
+    "next": "Dalej",
+    "confirm": "Potwierdź",
+    "search": "Szukaj...",
+    "comingSoon": "Wkrótce",
+    "error": "Wystąpił błąd",
+    "success": "Sukces"
+  },
+  "nav": {
+    "home": "Strona główna",
+    "dashboard": "Panel",
+    "settings": "Ustawienia",
+    "signIn": "Zaloguj się",
+    "signUp": "Zarejestruj się",
+    "signOut": "Wyloguj się",
+    "backToDashboard": "Wróć do panelu"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Infrastruktura Chmurowa Prosto",
+      "title": "Projektuj Infrastrukturę Chmurową",
+      "titleHighlight": "Wizualnie",
+      "description": "Twórz, zarządzaj i eksportuj diagramy architektury chmurowej z intuicyjnym interfejsem drag-and-drop. Wsparcie dla AWS, Azure i GCP.",
+      "cta": "Zacznij za Darmo",
+      "ctaSecondary": "Zobacz Demo"
+    },
+    "features": {
+      "title": "Wszystko czego potrzebujesz do projektowania infrastruktury",
+      "visual": {
+        "title": "Wizualny Projektant",
+        "description": "Przeciągnij i upuść komponenty, aby zbudować infrastrukturę"
+      },
+      "multiCloud": {
+        "title": "Multi-Cloud",
+        "description": "Wsparcie dla AWS, Azure i Google Cloud Platform"
+      },
+      "export": {
+        "title": "Eksport i Udostępnianie",
+        "description": "Eksportuj do Terraform, PDF lub udostępnij zespołowi"
+      },
+      "collaboration": {
+        "title": "Współpraca",
+        "description": "Pracuj razem z zespołem w czasie rzeczywistym"
+      },
+      "templates": {
+        "title": "Szablony",
+        "description": "Rozpocznij od gotowych szablonów architektury"
+      },
+      "costEstimation": {
+        "title": "Szacowanie Kosztów",
+        "description": "Uzyskaj szacunkowe koszty swojej infrastruktury"
+      }
+    },
+    "cta": {
+      "title": "Gotowy na projektowanie infrastruktury chmurowej?",
+      "description": "Dołącz do tysięcy inżynierów, którzy używają JobStack do projektowania i zarządzania architekturą chmurową.",
+      "button": "Zacznij Budować"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Witaj ponownie",
+      "description": "Zaloguj się na swoje konto",
+      "emailLabel": "Email",
+      "passwordLabel": "Hasło",
+      "submit": "Zaloguj się",
+      "forgotPassword": "Nie pamiętasz hasła?",
+      "noAccount": "Nie masz konta?",
+      "signUpLink": "Zarejestruj się"
+    },
+    "register": {
+      "title": "Utwórz konto",
+      "description": "Zacznij projektować swoją infrastrukturę chmurową",
+      "fullNameLabel": "Imię i Nazwisko",
+      "emailLabel": "Email",
+      "passwordLabel": "Hasło",
+      "confirmPasswordLabel": "Potwierdź Hasło",
+      "consent": "Zgadzam się z {terms} i {privacy}",
+      "termsLink": "Regulaminem",
+      "privacyLink": "Polityką Prywatności",
+      "submit": "Utwórz Konto",
+      "hasAccount": "Masz już konto?",
+      "signInLink": "Zaloguj się"
+    },
+    "verifyEmail": {
+      "title": "Zweryfikuj swój adres email",
+      "description": "Wysłaliśmy link weryfikacyjny na Twój adres email. Sprawdź skrzynkę odbiorczą i kliknij link, aby zweryfikować konto.",
+      "resend": "Wyślij ponownie email weryfikacyjny",
+      "resent": "Email weryfikacyjny wysłany!",
+      "cooldown": "Wyślij ponownie za {seconds}s",
+      "backToLogin": "Wróć do logowania"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Witaj ponownie, {name}!",
+    "projects": {
+      "title": "Projekty",
+      "create": "Nowy Projekt",
+      "empty": "Brak projektów",
+      "emptyDescription": "Utwórz swój pierwszy projekt infrastruktury chmurowej",
+      "card": {
+        "updated": "Zaktualizowano {date}",
+        "components": "{count} komponentów",
+        "open": "Otwórz",
+        "delete": "Usuń"
+      }
+    },
+    "stats": {
+      "totalProjects": "Łączna liczba projektów",
+      "totalComponents": "Łączna liczba komponentów",
+      "organizations": "Organizacje"
+    }
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "description": "Zarządzaj swoim kontem i preferencjami",
+    "profile": {
+      "title": "Profil",
+      "description": "Zarządzaj swoimi danymi osobowymi",
+      "avatarUrl": "URL Avatara",
+      "avatarHint": "Wprowadź URL do swojego zdjęcia profilowego",
+      "email": "Email",
+      "emailHint": "Twój email jest zarządzany przez dostawcę uwierzytelniania",
+      "fullName": "Imię i Nazwisko",
+      "save": "Zapisz Zmiany"
+    },
+    "security": {
+      "title": "Bezpieczeństwo",
+      "description": "Zarządzaj ustawieniami bezpieczeństwa konta",
+      "emailAddress": "Adres Email",
+      "changePassword": "Zmień Hasło",
+      "currentPassword": "Aktualne Hasło",
+      "newPassword": "Nowe Hasło",
+      "confirmPassword": "Potwierdź Nowe Hasło"
+    },
+    "preferences": {
+      "title": "Preferencje",
+      "description": "Dostosuj swoje doświadczenie",
+      "theme": "Motyw",
+      "themeDescription": "Przełącz między jasnym a ciemnym trybem",
+      "language": "Język",
+      "languageDescription": "Wybierz preferowany język"
+    },
+    "notifications": {
+      "title": "Powiadomienia",
+      "description": "Skonfiguruj sposób otrzymywania powiadomień",
+      "orgInvites": "Zaproszenia do Organizacji",
+      "orgInvitesDescription": "Otrzymuj email gdy zostaniesz zaproszony do organizacji",
+      "projectShares": "Udostępnione Projekty",
+      "projectSharesDescription": "Otrzymuj email gdy ktoś udostępni Ci projekt",
+      "accountAlerts": "Alerty Konta",
+      "accountAlertsDescription": "Ważne powiadomienia o bezpieczeństwie konta",
+      "weeklyDigest": "Tygodniowe Podsumowanie",
+      "weeklyDigestDescription": "Podsumowanie projektów i aktywności każdego tygodnia",
+      "savePreferences": "Zapisz Preferencje"
+    },
+    "dataPrivacy": {
+      "title": "Dane i Prywatność",
+      "description": "Zarządzaj swoimi danymi zgodnie z RODO (Art. 20)",
+      "export": "Eksportuj Swoje Dane",
+      "exportDescription": "Pobierz kopię wszystkich danych w tym profilu, projektów, diagramów i organizacji",
+      "exportButton": "Eksportuj Moje Dane"
+    },
+    "dangerZone": {
+      "title": "Strefa Niebezpieczna",
+      "description": "Nieodwracalne działania na Twoim koncie. Usunięcie ma 7-dniowy okres karencji.",
+      "deleteAccount": "Usuń Konto",
+      "deleteDescription": "Trwale usuń swoje konto i wszystkie dane",
+      "deleteConfirmTitle": "Czy jesteś absolutnie pewien?",
+      "deleteConfirmDescription": "Twoje konto zostanie zaplanowane do usunięcia z 7-dniowym okresem karencji. W tym czasie możesz anulować usunięcie. Po 7 dniach konto i wszystkie dane zostaną trwale usunięte.",
+      "typeEmail": "Wpisz {email} aby potwierdzić",
+      "scheduleDeletion": "Zaplanuj Usunięcie",
+      "cancelDeletion": "Anuluj Usunięcie",
+      "deletionScheduled": "Usunięcie zaplanowane na {date}"
+    }
+  },
+  "projects": {
+    "editor": {
+      "save": "Zapisz",
+      "saving": "Zapisywanie...",
+      "saved": "Zapisano",
+      "export": "Eksportuj",
+      "share": "Udostępnij",
+      "components": "Komponenty",
+      "searchComponents": "Szukaj komponentów...",
+      "noResults": "Nie znaleziono komponentów",
+      "dragHint": "Przeciągnij komponenty na płótno",
+      "connectionError": "Nieprawidłowe połączenie: {reason}",
+      "dropError": "Nie można umieścić tego komponentu tutaj"
+    }
+  },
+  "footer": {
+    "copyright": "© {year} KobeCloud Jakub Pospieszny. Wszelkie prawa zastrzeżone.",
+    "privacy": "Polityka Prywatności",
+    "terms": "Regulamin",
+    "contact": "Kontakt"
+  }
+}

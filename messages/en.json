@@ -1,0 +1,208 @@
+{
+  "common": {
+    "appName": "JobStack",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "search": "Search...",
+    "comingSoon": "Coming Soon",
+    "error": "An error occurred",
+    "success": "Success"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Cloud Infrastructure Made Simple",
+      "title": "Design Cloud Infrastructure",
+      "titleHighlight": "Visually",
+      "description": "Create, manage, and export cloud architecture diagrams with an intuitive drag-and-drop interface. Support for AWS, Azure, and GCP.",
+      "cta": "Get Started Free",
+      "ctaSecondary": "View Demo"
+    },
+    "features": {
+      "title": "Everything you need to design infrastructure",
+      "visual": {
+        "title": "Visual Designer",
+        "description": "Drag-and-drop components to build your infrastructure"
+      },
+      "multiCloud": {
+        "title": "Multi-Cloud",
+        "description": "Support for AWS, Azure, and Google Cloud Platform"
+      },
+      "export": {
+        "title": "Export & Share",
+        "description": "Export to Terraform, PDF, or share with your team"
+      },
+      "collaboration": {
+        "title": "Collaboration",
+        "description": "Work together with your team in real-time"
+      },
+      "templates": {
+        "title": "Templates",
+        "description": "Start from pre-built architecture templates"
+      },
+      "costEstimation": {
+        "title": "Cost Estimation",
+        "description": "Get estimated costs for your infrastructure"
+      }
+    },
+    "cta": {
+      "title": "Ready to design your cloud infrastructure?",
+      "description": "Join thousands of engineers who use JobStack to design and manage their cloud architecture.",
+      "button": "Start Building Now"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "description": "Sign in to your account",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submit": "Sign In",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up"
+    },
+    "register": {
+      "title": "Create an account",
+      "description": "Start designing your cloud infrastructure",
+      "fullNameLabel": "Full Name",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "confirmPasswordLabel": "Confirm Password",
+      "consent": "I agree to the {terms} and {privacy}",
+      "termsLink": "Terms of Service",
+      "privacyLink": "Privacy Policy",
+      "submit": "Create Account",
+      "hasAccount": "Already have an account?",
+      "signInLink": "Sign in"
+    },
+    "verifyEmail": {
+      "title": "Verify your email address",
+      "description": "We've sent a verification link to your email address. Please check your inbox and click the link to verify your account.",
+      "resend": "Resend Verification Email",
+      "resent": "Verification email sent!",
+      "cooldown": "Resend in {seconds}s",
+      "backToLogin": "Back to login"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {name}!",
+    "projects": {
+      "title": "Projects",
+      "create": "New Project",
+      "empty": "No projects yet",
+      "emptyDescription": "Create your first cloud infrastructure project",
+      "card": {
+        "updated": "Updated {date}",
+        "components": "{count} components",
+        "open": "Open",
+        "delete": "Delete"
+      }
+    },
+    "stats": {
+      "totalProjects": "Total Projects",
+      "totalComponents": "Total Components",
+      "organizations": "Organizations"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account and preferences",
+    "profile": {
+      "title": "Profile",
+      "description": "Manage your personal information",
+      "avatarUrl": "Avatar URL",
+      "avatarHint": "Enter a URL to your profile picture",
+      "email": "Email",
+      "emailHint": "Your email is managed by your authentication provider",
+      "fullName": "Full Name",
+      "save": "Save Changes"
+    },
+    "security": {
+      "title": "Security",
+      "description": "Manage your account security settings",
+      "emailAddress": "Email Address",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "description": "Customize your experience",
+      "theme": "Theme",
+      "themeDescription": "Switch between light and dark mode",
+      "language": "Language",
+      "languageDescription": "Choose your preferred language"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Configure how you receive notifications",
+      "orgInvites": "Organization Invitations",
+      "orgInvitesDescription": "Receive email when invited to an organization",
+      "projectShares": "Project Shares",
+      "projectSharesDescription": "Receive email when someone shares a project with you",
+      "accountAlerts": "Account Alerts",
+      "accountAlertsDescription": "Important notifications about your account security",
+      "weeklyDigest": "Weekly Digest",
+      "weeklyDigestDescription": "Summary of your projects and activity each week",
+      "savePreferences": "Save Preferences"
+    },
+    "dataPrivacy": {
+      "title": "Data & Privacy",
+      "description": "Manage your data in compliance with GDPR (Art. 20)",
+      "export": "Export Your Data",
+      "exportDescription": "Download a copy of all your data including profile, projects, diagrams and organizations",
+      "exportButton": "Export My Data"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "description": "Irreversible actions for your account. Deletion has a 7-day grace period.",
+      "deleteAccount": "Delete Account",
+      "deleteDescription": "Permanently delete your account and all data",
+      "deleteConfirmTitle": "Are you absolutely sure?",
+      "deleteConfirmDescription": "Your account will be scheduled for deletion with a 7-day grace period. During this time you can cancel the deletion. After 7 days your account and all data will be permanently removed.",
+      "typeEmail": "Type {email} to confirm",
+      "scheduleDeletion": "Schedule Deletion",
+      "cancelDeletion": "Cancel Deletion",
+      "deletionScheduled": "Deletion scheduled for {date}"
+    }
+  },
+  "projects": {
+    "editor": {
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "export": "Export",
+      "share": "Share",
+      "components": "Components",
+      "searchComponents": "Search components...",
+      "noResults": "No components found",
+      "dragHint": "Drag components to the canvas",
+      "connectionError": "Invalid connection: {reason}",
+      "dropError": "Cannot place this component here"
+    }
+  },
+  "footer": {
+    "copyright": "© {year} KobeCloud Jakub Pospieszny. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact"
+  }
+}

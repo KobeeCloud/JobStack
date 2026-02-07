@@ -129,7 +129,7 @@ export function ComponentPalette({
   }
 
   return (
-    <div className="w-72 border-r bg-muted/20 flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       <div className="p-4 border-b space-y-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Components</h3>

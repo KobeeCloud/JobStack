@@ -22,7 +22,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
-import { CustomNode, ContainerNode, isValidConnection, getComponentCategory, shouldUseParentChild } from '@/components/diagram/custom-nodes'
+import { CustomNode, ContainerNode, isValidConnection, getComponentCategory, shouldUseParentChild, getConnectionError, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { DiagramSearch } from '@/components/diagram/diagram-search'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
@@ -39,6 +39,7 @@ import { AIAssistantPanel } from '@/components/ai/ai-assistant-panel'
 import { ComplianceReportPanel } from '@/components/compliance/compliance-report-panel'
 import { TestResultsPanel } from '@/components/testing/test-results-panel'
 import { MultiCloudComparePanel } from '@/components/multi-cloud/multi-cloud-compare-panel'
+import { CustomComponentPanel } from '@/components/custom/custom-component-panel'
 import { analyzeArchitecture } from '@/lib/ai/architecture-analyzer'
 import { runComplianceScan } from '@/lib/compliance/compliance-scanner'
 import { testDiagram } from '@/lib/testing/infrastructure-tester'
@@ -48,12 +49,9 @@ import type { InfrastructureTest } from '@/lib/testing/infrastructure-tester'
 
 const nodeTypes = { custom: CustomNode, container: ContainerNode }
 
-// Container component IDs that should use ContainerNode
-const CONTAINER_COMPONENTS = [
-  'azure-vnet', 'azure-subnet',
-  'aws-vpc', 'aws-subnet',
-  'gcp-vpc', 'gcp-subnet',
-]
+// Container component IDs that should use ContainerNode type
+// Derived from CONTAINER_HIERARCHY keys so it stays in sync
+const CONTAINER_COMPONENTS = Object.keys(CONTAINER_HIERARCHY)
 
 interface Project {
   id: string
@@ -61,6 +59,7 @@ interface Project {
   description: string | null
   updated_at: string
   cloud_provider?: CloudProvider
+  organization_id?: string | null
   settings?: {
     project_types?: ServiceType[]
   }
@@ -416,7 +415,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      // Validate connection based on component categories
       if (params.source && params.target) {
         const currentNodes = getNodes()
         const sourceNode = currentNodes.find(n => n.id === params.source)
@@ -426,25 +424,16 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           const sourceComponentId = (sourceNode.data as any).componentId || (sourceNode.data as any).component || ''
           const targetComponentId = (targetNode.data as any).componentId || (targetNode.data as any).component || ''
 
-          // Check if these components should use parent-child relationship instead
-          if (sourceComponentId && targetComponentId && shouldUseParentChild(sourceComponentId, targetComponentId)) {
-            toast({
-              title: 'Use Drag & Drop Instead',
-              description: 'These components should be nested (parent-child), not connected with an edge. Drag the child component into the container.',
-              variant: 'destructive'
-            })
-            return // Don't create the connection
-          }
-
-          if (sourceComponentId && targetComponentId && !isValidConnection(sourceComponentId, targetComponentId)) {
-            const sourceCategory = getComponentCategory(sourceComponentId)
-            const targetCategory = getComponentCategory(targetComponentId)
-            toast({
-              title: 'Invalid Connection',
-              description: `${sourceCategory} components typically cannot connect directly to ${targetCategory} components`,
-              variant: 'destructive'
-            })
-            return // Don't create the connection
+          if (sourceComponentId && targetComponentId) {
+            const error = getConnectionError(sourceComponentId, targetComponentId)
+            if (error) {
+              toast({
+                title: 'Invalid Connection',
+                description: error,
+                variant: 'destructive'
+              })
+              return
+            }
           }
         }
       }
@@ -471,164 +460,88 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     setSelectedNode(null)
   }, [setNodes])
 
+  // Helper: compute absolute position of a node considering its parent chain
+  const getAbsolutePosition = useCallback((node: Node, allNodes: Node[]): { x: number; y: number } => {
+    let x = node.position.x
+    let y = node.position.y
+    let currentParentId = node.parentId
+    while (currentParentId) {
+      const parent = allNodes.find(n => n.id === currentParentId)
+      if (!parent) break
+      x += parent.position.x
+      y += parent.position.y
+      currentParentId = parent.parentId
+    }
+    return { x, y }
+  }, [])
+
+  // Helper: get node bounding box (absolute)
+  const getNodeBounds = useCallback((node: Node, allNodes: Node[]) => {
+    const pos = getAbsolutePosition(node, allNodes)
+    const w = (node.style?.width as number) || (node.measured?.width as number) || 400
+    const h = (node.style?.height as number) || (node.measured?.height as number) || 300
+    return { x: pos.x, y: pos.y, width: w, height: h }
+  }, [getAbsolutePosition])
+
   // Handle node reparenting when dragged into/out of containers
   const onNodeDragStop = useCallback(
     (_event: React.MouseEvent, draggedNode: Node) => {
-      // Skip if the dragged node is a container (VNet/Subnet/VPC)
-      const isContainer = CONTAINER_COMPONENTS.includes(draggedNode.data?.componentId as string)
-      if (isContainer) {
-        // Handle container hierarchy (e.g., Subnet into VNet)
-        const allNodes = getNodes()
-        const potentialParent = allNodes.find(node => {
-          if (node.id === draggedNode.id) return false
-          if (node.type !== 'container') return false
-
-          // Only VNet/VPC can contain Subnet
-          const nodeComponent = node.data?.componentId as string
-          const draggedComponent = draggedNode.data?.componentId as string
-
-          // Check if the dragged node can be a child of this node
-          const canContainMapping: Record<string, string[]> = {
-            // Azure
-            'azure-resource-group': ['azure-vnet', 'azure-vm', 'azure-storage', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql', 'azure-cosmos', 'azure-function', 'azure-aks', 'azure-acr'],
-            'azure-vnet': ['azure-subnet'],
-            'azure-subnet': ['azure-vm', 'azure-nic', 'azure-aks'],
-            // AWS
-            'aws-vpc': ['aws-subnet'],
-            'aws-subnet': ['aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
-            // GCP
-            'gcp-vpc': ['gcp-subnet'],
-            'gcp-subnet': ['gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
-          }
-
-          if (!canContainMapping[nodeComponent]?.includes(draggedComponent)) {
-            return false
-          }
-
-          const nodeX = node.position.x
-          const nodeY = node.position.y
-          const nodeWidth = (node.style?.width as number) || (node.measured?.width as number) || 400
-          const nodeHeight = (node.style?.height as number) || (node.measured?.height as number) || 300
-
-          // Get absolute position of dragged node
-          const draggedAbsX = draggedNode.position.x
-          const draggedAbsY = draggedNode.position.y
-
-          return (
-            draggedAbsX >= nodeX &&
-            draggedAbsX <= nodeX + nodeWidth &&
-            draggedAbsY >= nodeY &&
-            draggedAbsY <= nodeY + nodeHeight
-          )
-        })
-
-        if (potentialParent && potentialParent.id !== draggedNode.parentId) {
-          setNodes((nds) =>
-            nds.map((node) => {
-              if (node.id === draggedNode.id) {
-                return {
-                  ...node,
-                  parentId: potentialParent.id,
-                  extent: 'parent' as const,
-                  expandParent: true,
-                  position: {
-                    x: draggedNode.position.x - potentialParent.position.x,
-                    y: draggedNode.position.y - potentialParent.position.y,
-                  },
-                }
-              }
-              return node
-            })
-          )
-          toast({
-            title: 'Node Reparented',
-            description: `${draggedNode.data?.label} moved into ${potentialParent.data?.label}`,
-          })
-        }
-        return
-      }
-
-      // For non-container nodes, check if dropped into a container
       const allNodes = getNodes()
       const draggedComponent = draggedNode.data?.componentId as string
+      const draggedAbs = getAbsolutePosition(draggedNode, allNodes)
 
-      // Define what containers can hold which child nodes
-      const canContainChildMapping: Record<string, string[]> = {
-        // Azure
-        'azure-resource-group': ['azure-vnet', 'azure-vm', 'azure-storage', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql', 'azure-cosmos', 'azure-function', 'azure-aks', 'azure-acr', 'azure-subnet'],
-        'azure-vnet': ['azure-subnet', 'azure-vm', 'azure-nic'],
-        'azure-subnet': ['azure-vm', 'azure-nic', 'azure-aks'],
-        // AWS
-        'aws-vpc': ['aws-subnet', 'aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
-        'aws-subnet': ['aws-ec2', 'aws-rds', 'aws-ecs', 'aws-eks', 'aws-lambda'],
-        // GCP
-        'gcp-vpc': ['gcp-subnet', 'gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
-        'gcp-subnet': ['gcp-compute-instance', 'gcp-gke', 'gcp-cloud-function', 'gcp-cloud-run'],
-      }
+      // Find the deepest (most specific) valid container at the drop position
+      // Sort by depth (most children / deepest nesting first)
+      const validContainers = allNodes
+        .filter(node => {
+          if (node.id === draggedNode.id) return false
+          if (node.type !== 'container') return false
+          // Don't allow dropping a node into its own descendant
+          let parentCheck = node.parentId
+          while (parentCheck) {
+            if (parentCheck === draggedNode.id) return false
+            parentCheck = allNodes.find(n => n.id === parentCheck)?.parentId
+          }
 
-      const containerNode = allNodes.find(node => {
-        if (node.id === draggedNode.id) return false
-        if (node.type !== 'container') return false
+          const containerComponent = node.data?.componentId as string
+          // Use CONTAINER_HIERARCHY from custom-nodes for validation
+          if (!CONTAINER_HIERARCHY[containerComponent]?.includes(draggedComponent)) return false
 
-        // Check if this container can hold the dragged component
-        const containerComponent = node.data?.componentId as string
-        if (!canContainChildMapping[containerComponent]?.includes(draggedComponent)) {
-          return false
-        }
+          // Check if dragged node center is inside this container
+          const bounds = getNodeBounds(node, allNodes)
+          return (
+            draggedAbs.x >= bounds.x &&
+            draggedAbs.x <= bounds.x + bounds.width &&
+            draggedAbs.y >= bounds.y &&
+            draggedAbs.y <= bounds.y + bounds.height
+          )
+        })
+        .sort((a, b) => {
+          // Prefer deeper (more nested) containers — count parent chain depth
+          let depthA = 0, depthB = 0
+          let p = a.parentId
+          while (p) { depthA++; p = allNodes.find(n => n.id === p)?.parentId }
+          p = b.parentId
+          while (p) { depthB++; p = allNodes.find(n => n.id === p)?.parentId }
+          return depthB - depthA // deepest first
+        })
 
-        const nodeX = node.parentId
-          ? (allNodes.find(n => n.id === node.parentId)?.position.x || 0) + node.position.x
-          : node.position.x
-        const nodeY = node.parentId
-          ? (allNodes.find(n => n.id === node.parentId)?.position.y || 0) + node.position.y
-          : node.position.y
-        const nodeWidth = (node.style?.width as number) || (node.measured?.width as number) || 400
-        const nodeHeight = (node.style?.height as number) || (node.measured?.height as number) || 300
+      const targetContainer = validContainers[0] || null
 
-        // Get absolute position of dragged node
-        const draggedAbsX = draggedNode.parentId
-          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.x || 0) + draggedNode.position.x
-          : draggedNode.position.x
-        const draggedAbsY = draggedNode.parentId
-          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.y || 0) + draggedNode.position.y
-          : draggedNode.position.y
-
-        return (
-          draggedAbsX >= nodeX &&
-          draggedAbsX <= nodeX + nodeWidth &&
-          draggedAbsY >= nodeY &&
-          draggedAbsY <= nodeY + nodeHeight
-        )
-      })
-
-      // If dropped into a container, set parentId
-      if (containerNode && containerNode.id !== draggedNode.parentId) {
-        // Calculate position relative to container
-        const containerAbsX = containerNode.parentId
-          ? (allNodes.find(n => n.id === containerNode.parentId)?.position.x || 0) + containerNode.position.x
-          : containerNode.position.x
-        const containerAbsY = containerNode.parentId
-          ? (allNodes.find(n => n.id === containerNode.parentId)?.position.y || 0) + containerNode.position.y
-          : containerNode.position.y
-
-        const draggedAbsX = draggedNode.parentId
-          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.x || 0) + draggedNode.position.x
-          : draggedNode.position.x
-        const draggedAbsY = draggedNode.parentId
-          ? (allNodes.find(n => n.id === draggedNode.parentId)?.position.y || 0) + draggedNode.position.y
-          : draggedNode.position.y
-
+      if (targetContainer && targetContainer.id !== draggedNode.parentId) {
+        // Reparent into new container
+        const containerAbs = getAbsolutePosition(targetContainer, allNodes)
         setNodes((nds) =>
           nds.map((node) => {
             if (node.id === draggedNode.id) {
               return {
                 ...node,
-                parentId: containerNode.id,
+                parentId: targetContainer.id,
                 extent: 'parent' as const,
                 expandParent: true,
                 position: {
-                  x: draggedAbsX - containerAbsX,
-                  y: draggedAbsY - containerAbsY,
+                  x: draggedAbs.x - containerAbs.x,
+                  y: draggedAbs.y - containerAbs.y,
                 },
               }
             }
@@ -636,20 +549,13 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           })
         )
         toast({
-          title: 'Node Reparented',
-          description: `${draggedNode.data?.label} moved into ${containerNode.data?.label}`,
+          title: 'Component Nested',
+          description: `${draggedNode.data?.label} → ${targetContainer.data?.label}`,
         })
-      } else if (!containerNode && draggedNode.parentId) {
-        // If dragged out of container, remove parentId
+      } else if (!targetContainer && draggedNode.parentId) {
+        // Dragged out of container — unparent
         const oldParent = allNodes.find(n => n.id === draggedNode.parentId)
         if (oldParent) {
-          const parentAbsX = oldParent.parentId
-            ? (allNodes.find(n => n.id === oldParent.parentId)?.position.x || 0) + oldParent.position.x
-            : oldParent.position.x
-          const parentAbsY = oldParent.parentId
-            ? (allNodes.find(n => n.id === oldParent.parentId)?.position.y || 0) + oldParent.position.y
-            : oldParent.position.y
-
           setNodes((nds) =>
             nds.map((node) => {
               if (node.id === draggedNode.id) {
@@ -658,23 +564,20 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                   parentId: undefined,
                   extent: undefined,
                   expandParent: undefined,
-                  position: {
-                    x: parentAbsX + draggedNode.position.x,
-                    y: parentAbsY + draggedNode.position.y,
-                  },
+                  position: { x: draggedAbs.x, y: draggedAbs.y },
                 }
               }
               return node
             })
           )
           toast({
-            title: 'Node Removed',
+            title: 'Component Removed',
             description: `${draggedNode.data?.label} removed from ${oldParent.data?.label}`,
           })
         }
       }
     },
-    [getNodes, setNodes, toast]
+    [getNodes, setNodes, toast, getAbsolutePosition, getNodeBounds]
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -703,41 +606,81 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           y: Math.round(position.y / 20) * 20,
         }
 
-        // Check if this is a container component (VNet, Subnet, VPC)
-        const isContainer = CONTAINER_COMPONENTS.includes(component.id)
+        // Check if this is a container component
+        const componentId = component.isCustom ? component.componentId : component.id
+        const isContainer = !component.isCustom && CONTAINER_COMPONENTS.includes(component.id)
 
-        // Check if dropped inside a container node
+        // Find the deepest valid container at drop position
         let parentId: string | undefined
         let relativePosition = snappedPosition
 
-        if (!isContainer) {
-          // Find container node at drop position
-          const currentNodes = nodes
-          const containerNode = currentNodes.find(node => {
+        const currentNodes = nodes
+        // Sort containers deepest-first for proper nesting
+        const validContainers = currentNodes
+          .filter(node => {
             if (node.type !== 'container') return false
+            const containerComponent = node.data?.componentId as string
+            // Use CONTAINER_HIERARCHY to validate
+            if (!CONTAINER_HIERARCHY[containerComponent]?.includes(component.id)) return false
 
-            const nodeX = node.position.x
-            const nodeY = node.position.y
-            const nodeWidth = (node.style?.width as number) || (node.measured?.width as number) || 300
-            const nodeHeight = (node.style?.height as number) || (node.measured?.height as number) || 200
+            // Compute absolute bounds
+            let absX = node.position.x, absY = node.position.y
+            let pid = node.parentId
+            while (pid) {
+              const p = currentNodes.find(n => n.id === pid)
+              if (!p) break
+              absX += p.position.x
+              absY += p.position.y
+              pid = p.parentId
+            }
+            const w = (node.style?.width as number) || (node.measured?.width as number) || 400
+            const h = (node.style?.height as number) || (node.measured?.height as number) || 300
 
             return (
-              snappedPosition.x >= nodeX &&
-              snappedPosition.x <= nodeX + nodeWidth &&
-              snappedPosition.y >= nodeY &&
-              snappedPosition.y <= nodeY + nodeHeight
+              snappedPosition.x >= absX &&
+              snappedPosition.x <= absX + w &&
+              snappedPosition.y >= absY &&
+              snappedPosition.y <= absY + h
             )
           })
+          .sort((a, b) => {
+            let dA = 0, dB = 0
+            let p = a.parentId
+            while (p) { dA++; p = currentNodes.find(n => n.id === p)?.parentId }
+            p = b.parentId
+            while (p) { dB++; p = currentNodes.find(n => n.id === p)?.parentId }
+            return dB - dA
+          })
 
-          if (containerNode) {
-            parentId = containerNode.id
-            // Calculate position relative to container
-            relativePosition = {
-              x: snappedPosition.x - containerNode.position.x,
-              y: snappedPosition.y - containerNode.position.y,
-            }
+        const targetContainer = validContainers[0]
+        if (targetContainer) {
+          parentId = targetContainer.id
+          // Compute container absolute position
+          let absX = targetContainer.position.x, absY = targetContainer.position.y
+          let pid = targetContainer.parentId
+          while (pid) {
+            const p = currentNodes.find(n => n.id === pid)
+            if (!p) break
+            absX += p.position.x
+            absY += p.position.y
+            pid = p.parentId
+          }
+          relativePosition = {
+            x: snappedPosition.x - absX,
+            y: snappedPosition.y - absY,
           }
         }
+
+        // Default sizes for containers
+        const getContainerSize = (id: string) => {
+          if (id.includes('resource-group')) return { width: 800, height: 600 }
+          if (id.includes('vnet') || id.includes('vpc')) return { width: 600, height: 450 }
+          if (id.includes('subnet')) return { width: 450, height: 300 }
+          if (id.includes('availability-set')) return { width: 350, height: 250 }
+          return { width: 400, height: 300 }
+        }
+
+        const containerSize = isContainer ? getContainerSize(component.id) : undefined
 
         const newNode: Node = {
           id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -747,17 +690,17 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           extent: parentId ? 'parent' : undefined,
           expandParent: parentId ? true : undefined,
           data: {
-            label: component.name,
-            componentId: component.id,
+            label: component.name || component.label,
+            componentId: componentId,
             provider: component.provider,
             category: component.category,
+            ...(component.isCustom && {
+              isCustom: true,
+              icon: component.icon,
+              color: component.color,
+            }),
           },
-          ...(isContainer && {
-            style: {
-              width: 400,
-              height: 300,
-            },
-          }),
+          ...(containerSize && { style: containerSize }),
         }
 
         setNodes((nds) => [...nds, newNode])
@@ -1081,15 +1024,26 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         </div>
       </nav>
       <div className="flex-1 flex overflow-hidden min-h-0">
-        <ComponentPalette
-          components={COMPONENT_CATALOG}
-          cloudProvider={project?.cloud_provider}
-          projectTypes={project?.settings?.project_types}
-          onDragStart={(e, component) => {
-            e.dataTransfer.effectAllowed = 'move'
-            e.dataTransfer.setData('application/reactflow', JSON.stringify(component))
-          }}
-        />
+        <div className="flex flex-col w-72 border-r bg-muted/20 overflow-hidden">
+          <ComponentPalette
+            components={COMPONENT_CATALOG}
+            cloudProvider={project?.cloud_provider}
+            projectTypes={project?.settings?.project_types}
+            onDragStart={(e, component) => {
+              e.dataTransfer.effectAllowed = 'move'
+              e.dataTransfer.setData('application/reactflow', JSON.stringify(component))
+            }}
+          />
+          {project?.organization_id && (
+            <div className="border-t max-h-[40%] overflow-hidden flex-shrink-0">
+              <CustomComponentPanel
+                organizationId={project.organization_id}
+                onDragStart={() => {}}
+                className="h-full"
+              />
+            </div>
+          )}
+        </div>
         <div className="flex-1 relative overflow-hidden">
           <ReactFlow
             nodes={nodes}

@@ -41,6 +41,16 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Enforce email verification for authenticated users on protected routes
+  if (user && isProtectedRoute) {
+    const isEmailVerified = user.email_confirmed_at != null
+    if (!isEmailVerified) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/verify-email'
+      return NextResponse.redirect(url)
+    }
+  }
+
   // Redirect authenticated users away from auth pages
   const authPaths = ['/login', '/register']
   const isAuthRoute = authPaths.some(path => request.nextUrl.pathname.startsWith(path))
@@ -49,6 +59,16 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // Allow verified users to leave verify-email page
+  if (user && request.nextUrl.pathname === '/verify-email') {
+    const isEmailVerified = user.email_confirmed_at != null
+    if (isEmailVerified) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

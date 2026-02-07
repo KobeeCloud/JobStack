@@ -9,6 +9,8 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { LogoIcon } from '@/components/logo'
 import { AnimatedDiagramDemo } from '@/components/animated-diagram-demo'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { LanguageSwitcher } from '@/components/language-switcher'
 
 export default async function Home() {
   const supabase = await createClient()
@@ -33,6 +35,8 @@ export default async function Home() {
             <span className="font-bold text-xl">JobStack</span>
           </div>
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
+            <ThemeToggle />
             {user ? (
               <>
                 <Link href="/dashboard">

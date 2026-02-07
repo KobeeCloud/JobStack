@@ -3,11 +3,15 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, User, Shield, Bell, Palette, Key } from 'lucide-react'
+import { ArrowLeft, User, Shield, Bell, Palette, Key, Database } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SettingsForm, DeleteAccountButton } from './settings-form'
 import { ChangePasswordForm } from './change-password-form'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { ExportDataButton } from './export-data-button'
+import { NotificationPreferences } from './notification-preferences'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -98,20 +102,16 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Theme</p>
-                    <p className="text-sm text-muted-foreground">System default</p>
+                    <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
                   </div>
-                  <Button variant="outline" disabled>
-                    Coming Soon
-                  </Button>
+                  <ThemeToggle />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Language</p>
                     <p className="text-sm text-muted-foreground">English</p>
                   </div>
-                  <Button variant="outline" disabled>
-                    Coming Soon
-                  </Button>
+                  <LanguageSwitcher />
                 </div>
               </CardContent>
             </Card>
@@ -127,15 +127,31 @@ export default async function SettingsPage() {
                   Configure how you receive notifications
                 </CardDescription>
               </CardHeader>
+              <CardContent>
+                <NotificationPreferences />
+              </CardContent>
+            </Card>
+
+            {/* Data & Privacy (GDPR / RODO) */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Database className="h-5 w-5 text-primary" />
+                  <CardTitle>Data &amp; Privacy</CardTitle>
+                </div>
+                <CardDescription>
+                  Manage your data in compliance with GDPR (Art.&nbsp;20)
+                </CardDescription>
+              </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Email Notifications</p>
-                    <p className="text-sm text-muted-foreground">Receive updates about your projects</p>
+                    <p className="font-medium">Export Your Data</p>
+                    <p className="text-sm text-muted-foreground">
+                      Download a copy of all your data including profile, projects, diagrams and organizations
+                    </p>
                   </div>
-                  <Button variant="outline" disabled>
-                    Coming Soon
-                  </Button>
+                  <ExportDataButton />
                 </div>
               </CardContent>
             </Card>
@@ -145,7 +161,7 @@ export default async function SettingsPage() {
               <CardHeader>
                 <CardTitle className="text-destructive">Danger Zone</CardTitle>
                 <CardDescription>
-                  Irreversible actions for your account
+                  Irreversible actions for your account. Deletion has a 7-day grace period.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

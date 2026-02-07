@@ -12,6 +12,9 @@ import {
 import { LogoIcon } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Suspense } from 'react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { DashboardCharts } from '@/components/dashboard-charts'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -341,6 +344,87 @@ function ProjectsListSkeleton() {
   )
 }
 
+// Analytics data fetching
+async function AnalyticsDashboard() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: projects } = await supabase
+    .from('projects')
+    .select('id, cloud_provider, status, created_at')
+    .eq('user_id', user.id)
+
+  if (!projects || projects.length < 2) return null
+
+  // Projects by provider
+  const providerCounts = projects.reduce((acc: Record<string, number>, p: { cloud_provider: string }) => {
+    const key = p.cloud_provider || 'other'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const projectsByProvider = Object.entries(providerCounts).map(([name, count]) => ({
+    name: name.toUpperCase(),
+    count: count as number,
+  }))
+
+  // Projects by status
+  const statusCounts = projects.reduce((acc: Record<string, number>, p: { status: string }) => {
+    const key = p.status || 'draft'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const projectsByStatus = Object.entries(statusCounts).map(([name, count]) => ({
+    name: name.charAt(0).toUpperCase() + name.slice(1),
+    count: count as number,
+  }))
+
+  // Projects by month (last 6 months)
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const now = new Date()
+  const projectsByMonth = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+    const month = `${monthNames[d.getMonth()]} ${d.getFullYear()}`
+    const count = projects.filter((p: { created_at: string }) => {
+      const pd = new Date(p.created_at)
+      return pd.getMonth() === d.getMonth() && pd.getFullYear() === d.getFullYear()
+    }).length
+    return { month, count }
+  })
+
+  // Get component counts from diagrams
+  const { data: diagrams } = await supabase
+    .from('diagrams')
+    .select('nodes, project_id')
+    .in('project_id', projects.map((p: { id: string }) => p.id))
+
+  const categoryCounts: Record<string, number> = {}
+  if (diagrams) {
+    for (const diagram of diagrams) {
+      const nodes = Array.isArray(diagram.nodes) ? diagram.nodes : []
+      for (const node of nodes) {
+        const category = (node as { data?: { category?: string } }).data?.category || 'unknown'
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1
+      }
+    }
+  }
+  const componentsByCategory = Object.entries(categoryCounts)
+    .map(([name, count]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8)
+
+  return (
+    <DashboardCharts
+      data={{
+        projectsByProvider,
+        projectsByStatus,
+        projectsByMonth,
+        componentsByCategory,
+      }}
+    />
+  )
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -374,6 +458,8 @@ export default async function DashboardPage() {
             </Link>
 
             <div className="flex items-center gap-4">
+              <LanguageSwitcher />
+              <ThemeToggle />
               {profile?.subscription_tier && profile.subscription_tier !== 'free' && (
                 <Badge variant="outline" className="hidden sm:flex gap-1 text-primary border-primary/30">
                   <Star className="h-3 w-3 fill-primary" />
@@ -460,6 +546,11 @@ export default async function DashboardPage() {
           {/* Recent Activity */}
           <Suspense fallback={null}>
             <RecentActivity />
+          </Suspense>
+
+          {/* Analytics Charts */}
+          <Suspense fallback={null}>
+            <AnalyticsDashboard />
           </Suspense>
 
           {/* Projects Section */}
