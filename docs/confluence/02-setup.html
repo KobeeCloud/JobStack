@@ -1,0 +1,104 @@
+<h1>Instalacja i konfiguracja</h1>
+
+<ac:structured-macro ac:name="warning">
+  <ac:rich-text-body>
+    <p>Wymagane: Node.js &ge; 20.0, npm &ge; 10.0, konto Supabase (darmowy plan wystarczy na dev)</p>
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h2>1. Klonowanie repozytorium</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:plain-text-body><![CDATA[git clone <repo-url> JobStack
+cd JobStack
+npm install]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>2. Zmienne środowiskowe</h2>
+<p>Skopiuj plik <code>.env.example</code> do <code>.env.local</code> i uzupełnij wartości:</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:plain-text-body><![CDATA[cp .env.example .env.local]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<table>
+  <tbody>
+    <tr><th>Zmienna</th><th>Wymagana</th><th>Opis</th><th>Przykład</th></tr>
+    <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>✅</td><td>URL instancji Supabase</td><td><code>https://xxxxx.supabase.co</code></td></tr>
+    <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>✅</td><td>Klucz publiczny anon Supabase</td><td><code>eyJhbGciOi...</code></td></tr>
+    <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>✅</td><td>Klucz service-role (server-side)</td><td><code>eyJhbGciOi...</code></td></tr>
+    <tr><td><code>OPENAI_API_KEY</code></td><td>✅</td><td>Klucz API OpenAI (GPT-4 Turbo)</td><td><code>sk-...</code></td></tr>
+    <tr><td><code>RESEND_API_KEY</code></td><td>✅</td><td>Klucz API Resend (email)</td><td><code>re_...</code></td></tr>
+    <tr><td><code>NEXT_PUBLIC_APP_URL</code></td><td>✅</td><td>URL aplikacji (CORS, redirect)</td><td><code>http://localhost:3000</code></td></tr>
+    <tr><td><code>UPSTASH_REDIS_REST_URL</code></td><td>✅</td><td>URL Upstash Redis (rate limiting)</td><td><code>https://xxxxx.upstash.io</code></td></tr>
+    <tr><td><code>UPSTASH_REDIS_REST_TOKEN</code></td><td>✅</td><td>Token Upstash Redis</td><td><code>AXxx...</code></td></tr>
+    <tr><td><code>SENTRY_DSN</code></td><td>❌</td><td>DSN Sentry (monitoring błędów)</td><td><code>https://xxxxx@sentry.io/xxx</code></td></tr>
+    <tr><td><code>SENTRY_AUTH_TOKEN</code></td><td>❌</td><td>Token Auth Sentry (source maps)</td><td><code>sntrys_...</code></td></tr>
+  </tbody>
+</table>
+
+<h2>3. Konfiguracja Supabase</h2>
+<h3>a) Utworzenie bazy danych</h3>
+<ol>
+  <li>Zaloguj się na <a href="https://supabase.com">supabase.com</a> i utwórz nowy projekt.</li>
+  <li>Skopiuj <strong>URL</strong>, <strong>anon key</strong> i <strong>service role key</strong> z Settings &rarr; API.</li>
+</ol>
+
+<h3>b) Inicjalizacja schematu</h3>
+<p>Wykonaj cały plik <code>supabase/schema.sql</code> (v3.0, 787 linii) w SQL Editor:</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">sql</ac:parameter>
+  <ac:plain-text-body><![CDATA[-- Otwórz Supabase Dashboard → SQL Editor
+-- Wklej zawartość pliku supabase/schema.sql
+-- Kliknij "Run"
+
+-- Schema tworzy:
+--   16 tabel + ENUM types
+--   RLS policies na każdej tabeli
+--   Triggery na updated_at
+--   Indeksy composite/GIN
+--   Funkcję verify_project_access(uuid, uuid)]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h3>c) Konfiguracja Auth</h3>
+<ol>
+  <li>Authentication &rarr; Providers &rarr; Email: włącz <strong>Confirm email</strong></li>
+  <li>Authentication &rarr; Providers &rarr; GitHub: dodaj Client ID/Secret z GitHub OAuth App</li>
+  <li>Authentication &rarr; Providers &rarr; Google: dodaj Client ID/Secret z Google Cloud Console</li>
+  <li>Authentication &rarr; URL Configuration &rarr; Site URL: <code>http://localhost:3000</code> (dev) lub URL produkcyjny</li>
+  <li>Authentication &rarr; URL Configuration &rarr; Redirect URLs: dodaj <code>http://localhost:3000/auth/callback</code></li>
+</ol>
+
+<h2>4. Uruchomienie lokalne</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:plain-text-body><![CDATA[# Development
+npm run dev
+# → http://localhost:3000
+
+# Build produkcyjny
+npm run build
+npm start]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>5. Struktura projektu (skrócona)</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">text</ac:parameter>
+  <ac:plain-text-body><![CDATA[JobStack/
+├── app/                    # Next.js App Router (17 stron + 25 API)
+│   ├── api/               # REST API endpoints
+│   ├── dashboard/         # Panel użytkownika
+│   ├── projects/          # Projekty + edytor diagramów
+│   ├── organizations/     # Organizacje
+│   └── settings/          # Ustawienia
+├── components/            # Komponenty React (19 katalogów + 13 plików)
+├── lib/                   # Logika biznesowa (14 katalogów + 18 plików)
+│   ├── supabase/          # Klienty Supabase (browser + server + admin)
+│   ├── generators/        # Eksport IaC (Terraform, CF, ARM, Pulumi)
+│   ├── compliance/        # Skanery compliance (CIS, GDPR, SOC2...)
+│   └── validations/       # Schematy Zod
+├── messages/              # i18n (en.json, pl.json)
+├── public/                # Statyczne assety
+├── supabase/              # schema.sql v3.0 (787 linii)
+└── docs/confluence/       # Ta dokumentacja]]></ac:plain-text-body>
+</ac:structured-macro>

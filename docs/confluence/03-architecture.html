@@ -1,0 +1,98 @@
+<h1>Architektura systemu</h1>
+
+<h2>Diagram wysokopoziomowy</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">text</ac:parameter>
+  <ac:plain-text-body><![CDATA[
+┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
+│   Klient    │────▶│  Next.js 16  │────▶│   Supabase      │
+│  (Browser)  │◀────│  App Router  │◀────│  PostgreSQL+RLS │
+└─────────────┘     └──────┬───────┘     └────────┬────────┘
+                           │                       │
+                    ┌──────┴───────┐        ┌──────┴────────┐
+                    │  API Routes  │        │  Supabase     │
+                    │  (25 endpt)  │        │  Auth+Realtime│
+                    └──────┬───────┘        └───────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+        ┌──────────┐ ┌──────────┐ ┌──────────┐
+        │  OpenAI  │ │  Resend  │ │  Upstash │
+        │ GPT-4 T  │ │  (email) │ │  (Redis) │
+        └──────────┘ └──────────┘ └──────────┘
+]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>Schemat bazy danych (v3.0 — 16 tabel)</h2>
+<table>
+  <tbody>
+    <tr><th>Tabela</th><th>Opis</th><th>RLS</th><th>Klucze obce</th></tr>
+    <tr><td><code>profiles</code></td><td>Profil użytkownika (rozszerza auth.users)</td><td>✅</td><td>auth.users(id)</td></tr>
+    <tr><td><code>organizations</code></td><td>Organizacje (name, billing, tier)</td><td>✅</td><td>profiles(id) [owner]</td></tr>
+    <tr><td><code>organization_members</code></td><td>Członkowie organizacji + role (owner/admin/member/viewer)</td><td>✅</td><td>organizations, profiles</td></tr>
+    <tr><td><code>organization_invites</code></td><td>Zaproszenia do organizacji (token, expiry)</td><td>✅</td><td>organizations, profiles</td></tr>
+    <tr><td><code>projects</code></td><td>Projekty infrastruktury (nazwa, provider, opis)</td><td>✅</td><td>profiles, organizations</td></tr>
+    <tr><td><code>diagrams</code></td><td>Diagramy React Flow (nodes, edges, viewport)</td><td>✅</td><td>projects</td></tr>
+    <tr><td><code>diagram_versions</code></td><td>Historia wersji diagramów</td><td>✅</td><td>diagrams, profiles</td></tr>
+    <tr><td><code>templates</code></td><td>Szablony infrastruktury (publiczne/prywatne)</td><td>✅</td><td>profiles</td></tr>
+    <tr><td><code>template_usages</code></td><td>Analityka użycia szablonów</td><td>✅</td><td>templates, profiles</td></tr>
+    <tr><td><code>activity_log</code></td><td>Audyt log (kto co robił)</td><td>✅</td><td>profiles, projects, organizations</td></tr>
+    <tr><td><code>compliance_scans</code></td><td>Wyniki skanowania compliance</td><td>✅</td><td>projects, profiles</td></tr>
+    <tr><td><code>user_settings</code></td><td>Ustawienia (theme, notyfikacje, język, GDPR)</td><td>✅</td><td>profiles</td></tr>
+    <tr><td><code>export_history</code></td><td>Historia eksportów (format, rozmiar, status)</td><td>✅</td><td>projects, profiles</td></tr>
+    <tr><td><code>shared_projects</code></td><td>Udostępnianie projektów (permission_level)</td><td>✅</td><td>projects, profiles</td></tr>
+    <tr><td><code>webhooks</code></td><td>Webhooki użytkowników (URL, secret, events)</td><td>✅</td><td>profiles, organizations</td></tr>
+    <tr><td><code>cost_estimates</code></td><td>Szacunki kosztów infrastruktury (monthly/yearly)</td><td>✅</td><td>projects, profiles</td></tr>
+  </tbody>
+</table>
+
+<h2>Typy ENUM w bazie</h2>
+<table>
+  <tbody>
+    <tr><th>ENUM</th><th>Wartości</th></tr>
+    <tr><td><code>subscription_tier</code></td><td>free, pro, enterprise</td></tr>
+    <tr><td><code>org_role</code></td><td>owner, admin, member, viewer</td></tr>
+    <tr><td><code>cloud_provider</code></td><td>aws, azure, gcp, kubernetes, multi-cloud</td></tr>
+    <tr><td><code>export_format</code></td><td>terraform, cloudformation, arm, pulumi, png, svg, pdf, json</td></tr>
+    <tr><td><code>compliance_framework</code></td><td>cis, gdpr, soc2, pci-dss, hipaa</td></tr>
+    <tr><td><code>invite_status</code></td><td>pending, accepted, expired, revoked</td></tr>
+  </tbody>
+</table>
+
+<h2>Struktura lib/ (logika biznesowa)</h2>
+<table>
+  <tbody>
+    <tr><th>Moduł</th><th>Pliki</th><th>Odpowiedzialność</th></tr>
+    <tr><td><code>lib/supabase/</code></td><td>client.ts, server.ts, admin.ts, middleware.ts</td><td>Klienty Supabase (browser, SSR, service-role)</td></tr>
+    <tr><td><code>lib/generators/</code></td><td>terraform.ts, cloudformation.ts, arm.ts, pulumi.ts</td><td>Generatory eksportu IaC (z pełnym pipeline)</td></tr>
+    <tr><td><code>lib/compliance/</code></td><td>scanner.ts, rules/*.ts</td><td>Skanowanie compliance (5 frameworków)</td></tr>
+    <tr><td><code>lib/validations/</code></td><td>project.ts, organization.ts, user.ts, diagram.ts</td><td>Schematy Zod (walidacja formularzy + API)</td></tr>
+    <tr><td><code>lib/hooks/</code></td><td>use-*.ts</td><td>Custom React hooks (Supabase, diagrams, toast)</td></tr>
+    <tr><td><code>lib/ai/</code></td><td>chat.ts, suggestions.ts</td><td>Integracja OpenAI (GPT-4 Turbo)</td></tr>
+    <tr><td><code>lib/export/</code></td><td>png.ts, svg.ts, pdf.ts, json.ts, zip.ts</td><td>Eksport obrazów i dokumentów</td></tr>
+    <tr><td><code>lib/cost/</code></td><td>calculator.ts, pricing.ts</td><td>Kalkulator kosztów infrastruktury</td></tr>
+    <tr><td><code>lib/i18n/</code></td><td>config.ts, request.ts</td><td>Konfiguracja next-intl (PL/EN)</td></tr>
+    <tr><td><code>lib/utils.ts</code></td><td>-</td><td>Utility (cn, formatDate, debounce...)</td></tr>
+    <tr><td><code>lib/mock-client.ts</code></td><td>-</td><td>Mock Supabase do dev bez bazy</td></tr>
+  </tbody>
+</table>
+
+<h2>Struktura components/ (UI)</h2>
+<table>
+  <tbody>
+    <tr><th>Katalog</th><th>Opis</th></tr>
+    <tr><td><code>components/ui/</code></td><td>shadcn/ui primitives (Button, Dialog, Input, Select...)</td></tr>
+    <tr><td><code>components/editor/</code></td><td>Edytor diagramów (Toolbar, NodePanel, EdgePanel, Canvas)</td></tr>
+    <tr><td><code>components/nodes/</code></td><td>Komponenty węzłów (AWS, Azure, GCP, K8s)</td></tr>
+    <tr><td><code>components/dashboard/</code></td><td>Widgety dashboardu (StatsCard, RecentProjects...)</td></tr>
+    <tr><td><code>components/compliance/</code></td><td>Wyniki skanowania, raporty compliance</td></tr>
+    <tr><td><code>components/cost/</code></td><td>Kalkulator kosztów, wykresy (Recharts)</td></tr>
+    <tr><td><code>components/auth/</code></td><td>Formularze logowania/rejestracji (z Google/GitHub)</td></tr>
+    <tr><td><code>components/projects/</code></td><td>ProjectCard, ProjectShareDialog, NewProjectWizard</td></tr>
+    <tr><td><code>components/organizations/</code></td><td>OrgCard, MembersList, InviteDialog</td></tr>
+    <tr><td><code>components/settings/</code></td><td>Formularze ustawień, WebhookSettings, GDPR</td></tr>
+    <tr><td><code>components/layout/</code></td><td>Navbar, Sidebar, Footer, LanguageSwitcher</td></tr>
+    <tr><td><code>components/shared/</code></td><td>Reużywalne (LoadingSpinner, ErrorBoundary, EmptyState)</td></tr>
+    <tr><td><code>components/version-history/</code></td><td>VersionHistory panel, diff viewer</td></tr>
+  </tbody>
+</table>

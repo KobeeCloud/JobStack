@@ -85,7 +85,7 @@ export default async function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link href="/register"><Button size="lg">Start Building Free<ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
-                <Link href="/login"><Button size="lg" variant="outline">View Demo</Button></Link>
+                <Link href="/demo"><Button size="lg" variant="outline">View Demo</Button></Link>
               </div>
 
               {/* Tech badges */}

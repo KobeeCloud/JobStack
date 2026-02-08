@@ -84,7 +84,7 @@
       "emailLabel": "Email",
       "passwordLabel": "Password",
       "confirmPasswordLabel": "Confirm Password",
-      "consent": "I agree to the {terms} and {privacy}",
+      "consent": "I agree to the {terms} and {privacy} and consent to the processing of my personal data for the purpose of providing the service.",
       "termsLink": "Terms of Service",
       "privacyLink": "Privacy Policy",
       "submit": "Create Account",

@@ -1,0 +1,121 @@
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Plus, ArrowLeft, FolderOpen, Search } from 'lucide-react'
+import { LogoIcon } from '@/components/logo'
+import { ProjectCard } from '@/components/project-card'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { LanguageSwitcher } from '@/components/language-switcher'
+import { Badge } from '@/components/ui/badge'
+
+interface Project {
+  id: string
+  name: string
+  description: string | null
+  updated_at: string
+  created_at: string
+  status: string
+  cloud_provider: string
+}
+
+export default async function ProjectsPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: projects, count } = await supabase
+    .from('projects')
+    .select('*', { count: 'exact' })
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+
+  const providerColors: Record<string, string> = {
+    aws: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400',
+    azure: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400',
+    gcp: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
+    vercel: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    netlify: 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-400',
+    cloudflare: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400',
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <LogoIcon size={24} />
+              <span className="font-bold text-xl">JobStack</span>
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="font-medium">Projects</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
+            <ThemeToggle />
+            <Link href="/projects/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Project
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Your Projects</h1>
+          <p className="text-muted-foreground">
+            {count || 0} project{(count || 0) !== 1 ? 's' : ''} total
+          </p>
+        </div>
+
+        {!projects || projects.length === 0 ? (
+          <Card className="text-center py-16">
+            <CardContent>
+              <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Create your first cloud infrastructure project to get started.
+              </p>
+              <Link href="/projects/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Project
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(projects as Project[]).map((project) => (
+              <div key={project.id} className="relative">
+                <ProjectCard project={project} />
+                <div className="absolute top-3 right-12 z-10">
+                  <Badge
+                    variant="secondary"
+                    className={providerColors[project.cloud_provider] || ''}
+                  >
+                    {project.cloud_provider?.toUpperCase() || 'N/A'}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <footer className="border-t py-6 mt-auto">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+          <Link href="/dashboard" className="hover:text-foreground transition-colors">
+            <ArrowLeft className="inline h-3 w-3 mr-1" />
+            Back to Dashboard
+          </Link>
+        </div>
+      </footer>
+    </div>
+  )
+}

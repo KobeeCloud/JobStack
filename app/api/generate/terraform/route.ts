@@ -51,6 +51,7 @@ export const POST = createApiHandler(
             diagram_id: body.diagram_id,
             export_type: 'terraform',
             code_content: JSON.stringify(allFiles),
+            metadata: { file_count: allFiles.length, generated_at: new Date().toISOString() },
           })
           log.info('Terraform export saved', { diagramId: body.diagram_id, userId: auth.user.id })
         }

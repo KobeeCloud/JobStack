@@ -1,0 +1,146 @@
+<h1>Deployment &amp; DevOps</h1>
+
+<h2>Opcja 1: Vercel (rekomendowana)</h2>
+<ac:structured-macro ac:name="tip">
+  <ac:rich-text-body>
+    <p>Vercel to natywna platforma dla Next.js — zero-config deployment z edge functions, preview per PR i auto-scaling.</p>
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h3>Krok po kroku</h3>
+<ol>
+  <li>Połącz repozytorium Git z <a href="https://vercel.com">vercel.com</a></li>
+  <li>Framework Preset: <strong>Next.js</strong> (auto-detect)</li>
+  <li>Root Directory: <code>./</code> (domyślne)</li>
+  <li>Dodaj zmienne środowiskowe (wszystkie 10 z <code>.env.example</code>) w Settings &rarr; Environment Variables</li>
+  <li>Deploy — Vercel automatycznie wykona <code>npm run build</code></li>
+</ol>
+
+<h3>Konfiguracja domenowa</h3>
+<ol>
+  <li>Settings &rarr; Domains &rarr; dodaj domenę</li>
+  <li>Zaktualizuj <code>NEXT_PUBLIC_APP_URL</code></li>
+  <li>Zaktualizuj Supabase Auth &rarr; URL Configuration &rarr; Site URL + Redirect URLs</li>
+</ol>
+
+<h3>Preview Deployments</h3>
+<p>Każdy PR generuje unikalne preview URL. Zmienne środowiskowe preview można ustawić oddzielnie (scope: Preview).</p>
+
+<h2>Opcja 2: Self-hosted (Docker / Node.js)</h2>
+
+<h3>Docker</h3>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">dockerfile</ac:parameter>
+  <ac:plain-text-body><![CDATA[FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+EXPOSE 3000
+CMD ["node", "server.js"]]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<ac:structured-macro ac:name="note">
+  <ac:rich-text-body>
+    <p>Wymaga <code>output: 'standalone'</code> w <code>next.config.ts</code>. Dodaj do konfiguracji:</p>
+    <p><code>const config = { output: 'standalone', ... }</code></p>
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h3>Node.js bezpośrednio</h3>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:plain-text-body><![CDATA[# Na serwerze
+git pull origin main
+npm ci --production
+npm run build
+PORT=3000 npm start
+
+# Z process managerem (PM2)
+npm install -g pm2
+pm2 start npm --name "jobstack" -- start
+pm2 save
+pm2 startup]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>Reverse Proxy (nginx)</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">nginx</ac:parameter>
+  <ac:plain-text-body><![CDATA[server {
+    listen 443 ssl http2;
+    server_name app.jobstack.dev;
+
+    ssl_certificate     /etc/letsencrypt/live/app.jobstack.dev/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.jobstack.dev/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>Monitoring (Sentry)</h2>
+<table>
+  <tbody>
+    <tr><th>Funkcja</th><th>Konfiguracja</th></tr>
+    <tr><td>Error Tracking</td><td>Automatyczne — <code>@sentry/nextjs</code> łapie errory client + server</td></tr>
+    <tr><td>Source Maps</td><td><code>SENTRY_AUTH_TOKEN</code> — upload przy build</td></tr>
+    <tr><td>Performance</td><td>Tracing włączone domyślnie (sampleRate: 0.1 w prod)</td></tr>
+    <tr><td>Alerty</td><td>Skonfiguruj w Sentry Dashboard (email, Slack)</td></tr>
+  </tbody>
+</table>
+
+<h2>Health Check</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:plain-text-body><![CDATA[# Prosty health check
+curl -f http://localhost:3000/api/health || exit 1
+
+# Docker healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>CI/CD Pipeline (GitHub Actions — przykład)</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">yaml</ac:parameter>
+  <ac:plain-text-body><![CDATA[name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>Backup bazy</h2>
+<p>Supabase Cloud zapewnia automatyczne backupy (Point-in-Time Recovery na planie Pro). Dla self-hosted Supabase:</p>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:plain-text-body><![CDATA[# Backup (pg_dump)
+pg_dump -h db.xxxxx.supabase.co -U postgres -d postgres -F c -f backup_$(date +%Y%m%d).dump
+
+# Restore
+pg_restore -h localhost -U postgres -d postgres backup_20250115.dump]]></ac:plain-text-body>
+</ac:structured-macro>

@@ -106,7 +106,7 @@ export default function NewOrganizationPage() {
         return
       }
 
-      // Add owner as member
+      // Add owner as member — rollback org if this fails
       const { error: memberError } = await supabase
         .from('organization_members')
         .insert({
@@ -115,7 +115,11 @@ export default function NewOrganizationPage() {
           role: 'owner',
         })
 
-      if (memberError) throw memberError
+      if (memberError) {
+        // Rollback: delete the orphaned organization
+        await supabase.from('organizations').delete().eq('id', org.id)
+        throw new Error(`Failed to add owner as member: ${memberError.message}`)
+      }
 
       toast.success('Organization created successfully!')
       router.push('/organizations')

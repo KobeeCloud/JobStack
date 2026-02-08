@@ -13,9 +13,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { 
-  MessageSquare, Send, MoreVertical, Edit2, Trash2, 
-  Reply, CheckCircle, AlertCircle, X, AtSign 
+import {
+  MessageSquare, Send, MoreVertical, Edit2, Trash2,
+  Reply, CheckCircle, AlertCircle, X, AtSign
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -63,8 +63,8 @@ export function NodeComments({
   const [showResolved, setShowResolved] = useState(false)
 
   const nodeComments = comments.filter(c => c.nodeId === nodeId)
-  const visibleComments = showResolved 
-    ? nodeComments 
+  const visibleComments = showResolved
+    ? nodeComments
     : nodeComments.filter(c => !c.resolved)
 
   // Group comments by parent
@@ -114,7 +114,7 @@ export function NodeComments({
                 {getInitials(comment.userName)}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium text-sm">{comment.userName}</span>
@@ -142,9 +142,9 @@ export function NodeComments({
                   />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSaveEdit}>Save</Button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => setEditingId(null)}
                     >
                       Cancel
@@ -158,9 +158,9 @@ export function NodeComments({
               {!isEditing && (
                 <div className="flex items-center gap-2 mt-2">
                   {!isReply && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-7 text-xs"
                       onClick={() => setReplyingTo(comment.id)}
                     >
@@ -169,9 +169,9 @@ export function NodeComments({
                     </Button>
                   )}
                   {!comment.resolved && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-7 text-xs"
                       onClick={() => onResolveComment(comment.id, true)}
                     >
@@ -180,9 +180,9 @@ export function NodeComments({
                     </Button>
                   )}
                   {comment.resolved && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-7 text-xs"
                       onClick={() => onResolveComment(comment.id, false)}
                     >
@@ -206,7 +206,7 @@ export function NodeComments({
                     <Edit2 className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => onDeleteComment(comment.id)}
                     className="text-destructive"
                   >
@@ -238,9 +238,9 @@ export function NodeComments({
               <Button size="icon" onClick={handleSubmit} disabled={!newComment.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
-              <Button 
-                size="icon" 
-                variant="ghost" 
+              <Button
+                size="icon"
+                variant="ghost"
                 onClick={() => {
                   setReplyingTo(null)
                   setNewComment('')
@@ -282,8 +282,8 @@ export function NodeComments({
               <span> ({nodeComments.filter(c => c.resolved).length} resolved)</span>
             )}
           </span>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => setShowResolved(!showResolved)}
           >
@@ -317,9 +317,9 @@ export function NodeComments({
               placeholder="Add a comment... Use @mention to notify"
               className="min-h-[60px]"
             />
-            <Button 
-              size="icon" 
-              onClick={handleSubmit} 
+            <Button
+              size="icon"
+              onClick={handleSubmit}
               disabled={!newComment.trim()}
             >
               <Send className="h-4 w-4" />
@@ -332,15 +332,19 @@ export function NodeComments({
 }
 
 // Hook to manage comments
-export function useComments(initialComments: Comment[] = []) {
+export function useComments(
+  initialComments: Comment[] = [],
+  currentUser: { id: string; name: string; avatar?: string } = { id: 'anonymous', name: 'Anonymous' }
+) {
   const [comments, setComments] = useState<Comment[]>(initialComments)
 
   const addComment = useCallback((nodeId: string, content: string, parentId?: string) => {
     const newComment: Comment = {
       id: `comment-${Date.now()}`,
       nodeId,
-      userId: 'current-user', // TODO: Get from auth
-      userName: 'Current User',
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
       content,
       createdAt: new Date(),
       resolved: false,
@@ -350,8 +354,8 @@ export function useComments(initialComments: Comment[] = []) {
   }, [])
 
   const updateComment = useCallback((commentId: string, content: string) => {
-    setComments(prev => prev.map(c => 
-      c.id === commentId 
+    setComments(prev => prev.map(c =>
+      c.id === commentId
         ? { ...c, content, updatedAt: new Date() }
         : c
     ))
@@ -362,7 +366,7 @@ export function useComments(initialComments: Comment[] = []) {
   }, [])
 
   const resolveComment = useCallback((commentId: string, resolved: boolean) => {
-    setComments(prev => prev.map(c => 
+    setComments(prev => prev.map(c =>
       c.id === commentId ? { ...c, resolved } : c
     ))
   }, [])

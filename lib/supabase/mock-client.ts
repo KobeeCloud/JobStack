@@ -7,25 +7,51 @@ const mockStorage: {
   projects: Map<string, any>
   diagrams: Map<string, any>
   templates: any[]
+  profiles: Map<string, any>
+  organizations: Map<string, any>
+  organization_members: Map<string, any>
+  organization_invites: Map<string, any>
+  project_shares: Map<string, any>
+  exports: Map<string, any>
+  diagram_versions: Map<string, any>
+  webhooks: Map<string, any>
+  custom_components: Map<string, any>
+  subscriptions: Map<string, any>
+  activity_log: Map<string, any>
+  project_tags: Map<string, any>
+  notifications: Map<string, any>
 } = {
   projects: new Map(),
   diagrams: new Map(),
+  profiles: new Map(),
+  organizations: new Map(),
+  organization_members: new Map(),
+  organization_invites: new Map(),
+  project_shares: new Map(),
+  exports: new Map(),
+  diagram_versions: new Map(),
+  webhooks: new Map(),
+  custom_components: new Map(),
+  subscriptions: new Map(),
+  activity_log: new Map(),
+  project_tags: new Map(),
+  notifications: new Map(),
   templates: [
     {
       id: 'tpl-startup',
       name: 'Startup Stack',
       description: 'Simple web app with database and CDN',
-      diagram_data: {
-        nodes: [
-          { id: 'web-1', type: 'compute', position: { x: 100, y: 100 }, data: { label: 'Web Server', provider: 'aws', service: 'EC2', specs: { instance: 't3.medium' }, monthlyCost: 30 } },
-          { id: 'db-1', type: 'database', position: { x: 300, y: 100 }, data: { label: 'PostgreSQL', provider: 'aws', service: 'RDS', specs: { instance: 'db.t3.micro' }, monthlyCost: 15 } },
-          { id: 'cdn-1', type: 'network', position: { x: 100, y: 250 }, data: { label: 'CloudFront CDN', provider: 'aws', service: 'CloudFront', monthlyCost: 10 } },
-        ],
-        edges: [
-          { id: 'e1', source: 'web-1', target: 'db-1' },
-          { id: 'e2', source: 'cdn-1', target: 'web-1' },
-        ],
-      },
+      category: 'startup',
+      cloud_provider: 'aws',
+      nodes: [
+        { id: 'web-1', type: 'compute', position: { x: 100, y: 100 }, data: { label: 'Web Server', provider: 'aws', service: 'EC2', specs: { instance: 't3.medium' }, monthlyCost: 30 } },
+        { id: 'db-1', type: 'database', position: { x: 300, y: 100 }, data: { label: 'PostgreSQL', provider: 'aws', service: 'RDS', specs: { instance: 'db.t3.micro' }, monthlyCost: 15 } },
+        { id: 'cdn-1', type: 'network', position: { x: 100, y: 250 }, data: { label: 'CloudFront CDN', provider: 'aws', service: 'CloudFront', monthlyCost: 10 } },
+      ],
+      edges: [
+        { id: 'e1', source: 'web-1', target: 'db-1' },
+        { id: 'e2', source: 'cdn-1', target: 'web-1' },
+      ],
       is_public: true,
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
@@ -34,19 +60,19 @@ const mockStorage: {
       id: 'tpl-microservices',
       name: 'Microservices Architecture',
       description: 'Kubernetes cluster with API Gateway and message queue',
-      diagram_data: {
-        nodes: [
-          { id: 'k8s-1', type: 'compute', position: { x: 200, y: 150 }, data: { label: 'Kubernetes Cluster', provider: 'aws', service: 'EKS', specs: { nodes: 3 }, monthlyCost: 150 } },
-          { id: 'api-1', type: 'network', position: { x: 200, y: 0 }, data: { label: 'API Gateway', provider: 'aws', service: 'API Gateway', monthlyCost: 25 } },
-          { id: 'mq-1', type: 'storage', position: { x: 400, y: 150 }, data: { label: 'Message Queue', provider: 'aws', service: 'SQS', monthlyCost: 5 } },
-          { id: 'cache-1', type: 'database', position: { x: 0, y: 150 }, data: { label: 'Redis Cache', provider: 'aws', service: 'ElastiCache', monthlyCost: 20 } },
-        ],
-        edges: [
-          { id: 'e1', source: 'api-1', target: 'k8s-1' },
-          { id: 'e2', source: 'k8s-1', target: 'mq-1' },
-          { id: 'e3', source: 'k8s-1', target: 'cache-1' },
-        ],
-      },
+      category: 'microservices',
+      cloud_provider: 'aws',
+      nodes: [
+        { id: 'k8s-1', type: 'compute', position: { x: 200, y: 150 }, data: { label: 'Kubernetes Cluster', provider: 'aws', service: 'EKS', specs: { nodes: 3 }, monthlyCost: 150 } },
+        { id: 'api-1', type: 'network', position: { x: 200, y: 0 }, data: { label: 'API Gateway', provider: 'aws', service: 'API Gateway', monthlyCost: 25 } },
+        { id: 'mq-1', type: 'storage', position: { x: 400, y: 150 }, data: { label: 'Message Queue', provider: 'aws', service: 'SQS', monthlyCost: 5 } },
+        { id: 'cache-1', type: 'database', position: { x: 0, y: 150 }, data: { label: 'Redis Cache', provider: 'aws', service: 'ElastiCache', monthlyCost: 20 } },
+      ],
+      edges: [
+        { id: 'e1', source: 'api-1', target: 'k8s-1' },
+        { id: 'e2', source: 'k8s-1', target: 'mq-1' },
+        { id: 'e3', source: 'k8s-1', target: 'cache-1' },
+      ],
       is_public: true,
       created_at: '2024-01-02T00:00:00Z',
       updated_at: '2024-01-02T00:00:00Z',
@@ -55,19 +81,19 @@ const mockStorage: {
       id: 'tpl-serverless',
       name: 'Serverless Application',
       description: 'Lambda functions with DynamoDB and S3',
-      diagram_data: {
-        nodes: [
-          { id: 'lambda-1', type: 'compute', position: { x: 150, y: 100 }, data: { label: 'Lambda Functions', provider: 'aws', service: 'Lambda', monthlyCost: 0 } },
-          { id: 'dynamo-1', type: 'database', position: { x: 350, y: 100 }, data: { label: 'DynamoDB', provider: 'aws', service: 'DynamoDB', monthlyCost: 5 } },
-          { id: 's3-1', type: 'storage', position: { x: 150, y: 250 }, data: { label: 'S3 Bucket', provider: 'aws', service: 'S3', monthlyCost: 3 } },
-          { id: 'apigw-1', type: 'network', position: { x: 150, y: -50 }, data: { label: 'API Gateway', provider: 'aws', service: 'API Gateway', monthlyCost: 10 } },
-        ],
-        edges: [
-          { id: 'e1', source: 'apigw-1', target: 'lambda-1' },
-          { id: 'e2', source: 'lambda-1', target: 'dynamo-1' },
-          { id: 'e3', source: 'lambda-1', target: 's3-1' },
-        ],
-      },
+      category: 'startup',
+      cloud_provider: 'aws',
+      nodes: [
+        { id: 'lambda-1', type: 'compute', position: { x: 150, y: 100 }, data: { label: 'Lambda Functions', provider: 'aws', service: 'Lambda', monthlyCost: 0 } },
+        { id: 'dynamo-1', type: 'database', position: { x: 350, y: 100 }, data: { label: 'DynamoDB', provider: 'aws', service: 'DynamoDB', monthlyCost: 5 } },
+        { id: 's3-1', type: 'storage', position: { x: 150, y: 250 }, data: { label: 'S3 Bucket', provider: 'aws', service: 'S3', monthlyCost: 3 } },
+        { id: 'apigw-1', type: 'network', position: { x: 150, y: -50 }, data: { label: 'API Gateway', provider: 'aws', service: 'API Gateway', monthlyCost: 10 } },
+      ],
+      edges: [
+        { id: 'e1', source: 'apigw-1', target: 'lambda-1' },
+        { id: 'e2', source: 'lambda-1', target: 'dynamo-1' },
+        { id: 'e3', source: 'lambda-1', target: 's3-1' },
+      ],
       is_public: true,
       created_at: '2024-01-03T00:00:00Z',
       updated_at: '2024-01-03T00:00:00Z',
@@ -76,19 +102,19 @@ const mockStorage: {
       id: 'tpl-data-pipeline',
       name: 'Data Analytics Pipeline',
       description: 'ETL pipeline with data warehouse and BI tools',
-      diagram_data: {
-        nodes: [
-          { id: 'kinesis-1', type: 'storage', position: { x: 0, y: 100 }, data: { label: 'Kinesis Stream', provider: 'aws', service: 'Kinesis', monthlyCost: 25 } },
-          { id: 'glue-1', type: 'compute', position: { x: 200, y: 100 }, data: { label: 'Glue ETL', provider: 'aws', service: 'Glue', monthlyCost: 50 } },
-          { id: 'redshift-1', type: 'database', position: { x: 400, y: 100 }, data: { label: 'Redshift', provider: 'aws', service: 'Redshift', monthlyCost: 180 } },
-          { id: 'quicksight-1', type: 'network', position: { x: 400, y: 250 }, data: { label: 'QuickSight', provider: 'aws', service: 'QuickSight', monthlyCost: 24 } },
-        ],
-        edges: [
-          { id: 'e1', source: 'kinesis-1', target: 'glue-1' },
-          { id: 'e2', source: 'glue-1', target: 'redshift-1' },
-          { id: 'e3', source: 'redshift-1', target: 'quicksight-1' },
-        ],
-      },
+      category: 'enterprise',
+      cloud_provider: 'aws',
+      nodes: [
+        { id: 'kinesis-1', type: 'storage', position: { x: 0, y: 100 }, data: { label: 'Kinesis Stream', provider: 'aws', service: 'Kinesis', monthlyCost: 25 } },
+        { id: 'glue-1', type: 'compute', position: { x: 200, y: 100 }, data: { label: 'Glue ETL', provider: 'aws', service: 'Glue', monthlyCost: 50 } },
+        { id: 'redshift-1', type: 'database', position: { x: 400, y: 100 }, data: { label: 'Redshift', provider: 'aws', service: 'Redshift', monthlyCost: 180 } },
+        { id: 'quicksight-1', type: 'network', position: { x: 400, y: 250 }, data: { label: 'QuickSight', provider: 'aws', service: 'QuickSight', monthlyCost: 24 } },
+      ],
+      edges: [
+        { id: 'e1', source: 'kinesis-1', target: 'glue-1' },
+        { id: 'e2', source: 'glue-1', target: 'redshift-1' },
+        { id: 'e3', source: 'redshift-1', target: 'quicksight-1' },
+      ],
       is_public: true,
       created_at: '2024-01-04T00:00:00Z',
       updated_at: '2024-01-04T00:00:00Z',
@@ -98,6 +124,22 @@ const mockStorage: {
 
 // Initialize with a demo project
 const demoProjectId = 'demo-project-001'
+
+// Mock profile
+mockStorage.profiles.set('mock-user-id', {
+  id: 'mock-user-id',
+  email: 'dev@example.com',
+  full_name: 'Developer User',
+  avatar_url: null,
+  subscription_tier: 'free',
+  subscription_ends_at: null,
+  deleted_at: null,
+  deletion_scheduled_for: null,
+  settings: {},
+  created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+  updated_at: new Date().toISOString(),
+})
+
 mockStorage.projects.set(demoProjectId, {
   id: demoProjectId,
   name: 'Demo Infrastructure',
@@ -111,17 +153,16 @@ mockStorage.diagrams.set('demo-diagram-001', {
   id: 'demo-diagram-001',
   project_id: demoProjectId,
   name: 'Main Architecture',
-  data: {
-    nodes: [
-      { id: 'node-1', type: 'custom', position: { x: 100, y: 100 }, data: { label: 'Web Server', componentId: 'aws-ec2', provider: 'aws', service: 'EC2', monthlyCost: 25 } },
-      { id: 'node-2', type: 'custom', position: { x: 350, y: 100 }, data: { label: 'Database', componentId: 'aws-rds', provider: 'aws', service: 'RDS', monthlyCost: 50 } },
-      { id: 'node-3', type: 'custom', position: { x: 225, y: 250 }, data: { label: 'S3 Storage', componentId: 'aws-s3', provider: 'aws', service: 'S3', monthlyCost: 5 } },
-    ],
-    edges: [
-      { id: 'edge-1', source: 'node-1', target: 'node-2', animated: true },
-      { id: 'edge-2', source: 'node-1', target: 'node-3', animated: true },
-    ],
-  },
+  nodes: [
+    { id: 'node-1', type: 'custom', position: { x: 100, y: 100 }, data: { label: 'Web Server', componentId: 'aws-ec2', provider: 'aws', service: 'EC2', monthlyCost: 25 } },
+    { id: 'node-2', type: 'custom', position: { x: 350, y: 100 }, data: { label: 'Database', componentId: 'aws-rds', provider: 'aws', service: 'RDS', monthlyCost: 50 } },
+    { id: 'node-3', type: 'custom', position: { x: 225, y: 250 }, data: { label: 'S3 Storage', componentId: 'aws-s3', provider: 'aws', service: 'S3', monthlyCost: 5 } },
+  ],
+  edges: [
+    { id: 'edge-1', source: 'node-1', target: 'node-2', animated: true },
+    { id: 'edge-2', source: 'node-1', target: 'node-3', animated: true },
+  ],
+  viewport: { x: 0, y: 0, zoom: 1 },
   created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
   updated_at: new Date().toISOString(),
 })
@@ -202,6 +243,32 @@ export function createMockSupabaseClient() {
             return Array.from(mockStorage.diagrams.values())
           case 'templates':
             return mockStorage.templates
+          case 'profiles':
+            return Array.from(mockStorage.profiles.values())
+          case 'organizations':
+            return Array.from(mockStorage.organizations.values())
+          case 'organization_members':
+            return Array.from(mockStorage.organization_members.values())
+          case 'organization_invites':
+            return Array.from(mockStorage.organization_invites.values())
+          case 'project_shares':
+            return Array.from(mockStorage.project_shares.values())
+          case 'exports':
+            return Array.from(mockStorage.exports.values())
+          case 'diagram_versions':
+            return Array.from(mockStorage.diagram_versions.values())
+          case 'webhooks':
+            return Array.from(mockStorage.webhooks.values())
+          case 'custom_components':
+            return Array.from(mockStorage.custom_components.values())
+          case 'subscriptions':
+            return Array.from(mockStorage.subscriptions.values())
+          case 'activity_log':
+            return Array.from(mockStorage.activity_log.values())
+          case 'project_tags':
+            return Array.from(mockStorage.project_tags.values())
+          case 'notifications':
+            return Array.from(mockStorage.notifications.values())
           default:
             return []
         }

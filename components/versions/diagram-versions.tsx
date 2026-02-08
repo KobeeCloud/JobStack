@@ -345,7 +345,10 @@ export function DiagramVersions({
 }
 
 // Hook for version management
-export function useDiagramVersions(diagramId: string) {
+export function useDiagramVersions(
+  diagramId: string,
+  currentUser: { id: string; name: string } = { id: 'anonymous', name: 'Anonymous' }
+) {
   const [versions, setVersions] = useState<DiagramVersion[]>([])
   const [versionCounter, setVersionCounter] = useState(1)
 
@@ -364,7 +367,7 @@ export function useDiagramVersions(diagramId: string) {
       nodes: JSON.parse(JSON.stringify(nodes)),
       edges: JSON.parse(JSON.stringify(edges)),
       createdAt: new Date(),
-      createdBy: 'Current User', // TODO: Get from auth
+      createdBy: currentUser.name,
       isAutosave,
     }
 

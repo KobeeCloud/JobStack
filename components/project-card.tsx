@@ -100,6 +100,32 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
       }
 
       const newProject = await response.json()
+
+      // Copy diagrams from original project
+      try {
+        const diagramsRes = await fetch(`/api/diagrams?project_id=${project.id}`)
+        if (diagramsRes.ok) {
+          const diagramsData = await diagramsRes.json()
+          const diagrams = diagramsData?.data || diagramsData || []
+          for (const diagram of diagrams) {
+            await fetch('/api/diagrams', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                project_id: newProject.id,
+                name: diagram.name || 'Main Diagram',
+                nodes: diagram.nodes || [],
+                edges: diagram.edges || [],
+                viewport: diagram.viewport || { x: 0, y: 0, zoom: 1 },
+              }),
+            })
+          }
+        }
+      } catch {
+        // Diagram copy failed — project still created, just empty
+        console.warn('Failed to copy diagrams, project created without diagrams')
+      }
+
       toast.success('Project duplicated successfully')
       router.refresh()
 

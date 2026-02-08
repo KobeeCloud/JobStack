@@ -16,7 +16,7 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   if (!resend) {
-    console.log(`[EMAIL STUB] To: ${to}, Subject: ${subject}`)
+    console.warn(`[EMAIL] Resend not configured — skipping email to: ${to}, subject: "${subject}". Set RESEND_API_KEY to enable.`)
     return { success: true, stub: true }
   }
 

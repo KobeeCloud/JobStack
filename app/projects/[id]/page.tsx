@@ -40,6 +40,7 @@ import { ComplianceReportPanel } from '@/components/compliance/compliance-report
 import { TestResultsPanel } from '@/components/testing/test-results-panel'
 import { MultiCloudComparePanel } from '@/components/multi-cloud/multi-cloud-compare-panel'
 import { CustomComponentPanel } from '@/components/custom/custom-component-panel'
+import { ProjectShareDialog } from '@/components/project-share-dialog'
 import { analyzeArchitecture } from '@/lib/ai/architecture-analyzer'
 import { runComplianceScan } from '@/lib/compliance/compliance-scanner'
 import { testDiagram } from '@/lib/testing/infrastructure-tester'
@@ -868,6 +869,69 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }
 
+  const handleGenerateCloudFormation = async () => {
+    if (nodes.length === 0) {
+      toast({ title: 'No Components', description: 'Add cloud components to generate CloudFormation.', variant: 'destructive' })
+      return
+    }
+    try {
+      const { generateCloudFormation } = await import('@/lib/export/cloudformation-generator')
+      const yaml = generateCloudFormation(nodes, edges, 'yaml')
+      const blob = new Blob([yaml], { type: 'text/yaml' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'cloudformation-template.yaml'
+      a.click()
+      URL.revokeObjectURL(url)
+      toast({ title: 'CloudFormation Generated', description: 'Template exported as YAML' })
+    } catch (error) {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to generate CloudFormation', variant: 'destructive' })
+    }
+  }
+
+  const handleGenerateARM = async () => {
+    if (nodes.length === 0) {
+      toast({ title: 'No Components', description: 'Add cloud components to generate ARM template.', variant: 'destructive' })
+      return
+    }
+    try {
+      const { generateARM } = await import('@/lib/export/arm-generator')
+      const json = generateARM(nodes, edges)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'arm-template.json'
+      a.click()
+      URL.revokeObjectURL(url)
+      toast({ title: 'ARM Template Generated', description: 'Template exported as JSON' })
+    } catch (error) {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to generate ARM template', variant: 'destructive' })
+    }
+  }
+
+  const handleGeneratePulumi = async () => {
+    if (nodes.length === 0) {
+      toast({ title: 'No Components', description: 'Add cloud components to generate Pulumi code.', variant: 'destructive' })
+      return
+    }
+    try {
+      const { generatePulumi } = await import('@/lib/export/pulumi-generator')
+      const code = generatePulumi(nodes, edges)
+      const blob = new Blob([code], { type: 'text/typescript' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'index.ts'
+      a.click()
+      URL.revokeObjectURL(url)
+      toast({ title: 'Pulumi Generated', description: 'Infrastructure code exported as TypeScript' })
+    } catch (error) {
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to generate Pulumi code', variant: 'destructive' })
+    }
+  }
+
   // AI Analysis
   const handleAIAnalysis = async () => {
     if (nodes.length === 0) {
@@ -1020,6 +1084,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 Saved {lastSaved.toLocaleTimeString()}
               </div>
             )}
+            <ProjectShareDialog projectId={projectId} projectName={project?.name || 'Project'} />
           </div>
         </div>
       </nav>
@@ -1100,6 +1165,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onSave={handleSave}
             onExport={handleExport}
             onGenerateCode={handleGenerateCode}
+            onGenerateCloudFormation={handleGenerateCloudFormation}
+            onGenerateARM={handleGenerateARM}
+            onGeneratePulumi={handleGeneratePulumi}
             onAIAnalysis={handleAIAnalysis}
             onComplianceScan={() => setCompliancePanelOpen(true)}
             onRunTests={handleRunTests}
@@ -1112,6 +1180,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             complianceScanning={complianceScanning}
             testing={testing}
             saving={saving}
+            diagramId={diagramId ?? undefined}
+            onRestoreVersion={() => {
+              // Reload diagram data from server after version restore
+              window.location.reload()
+            }}
             onExportImage={async (format: 'png' | 'svg') => {
               try {
                 const { toPng, toSvg } = await import('html-to-image')

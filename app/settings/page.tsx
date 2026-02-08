@@ -12,6 +12,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { ExportDataButton } from './export-data-button'
 import { NotificationPreferences } from './notification-preferences'
+import { WebhookSettings } from '@/components/webhook-settings'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -153,6 +154,22 @@ export default async function SettingsPage() {
                   </div>
                   <ExportDataButton />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Webhooks Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Key className="h-5 w-5 text-primary" />
+                  <CardTitle>Integrations</CardTitle>
+                </div>
+                <CardDescription>
+                  Configure webhooks and external integrations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WebhookSettings />
               </CardContent>
             </Card>
 

@@ -44,6 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { VersionHistory } from '@/components/version-history'
 
 interface DiagramToolbarProps {
   onZoomIn: () => void
@@ -52,6 +53,9 @@ interface DiagramToolbarProps {
   onSave: () => void
   onExport: () => void
   onGenerateCode: () => void
+  onGenerateCloudFormation?: () => void
+  onGenerateARM?: () => void
+  onGeneratePulumi?: () => void
   onExportImage?: (format: 'png' | 'svg') => void
   onUndo?: () => void
   onRedo?: () => void
@@ -69,6 +73,9 @@ interface DiagramToolbarProps {
   aiAnalyzing?: boolean
   complianceScanning?: boolean
   testing?: boolean
+  // Version history
+  diagramId?: string
+  onRestoreVersion?: () => void
 }
 
 const keyboardShortcuts = [
@@ -90,6 +97,9 @@ export function DiagramToolbar({
   onSave,
   onExport,
   onGenerateCode,
+  onGenerateCloudFormation,
+  onGenerateARM,
+  onGeneratePulumi,
   onExportImage,
   onUndo,
   onRedo,
@@ -106,6 +116,8 @@ export function DiagramToolbar({
   aiAnalyzing = false,
   complianceScanning = false,
   testing = false,
+  diagramId,
+  onRestoreVersion,
 }: DiagramToolbarProps) {
   const [showShortcuts, setShowShortcuts] = useState(false)
 
@@ -331,6 +343,24 @@ export function DiagramToolbar({
               <FileCode className="h-4 w-4 mr-2" />
               Terraform Code
             </DropdownMenuItem>
+            {onGenerateCloudFormation && (
+              <DropdownMenuItem onClick={onGenerateCloudFormation}>
+                <FileCode className="h-4 w-4 mr-2" />
+                CloudFormation (YAML)
+              </DropdownMenuItem>
+            )}
+            {onGenerateARM && (
+              <DropdownMenuItem onClick={onGenerateARM}>
+                <FileCode className="h-4 w-4 mr-2" />
+                ARM Template (JSON)
+              </DropdownMenuItem>
+            )}
+            {onGeneratePulumi && (
+              <DropdownMenuItem onClick={onGeneratePulumi}>
+                <FileCode className="h-4 w-4 mr-2" />
+                Pulumi (TypeScript)
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -352,24 +382,61 @@ export function DiagramToolbar({
           </Tooltip>
         )}
 
-        {/* Generate Code Button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="default"
-              size="sm"
-              className="h-8 px-3 ml-1"
-              onClick={onGenerateCode}
-              aria-label="Generate Terraform code"
-            >
-              <Code className="h-4 w-4 mr-1.5" />
-              Generate
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Generate Terraform Code</TooltipContent>
-        </Tooltip>
+        {/* Generate Code Dropdown */}
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-8 px-3 ml-1"
+                  aria-label="Generate infrastructure code"
+                >
+                  <Code className="h-4 w-4 mr-1.5" />
+                  Generate
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Generate Infrastructure Code</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel>Infrastructure as Code</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onGenerateCode}>
+              <FileCode className="h-4 w-4 mr-2" />
+              Terraform (.tf)
+            </DropdownMenuItem>
+            {onGenerateCloudFormation && (
+              <DropdownMenuItem onClick={onGenerateCloudFormation}>
+                <FileCode className="h-4 w-4 mr-2" />
+                CloudFormation (YAML)
+              </DropdownMenuItem>
+            )}
+            {onGenerateARM && (
+              <DropdownMenuItem onClick={onGenerateARM}>
+                <FileCode className="h-4 w-4 mr-2" />
+                ARM Template (JSON)
+              </DropdownMenuItem>
+            )}
+            {onGeneratePulumi && (
+              <DropdownMenuItem onClick={onGeneratePulumi}>
+                <FileCode className="h-4 w-4 mr-2" />
+                Pulumi (TypeScript)
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Separator orientation="vertical" className="h-6 mx-1" />
+
+        {/* Version History */}
+        {diagramId && onRestoreVersion && (
+          <>
+            <VersionHistory diagramId={diagramId} onRestore={onRestoreVersion} />
+            <Separator orientation="vertical" className="h-6 mx-1" />
+          </>
+        )}
 
         {/* More Actions */}
         <DropdownMenu>

@@ -29,26 +29,12 @@ export async function GET() {
       profile: profile || null,
     }
 
-    // 2. Projects with diagrams
-    const { data: projects } = await supabase
+    // 2. Projects with diagrams — [C] single JOIN query zamiast N+1
+    const { data: projectsWithDiagrams } = await supabase
       .from('projects')
-      .select('*')
+      .select('*, diagrams(*)')
       .eq('user_id', user.id)
-
-    const projectsWithDiagrams = []
-    if (projects) {
-      for (const project of projects) {
-        const { data: diagrams } = await supabase
-          .from('diagrams')
-          .select('*')
-          .eq('project_id', project.id)
-
-        projectsWithDiagrams.push({
-          ...project,
-          diagrams: diagrams || [],
-        })
-      }
-    }
+      .order('updated_at', { ascending: false })
 
     // 3. Organization memberships
     const { data: memberships } = await supabase
@@ -67,7 +53,7 @@ export async function GET() {
 
     // 4. Invitations sent/received
     const { data: invites } = await supabase
-      .from('invitations')
+      .from('organization_invites')
       .select('*')
       .or(`invited_by.eq.${user.id},email.eq.${user.email}`)
 
@@ -80,7 +66,7 @@ export async function GET() {
         description: 'Complete data export (GDPR Art. 20)',
       },
       profile: profileExport,
-      projects: projectsWithDiagrams,
+      projects: projectsWithDiagrams || [],
       organizations: memberships || [],
       invitations: invites || [],
     }

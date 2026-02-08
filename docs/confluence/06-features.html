@@ -1,0 +1,124 @@
+<h1>Funkcjonalności</h1>
+
+<h2>1. Edytor diagramów infrastruktury</h2>
+<p>Główna funkcja aplikacji — wizualny, drag-and-drop edytor oparty na React Flow (@xyflow/react).</p>
+<table>
+  <tbody>
+    <tr><th>Funkcja</th><th>Opis</th></tr>
+    <tr><td>Drag &amp; Drop</td><td>Przeciągnij komponenty z panelu bocznego na canvas</td></tr>
+    <tr><td>Multi-cloud</td><td>Węzły AWS, Azure, GCP, Kubernetes w jednym diagramie</td></tr>
+    <tr><td>Auto-connect</td><td>Inteligentne łączenie węzłów z walidacją typów połączeń</td></tr>
+    <tr><td>Minimap</td><td>Miniaturka diagramu do szybkiej nawigacji</td></tr>
+    <tr><td>Zoom &amp; Pan</td><td>Kontrolki + scroll + pinch-to-zoom</td></tr>
+    <tr><td>Undo/Redo</td><td>Historia operacji (Ctrl+Z / Ctrl+Shift+Z)</td></tr>
+    <tr><td>Grid snap</td><td>Opcjonalne przyciąganie do siatki</td></tr>
+    <tr><td>Auto-save</td><td>Zapis co 30s + przy zamknięciu karty</td></tr>
+  </tbody>
+</table>
+
+<h2>2. Eksport Infrastructure as Code</h2>
+<table>
+  <tbody>
+    <tr><th>Format</th><th>Output</th><th>Opis</th></tr>
+    <tr><td>Terraform</td><td>ZIP (main.tf, variables.tf, outputs.tf, providers.tf)</td><td>Pełny pipeline HCL z modułami per provider</td></tr>
+    <tr><td>CloudFormation</td><td>YAML</td><td>AWS-native template z Parameters/Resources/Outputs</td></tr>
+    <tr><td>ARM</td><td>JSON</td><td>Azure Resource Manager template z parameters</td></tr>
+    <tr><td>Pulumi</td><td>TypeScript</td><td>Pulumi program z typowanymi zasobami</td></tr>
+    <tr><td>PNG/SVG/PDF</td><td>Obraz</td><td>Eksport wizualny diagramu (html-to-image + jsPDF)</td></tr>
+    <tr><td>JSON</td><td>JSON</td><td>Surowe dane diagramu (nodes + edges + metadata)</td></tr>
+  </tbody>
+</table>
+
+<h2>3. Skanowanie compliance</h2>
+<p>Automatyczna analiza diagramu pod kątem zgodności z regulacjami:</p>
+<table>
+  <tbody>
+    <tr><th>Framework</th><th>Zasięg</th><th>Przykładowe reguły</th></tr>
+    <tr><td>CIS Benchmarks</td><td>AWS, Azure, GCP</td><td>Szyfrowanie storage, MFA, security groups</td></tr>
+    <tr><td>GDPR</td><td>Wszystkie</td><td>Lokalizacja danych (EU), szyfrowanie, audit log</td></tr>
+    <tr><td>SOC 2</td><td>Wszystkie</td><td>Kontrola dostępu, monitoring, backup</td></tr>
+    <tr><td>PCI-DSS</td><td>Wszystkie</td><td>Segmentacja sieci, szyfrowanie, WAF</td></tr>
+    <tr><td>HIPAA</td><td>Wszystkie</td><td>PHI szyfrowanie, audit trail, BAA</td></tr>
+  </tbody>
+</table>
+<p>Wyniki: raport z severity (critical/high/medium/low), zaleceniami naprawczymi i linkami do dokumentacji.</p>
+
+<h2>4. AI-powered sugestie</h2>
+<ul>
+  <li><strong>Optymalizacja kosztów</strong> — AI analizuje diagram i sugeruje tańsze instancje/regiony</li>
+  <li><strong>Best practices</strong> — rekomendacje HA, DR, security</li>
+  <li><strong>Auto-fix compliance</strong> — AI proponuje zmiany naprawiające znalezione naruszenia</li>
+  <li><strong>Natural language → diagram</strong> — opisz infrastrukturę słownie, AI generuje węzły i połączenia</li>
+  <li>Model: GPT-4 Turbo (OpenAI SDK v6)</li>
+  <li>Bezpieczeństwo: AI otrzymuje tylko metadane komponentów, bez credentiali</li>
+</ul>
+
+<h2>5. Kalkulator kosztów</h2>
+<ul>
+  <li>Dynamiczne ceny per typ instancji, region i provider</li>
+  <li>Szacunki monthly + yearly (z discountem za Reserved Instances)</li>
+  <li>Wykresy porównawcze (Recharts) — bar/line chart per komponent</li>
+  <li>Eksport do CSV/PDF</li>
+</ul>
+
+<h2>6. Szablony infrastruktury</h2>
+<ul>
+  <li>Biblioteka predefiniowanych szablonów (3-tier web app, microservices, serverless...)</li>
+  <li>Szablony publiczne (community) i prywatne (per organizacja)</li>
+  <li>One-click deploy do nowego projektu</li>
+  <li>Analityka użycia szablonów (template_usages)</li>
+</ul>
+
+<h2>7. Zarządzanie organizacjami</h2>
+<table>
+  <tbody>
+    <tr><th>Rola</th><th>Uprawnienia</th></tr>
+    <tr><td>Owner</td><td>Pełna kontrola — billing, usuwanie, zarządzanie członkami</td></tr>
+    <tr><td>Admin</td><td>Zarządzanie projektami i członkami</td></tr>
+    <tr><td>Member</td><td>Tworzenie i edycja projektów</td></tr>
+    <tr><td>Viewer</td><td>Tylko odczyt — przeglądanie projektów i diagramów</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li>Zaproszenia email z tokenem (7 dni ważności)</li>
+  <li>Strona akceptacji zaproszenia: <code>/invites/accept/[token]</code></li>
+  <li>Tworzenie organizacji z rollback (jeśli dodanie ownera się nie powiedzie)</li>
+</ul>
+
+<h2>8. Historia wersji diagramów</h2>
+<ul>
+  <li>Automatyczny zapis wersji przy każdym PUT /api/diagrams/[id]</li>
+  <li>Panel VersionHistory w edytorze (sidebar)</li>
+  <li>Przywracanie dowolnej wcześniejszej wersji</li>
+  <li>Metadane: autor, timestamp, opis zmian</li>
+</ul>
+
+<h2>9. Udostępnianie projektów</h2>
+<ul>
+  <li>Udostępnianie per użytkownik: <code>view</code> / <code>edit</code> / <code>admin</code></li>
+  <li>Dialog ProjectShareDialog z wyszukiwaniem użytkowników</li>
+  <li>Sprawdzanie <code>verify_project_access()</code> (funkcja DB) przy każdym request</li>
+</ul>
+
+<h2>10. Webhooks</h2>
+<ul>
+  <li>Użytkownicy mogą skonfigurować webhooki (URL + secret) w Settings</li>
+  <li>Eventy: project.created, project.updated, diagram.saved, export.completed, compliance.scanned</li>
+  <li>HMAC-SHA256 signing z user secret</li>
+  <li>Panel zarządzania w <code>/settings</code> → zakładka Webhooks</li>
+</ul>
+
+<h2>11. i18n (wielojęzyczność)</h2>
+<ul>
+  <li>Obsługiwane języki: <strong>Polski (PL)</strong>, <strong>English (EN)</strong></li>
+  <li>next-intl z plikami <code>messages/pl.json</code> i <code>messages/en.json</code></li>
+  <li>LanguageSwitcher w Navbar</li>
+  <li>Consent GDPR wielojęzyczny na stronie rejestracji</li>
+</ul>
+
+<h2>12. Interaktywna strona demo</h2>
+<ul>
+  <li>Ścieżka: <code>/demo</code></li>
+  <li>Read-only React Flow z przykładowym diagramem</li>
+  <li>Bez wymagania logowania — do prezentacji produktu</li>
+</ul>

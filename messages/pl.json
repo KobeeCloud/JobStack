@@ -84,9 +84,9 @@
       "emailLabel": "Email",
       "passwordLabel": "Hasło",
       "confirmPasswordLabel": "Potwierdź Hasło",
-      "consent": "Zgadzam się z {terms} i {privacy}",
-      "termsLink": "Regulaminem",
-      "privacyLink": "Polityką Prywatności",
+      "consent": "Akceptuję {terms} oraz {privacy} i wyrażam zgodę na przetwarzanie moich danych osobowych w celu świadczenia usługi.",
+      "termsLink": "Regulamin",
+      "privacyLink": "Politykę Prywatności",
       "submit": "Utwórz Konto",
       "hasAccount": "Masz już konto?",
       "signInLink": "Zaloguj się"

@@ -1,0 +1,124 @@
+<h1>Referencja API (25 endpointów)</h1>
+
+<ac:structured-macro ac:name="info">
+  <ac:rich-text-body>
+    <p>Wszystkie endpointy wymagają autentykacji Supabase (Bearer token) z wyjątkiem webhooks i auth callback. Rate limiting: 100 req/15 min/user (Upstash Redis).</p>
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h2>Autentykacja &amp; Profil</h2>
+<table>
+  <tbody>
+    <tr><th>Metoda</th><th>Endpoint</th><th>Opis</th><th>Auth</th></tr>
+    <tr><td>GET</td><td><code>/api/auth/callback</code></td><td>OAuth callback (GitHub, Google)</td><td>❌</td></tr>
+    <tr><td>POST</td><td><code>/api/auth/register</code></td><td>Rejestracja (email + hasło + consent GDPR)</td><td>❌</td></tr>
+    <tr><td>POST</td><td><code>/api/auth/login</code></td><td>Logowanie (email + hasło)</td><td>❌</td></tr>
+    <tr><td>POST</td><td><code>/api/auth/logout</code></td><td>Wylogowanie (revoke session)</td><td>✅</td></tr>
+    <tr><td>GET</td><td><code>/api/profile</code></td><td>Pobierz profil użytkownika</td><td>✅</td></tr>
+    <tr><td>PUT</td><td><code>/api/profile</code></td><td>Aktualizuj profil</td><td>✅</td></tr>
+  </tbody>
+</table>
+
+<h2>Projekty</h2>
+<table>
+  <tbody>
+    <tr><th>Metoda</th><th>Endpoint</th><th>Opis</th><th>Auth</th></tr>
+    <tr><td>GET</td><td><code>/api/projects</code></td><td>Lista projektów użytkownika (+ organizacji)</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/projects</code></td><td>Utwórz nowy projekt</td><td>✅</td></tr>
+    <tr><td>GET</td><td><code>/api/projects/[id]</code></td><td>Szczegóły projektu (z diagramami)</td><td>✅</td></tr>
+    <tr><td>PUT</td><td><code>/api/projects/[id]</code></td><td>Aktualizuj projekt (nazwa, opis, provider)</td><td>✅</td></tr>
+    <tr><td>DELETE</td><td><code>/api/projects/[id]</code></td><td>Usuń projekt (cascade na diagramy)</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/projects/[id]/duplicate</code></td><td>Duplikuj projekt z diagramami</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/projects/[id]/share</code></td><td>Udostępnij projekt innemu użytkownikowi</td><td>✅</td></tr>
+  </tbody>
+</table>
+
+<h2>Diagramy</h2>
+<table>
+  <tbody>
+    <tr><th>Metoda</th><th>Endpoint</th><th>Opis</th><th>Auth</th></tr>
+    <tr><td>GET</td><td><code>/api/diagrams/[id]</code></td><td>Pobierz diagram (nodes, edges, viewport)</td><td>✅</td></tr>
+    <tr><td>PUT</td><td><code>/api/diagrams/[id]</code></td><td>Zapisz diagram (auto-version bump)</td><td>✅</td></tr>
+    <tr><td>GET</td><td><code>/api/diagrams/[id]/versions</code></td><td>Historia wersji diagramu</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/diagrams/[id]/versions/[vid]/restore</code></td><td>Przywróć konkretną wersję</td><td>✅</td></tr>
+  </tbody>
+</table>
+
+<h2>Eksport</h2>
+<table>
+  <tbody>
+    <tr><th>Metoda</th><th>Endpoint</th><th>Opis</th><th>Auth</th></tr>
+    <tr><td>POST</td><td><code>/api/export/terraform</code></td><td>Generuj Terraform (HCL) → ZIP</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/export/cloudformation</code></td><td>Generuj CloudFormation (YAML)</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/export/arm</code></td><td>Generuj ARM Template (JSON)</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/export/pulumi</code></td><td>Generuj Pulumi (TypeScript)</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/export/image</code></td><td>Eksportuj diagram jako PNG/SVG/PDF</td><td>✅</td></tr>
+  </tbody>
+</table>
+
+<h2>Organizacje</h2>
+<table>
+  <tbody>
+    <tr><th>Metoda</th><th>Endpoint</th><th>Opis</th><th>Auth</th></tr>
+    <tr><td>GET</td><td><code>/api/organizations</code></td><td>Lista organizacji użytkownika</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/organizations</code></td><td>Utwórz organizację (z rollback)</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/organizations/[id]/invite</code></td><td>Zaproś użytkownika (email + rola)</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/invites/accept</code></td><td>Akceptuj zaproszenie (token)</td><td>✅</td></tr>
+  </tbody>
+</table>
+
+<h2>AI &amp; Compliance &amp; Koszty</h2>
+<table>
+  <tbody>
+    <tr><th>Metoda</th><th>Endpoint</th><th>Opis</th><th>Auth</th></tr>
+    <tr><td>POST</td><td><code>/api/ai/suggest</code></td><td>AI sugestie (GPT-4 Turbo) — optymalizacja infrastruktury</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/compliance/scan</code></td><td>Skanuj projekt pod kątem compliance</td><td>✅</td></tr>
+    <tr><td>POST</td><td><code>/api/cost/estimate</code></td><td>Oszacuj koszt infrastruktury (monthly/yearly)</td><td>✅</td></tr>
+  </tbody>
+</table>
+
+<h2>Wspólne nagłówki żądań</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">http</ac:parameter>
+  <ac:plain-text-body><![CDATA[Authorization: Bearer <supabase-access-token>
+Content-Type: application/json
+Accept: application/json
+X-Request-Id: <uuid>  (opcjonalnie, do debugowania)]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<h2>Kody odpowiedzi</h2>
+<table>
+  <tbody>
+    <tr><th>Kod</th><th>Opis</th></tr>
+    <tr><td>200</td><td>OK — operacja zakończona sukcesem</td></tr>
+    <tr><td>201</td><td>Created — zasób utworzony</td></tr>
+    <tr><td>400</td><td>Bad Request — błąd walidacji (Zod)</td></tr>
+    <tr><td>401</td><td>Unauthorized — brak/niepoprawny token</td></tr>
+    <tr><td>403</td><td>Forbidden — brak uprawnień (RLS / rola)</td></tr>
+    <tr><td>404</td><td>Not Found — zasób nie istnieje</td></tr>
+    <tr><td>429</td><td>Too Many Requests — rate limit (100/15min)</td></tr>
+    <tr><td>500</td><td>Internal Server Error — logowane do Sentry</td></tr>
+  </tbody>
+</table>
+
+<h2>Przykład żądania (utworzenie projektu)</h2>
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">bash</ac:parameter>
+  <ac:plain-text-body><![CDATA[curl -X POST https://app.jobstack.dev/api/projects \
+  -H "Authorization: Bearer eyJhbGciOi..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production VPC",
+    "description": "Main production network",
+    "cloud_provider": "aws",
+    "organization_id": "uuid-org-123"
+  }'
+
+# Response 201:
+{
+  "id": "uuid-project-456",
+  "name": "Production VPC",
+  "cloud_provider": "aws",
+  "created_at": "2025-01-15T12:00:00Z"
+}]]></ac:plain-text-body>
+</ac:structured-macro>

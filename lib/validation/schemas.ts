@@ -95,13 +95,17 @@ export const diagramDataSchema = z.object({
 export const createDiagramSchema = z.object({
   project_id: uuidSchema,
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
-  data: diagramDataSchema,
+  data: diagramDataSchema.optional(),
+  nodes: z.array(nodeSchema).optional(),
+  edges: z.array(edgeSchema).optional(),
   thumbnail_url: z.string().url().optional().nullable(),
 })
 
 export const updateDiagramSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters').optional(),
   data: diagramDataSchema.optional(),
+  nodes: z.array(nodeSchema).optional(),
+  edges: z.array(edgeSchema).optional(),
   thumbnail_url: z.string().url().optional().nullable(),
 })
 
@@ -142,9 +146,11 @@ export const registerSchema = z.object({
 })
 
 // Project share schema
+// [B] Dodano opcjonalne shared_with_user_id
 export const shareProjectSchema = z.object({
   project_id: uuidSchema,
   shared_with_email: z.string().email('Invalid email address'),
+  shared_with_user_id: z.string().uuid('Invalid user ID').optional(),
   permission: z.enum(['view', 'edit'], {
     errorMap: () => ({ message: 'Permission must be either "view" or "edit"' }),
   }),

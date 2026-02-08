@@ -8,14 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  Activity, Plus, Trash2, Edit2, Link, Unlink, 
+import {
+  Activity, Plus, Trash2, Edit2, Link, Unlink,
   Save, Share2, Download, Upload, Eye, Search,
   Filter, X, Clock, User, GitCommit
 } from 'lucide-react'
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns'
 
-export type ActivityType = 
+export type ActivityType =
   | 'node_added'
   | 'node_deleted'
   | 'node_updated'
@@ -95,7 +95,7 @@ const activityColors: Record<ActivityType, string> = {
 
 function getActivityMessage(activity: ActivityEvent): string {
   const { type, details } = activity
-  
+
   switch (type) {
     case 'node_added':
       return `added ${details.nodeType || 'component'} "${details.nodeName}"`
@@ -134,11 +134,11 @@ function getActivityMessage(activity: ActivityEvent): string {
 
 function groupActivitiesByDate(activities: ActivityEvent[]): Map<string, ActivityEvent[]> {
   const groups = new Map<string, ActivityEvent[]>()
-  
+
   activities.forEach(activity => {
     let dateKey: string
     const date = new Date(activity.timestamp)
-    
+
     if (isToday(date)) {
       dateKey = 'Today'
     } else if (isYesterday(date)) {
@@ -146,13 +146,13 @@ function groupActivitiesByDate(activities: ActivityEvent[]): Map<string, Activit
     } else {
       dateKey = format(date, 'MMMM d, yyyy')
     }
-    
+
     if (!groups.has(dateKey)) {
       groups.set(dateKey, [])
     }
     groups.get(dateKey)!.push(activity)
   })
-  
+
   return groups
 }
 
@@ -171,13 +171,13 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
 
   const filteredActivities = useMemo(() => {
     return activities.filter(activity => {
-      const matchesSearch = search === '' || 
+      const matchesSearch = search === '' ||
         getActivityMessage(activity).toLowerCase().includes(search.toLowerCase()) ||
         activity.userName.toLowerCase().includes(search.toLowerCase())
-      
+
       const matchesType = typeFilter === 'all' || activity.type === typeFilter
       const matchesUser = userFilter === 'all' || activity.userId === userFilter
-      
+
       return matchesSearch && matchesType && matchesUser
     }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
   }, [activities, search, typeFilter, userFilter])
@@ -276,7 +276,7 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
                     {dateActivities.map(activity => {
                       const Icon = activityIcons[activity.type]
                       const color = activityColors[activity.type]
-                      
+
                       return (
                         <div key={activity.id} className="flex items-start gap-3">
                           <Avatar className="h-8 w-8">
@@ -285,7 +285,7 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
                               {getInitials(activity.userName)}
                             </AvatarFallback>
                           </Avatar>
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">
@@ -319,7 +319,9 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
 }
 
 // Hook to track activities
-export function useActivityTracker() {
+export function useActivityTracker(
+  currentUser: { id: string; name: string; avatar?: string } = { id: 'anonymous', name: 'Anonymous' }
+) {
   const [activities, setActivities] = useState<ActivityEvent[]>([])
 
   const trackActivity = useCallback((
@@ -329,12 +331,13 @@ export function useActivityTracker() {
     const activity: ActivityEvent = {
       id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type,
-      userId: 'current-user', // TODO: Get from auth
-      userName: 'Current User',
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
       timestamp: new Date(),
       details,
     }
-    
+
     setActivities(prev => [activity, ...prev])
     return activity
   }, [])

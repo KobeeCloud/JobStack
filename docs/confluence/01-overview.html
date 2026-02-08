@@ -1,0 +1,82 @@
+<h1>JobStack &mdash; Przegląd projektu</h1>
+
+<ac:structured-macro ac:name="info">
+  <ac:rich-text-body>
+    <p><strong>Wersja:</strong> 2.0.0 &nbsp;|&nbsp; <strong>Stack:</strong> Next.js 16 + React 19 + Supabase + React Flow &nbsp;|&nbsp; <strong>Licencja:</strong> Proprietary (UNLICENSED)</p>
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h2>Czym jest JobStack?</h2>
+<p>JobStack to platforma do wizualnego projektowania infrastruktury chmurowej (AWS, Azure, GCP, Kubernetes) z drag-and-drop edytorem diagramów, wbudowanym AI, skanowaniem compliance, testowaniem infrastruktury i eksportem do Terraform/CloudFormation/ARM/Pulumi.</p>
+
+<h2>Kluczowe metryki projektu</h2>
+<table>
+  <tbody>
+    <tr><th>Metryka</th><th>Wartość</th></tr>
+    <tr><td>Pliki .ts/.tsx w app/</td><td>51</td></tr>
+    <tr><td>Stron (page.tsx)</td><td>17</td></tr>
+    <tr><td>Endpointów API</td><td>25</td></tr>
+    <tr><td>Zależności produkcyjne (npm)</td><td>38</td></tr>
+    <tr><td>Tabele w bazie danych</td><td>16</td></tr>
+    <tr><td>Schema DB (wersja)</td><td>v3.0 (787 linii SQL)</td></tr>
+    <tr><td>Zmienne środowiskowe</td><td>10 (8 wymaganych + 2 opcjonalne)</td></tr>
+    <tr><td>Frameworki compliance</td><td>CIS, GDPR, SOC 2, PCI-DSS, HIPAA</td></tr>
+    <tr><td>Obsługiwane chmury</td><td>AWS, Azure, GCP, Kubernetes</td></tr>
+    <tr><td>Formaty eksportu IaC</td><td>Terraform, CloudFormation, ARM, Pulumi</td></tr>
+  </tbody>
+</table>
+
+<h2>Stack technologiczny</h2>
+<table>
+  <tbody>
+    <tr><th>Warstwa</th><th>Technologia</th><th>Wersja</th></tr>
+    <tr><td>Framework</td><td>Next.js (App Router)</td><td>16.x</td></tr>
+    <tr><td>Język</td><td>TypeScript</td><td>5.x</td></tr>
+    <tr><td>UI</td><td>React + Tailwind CSS + shadcn/ui</td><td>React 19</td></tr>
+    <tr><td>Diagram Engine</td><td>React Flow (@xyflow/react)</td><td>12.x</td></tr>
+    <tr><td>Baza danych</td><td>Supabase (PostgreSQL + Realtime)</td><td>-</td></tr>
+    <tr><td>Autentykacja</td><td>Supabase Auth (email, GitHub, Google)</td><td>-</td></tr>
+    <tr><td>AI</td><td>OpenAI GPT-4 Turbo</td><td>6.x SDK</td></tr>
+    <tr><td>Rate Limiting</td><td>Upstash Redis</td><td>-</td></tr>
+    <tr><td>Email</td><td>Resend</td><td>6.x</td></tr>
+    <tr><td>Monitoring</td><td>Sentry</td><td>10.x</td></tr>
+    <tr><td>i18n</td><td>next-intl (PL/EN)</td><td>4.x</td></tr>
+    <tr><td>Formularzue</td><td>React Hook Form + Zod</td><td>-</td></tr>
+    <tr><td>Eksport</td><td>JSZip, jsPDF, html-to-image</td><td>-</td></tr>
+    <tr><td>CI/CD</td><td>Vercel (rekomendacja)</td><td>-</td></tr>
+  </tbody>
+</table>
+
+<h2>Mapa stron (17)</h2>
+<table>
+  <tbody>
+    <tr><th>Ścieżka</th><th>Opis</th><th>Typ</th></tr>
+    <tr><td><code>/</code></td><td>Landing page</td><td>Public</td></tr>
+    <tr><td><code>/demo</code></td><td>Interaktywne demo (ReactFlow, read-only)</td><td>Public</td></tr>
+    <tr><td><code>/login</code></td><td>Logowanie (email, GitHub, Google)</td><td>Public</td></tr>
+    <tr><td><code>/register</code></td><td>Rejestracja z consent GDPR (i18n)</td><td>Public</td></tr>
+    <tr><td><code>/verify-email</code></td><td>Weryfikacja email</td><td>Public</td></tr>
+    <tr><td><code>/terms</code></td><td>Regulamin</td><td>Public</td></tr>
+    <tr><td><code>/privacy</code></td><td>Polityka prywatności</td><td>Public</td></tr>
+    <tr><td><code>/dashboard</code></td><td>Panel główny — projekty, statystyki</td><td>Auth</td></tr>
+    <tr><td><code>/projects</code></td><td>Lista projektów z badge'ami providerów</td><td>Auth</td></tr>
+    <tr><td><code>/projects/new</code></td><td>Kreator nowego projektu</td><td>Auth</td></tr>
+    <tr><td><code>/projects/[id]</code></td><td>Edytor diagramów (React Flow)</td><td>Auth</td></tr>
+    <tr><td><code>/organizations</code></td><td>Lista organizacji</td><td>Auth</td></tr>
+    <tr><td><code>/organizations/new</code></td><td>Tworzenie organizacji (z rollback)</td><td>Auth</td></tr>
+    <tr><td><code>/organizations/[id]</code></td><td>Szczegóły organizacji + członkowie</td><td>Auth</td></tr>
+    <tr><td><code>/templates</code></td><td>Szablony infrastruktury</td><td>Auth</td></tr>
+    <tr><td><code>/settings</code></td><td>Ustawienia — profil, hasło, notyfikacje, webhooks, GDPR</td><td>Auth</td></tr>
+    <tr><td><code>/invites/accept/[token]</code></td><td>Akceptacja zaproszenia do organizacji</td><td>Auth/Public</td></tr>
+  </tbody>
+</table>
+
+<h2>Bezpieczeństwo</h2>
+<ul>
+  <li><strong>RLS (Row Level Security)</strong> — na wszystkich 16 tabelach</li>
+  <li><strong>Rate Limiting</strong> — Redis (100 req/15min/user)</li>
+  <li><strong>CSP</strong> — Content Security Policy w <code>next.config.ts</code></li>
+  <li><strong>GDPR</strong> — eksport danych, usuwanie konta (7-day grace), consent i18n</li>
+  <li><strong>Weryfikacja email</strong> — wymuszana przez middleware</li>
+  <li><strong>API</strong> — OpenAI nie otrzymuje danych wrażliwych (tylko metadane komponentów)</li>
+</ul>

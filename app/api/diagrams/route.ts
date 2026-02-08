@@ -16,16 +16,26 @@ async function verifyProjectAccess(supabase: any, projectId: string, userId: str
   }
 
   if (project.user_id !== userId) {
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: share } = await supabase
+    // [B] Sprawdź shared access po user_id lub email
+    const { data: shareById } = await supabase
       .from('project_shares')
       .select('id')
       .eq('project_id', projectId)
-      .eq('shared_with_email', user?.email)
+      .eq('shared_with_user_id', userId)
       .single()
 
-    if (!share) {
-      throw new ApiError(403, 'Forbidden - You do not have access to this project', 'FORBIDDEN')
+    if (!shareById) {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: shareByEmail } = await supabase
+        .from('project_shares')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('shared_with_email', user?.email)
+        .single()
+
+      if (!shareByEmail) {
+        throw new ApiError(403, 'Forbidden - You do not have access to this project', 'FORBIDDEN')
+      }
     }
   }
 }

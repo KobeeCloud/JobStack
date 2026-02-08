@@ -172,10 +172,13 @@ export const GET = createApiHandler(
       return NextResponse.json(filteredDefaults)
     }
 
-    // Transform diagram_data to data if needed for consistency
+    // Normalize template data format for frontend consistency
     const formattedTemplates = templates.map((t: Record<string, any>) => ({
       ...t,
-      data: t.data || t.diagram_data || { nodes: [], edges: [] }
+      data: {
+        nodes: t.nodes || [],
+        edges: t.edges || [],
+      }
     }))
 
     return NextResponse.json(formattedTemplates)

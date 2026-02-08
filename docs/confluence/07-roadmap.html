@@ -1,0 +1,63 @@
+<h1>Roadmapa i propozycje rozwoju</h1>
+
+<ac:structured-macro ac:name="info">
+  <ac:rich-text-body>
+    <p>Poniższa roadmapa zawiera propozycje nowych funkcjonalności i usprawnień. Priorytet: P0 (krytyczny) &rarr; P3 (nice-to-have).</p>
+  </ac:rich-text-body>
+</ac:structured-macro>
+
+<h2>Quick wins (1–3 dni każdy)</h2>
+<table>
+  <tbody>
+    <tr><th>Priorytet</th><th>Zadanie</th><th>Opis</th><th>Szacunek</th></tr>
+    <tr><td>P0</td><td>Favicon PNG + Apple Touch Icon</td><td>Brak favikonu — dodać 16/32/180px ikony</td><td>0.5d</td></tr>
+    <tr><td>P0</td><td>OG Meta Tags</td><td>Open Graph + Twitter Card meta tagi w layout.tsx</td><td>0.5d</td></tr>
+    <tr><td>P0</td><td>Loading skeletons</td><td>Shimmer/skeleton UI na dashboard, projects, editor</td><td>1d</td></tr>
+    <tr><td>P1</td><td>Custom error pages</td><td>Strony 404.tsx, 500.tsx, error.tsx z branded UI</td><td>1d</td></tr>
+    <tr><td>P1</td><td>Keyboard shortcuts help</td><td>Modal z listą skrótów klawiszowych (Ctrl+Z, S, etc.)</td><td>0.5d</td></tr>
+    <tr><td>P1</td><td>Toast notifications ulepszenie</td><td>Pozycjonowanie, auto-dismiss, stack, undo action</td><td>1d</td></tr>
+    <tr><td>P2</td><td>Dark mode toggle</td><td>Przepinanie theme w Navbar (light/dark/system)</td><td>1d</td></tr>
+  </tbody>
+</table>
+
+<h2>Średnioterminowe (1–2 tygodnie)</h2>
+<table>
+  <tbody>
+    <tr><th>Priorytet</th><th>Zadanie</th><th>Opis</th><th>Szacunek</th></tr>
+    <tr><td>P0</td><td>Testy E2E (Playwright)</td><td>Pokrycie krytycznych ścieżek: login, create project, export, compliance scan</td><td>5d</td></tr>
+    <tr><td>P0</td><td>Testy unit (Vitest)</td><td>Generatory IaC, compliance scanner, kalkulatory, walidacje Zod</td><td>5d</td></tr>
+    <tr><td>P1</td><td>PWA + Mobile responsive</td><td>Service worker, manifest.json, responsive editor (touch gestures)</td><td>5d</td></tr>
+    <tr><td>P1</td><td>API Keys (CI/CD)</td><td>Tabela api_keys, CRUD w settings, API auth z API key</td><td>3d</td></tr>
+    <tr><td>P1</td><td>Realtime collaboration</td><td>Supabase Realtime cursory + presence + conflict resolution</td><td>5d</td></tr>
+    <tr><td>P2</td><td>Import z istniejącej infrastruktury</td><td>Terraform state → diagram, AWS Config → diagram</td><td>5d</td></tr>
+    <tr><td>P2</td><td>Notifications center</td><td>In-app notyfikacje (invite, share, compliance alert)</td><td>3d</td></tr>
+  </tbody>
+</table>
+
+<h2>Długoterminowe (1+ miesiąc)</h2>
+<table>
+  <tbody>
+    <tr><th>Priorytet</th><th>Zadanie</th><th>Opis</th><th>Szacunek</th></tr>
+    <tr><td>P1</td><td>Stripe Billing</td><td>Integracja płatności — free/pro/enterprise tiers, subscription management</td><td>10d</td></tr>
+    <tr><td>P1</td><td>SSO/SAML</td><td>Enterprise SSO (Okta, Azure AD) — wymaga Supabase Pro</td><td>5d</td></tr>
+    <tr><td>P2</td><td>Extended AI Chat</td><td>Chat w edytorze z kontekstem diagramu — pytania o architekturę, debugging</td><td>5d</td></tr>
+    <tr><td>P2</td><td>Marketplace szablonów</td><td>Community templates z rating, komentarze, paid templates</td><td>10d</td></tr>
+    <tr><td>P2</td><td>GitOps Integration</td><td>Automatyczny commit eksportów IaC do repo + PR creation</td><td>5d</td></tr>
+    <tr><td>P3</td><td>Plugin system</td><td>Rozszerzenia użytkowników (custom nodes, exportery, integracje)</td><td>15d</td></tr>
+    <tr><td>P3</td><td>Multi-tenant SaaS</td><td>Pełna izolacja danych per tenant, custom domains, white-label</td><td>20d</td></tr>
+  </tbody>
+</table>
+
+<h2>Dług techniczny</h2>
+<table>
+  <tbody>
+    <tr><th>Priorytet</th><th>Zadanie</th><th>Opis</th></tr>
+    <tr><td>P0</td><td>Brak testów</td><td>Projekt nie ma ani jednego testu — dodać Vitest + Playwright</td></tr>
+    <tr><td>P0</td><td>Brak CI/CD pipeline</td><td>Dodać GitHub Actions (lint, build, test)</td></tr>
+    <tr><td>P1</td><td>TypeScript strict mode</td><td>Włączyć <code>strict: true</code> w tsconfig i naprawić błędy typów</td></tr>
+    <tr><td>P1</td><td>ESLint + Prettier</td><td>Ustandaryzować formatowanie kodu w projekcie</td></tr>
+    <tr><td>P1</td><td>Brak health endpoint</td><td>Dodać <code>/api/health</code> z kontrolą DB connection</td></tr>
+    <tr><td>P2</td><td>Bundle size audit</td><td>Analiza i optymalizacja rozmiaru bundla (lazy loading, code splitting)</td></tr>
+    <tr><td>P2</td><td>Accessibility (a11y)</td><td>Audyt WCAG 2.1 AA — szczególnie edytor diagramów</td></tr>
+  </tbody>
+</table>

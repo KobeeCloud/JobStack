@@ -27,14 +27,25 @@ async function verifyDiagramAccess(
     return { diagram, project }
   }
 
-  // Check for shared access
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: share } = await supabase
+  // [B] Sprawdź shared access po user_id lub email
+  const { data: shareById } = await supabase
     .from('project_shares')
     .select('permission')
     .eq('project_id', project.id)
-    .eq('shared_with_email', user?.email)
+    .eq('shared_with_user_id', userId)
     .single()
+
+  let share = shareById
+  if (!share) {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: shareByEmail } = await supabase
+      .from('project_shares')
+      .select('permission')
+      .eq('project_id', project.id)
+      .eq('shared_with_email', user?.email)
+      .single()
+    share = shareByEmail
+  }
 
   if (!share) {
     throw new ApiError(403, 'Forbidden - You do not have access to this diagram', 'FORBIDDEN')
