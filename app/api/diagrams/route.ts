@@ -107,8 +107,8 @@ export const POST = createApiHandler(
       .insert({
         project_id: body.project_id,
         name: body.name,
-        nodes: body.data.nodes || [],
-        edges: body.data.edges || [],
+        nodes: body.data?.nodes || body.nodes || [],
+        edges: body.data?.edges || body.edges || [],
       })
       .select()
       .single()

@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Controls,
   MiniMap,
@@ -10,8 +11,8 @@ import ReactFlow, {
   useEdgesState,
   type Node,
   type Edge,
-} from 'reactflow'
-import 'reactflow/dist/style.css'
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
