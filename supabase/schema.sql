@@ -24,6 +24,10 @@ DROP TRIGGER IF EXISTS set_subscriptions_updated_at ON public.subscriptions;
 -- Funkcje
 DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 DROP FUNCTION IF EXISTS public.handle_updated_at() CASCADE;
+DROP FUNCTION IF EXISTS public.is_org_member(UUID, UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.get_org_role(UUID, UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_org_owner(UUID, UUID) CASCADE;
+DROP FUNCTION IF EXISTS public.is_org_admin_or_owner(UUID, UUID) CASCADE;
 
 -- Tabele (w kolejności zależności — od liści do korzeni)
 DROP TABLE IF EXISTS public.notifications CASCADE;
@@ -393,40 +397,25 @@ CREATE POLICY "profiles_insert" ON public.profiles FOR INSERT WITH CHECK (auth.u
 -- ---- Organizations ----
 CREATE POLICY "orgs_select" ON public.organizations FOR SELECT USING (
     owner_id = auth.uid()
-    OR EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = organizations.id AND user_id = auth.uid()
-    )
+    OR public.is_org_member(id, auth.uid())
 );
 CREATE POLICY "orgs_insert" ON public.organizations FOR INSERT WITH CHECK (owner_id = auth.uid());
 CREATE POLICY "orgs_update" ON public.organizations FOR UPDATE USING (owner_id = auth.uid());
 CREATE POLICY "orgs_delete" ON public.organizations FOR DELETE USING (owner_id = auth.uid());
 
 -- ---- Organization Members ----
+-- Używamy SECURITY DEFINER functions zamiast subqueries na organization_members
+-- aby uniknąć nieskończonej rekurencji RLS
 CREATE POLICY "org_members_select" ON public.organization_members FOR SELECT USING (
     user_id = auth.uid()
-    OR EXISTS (
-        SELECT 1 FROM public.organization_members om
-        WHERE om.organization_id = organization_members.organization_id
-        AND om.user_id = auth.uid()
-    )
+    OR public.is_org_member(organization_id, auth.uid())
 );
--- [B] NAPRAWIONY: owner organizacji może dodać siebie jako pierwszego membera
--- Poprzednia wersja wymagała istnienia membera — catch-22 przy tworzeniu org
+-- Owner organizacji może dodawać członków (w tym siebie jako pierwszego)
 CREATE POLICY "org_members_insert" ON public.organization_members FOR INSERT WITH CHECK (
-    -- Owner organizacji może dodawać członków (w tym siebie jako pierwszego)
-    EXISTS (
-        SELECT 1 FROM public.organizations
-        WHERE id = organization_members.organization_id
-        AND owner_id = auth.uid()
-    )
+    -- Owner organizacji może dodawać członków
+    public.is_org_owner(organization_id, auth.uid())
     -- Istniejący admin/owner może dodawać
-    OR EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = organization_members.organization_id
-        AND user_id = auth.uid()
-        AND role IN ('owner', 'admin')
-    )
+    OR public.is_org_admin_or_owner(organization_id, auth.uid())
     -- Użytkownik może dodać siebie (np. po akceptacji zaproszenia)
     OR (
         user_id = auth.uid()
@@ -439,86 +428,43 @@ CREATE POLICY "org_members_insert" ON public.organization_members FOR INSERT WIT
     )
 );
 CREATE POLICY "org_members_update" ON public.organization_members FOR UPDATE USING (
-    EXISTS (
-        SELECT 1 FROM public.organization_members om
-        WHERE om.organization_id = organization_members.organization_id
-        AND om.user_id = auth.uid()
-        AND om.role IN ('owner', 'admin')
-    )
+    public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 CREATE POLICY "org_members_delete" ON public.organization_members FOR DELETE USING (
     user_id = auth.uid()
-    OR EXISTS (
-        SELECT 1 FROM public.organization_members om
-        WHERE om.organization_id = organization_members.organization_id
-        AND om.user_id = auth.uid()
-        AND om.role IN ('owner', 'admin')
-    )
+    OR public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 
 -- ---- Organization Invites ----
 CREATE POLICY "org_invites_select" ON public.organization_invites FOR SELECT USING (
     email = (SELECT email FROM auth.users WHERE id = auth.uid())
-    OR EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = organization_invites.organization_id
-        AND user_id = auth.uid()
-        AND role IN ('owner', 'admin')
-    )
+    OR public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 CREATE POLICY "org_invites_insert" ON public.organization_invites FOR INSERT WITH CHECK (
-    EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = organization_invites.organization_id
-        AND user_id = auth.uid()
-        AND role IN ('owner', 'admin')
-    )
+    public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 CREATE POLICY "org_invites_delete" ON public.organization_invites FOR DELETE USING (
     invited_by = auth.uid()
     OR email = (SELECT email FROM auth.users WHERE id = auth.uid())
-    OR EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = organization_invites.organization_id
-        AND user_id = auth.uid()
-        AND role IN ('owner', 'admin')
-    )
+    OR public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 
 -- ---- Projects ----
 CREATE POLICY "projects_select" ON public.projects FOR SELECT USING (
     user_id = auth.uid()
-    OR (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = projects.organization_id AND user_id = auth.uid()
-    ))
+    OR (organization_id IS NOT NULL AND public.is_org_member(organization_id, auth.uid()))
 );
 CREATE POLICY "projects_insert" ON public.projects FOR INSERT WITH CHECK (
     user_id = auth.uid()
-    OR (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = projects.organization_id
-        AND user_id = auth.uid()
-        AND role IN ('owner', 'admin')
-    ))
+    OR (organization_id IS NOT NULL AND public.is_org_admin_or_owner(organization_id, auth.uid()))
 );
 CREATE POLICY "projects_update" ON public.projects FOR UPDATE USING (
     user_id = auth.uid()
-    OR (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = projects.organization_id
-        AND user_id = auth.uid()
-        AND role IN ('owner', 'admin')
-    ))
+    OR (organization_id IS NOT NULL AND public.is_org_admin_or_owner(organization_id, auth.uid()))
 );
 CREATE POLICY "projects_delete" ON public.projects FOR DELETE USING (
     user_id = auth.uid()
-    OR (organization_id IS NOT NULL AND EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = projects.organization_id
-        AND user_id = auth.uid()
-        AND role = 'owner'
-    ))
+    OR (organization_id IS NOT NULL AND public.is_org_owner(organization_id, auth.uid()))
 );
 
 -- ---- Diagrams ----
@@ -526,35 +472,36 @@ CREATE POLICY "diagrams_select" ON public.diagrams FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
     OR EXISTS (
         SELECT 1 FROM public.projects p
-        JOIN public.organization_members om ON om.organization_id = p.organization_id
-        WHERE p.id = diagrams.project_id AND om.user_id = auth.uid()
+        WHERE p.id = diagrams.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_member(p.organization_id, auth.uid())
     )
 );
 CREATE POLICY "diagrams_insert" ON public.diagrams FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
     OR EXISTS (
         SELECT 1 FROM public.projects p
-        JOIN public.organization_members om ON om.organization_id = p.organization_id
-        WHERE p.id = diagrams.project_id AND om.user_id = auth.uid()
-        AND om.role IN ('owner', 'admin', 'member')
+        WHERE p.id = diagrams.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_member(p.organization_id, auth.uid())
     )
 );
 CREATE POLICY "diagrams_update" ON public.diagrams FOR UPDATE USING (
     EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
     OR EXISTS (
         SELECT 1 FROM public.projects p
-        JOIN public.organization_members om ON om.organization_id = p.organization_id
-        WHERE p.id = diagrams.project_id AND om.user_id = auth.uid()
-        AND om.role IN ('owner', 'admin', 'member')
+        WHERE p.id = diagrams.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_member(p.organization_id, auth.uid())
     )
 );
 CREATE POLICY "diagrams_delete" ON public.diagrams FOR DELETE USING (
     EXISTS (SELECT 1 FROM public.projects WHERE id = diagrams.project_id AND user_id = auth.uid())
     OR EXISTS (
         SELECT 1 FROM public.projects p
-        JOIN public.organization_members om ON om.organization_id = p.organization_id
-        WHERE p.id = diagrams.project_id AND om.user_id = auth.uid()
-        AND om.role IN ('owner', 'admin')
+        WHERE p.id = diagrams.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_admin_or_owner(p.organization_id, auth.uid())
     )
 );
 
@@ -631,47 +578,30 @@ CREATE POLICY "webhooks_delete" ON public.webhooks FOR DELETE USING (user_id = a
 
 -- ---- Custom Components ----
 CREATE POLICY "custom_components_select" ON public.custom_components FOR SELECT USING (
-    organization_id IN (
-        SELECT organization_id FROM public.organization_members WHERE user_id = auth.uid()
-    )
+    public.is_org_member(organization_id, auth.uid())
     OR is_shared = true
 );
 CREATE POLICY "custom_components_insert" ON public.custom_components FOR INSERT WITH CHECK (
-    organization_id IN (
-        SELECT organization_id FROM public.organization_members
-        WHERE user_id = auth.uid() AND role IN ('owner', 'admin')
-    )
+    public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 CREATE POLICY "custom_components_update" ON public.custom_components FOR UPDATE USING (
-    organization_id IN (
-        SELECT organization_id FROM public.organization_members
-        WHERE user_id = auth.uid() AND role IN ('owner', 'admin')
-    )
+    public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 CREATE POLICY "custom_components_delete" ON public.custom_components FOR DELETE USING (
-    organization_id IN (
-        SELECT organization_id FROM public.organization_members
-        WHERE user_id = auth.uid() AND role IN ('owner', 'admin')
-    )
+    public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 
 -- ---- [B] Subscriptions ----
 CREATE POLICY "subscriptions_select" ON public.subscriptions FOR SELECT USING (
     user_id = auth.uid()
-    OR organization_id IN (
-        SELECT organization_id FROM public.organization_members
-        WHERE user_id = auth.uid() AND role IN ('owner', 'admin')
-    )
+    OR (organization_id IS NOT NULL AND public.is_org_admin_or_owner(organization_id, auth.uid()))
 );
 -- INSERT/UPDATE/DELETE tylko przez service_role (backend/webhooks payment provider)
 
 -- ---- [A] Activity Log ----
 CREATE POLICY "activity_log_select" ON public.activity_log FOR SELECT USING (
     user_id = auth.uid()
-    OR (organization_id IS NOT NULL AND organization_id IN (
-        SELECT organization_id FROM public.organization_members
-        WHERE user_id = auth.uid() AND role IN ('owner', 'admin')
-    ))
+    OR (organization_id IS NOT NULL AND public.is_org_admin_or_owner(organization_id, auth.uid()))
 );
 CREATE POLICY "activity_log_insert" ON public.activity_log FOR INSERT WITH CHECK (
     user_id = auth.uid()
@@ -682,8 +612,9 @@ CREATE POLICY "project_tags_select" ON public.project_tags FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.projects WHERE id = project_tags.project_id AND user_id = auth.uid())
     OR EXISTS (
         SELECT 1 FROM public.projects p
-        JOIN public.organization_members om ON om.organization_id = p.organization_id
-        WHERE p.id = project_tags.project_id AND om.user_id = auth.uid()
+        WHERE p.id = project_tags.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_member(p.organization_id, auth.uid())
     )
 );
 CREATE POLICY "project_tags_insert" ON public.project_tags FOR INSERT WITH CHECK (
@@ -727,6 +658,46 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
+-- FUNKCJE POMOCNICZE DLA RLS (SECURITY DEFINER — omijają RLS)
+-- Rozwiązują problem nieskończonej rekurencji w politykach organization_members
+-- ============================================================================
+
+-- Sprawdza czy user jest członkiem organizacji
+CREATE OR REPLACE FUNCTION public.is_org_member(p_org_id UUID, p_user_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE organization_id = p_org_id AND user_id = p_user_id
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Sprawdza czy user ma określoną rolę w organizacji
+CREATE OR REPLACE FUNCTION public.get_org_role(p_org_id UUID, p_user_id UUID)
+RETURNS org_role AS $$
+    SELECT role FROM public.organization_members
+    WHERE organization_id = p_org_id AND user_id = p_user_id
+    LIMIT 1;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Sprawdza czy user jest właścicielem organizacji
+CREATE OR REPLACE FUNCTION public.is_org_owner(p_org_id UUID, p_user_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.organizations
+        WHERE id = p_org_id AND owner_id = p_user_id
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Sprawdza czy user ma rolę admin lub owner w organizacji
+CREATE OR REPLACE FUNCTION public.is_org_admin_or_owner(p_org_id UUID, p_user_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE organization_id = p_org_id AND user_id = p_user_id AND role IN ('owner', 'admin')
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ============================================================================
 -- TRIGGERY

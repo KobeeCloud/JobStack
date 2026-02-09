@@ -42,9 +42,13 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Enforce email verification for authenticated users on protected routes
+  // Skip for OAuth users (they have identity providers) — their email is verified by the provider
   if (user && isProtectedRoute) {
+    const isOAuthUser = user.app_metadata?.provider !== 'email' &&
+                        (user.app_metadata?.providers?.length ?? 0) > 0 &&
+                        !user.app_metadata?.providers?.includes('email')
     const isEmailVerified = user.email_confirmed_at != null
-    if (!isEmailVerified) {
+    if (!isEmailVerified && !isOAuthUser) {
       const url = request.nextUrl.clone()
       url.pathname = '/verify-email'
       return NextResponse.redirect(url)
