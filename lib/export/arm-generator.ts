@@ -26,32 +26,32 @@ interface ARMTemplate {
 
 // Map our component types to ARM resource types
 const ARM_MAPPINGS: Record<string, { type: string; apiVersion: string; defaultProps: Record<string, unknown> }> = {
-  'azure-vnet': { 
-    type: 'Microsoft.Network/virtualNetworks', 
+  'azure-vnet': {
+    type: 'Microsoft.Network/virtualNetworks',
     apiVersion: '2023-05-01',
-    defaultProps: { 
+    defaultProps: {
       addressSpace: { addressPrefixes: ['10.0.0.0/16'] },
       enableDdosProtection: false
-    } 
+    }
   },
-  'azure-subnet': { 
-    type: 'Microsoft.Network/virtualNetworks/subnets', 
+  'azure-subnet': {
+    type: 'Microsoft.Network/virtualNetworks/subnets',
     apiVersion: '2023-05-01',
-    defaultProps: { 
-      addressPrefix: '10.0.1.0/24' 
-    } 
+    defaultProps: {
+      addressPrefix: '10.0.1.0/24'
+    }
   },
-  'azure-nsg': { 
-    type: 'Microsoft.Network/networkSecurityGroups', 
+  'azure-nsg': {
+    type: 'Microsoft.Network/networkSecurityGroups',
     apiVersion: '2023-05-01',
-    defaultProps: { 
-      securityRules: [] 
-    } 
+    defaultProps: {
+      securityRules: []
+    }
   },
-  'azure-vm': { 
-    type: 'Microsoft.Compute/virtualMachines', 
+  'azure-vm': {
+    type: 'Microsoft.Compute/virtualMachines',
     apiVersion: '2023-07-01',
-    defaultProps: { 
+    defaultProps: {
       hardwareProfile: { vmSize: 'Standard_B2s' },
       storageProfile: {
         imageReference: {
@@ -61,61 +61,61 @@ const ARM_MAPPINGS: Record<string, { type: string; apiVersion: string; defaultPr
           version: 'latest'
         }
       }
-    } 
+    }
   },
-  'azure-functions': { 
-    type: 'Microsoft.Web/sites', 
+  'azure-functions': {
+    type: 'Microsoft.Web/sites',
     apiVersion: '2023-01-01',
-    defaultProps: { 
+    defaultProps: {
       kind: 'functionapp,linux',
       siteConfig: {
         linuxFxVersion: 'Node|18'
       }
-    } 
+    }
   },
-  'azure-app-service': { 
-    type: 'Microsoft.Web/sites', 
+  'azure-app-service': {
+    type: 'Microsoft.Web/sites',
     apiVersion: '2023-01-01',
-    defaultProps: { 
+    defaultProps: {
       kind: 'app,linux',
       siteConfig: {
         linuxFxVersion: 'NODE|18-lts'
       }
-    } 
+    }
   },
-  'azure-blob': { 
-    type: 'Microsoft.Storage/storageAccounts', 
+  'azure-blob': {
+    type: 'Microsoft.Storage/storageAccounts',
     apiVersion: '2023-01-01',
-    defaultProps: { 
+    defaultProps: {
       kind: 'StorageV2',
       sku: { name: 'Standard_LRS' },
       minimumTlsVersion: 'TLS1_2',
       supportsHttpsTrafficOnly: true
-    } 
+    }
   },
-  'azure-sql': { 
-    type: 'Microsoft.Sql/servers', 
+  'azure-sql': {
+    type: 'Microsoft.Sql/servers',
     apiVersion: '2023-05-01-preview',
-    defaultProps: { 
+    defaultProps: {
       version: '12.0',
       minimalTlsVersion: '1.2'
-    } 
+    }
   },
-  'azure-cosmosdb': { 
-    type: 'Microsoft.DocumentDB/databaseAccounts', 
+  'azure-cosmosdb': {
+    type: 'Microsoft.DocumentDB/databaseAccounts',
     apiVersion: '2023-09-15',
-    defaultProps: { 
+    defaultProps: {
       kind: 'GlobalDocumentDB',
       databaseAccountOfferType: 'Standard',
       consistencyPolicy: {
         defaultConsistencyLevel: 'Session'
       }
-    } 
+    }
   },
-  'azure-aks': { 
-    type: 'Microsoft.ContainerService/managedClusters', 
+  'azure-aks': {
+    type: 'Microsoft.ContainerService/managedClusters',
     apiVersion: '2023-08-01',
-    defaultProps: { 
+    defaultProps: {
       kubernetesVersion: '1.28',
       dnsPrefix: 'aks',
       agentPoolProfiles: [{
@@ -124,61 +124,61 @@ const ARM_MAPPINGS: Record<string, { type: string; apiVersion: string; defaultPr
         vmSize: 'Standard_DS2_v2',
         mode: 'System'
       }]
-    } 
+    }
   },
-  'azure-app-gw': { 
-    type: 'Microsoft.Network/applicationGateways', 
+  'azure-app-gw': {
+    type: 'Microsoft.Network/applicationGateways',
     apiVersion: '2023-05-01',
-    defaultProps: { 
+    defaultProps: {
       sku: {
         name: 'Standard_v2',
         tier: 'Standard_v2'
       }
-    } 
+    }
   },
-  'azure-keyvault': { 
-    type: 'Microsoft.KeyVault/vaults', 
+  'azure-keyvault': {
+    type: 'Microsoft.KeyVault/vaults',
     apiVersion: '2023-07-01',
-    defaultProps: { 
+    defaultProps: {
       sku: { name: 'standard', family: 'A' },
       enableSoftDelete: true,
       softDeleteRetentionInDays: 90
-    } 
+    }
   },
-  'azure-redis': { 
-    type: 'Microsoft.Cache/Redis', 
+  'azure-redis': {
+    type: 'Microsoft.Cache/Redis',
     apiVersion: '2023-08-01',
-    defaultProps: { 
+    defaultProps: {
       sku: { name: 'Basic', family: 'C', capacity: 0 },
       enableNonSslPort: false,
       minimumTlsVersion: '1.2'
-    } 
+    }
   },
-  'azure-service-bus': { 
-    type: 'Microsoft.ServiceBus/namespaces', 
+  'azure-service-bus': {
+    type: 'Microsoft.ServiceBus/namespaces',
     apiVersion: '2022-10-01-preview',
-    defaultProps: { 
+    defaultProps: {
       sku: { name: 'Standard', tier: 'Standard' }
-    } 
+    }
   },
-  'azure-event-grid': { 
-    type: 'Microsoft.EventGrid/topics', 
+  'azure-event-grid': {
+    type: 'Microsoft.EventGrid/topics',
     apiVersion: '2023-06-01-preview',
-    defaultProps: { 
+    defaultProps: {
       inputSchema: 'EventGridSchema'
-    } 
+    }
   },
-  'azure-container-apps': { 
-    type: 'Microsoft.App/containerApps', 
+  'azure-container-apps': {
+    type: 'Microsoft.App/containerApps',
     apiVersion: '2023-05-01',
-    defaultProps: { 
+    defaultProps: {
       configuration: {
         ingress: {
           external: true,
           targetPort: 80
         }
       }
-    } 
+    }
   },
 }
 
@@ -187,6 +187,10 @@ function sanitizeARMName(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '')
     .substring(0, 24)
+}
+
+function getNodeComponentId(node: Node): string {
+  return (node.data as any)?.componentId || (node.data as any)?.component || node.type || ''
 }
 
 export function generateARM(nodes: Node[], edges: Edge[]): string {
@@ -221,21 +225,23 @@ export function generateARM(nodes: Node[], edges: Edge[]): string {
 
   // Generate resources
   for (const node of nodes) {
-    const type = node.type || ''
-    const mapping = ARM_MAPPINGS[type]
-    
+    const componentId = getNodeComponentId(node)
+    const mapping = ARM_MAPPINGS[componentId]
+
     if (!mapping) continue
 
     const baseName = sanitizeARMName(String(node.data?.label || node.id))
     const resourceName = `[concat(variables('resourcePrefix'), '${baseName}')]`
     nodeIdToName.set(node.id, baseName)
 
+    const nodeConfig = (node.data as any)?.config || {}
+
     const resource: ARMResource = {
       type: mapping.type,
       apiVersion: mapping.apiVersion,
       name: resourceName,
       location: "[parameters('location')]",
-      properties: { ...mapping.defaultProps },
+      properties: { ...mapping.defaultProps, ...nodeConfig },
       tags: {
         Environment: "[parameters('environment')]",
         ManagedBy: 'ARM',
@@ -247,7 +253,7 @@ export function generateARM(nodes: Node[], edges: Edge[]): string {
     template.resources.push(resource)
 
     // Add outputs for key resources
-    if (['azure-vnet', 'azure-blob', 'azure-sql', 'azure-aks', 'azure-keyvault'].includes(type)) {
+    if (['azure-vnet', 'azure-blob', 'azure-sql', 'azure-aks', 'azure-keyvault'].includes(componentId)) {
       template.outputs[`${baseName}Id`] = {
         type: 'string',
         value: `[resourceId('${mapping.type}', ${resourceName})]`
@@ -260,14 +266,14 @@ export function generateARM(nodes: Node[], edges: Edge[]): string {
     const sourceName = nodeIdToName.get(edge.source)
     const targetName = nodeIdToName.get(edge.target)
     if (sourceName && targetName) {
-      const targetResource = template.resources.find(r => 
+      const targetResource = template.resources.find(r =>
         r.name.includes(targetName)
       )
       if (targetResource) {
         if (!targetResource.dependsOn) {
           targetResource.dependsOn = []
         }
-        const sourceResource = template.resources.find(r => 
+        const sourceResource = template.resources.find(r =>
           r.name.includes(sourceName)
         )
         if (sourceResource) {

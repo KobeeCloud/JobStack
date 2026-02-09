@@ -65,18 +65,24 @@ function sanitizeName(name: string): string {
     .toLowerCase()
 }
 
+function getNodeComponentId(node: Node): string {
+  return (node.data as any)?.componentId || (node.data as any)?.component || node.type || ''
+}
+
 function generatePulumiResource(node: Node): PulumiResource | null {
-  const type = node.type || ''
-  const mapping = PULUMI_MAPPINGS[type]
-  
+  const componentId = getNodeComponentId(node)
+  const mapping = PULUMI_MAPPINGS[componentId]
+
   if (!mapping) return null
 
   const name = sanitizeName(String(node.data?.label || node.id))
-  
+  const nodeConfig = (node.data as any)?.config || {}
+
   return {
     name,
     type: mapping.type,
     properties: {
+      ...nodeConfig,
       tags: {
         Name: node.data?.label || name,
         ManagedBy: 'Pulumi',
@@ -96,7 +102,8 @@ export function generatePulumi(nodes: Node[], edges: Edge[]): string {
   for (const node of nodes) {
     const resource = generatePulumiResource(node)
     if (resource) {
-      const mapping = PULUMI_MAPPINGS[node.type || '']
+      const componentId = getNodeComponentId(node)
+      const mapping = PULUMI_MAPPINGS[componentId]
       if (mapping) {
         mapping.imports.forEach(i => imports.add(i))
       }
@@ -136,7 +143,7 @@ export function generatePulumi(nodes: Node[], edges: Edge[]): string {
   lines.push('// Resources')
   for (const resource of resources) {
     lines.push(`const ${resource.name} = new ${resource.type}("${resource.name}", {`)
-    
+
     for (const [key, value] of Object.entries(resource.properties)) {
       if (typeof value === 'object') {
         lines.push(`  ${key}: ${JSON.stringify(value, null, 2).split('\n').join('\n  ')},`)
@@ -144,7 +151,7 @@ export function generatePulumi(nodes: Node[], edges: Edge[]): string {
         lines.push(`  ${key}: ${JSON.stringify(value)},`)
       }
     }
-    
+
     if (resource.dependencies.length > 0) {
       lines.push(`}, { dependsOn: [${resource.dependencies.join(', ')}] });`)
     } else {

@@ -546,6 +546,17 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
     setNodes([...nodes, newNode])
   }, [getNodes, id, setNodes])
 
+  // Handle resize — update node style so the visual size stays in sync
+  const handleResize = useCallback((_event: any, params: { width: number; height: number }) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id
+          ? { ...node, style: { ...node.style, width: params.width, height: params.height } }
+          : node
+      )
+    )
+  }, [id, setNodes])
+
   const CategoryIcon = getCategoryIcon(category)
 
   // Default sizes based on container type
@@ -558,8 +569,8 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
   }
 
   const defaults = getDefaultSize()
-  const width = style?.width || defaults.width
-  const height = style?.height || defaults.height
+  const width = (style?.width as number) || defaults.width
+  const height = (style?.height as number) || defaults.height
 
   const getMinSize = () => {
     if (componentId.includes('resource-group')) return { minWidth: 400, minHeight: 300 }
@@ -591,6 +602,7 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
             isVisible={selected}
             lineClassName="border-primary"
             handleClassName="h-3 w-3 bg-primary border-2 border-background rounded"
+            onResize={handleResize}
           />
 
           {data.security?.nsg && <SecurityIndicator type="nsg" />}

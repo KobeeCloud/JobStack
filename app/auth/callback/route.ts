@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
   const error_param = requestUrl.searchParams.get('error')
   const error_description = requestUrl.searchParams.get('error_description')
   const origin = requestUrl.origin
@@ -18,7 +18,15 @@ export async function GET(request: NextRequest) {
   }
 
   if (code) {
-    const cookieStore = await cookies()
+    // We MUST set cookies on the response object, not via cookies() API,
+    // because cookies() can't set cookies when the response is a redirect.
+    const forwardedHost = request.headers.get('x-forwarded-host')
+    const isLocalEnv = process.env.NODE_ENV === 'development'
+
+    const redirectTo = new URL(next, origin)
+
+    // Collect cookies to set on the final redirect response
+    const cookiesToSet: Array<{ name: string; value: string; options?: any }> = []
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,16 +34,12 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll()
+            return request.cookies.getAll()
           },
-          setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            } catch {
-              // The `setAll` method is called from Server Component
-            }
+          setAll(cookies: Array<{ name: string; value: string; options?: any }>) {
+            cookies.forEach((cookie) => {
+              cookiesToSet.push(cookie)
+            })
           },
         },
       }
@@ -44,7 +48,12 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      return NextResponse.redirect(`${origin}/dashboard`)
+      // Build redirect response and set ALL cookies on it
+      const response = NextResponse.redirect(redirectTo)
+      cookiesToSet.forEach(({ name, value, options }) => {
+        response.cookies.set(name, value, options)
+      })
+      return response
     }
 
     console.error('Code exchange failed:', error.message)

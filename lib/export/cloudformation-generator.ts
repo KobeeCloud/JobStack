@@ -21,73 +21,73 @@ interface CloudFormationTemplate {
 
 // Map our component types to CloudFormation resource types
 const CFN_MAPPINGS: Record<string, { type: string; defaultProps: Record<string, unknown> }> = {
-  'aws-vpc': { 
-    type: 'AWS::EC2::VPC', 
-    defaultProps: { CidrBlock: '10.0.0.0/16', EnableDnsSupport: true, EnableDnsHostnames: true } 
+  'aws-vpc': {
+    type: 'AWS::EC2::VPC',
+    defaultProps: { CidrBlock: '10.0.0.0/16', EnableDnsSupport: true, EnableDnsHostnames: true }
   },
-  'aws-subnet': { 
-    type: 'AWS::EC2::Subnet', 
-    defaultProps: { CidrBlock: '10.0.1.0/24' } 
+  'aws-subnet': {
+    type: 'AWS::EC2::Subnet',
+    defaultProps: { CidrBlock: '10.0.1.0/24' }
   },
-  'aws-security-group': { 
-    type: 'AWS::EC2::SecurityGroup', 
-    defaultProps: { GroupDescription: 'Security group created by JobStack' } 
+  'aws-security-group': {
+    type: 'AWS::EC2::SecurityGroup',
+    defaultProps: { GroupDescription: 'Security group created by JobStack' }
   },
-  'aws-ec2': { 
-    type: 'AWS::EC2::Instance', 
-    defaultProps: { InstanceType: 't3.micro', ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2}}' } 
+  'aws-ec2': {
+    type: 'AWS::EC2::Instance',
+    defaultProps: { InstanceType: 't3.micro', ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2}}' }
   },
-  'aws-lambda': { 
-    type: 'AWS::Lambda::Function', 
-    defaultProps: { Runtime: 'nodejs18.x', Handler: 'index.handler', MemorySize: 128, Timeout: 30 } 
+  'aws-lambda': {
+    type: 'AWS::Lambda::Function',
+    defaultProps: { Runtime: 'nodejs18.x', Handler: 'index.handler', MemorySize: 128, Timeout: 30 }
   },
-  'aws-s3': { 
-    type: 'AWS::S3::Bucket', 
-    defaultProps: { PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true } } 
+  'aws-s3': {
+    type: 'AWS::S3::Bucket',
+    defaultProps: { PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true } }
   },
-  'aws-rds': { 
-    type: 'AWS::RDS::DBInstance', 
-    defaultProps: { DBInstanceClass: 'db.t3.micro', AllocatedStorage: '20', Engine: 'postgres' } 
+  'aws-rds': {
+    type: 'AWS::RDS::DBInstance',
+    defaultProps: { DBInstanceClass: 'db.t3.micro', AllocatedStorage: '20', Engine: 'postgres' }
   },
-  'aws-dynamodb': { 
-    type: 'AWS::DynamoDB::Table', 
-    defaultProps: { BillingMode: 'PAY_PER_REQUEST', AttributeDefinitions: [{ AttributeName: 'id', AttributeType: 'S' }], KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }] } 
+  'aws-dynamodb': {
+    type: 'AWS::DynamoDB::Table',
+    defaultProps: { BillingMode: 'PAY_PER_REQUEST', AttributeDefinitions: [{ AttributeName: 'id', AttributeType: 'S' }], KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }] }
   },
-  'aws-alb': { 
-    type: 'AWS::ElasticLoadBalancingV2::LoadBalancer', 
-    defaultProps: { Type: 'application', Scheme: 'internet-facing' } 
+  'aws-alb': {
+    type: 'AWS::ElasticLoadBalancingV2::LoadBalancer',
+    defaultProps: { Type: 'application', Scheme: 'internet-facing' }
   },
-  'aws-eks': { 
-    type: 'AWS::EKS::Cluster', 
-    defaultProps: { Version: '1.28' } 
+  'aws-eks': {
+    type: 'AWS::EKS::Cluster',
+    defaultProps: { Version: '1.28' }
   },
-  'aws-ecs': { 
-    type: 'AWS::ECS::Cluster', 
-    defaultProps: { ClusterSettings: [{ Name: 'containerInsights', Value: 'enabled' }] } 
+  'aws-ecs': {
+    type: 'AWS::ECS::Cluster',
+    defaultProps: { ClusterSettings: [{ Name: 'containerInsights', Value: 'enabled' }] }
   },
-  'aws-api-gateway': { 
-    type: 'AWS::ApiGateway::RestApi', 
-    defaultProps: { EndpointConfiguration: { Types: ['REGIONAL'] } } 
+  'aws-api-gateway': {
+    type: 'AWS::ApiGateway::RestApi',
+    defaultProps: { EndpointConfiguration: { Types: ['REGIONAL'] } }
   },
-  'aws-cloudfront': { 
-    type: 'AWS::CloudFront::Distribution', 
-    defaultProps: {} 
+  'aws-cloudfront': {
+    type: 'AWS::CloudFront::Distribution',
+    defaultProps: {}
   },
-  'aws-sqs': { 
-    type: 'AWS::SQS::Queue', 
-    defaultProps: { VisibilityTimeout: 30, MessageRetentionPeriod: 345600 } 
+  'aws-sqs': {
+    type: 'AWS::SQS::Queue',
+    defaultProps: { VisibilityTimeout: 30, MessageRetentionPeriod: 345600 }
   },
-  'aws-sns': { 
-    type: 'AWS::SNS::Topic', 
-    defaultProps: {} 
+  'aws-sns': {
+    type: 'AWS::SNS::Topic',
+    defaultProps: {}
   },
-  'aws-cognito': { 
-    type: 'AWS::Cognito::UserPool', 
-    defaultProps: { MfaConfiguration: 'OFF', UserPoolName: 'JobStackUserPool' } 
+  'aws-cognito': {
+    type: 'AWS::Cognito::UserPool',
+    defaultProps: { MfaConfiguration: 'OFF', UserPoolName: 'JobStackUserPool' }
   },
-  'aws-elasticache': { 
-    type: 'AWS::ElastiCache::CacheCluster', 
-    defaultProps: { Engine: 'redis', CacheNodeType: 'cache.t3.micro', NumCacheNodes: 1 } 
+  'aws-elasticache': {
+    type: 'AWS::ElastiCache::CacheCluster',
+    defaultProps: { Engine: 'redis', CacheNodeType: 'cache.t3.micro', NumCacheNodes: 1 }
   },
 }
 
@@ -95,6 +95,10 @@ function sanitizeCfnName(name: string): string {
   return name
     .replace(/[^a-zA-Z0-9]/g, '')
     .replace(/^[0-9]/, 'R$&')
+}
+
+function getNodeComponentId(node: Node): string {
+  return (node.data as any)?.componentId || (node.data as any)?.component || node.type || ''
 }
 
 export function generateCloudFormation(nodes: Node[], edges: Edge[], format: 'yaml' | 'json' = 'yaml'): string {
@@ -117,9 +121,9 @@ export function generateCloudFormation(nodes: Node[], edges: Edge[], format: 'ya
 
   // Generate resources
   for (const node of nodes) {
-    const type = node.type || ''
-    const mapping = CFN_MAPPINGS[type]
-    
+    const componentId = getNodeComponentId(node)
+    const mapping = CFN_MAPPINGS[componentId]
+
     if (!mapping) continue
 
     const resourceName = sanitizeCfnName(String(node.data?.label || node.id))
@@ -129,6 +133,7 @@ export function generateCloudFormation(nodes: Node[], edges: Edge[], format: 'ya
       Type: mapping.type,
       Properties: {
         ...mapping.defaultProps,
+        ...((node.data as any)?.config || {}),
         Tags: [
           { Key: 'Name', Value: node.data?.label || resourceName },
           { Key: 'Environment', Value: { Ref: 'Environment' } },
@@ -141,7 +146,7 @@ export function generateCloudFormation(nodes: Node[], edges: Edge[], format: 'ya
     template.Resources[resourceName] = resource
 
     // Add outputs for key resources
-    if (['aws-vpc', 'aws-s3', 'aws-rds', 'aws-alb', 'aws-eks', 'aws-api-gateway'].includes(type)) {
+    if (['aws-vpc', 'aws-s3', 'aws-rds', 'aws-alb', 'aws-eks', 'aws-api-gateway'].includes(componentId)) {
       template.Outputs[`${resourceName}Id`] = {
         Description: `ID of ${resourceName}`,
         Value: { Ref: resourceName },
@@ -175,22 +180,22 @@ export function generateCloudFormation(nodes: Node[], edges: Edge[], format: 'ya
 
 function convertToYaml(obj: unknown, indent = 0): string {
   const spaces = '  '.repeat(indent)
-  
+
   if (obj === null || obj === undefined) {
     return 'null'
   }
-  
+
   if (typeof obj === 'string') {
     if (obj.includes('\n') || obj.includes(':') || obj.includes('#')) {
       return `"${obj.replace(/"/g, '\\"')}"`
     }
     return obj
   }
-  
+
   if (typeof obj === 'number' || typeof obj === 'boolean') {
     return String(obj)
   }
-  
+
   if (Array.isArray(obj)) {
     if (obj.length === 0) return '[]'
     return obj.map(item => {
@@ -201,11 +206,11 @@ function convertToYaml(obj: unknown, indent = 0): string {
       return `\n${spaces}- ${itemStr}`
     }).join('')
   }
-  
+
   if (typeof obj === 'object') {
     const entries = Object.entries(obj as Record<string, unknown>)
     if (entries.length === 0) return '{}'
-    
+
     // Handle CloudFormation intrinsic functions
     if ('Ref' in obj) {
       return `!Ref ${(obj as { Ref: string }).Ref}`
@@ -217,7 +222,7 @@ function convertToYaml(obj: unknown, indent = 0): string {
       const arr = (obj as { 'Fn::GetAtt': string[] })['Fn::GetAtt']
       return `!GetAtt ${arr.join('.')}`
     }
-    
+
     return entries.map(([key, value]) => {
       const valueStr = convertToYaml(value, indent + 1)
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
@@ -229,6 +234,6 @@ function convertToYaml(obj: unknown, indent = 0): string {
       return `${key}: ${valueStr}`
     }).join(`\n${spaces}`)
   }
-  
+
   return String(obj)
 }
