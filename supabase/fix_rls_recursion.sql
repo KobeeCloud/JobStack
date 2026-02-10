@@ -127,7 +127,7 @@ CREATE POLICY "org_members_insert" ON public.organization_members FOR INSERT WIT
         AND EXISTS (
             SELECT 1 FROM public.organization_invites
             WHERE organization_id = organization_members.organization_id
-            AND email = (SELECT email FROM auth.users WHERE id = auth.uid())
+            AND email = auth.jwt()->>'email'
             AND expires_at > NOW()
         )
     )
@@ -144,7 +144,7 @@ CREATE POLICY "org_members_delete" ON public.organization_members FOR DELETE USI
 
 -- ---- Organization Invites ----
 CREATE POLICY "org_invites_select" ON public.organization_invites FOR SELECT USING (
-    email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    email = auth.jwt()->>'email'
     OR public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 
@@ -154,7 +154,7 @@ CREATE POLICY "org_invites_insert" ON public.organization_invites FOR INSERT WIT
 
 CREATE POLICY "org_invites_delete" ON public.organization_invites FOR DELETE USING (
     invited_by = auth.uid()
-    OR email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    OR email = auth.jwt()->>'email'
     OR public.is_org_admin_or_owner(organization_id, auth.uid())
 );
 

@@ -491,8 +491,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       const draggedComponent = draggedNode.data?.componentId as string
       const draggedAbs = getAbsolutePosition(draggedNode, allNodes)
 
+      // Size of the dragged node itself (for proper containment check)
+      const draggedW = (draggedNode.style?.width as number) || (draggedNode.measured?.width as number) || 180
+      const draggedH = (draggedNode.style?.height as number) || (draggedNode.measured?.height as number) || 60
+
       // Find the deepest (most specific) valid container at the drop position
-      // Sort by depth (most children / deepest nesting first)
       const validContainers = allNodes
         .filter(node => {
           if (node.id === draggedNode.id) return false
@@ -505,26 +508,26 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           }
 
           const containerComponent = node.data?.componentId as string
-          // Use CONTAINER_HIERARCHY from custom-nodes for validation
           if (!CONTAINER_HIERARCHY[containerComponent]?.includes(draggedComponent)) return false
 
-          // Check if dragged node center is inside this container
           const bounds = getNodeBounds(node, allNodes)
+          // Check if dragged node CENTER is inside the container
+          const cx = draggedAbs.x + draggedW / 2
+          const cy = draggedAbs.y + draggedH / 2
           return (
-            draggedAbs.x >= bounds.x &&
-            draggedAbs.x <= bounds.x + bounds.width &&
-            draggedAbs.y >= bounds.y &&
-            draggedAbs.y <= bounds.y + bounds.height
+            cx >= bounds.x &&
+            cx <= bounds.x + bounds.width &&
+            cy >= bounds.y &&
+            cy <= bounds.y + bounds.height
           )
         })
         .sort((a, b) => {
-          // Prefer deeper (more nested) containers — count parent chain depth
           let depthA = 0, depthB = 0
           let p = a.parentId
           while (p) { depthA++; p = allNodes.find(n => n.id === p)?.parentId }
           p = b.parentId
           while (p) { depthB++; p = allNodes.find(n => n.id === p)?.parentId }
-          return depthB - depthA // deepest first
+          return depthB - depthA
         })
 
       const targetContainer = validContainers[0] || null
@@ -532,17 +535,41 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       if (targetContainer && targetContainer.id !== draggedNode.parentId) {
         // Reparent into new container
         const containerAbs = getAbsolutePosition(targetContainer, allNodes)
+        const childRelX = draggedAbs.x - containerAbs.x
+        const childRelY = draggedAbs.y - containerAbs.y
+
+        // Auto-resize container if child would overflow
+        const containerW = (targetContainer.style?.width as number) || 400
+        const containerH = (targetContainer.style?.height as number) || 300
+        const padding = 20
+        const headerHeight = 40
+        const neededW = Math.max(containerW, childRelX + draggedW + padding)
+        const neededH = Math.max(containerH, childRelY + draggedH + padding)
+        // Ensure child doesn't land in the header
+        const clampedY = Math.max(headerHeight + padding, childRelY)
+
         setNodes((nds) =>
           nds.map((node) => {
             if (node.id === draggedNode.id) {
               return {
                 ...node,
                 parentId: targetContainer.id,
-                extent: 'parent' as const,
-                expandParent: true,
+                extent: undefined,
+                expandParent: undefined,
                 position: {
-                  x: draggedAbs.x - containerAbs.x,
-                  y: draggedAbs.y - containerAbs.y,
+                  x: Math.max(padding, childRelX),
+                  y: clampedY,
+                },
+              }
+            }
+            // Grow container if needed
+            if (node.id === targetContainer.id && (neededW > containerW || neededH > containerH)) {
+              return {
+                ...node,
+                style: {
+                  ...node.style,
+                  width: neededW,
+                  height: neededH,
                 },
               }
             }
@@ -553,6 +580,33 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           title: 'Component Nested',
           description: `${draggedNode.data?.label} → ${targetContainer.data?.label}`,
         })
+      } else if (targetContainer && targetContainer.id === draggedNode.parentId) {
+        // Still inside the same parent — auto-resize if child overflows
+        const containerW = (targetContainer.style?.width as number) || 400
+        const containerH = (targetContainer.style?.height as number) || 300
+        const padding = 20
+        const childX = draggedNode.position.x
+        const childY = draggedNode.position.y
+        const neededW = Math.max(containerW, childX + draggedW + padding)
+        const neededH = Math.max(containerH, childY + draggedH + padding)
+
+        if (neededW > containerW || neededH > containerH) {
+          setNodes((nds) =>
+            nds.map((node) => {
+              if (node.id === targetContainer.id) {
+                return {
+                  ...node,
+                  style: {
+                    ...node.style,
+                    width: neededW,
+                    height: neededH,
+                  },
+                }
+              }
+              return node
+            })
+          )
+        }
       } else if (!targetContainer && draggedNode.parentId) {
         // Dragged out of container — unparent
         const oldParent = allNodes.find(n => n.id === draggedNode.parentId)
@@ -683,13 +737,38 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
         const containerSize = isContainer ? getContainerSize(component.id) : undefined
 
+        // Ensure child position is inside the container (below header)
+        const headerHeight = 40
+        const padding = 20
+        if (parentId) {
+          relativePosition = {
+            x: Math.max(padding, relativePosition.x),
+            y: Math.max(headerHeight + padding, relativePosition.y),
+          }
+        }
+
+        // Auto-resize the parent container if needed
+        const childW = containerSize ? containerSize.width : 180
+        const childH = containerSize ? containerSize.height : 60
+        let parentGrow: { id: string; width: number; height: number } | null = null
+        if (parentId) {
+          const parentNode = currentNodes.find(n => n.id === parentId)
+          if (parentNode) {
+            const parentW = (parentNode.style?.width as number) || 400
+            const parentH = (parentNode.style?.height as number) || 300
+            const neededW = Math.max(parentW, relativePosition.x + childW + padding)
+            const neededH = Math.max(parentH, relativePosition.y + childH + padding)
+            if (neededW > parentW || neededH > parentH) {
+              parentGrow = { id: parentId, width: neededW, height: neededH }
+            }
+          }
+        }
+
         const newNode: Node = {
           id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: isContainer ? 'container' : 'custom',
           position: relativePosition,
           parentId,
-          extent: parentId ? 'parent' : undefined,
-          expandParent: parentId ? true : undefined,
           data: {
             label: component.name || component.label,
             componentId: componentId,
@@ -704,7 +783,16 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           ...(containerSize && { style: containerSize }),
         }
 
-        setNodes((nds) => [...nds, newNode])
+        setNodes((nds) => {
+          const updated = parentGrow
+            ? nds.map((n) =>
+                n.id === parentGrow!.id
+                  ? { ...n, style: { ...n.style, width: parentGrow!.width, height: parentGrow!.height } }
+                  : n
+              )
+            : nds
+          return [...updated, newNode]
+        })
       } catch {
         toast({
           title: 'Error',
