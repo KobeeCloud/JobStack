@@ -48,8 +48,12 @@ import { testDiagram } from '@/lib/testing/infrastructure-tester'
 import type { ArchitectureIssue } from '@/lib/ai/architecture-analyzer'
 import type { ComplianceReport } from '@/lib/compliance/compliance-scanner'
 import type { InfrastructureTest } from '@/lib/testing/infrastructure-tester'
+import { LabeledEdge } from '@/components/diagram/labeled-edge'
+import { CodePreviewDialog } from '@/components/diagram/code-preview-dialog'
+import type { CodeFile } from '@/components/diagram/code-preview-dialog'
 
 const nodeTypes = { custom: CustomNode, container: ContainerNode }
+const edgeTypes = { default: LabeledEdge }
 
 // Container component IDs that should use ContainerNode type
 // Derived from CONTAINER_HIERARCHY keys so it stays in sync
@@ -64,6 +68,7 @@ interface Project {
   organization_id?: string | null
   settings?: {
     project_types?: ServiceType[]
+    environment?: string
   }
 }
 
@@ -105,6 +110,13 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
 
+  // Code generation state
+  const [terraformDirty, setTerraformDirty] = useState(false)
+  const [codePreviewOpen, setCodePreviewOpen] = useState(false)
+  const [codePreviewFiles, setCodePreviewFiles] = useState<CodeFile[]>([])
+  const [codePreviewTitle, setCodePreviewTitle] = useState('')
+  const [codePreviewZipName, setCodePreviewZipName] = useState('output.zip')
+
   const { zoomIn, zoomOut, fitView, screenToFlowPosition, getNodes, setCenter } = useReactFlow()
   const router = useRouter()
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -128,6 +140,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       pushState(nodes, edges)
     }
   }, [nodes, edges, pushState])
+
+  // Mark terraform as out-of-sync whenever the diagram changes
+  useEffect(() => {
+    if (nodes.length > 0) setTerraformDirty(true)
+  }, [nodes, edges]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Undo handler
   const handleUndo = useCallback(() => {
@@ -850,7 +867,13 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nodes, edges, diagram_id: diagramId }),
+          body: JSON.stringify({
+            nodes,
+            edges,
+            diagram_id: diagramId,
+            environment: project?.settings?.environment || 'dev',
+            project_name: project?.name || 'project',
+          }),
         },
         30000
       )
@@ -858,50 +881,97 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       const data = await res.json()
 
       if (!res.ok || !data.success) {
-        // Show detailed error with list of problems
         const errors = data.errors || []
         const warnings = data.warnings || []
         const errorMessage = data.error || 'Failed to generate Terraform'
-
-        // Create detailed error list
         const errorList = errors.length > 0
           ? errors.map((e: { nodeLabel: string; error: string }) => `• ${e.nodeLabel}: ${e.error}`).join('\n')
           : errorMessage
-
         toast.error('Cannot Generate Terraform', {
           description: errorList + (warnings.length > 0 ? `\n⚠ Warnings: ${warnings.slice(0, 3).join('; ')}` : ''),
         })
         return
       }
 
-      // Success - create ZIP with .tf files
-      // Dynamically import JSZip to avoid SSR issues
-      const JSZip = (await import('jszip')).default
-      const zip = new JSZip()
-
-      // Add each file to the zip
-      for (const file of data.files) {
-        zip.file(file.filename, file.code)
-      }
-
-      // Generate the zip file
-      const blob = await zip.generateAsync({ type: 'blob' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'terraform-infrastructure.zip'
-      a.click()
-      URL.revokeObjectURL(url)
+      // Store files and open preview dialog — user can copy or download from there
+      setCodePreviewFiles(
+        (data.files as { filename: string; code: string }[]).map((f) => ({
+          filename: f.filename,
+          code: f.code,
+        }))
+      )
+      setCodePreviewTitle('Terraform Infrastructure Code')
+      setCodePreviewZipName('terraform-infrastructure.zip')
+      setTerraformDirty(false)
+      setCodePreviewOpen(true)
 
       const successMessage = data.skippedCount > 0
         ? `Generated ${data.files.length} files (${data.skippedCount} components skipped)`
         : `Generated ${data.files.length} Terraform files`
-
       toast.success('Terraform Generated', { description: successMessage })
     } catch (error) {
       toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate Terraform code' })
     }
   }
+
+  // Download the files currently shown in the preview dialog
+  const handleCodePreviewDownload = useCallback(async () => {
+    if (codePreviewFiles.length === 0) return
+    if (codePreviewFiles.length === 1) {
+      const file = codePreviewFiles[0]
+      const blob = new Blob([file.code], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = file.filename
+      a.click()
+      URL.revokeObjectURL(url)
+    } else {
+      const JSZip = (await import('jszip')).default
+      const zip = new JSZip()
+      for (const file of codePreviewFiles) {
+        zip.file(file.filename, file.code)
+      }
+      const blob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = codePreviewZipName
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  }, [codePreviewFiles, codePreviewZipName])
+
+  // Import Terraform .tf files → diagram nodes
+  const handleImportTerraform = useCallback(async (files: FileList) => {
+    try {
+      const { importTerraformFiles } = await import('@/lib/terraform-import')
+      const fileContents = await Promise.all(
+        Array.from(files).map(async (f) => ({ name: f.name, content: await f.text() }))
+      )
+      const result = importTerraformFiles(fileContents)
+      if (result.nodes.length === 0) {
+        toast.warning('Nothing Imported', {
+          description: 'No recognized Terraform resources found. Make sure the files contain resource blocks.',
+        })
+        return
+      }
+      setNodes(result.nodes)
+      setEdges(result.edges)
+      hasUnsavedChanges.current = true
+      const warnMsg = result.warnings.length > 0
+        ? ` · ${result.warnings.length} warning${result.warnings.length > 1 ? 's' : ''}`
+        : ''
+      toast.success('Terraform Imported', {
+        description: `${result.nodes.length} component${result.nodes.length !== 1 ? 's' : ''} added from Terraform${warnMsg}`,
+      })
+      setTimeout(() => fitView({ padding: 0.2 }), 100)
+    } catch (error) {
+      toast.error('Import Failed', {
+        description: error instanceof Error ? error.message : 'Failed to parse Terraform files',
+      })
+    }
+  }, [setNodes, setEdges, fitView])
 
   const handleExport = () => {
     try {
@@ -1203,6 +1273,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onDrop={onDrop}
             onDragOver={onDragOver}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             snapToGrid={true}
             snapGrid={[20, 20]}
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
@@ -1264,6 +1335,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             complianceScanning={complianceScanning}
             testing={testing}
             saving={saving}
+            codeOutOfSync={terraformDirty && nodes.length > 0}
+            onImportTerraform={handleImportTerraform}
             diagramId={diagramId ?? undefined}
             onRestoreVersion={() => {
               // Reload diagram data from server after version restore
@@ -1290,6 +1363,15 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           />
         </div>
         <CostSidebar costData={costData} />
+
+        {/* Code Preview Dialog */}
+        <CodePreviewDialog
+          open={codePreviewOpen}
+          onClose={() => setCodePreviewOpen(false)}
+          title={codePreviewTitle}
+          files={codePreviewFiles}
+          onDownload={handleCodePreviewDownload}
+        />
 
         {/* Template Dialog */}
         <TemplateDialog

@@ -123,6 +123,8 @@ export const generateTerraformSchema = z.object({
   nodes: z.array(nodeSchema),
   edges: z.array(edgeSchema),
   diagram_id: uuidSchema.optional(),
+  environment: z.string().optional(),
+  project_name: z.string().optional(),
 })
 
 // Cost estimation schema

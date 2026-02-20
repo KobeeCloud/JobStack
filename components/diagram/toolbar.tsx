@@ -65,6 +65,8 @@ interface DiagramToolbarProps {
   onClear?: () => void
   onDuplicate?: () => void
   onImport?: (data: any) => void
+  onImportTerraform?: (files: FileList) => void
+  codeOutOfSync?: boolean
   canUndo?: boolean
   canRedo?: boolean
   saving?: boolean
@@ -112,6 +114,8 @@ export function DiagramToolbar({
   onClear,
   onDuplicate,
   onImport,
+  onImportTerraform,
+  codeOutOfSync = false,
   canUndo = false,
   canRedo = false,
   saving = false,
@@ -142,6 +146,20 @@ export function DiagramToolbar({
         } catch (error) {
           console.error('Failed to import:', error)
         }
+      }
+    }
+    input.click()
+  }
+
+  const handleImportTerraformClick = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.tf'
+    input.multiple = true
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files
+      if (files && files.length > 0 && onImportTerraform) {
+        onImportTerraform(files)
       }
     }
     input.click()
@@ -412,6 +430,22 @@ export function DiagramToolbar({
             <TooltipContent>Import JSON</TooltipContent>
           </Tooltip>
         )}
+        {onImportTerraform && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleImportTerraformClick}
+                aria-label="Import Terraform"
+              >
+                <FileCode className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Import Terraform (.tf) → Diagram</TooltipContent>
+          </Tooltip>
+        )}
 
         {/* Generate Code Dropdown */}
         <DropdownMenu>
@@ -421,11 +455,17 @@ export function DiagramToolbar({
                 <Button
                   variant="default"
                   size="sm"
-                  className="h-8 px-3 ml-1"
+                  className="h-8 px-3 ml-1 relative"
                   aria-label="Generate infrastructure code"
                 >
                   <Code className="h-4 w-4 mr-1.5" />
                   Generate
+                  {codeOutOfSync && (
+                    <span
+                      className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-yellow-400 border border-background"
+                      title="Diagram changed since last generation"
+                    />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>

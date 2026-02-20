@@ -23,7 +23,10 @@ export const POST = createApiHandler(
         }, { status: 400 })
       }
 
-      const result = generateTerraformWithValidation(body.nodes, body.edges || [])
+      const result = generateTerraformWithValidation(body.nodes, body.edges || [], {
+        environment: body.environment || 'dev',
+        projectName: body.project_name || 'project',
+      })
 
       if (!result.success && result.files.length === 0) {
         return NextResponse.json({
