@@ -6,14 +6,16 @@
 export { generatePulumi } from './pulumi-generator'
 export { generateCloudFormation } from './cloudformation-generator'
 export { generateARM } from './arm-generator'
+export { generateCICDConfigs, getCICDNodes } from '@/lib/generators/cicd'
 
 // Export format types
-export type ExportFormat = 
+export type ExportFormat =
   | 'terraform'
   | 'pulumi'
   | 'cloudformation-yaml'
   | 'cloudformation-json'
   | 'arm'
+  | 'cicd'
   | 'diagram-json'
   | 'diagram-png'
   | 'diagram-svg'
@@ -24,15 +26,26 @@ export interface ExportOption {
   description: string
   extension: string
   icon: string
+  /** If true, this format only applies to certain node types */
+  note?: string
 }
 
 export const EXPORT_OPTIONS: ExportOption[] = [
   {
     id: 'terraform',
     name: 'Terraform',
-    description: 'HashiCorp Configuration Language (HCL)',
+    description: 'HashiCorp Configuration Language (HCL) — AWS, Azure, GCP resources',
     extension: '.tf',
-    icon: 'terraform'
+    icon: 'terraform',
+    note: 'Cloud components (AWS/Azure/GCP) only'
+  },
+  {
+    id: 'cicd',
+    name: 'CI/CD & Config Files',
+    description: 'GitHub Actions workflows, GitLab CI, Jenkinsfile, ArgoCD, Helm, Datadog, docker-compose',
+    extension: '.yml',
+    icon: 'cicd',
+    note: 'CI/CD, monitoring, and messaging components only'
   },
   {
     id: 'pulumi',

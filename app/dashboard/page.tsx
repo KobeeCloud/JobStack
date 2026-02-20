@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ProjectCard } from '@/components/project-card'
 import { Badge } from '@/components/ui/badge'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 
 interface Project {
   id: string
@@ -459,6 +460,7 @@ export default async function DashboardPage() {
 
             <div className="flex items-center gap-4">
               <LanguageSwitcher />
+              <NotificationBell />
               <ThemeToggle />
               {profile?.subscription_tier && profile.subscription_tier !== 'free' && (
                 <Badge variant="outline" className="hidden sm:flex gap-1 text-primary border-primary/30">
@@ -506,6 +508,12 @@ export default async function DashboardPage() {
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/billing">
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Billing
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

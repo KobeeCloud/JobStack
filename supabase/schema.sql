@@ -755,3 +755,174 @@ GRANT SELECT ON public.diagram_versions TO anon;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;
+
+-- ============================================================================
+-- SEED DATA — PUBLIC TEMPLATES
+-- ============================================================================
+
+INSERT INTO public.templates (id, name, description, category, cloud_provider, is_public, nodes, edges) VALUES
+
+-- AWS Startup Stack
+(
+  '00000000-0000-0000-0000-000000000001',
+  'AWS Startup Stack',
+  'A cost-effective full-stack setup for startups: EC2 web server, RDS PostgreSQL, S3 storage, and Route53 DNS.',
+  'startup',
+  'aws',
+  true,
+  '[
+    {"id":"web-1","type":"custom","position":{"x":200,"y":150},"data":{"componentId":"aws-ec2","label":"Web Server","config":{"size":"t3-medium","replicas":2,"osImage":"Ubuntu 22.04"}}},
+    {"id":"db-1","type":"custom","position":{"x":200,"y":340},"data":{"componentId":"aws-rds","label":"PostgreSQL DB","config":{"size":"db.t3.medium","replicas":1}}},
+    {"id":"s3-1","type":"custom","position":{"x":500,"y":150},"data":{"componentId":"aws-s3","label":"Static Assets","config":{}}},
+    {"id":"dns-1","type":"custom","position":{"x":500,"y":340},"data":{"componentId":"aws-route53","label":"Route 53 DNS","config":{}}}
+  ]'::jsonb,
+  '[
+    {"id":"e1","source":"web-1","target":"db-1","type":"smoothstep"},
+    {"id":"e2","source":"web-1","target":"s3-1","type":"smoothstep"},
+    {"id":"e3","source":"dns-1","target":"web-1","type":"smoothstep"}
+  ]'::jsonb
+),
+
+-- AWS Serverless Architecture
+(
+  '00000000-0000-0000-0000-000000000002',
+  'AWS Serverless Architecture',
+  'Event-driven serverless stack using Lambda, API Gateway, DynamoDB, and S3 — zero server management.',
+  'startup',
+  'aws',
+  true,
+  '[
+    {"id":"gw-1","type":"custom","position":{"x":200,"y":100},"data":{"componentId":"aws-api-gateway","label":"API Gateway","config":{}}},
+    {"id":"fn-1","type":"custom","position":{"x":200,"y":280},"data":{"componentId":"aws-lambda","label":"Lambda Function","config":{"size":"256mb"}}},
+    {"id":"fn-2","type":"custom","position":{"x":450,"y":280},"data":{"componentId":"aws-lambda","label":"Auth Lambda","config":{"size":"128mb"}}},
+    {"id":"dyn-1","type":"custom","position":{"x":200,"y":460},"data":{"componentId":"aws-dynamodb","label":"DynamoDB","config":{}}},
+    {"id":"s3-1","type":"custom","position":{"x":450,"y":460},"data":{"componentId":"aws-s3","label":"Asset Bucket","config":{}}}
+  ]'::jsonb,
+  '[
+    {"id":"e1","source":"gw-1","target":"fn-1","type":"smoothstep"},
+    {"id":"e2","source":"gw-1","target":"fn-2","type":"smoothstep"},
+    {"id":"e3","source":"fn-1","target":"dyn-1","type":"smoothstep"},
+    {"id":"e4","source":"fn-1","target":"s3-1","type":"smoothstep"}
+  ]'::jsonb
+),
+
+-- AWS Microservices with EKS
+(
+  '00000000-0000-0000-0000-000000000003',
+  'AWS Microservices with EKS',
+  'Container-native microservices on Kubernetes (EKS) with RDS, ElastiCache, and an Application Load Balancer.',
+  'microservices',
+  'aws',
+  true,
+  '[
+    {"id":"alb-1","type":"custom","position":{"x":300,"y":60},"data":{"componentId":"aws-alb","label":"App Load Balancer","config":{}}},
+    {"id":"eks-1","type":"custom","position":{"x":300,"y":220},"data":{"componentId":"aws-eks","label":"EKS Cluster","config":{"size":"t3-large","replicas":3}}},
+    {"id":"rds-1","type":"custom","position":{"x":100,"y":420},"data":{"componentId":"aws-rds","label":"RDS Primary","config":{"size":"db.r5.large","replicas":1}}},
+    {"id":"cache-1","type":"custom","position":{"x":350,"y":420},"data":{"componentId":"aws-elasticache","label":"ElastiCache Redis","config":{"size":"cache.t3.medium"}}},
+    {"id":"s3-1","type":"custom","position":{"x":580,"y":420},"data":{"componentId":"aws-s3","label":"Object Storage","config":{}}},
+    {"id":"img-1","type":"custom","position":{"x":580,"y":220},"data":{"componentId":"aws-ecr","label":"ECR Registry","config":{}}}
+  ]'::jsonb,
+  '[
+    {"id":"e1","source":"alb-1","target":"eks-1","type":"smoothstep"},
+    {"id":"e2","source":"eks-1","target":"rds-1","type":"smoothstep"},
+    {"id":"e3","source":"eks-1","target":"cache-1","type":"smoothstep"},
+    {"id":"e4","source":"eks-1","target":"s3-1","type":"smoothstep"},
+    {"id":"e5","source":"img-1","target":"eks-1","type":"smoothstep"}
+  ]'::jsonb
+),
+
+-- AWS Enterprise Multi-Tier
+(
+  '00000000-0000-0000-0000-000000000004',
+  'AWS Enterprise Multi-Tier',
+  'Production-grade 3-tier architecture: CloudFront CDN, ECS containers, Aurora RDS, ElastiCache, and VPC networking.',
+  'enterprise',
+  'aws',
+  true,
+  '[
+    {"id":"cf-1","type":"custom","position":{"x":300,"y":40},"data":{"componentId":"aws-cloudfront","label":"CloudFront CDN","config":{}}},
+    {"id":"alb-1","type":"custom","position":{"x":300,"y":160},"data":{"componentId":"aws-alb","label":"Load Balancer","config":{}}},
+    {"id":"ecs-1","type":"custom","position":{"x":150,"y":300},"data":{"componentId":"aws-ecs","label":"ECS Service","config":{"size":"t3-large","replicas":3}}},
+    {"id":"ecs-2","type":"custom","position":{"x":450,"y":300},"data":{"componentId":"aws-ecs","label":"Worker ECS","config":{"size":"t3-medium","replicas":2}}},
+    {"id":"aurora-1","type":"custom","position":{"x":150,"y":460},"data":{"componentId":"aws-aurora","label":"Aurora Primary","config":{"size":"db.r5.large","replicas":2}}},
+    {"id":"cache-1","type":"custom","position":{"x":450,"y":460},"data":{"componentId":"aws-elasticache","label":"Session Cache","config":{"size":"cache.r6g.large"}}},
+    {"id":"sqs-1","type":"custom","position":{"x":650,"y":300},"data":{"componentId":"aws-sqs","label":"Task Queue","config":{}}}
+  ]'::jsonb,
+  '[
+    {"id":"e1","source":"cf-1","target":"alb-1","type":"smoothstep"},
+    {"id":"e2","source":"alb-1","target":"ecs-1","type":"smoothstep"},
+    {"id":"e3","source":"alb-1","target":"ecs-2","type":"smoothstep"},
+    {"id":"e4","source":"ecs-1","target":"aurora-1","type":"smoothstep"},
+    {"id":"e5","source":"ecs-1","target":"cache-1","type":"smoothstep"},
+    {"id":"e6","source":"ecs-2","target":"sqs-1","type":"smoothstep"}
+  ]'::jsonb
+),
+
+-- AWS Data Pipeline
+(
+  '00000000-0000-0000-0000-000000000005',
+  'AWS Data Pipeline',
+  'Real-time analytics pipeline: Kinesis ingestion, Lambda transformation, Redshift warehouse, and S3 data lake.',
+  'data-pipeline',
+  'aws',
+  true,
+  '[
+    {"id":"kin-1","type":"custom","position":{"x":100,"y":200},"data":{"componentId":"aws-kinesis","label":"Kinesis Stream","config":{}}},
+    {"id":"fn-1","type":"custom","position":{"x":300,"y":200},"data":{"componentId":"aws-lambda","label":"Transform Lambda","config":{"size":"512mb"}}},
+    {"id":"rs-1","type":"custom","position":{"x":500,"y":100},"data":{"componentId":"aws-redshift","label":"Redshift DW","config":{"size":"dc2.large","replicas":2}}},
+    {"id":"s3-1","type":"custom","position":{"x":500,"y":300},"data":{"componentId":"aws-s3","label":"Data Lake","config":{}}},
+    {"id":"glue-1","type":"custom","position":{"x":700,"y":200},"data":{"componentId":"aws-glue","label":"Glue ETL","config":{}}}
+  ]'::jsonb,
+  '[
+    {"id":"e1","source":"kin-1","target":"fn-1","type":"smoothstep"},
+    {"id":"e2","source":"fn-1","target":"rs-1","type":"smoothstep"},
+    {"id":"e3","source":"fn-1","target":"s3-1","type":"smoothstep"},
+    {"id":"e4","source":"s3-1","target":"glue-1","type":"smoothstep"}
+  ]'::jsonb
+),
+
+-- Azure Web App Stack
+(
+  '00000000-0000-0000-0000-000000000006',
+  'Azure Web App Stack',
+  'Managed Azure web application: App Service, Azure SQL, Blob Storage, and Azure CDN.',
+  'startup',
+  'azure',
+  true,
+  '[
+    {"id":"cdn-1","type":"custom","position":{"x":300,"y":60},"data":{"componentId":"azure-cdn","label":"Azure CDN","config":{}}},
+    {"id":"app-1","type":"custom","position":{"x":300,"y":220},"data":{"componentId":"azure-app-service","label":"App Service","config":{"size":"P2v3","replicas":2}}},
+    {"id":"sql-1","type":"custom","position":{"x":150,"y":400},"data":{"componentId":"azure-sql","label":"Azure SQL","config":{"size":"Standard S2"}}},
+    {"id":"blob-1","type":"custom","position":{"x":450,"y":400},"data":{"componentId":"azure-storage","label":"Blob Storage","config":{}}}
+  ]'::jsonb,
+  '[
+    {"id":"e1","source":"cdn-1","target":"app-1","type":"smoothstep"},
+    {"id":"e2","source":"app-1","target":"sql-1","type":"smoothstep"},
+    {"id":"e3","source":"app-1","target":"blob-1","type":"smoothstep"}
+  ]'::jsonb
+),
+
+-- Azure AKS Microservices
+(
+  '00000000-0000-0000-0000-000000000007',
+  'Azure AKS Microservices',
+  'Kubernetes microservices on Azure AKS with Azure Database for PostgreSQL, Redis Cache, and Application Gateway.',
+  'microservices',
+  'azure',
+  true,
+  '[
+    {"id":"agw-1","type":"custom","position":{"x":300,"y":60},"data":{"componentId":"azure-application-gateway","label":"App Gateway","config":{}}},
+    {"id":"aks-1","type":"custom","position":{"x":300,"y":230},"data":{"componentId":"azure-aks","label":"AKS Cluster","config":{"size":"Standard_D4s_v3","replicas":3}}},
+    {"id":"pg-1","type":"custom","position":{"x":100,"y":420},"data":{"componentId":"azure-postgresql","label":"PostgreSQL Flexible","config":{"size":"Standard_D2s_v3"}}},
+    {"id":"redis-1","type":"custom","position":{"x":350,"y":420},"data":{"componentId":"azure-redis","label":"Azure Cache Redis","config":{"size":"C2"}}},
+    {"id":"acr-1","type":"custom","position":{"x":580,"y":230},"data":{"componentId":"azure-container-registry","label":"Container Registry","config":{}}}
+  ]'::jsonb,
+  '[
+    {"id":"e1","source":"agw-1","target":"aks-1","type":"smoothstep"},
+    {"id":"e2","source":"aks-1","target":"pg-1","type":"smoothstep"},
+    {"id":"e3","source":"aks-1","target":"redis-1","type":"smoothstep"},
+    {"id":"e4","source":"acr-1","target":"aks-1","type":"smoothstep"}
+  ]'::jsonb
+)
+
+ON CONFLICT (id) DO NOTHING;

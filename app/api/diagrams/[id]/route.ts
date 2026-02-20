@@ -8,6 +8,7 @@ async function verifyDiagramAccess(
   supabase: any,
   diagramId: string,
   userId: string,
+  userEmail: string,
   requireEdit: boolean = false
 ): Promise<{ diagram: any; project: any }> {
   const { data: diagram, error: diagramError } = await supabase
@@ -37,12 +38,12 @@ async function verifyDiagramAccess(
 
   let share = shareById
   if (!share) {
-    const { data: { user } } = await supabase.auth.getUser()
+    // FIX BUG#6: use userEmail parameter instead of extra getUser() call
     const { data: shareByEmail } = await supabase
       .from('project_shares')
       .select('permission')
       .eq('project_id', project.id)
-      .eq('shared_with_email', user?.email)
+      .eq('shared_with_email', userEmail)
       .single()
     share = shareByEmail
   }
@@ -68,7 +69,7 @@ export const GET = createApiHandler(
     const params = await context.params
     const diagramId = uuidSchema.parse(params.id)
 
-    const { diagram } = await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, false)
+    const { diagram } = await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, auth.user.email, false)
 
     // Return with data wrapper for compatibility
     const responseData = {
@@ -90,7 +91,7 @@ export const PUT = createApiHandler(
     const params = await context.params
     const diagramId = uuidSchema.parse(params.id)
 
-    await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, true)
+    await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, auth.user.email ?? '', true)
 
     // Check payload size (max 10MB)
     if (body && body.data) {
@@ -155,7 +156,7 @@ export const DELETE = createApiHandler(
     const params = await context.params
     const diagramId = uuidSchema.parse(params.id)
 
-    await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, true)
+    await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, auth.user.email ?? '', true)
 
     const { error } = await auth.supabase.from('diagrams').delete().eq('id', diagramId)
 

@@ -36,12 +36,42 @@ export type ComponentCategory = 'frontend' | 'backend' | 'database' | 'cloud' | 
 export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare' | 'vercel' | 'generic'
 export type ServiceType = 'iaas' | 'paas' | 'saas' | 'generic'
 
+/**
+ * generatorType describes what kind of code/config this component produces during export:
+ * - 'terraform'    → HCL resource block via Terraform (IaaS/PaaS on AWS/Azure/GCP)
+ * - 'cicd'         → CI/CD YAML file (GitHub Actions, GitLab CI, Jenkins, etc.)
+ * - 'kubernetes'   → Kubernetes manifest / Helm values (ArgoCD, Helm)
+ * - 'docker'       → docker-compose service entry
+ * - 'monitoring'   → observability config (Datadog agent, Prometheus scrape config)
+ * - 'documentation'→ no code generated; component is an architectural annotation only
+ */
+export type GeneratorType = 'terraform' | 'cicd' | 'kubernetes' | 'docker' | 'monitoring' | 'documentation'
+
+export interface CICDConfig {
+  /** Which CI/CD tool/file format this node represents */
+  tool: 'github-actions' | 'gitlab-ci' | 'jenkins' | 'argocd' | 'helm' | 'generic'
+  /** Default pipeline config values shown in the Config tab */
+  defaultConfig: {
+    triggers?: string[]         // e.g. ['push', 'pull_request', 'schedule']
+    branches?: string[]         // e.g. ['main', 'develop']
+    runsOn?: string             // runner label: 'ubuntu-latest', 'self-hosted'
+    stages?: string[]           // pipeline stages
+    nodeVersion?: string
+    pythonVersion?: string
+    dockerRegistry?: string
+    deployTarget?: string       // 'kubernetes' | 'ecs' | 'appservice' | 'lambda' | 'custom'
+    [key: string]: any
+  }
+}
+
 export interface ComponentConfig {
   id: string
   name: string
   category: ComponentCategory
   provider?: CloudProvider
   serviceType?: ServiceType
+  /** What kind of code/config this component generates during export */
+  generatorType?: GeneratorType
   icon: any
   color: string
   description: string
@@ -54,6 +84,8 @@ export interface ComponentConfig {
     resource: string
     defaultConfig: Record<string, any>
   }
+  /** Present when generatorType === 'cicd' */
+  cicd?: CICDConfig
   // For IaaS components - can contain children
   canContain?: string[] // IDs of components that can be children
   // For configurable components
@@ -1720,9 +1752,10 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     name: 'Docker Container',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'docker',
     icon: Container,
     color: '#2496ED',
-    description: 'Containerized application',
+    description: 'Containerized application — generates a docker-compose service entry',
     estimatedCost: { min: 0, max: 0 },
   },
   {
@@ -1730,9 +1763,10 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     name: 'Terraform',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'documentation',
     icon: FileCode,
     color: '#7B42BC',
-    description: 'Infrastructure as Code',
+    description: 'Infrastructure as Code annotation — architectural reference node; all cloud components already generate Terraform',
     estimatedCost: { min: 0, max: 0 },
   },
   {
@@ -1740,9 +1774,10 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     name: 'Ansible',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'documentation',
     icon: Terminal,
     color: '#EE0000',
-    description: 'Configuration management',
+    description: 'Configuration management annotation — documents that Ansible manages this part of the infrastructure',
     estimatedCost: { min: 0, max: 0 },
   },
   {
@@ -1750,50 +1785,110 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     name: 'Jenkins',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'cicd',
     icon: Cog,
     color: '#D24939',
-    description: 'CI/CD automation server',
+    description: 'CI/CD automation server — generates a Jenkinsfile pipeline definition',
     estimatedCost: { min: 0, max: 100 },
+    cicd: {
+      tool: 'jenkins',
+      defaultConfig: {
+        triggers: ['pollSCM'],
+        branches: ['main'],
+        runsOn: 'any',
+        stages: ['Checkout', 'Build', 'Test', 'Docker Build', 'Deploy'],
+        deployTarget: 'kubernetes',
+      },
+    },
   },
   {
     id: 'github-actions',
     name: 'GitHub Actions',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'cicd',
     icon: GitBranch,
     color: '#2088FF',
-    description: 'CI/CD workflow automation',
+    description: 'CI/CD workflow automation — generates .github/workflows/deploy.yml',
     estimatedCost: { min: 0, max: 100 },
+    cicd: {
+      tool: 'github-actions',
+      defaultConfig: {
+        triggers: ['push', 'pull_request'],
+        branches: ['main'],
+        runsOn: 'ubuntu-latest',
+        stages: ['build', 'test', 'deploy'],
+        nodeVersion: '20',
+        deployTarget: 'kubernetes',
+      },
+    },
   },
   {
     id: 'gitlab-ci',
     name: 'GitLab CI/CD',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'cicd',
     icon: GitBranch,
     color: '#FC6D26',
-    description: 'Built-in CI/CD pipelines',
+    description: 'Built-in CI/CD pipelines — generates .gitlab-ci.yml',
     estimatedCost: { min: 0, max: 100 },
+    cicd: {
+      tool: 'gitlab-ci',
+      defaultConfig: {
+        triggers: ['push', 'merge_request'],
+        branches: ['main', 'develop'],
+        runsOn: 'docker',
+        stages: ['build', 'test', 'deploy'],
+        deployTarget: 'kubernetes',
+      },
+    },
   },
   {
     id: 'argocd',
     name: 'ArgoCD',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'kubernetes',
     icon: Workflow,
     color: '#EF7B4D',
-    description: 'GitOps continuous delivery',
+    description: 'GitOps continuous delivery — generates an ArgoCD Application manifest',
     estimatedCost: { min: 0, max: 0 },
+    cicd: {
+      tool: 'argocd',
+      defaultConfig: {
+        repoUrl: 'https://github.com/org/repo',
+        targetRevision: 'HEAD',
+        appNamespace: 'argocd',
+        destinationNamespace: 'default',
+        syncPolicy: 'automated',
+        selfHeal: true,
+        prune: true,
+      },
+    },
   },
   {
     id: 'helm',
     name: 'Helm Chart',
     category: 'devops',
     provider: 'generic',
+    generatorType: 'kubernetes',
     icon: Package,
     color: '#0F1689',
-    description: 'Kubernetes package manager',
+    description: 'Kubernetes package manager — generates a Helm values.yaml',
     estimatedCost: { min: 0, max: 0 },
+    cicd: {
+      tool: 'helm',
+      defaultConfig: {
+        chartName: 'my-app',
+        chartVersion: '1.0.0',
+        replicaCount: 1,
+        imageRepository: 'my-registry/my-app',
+        imageTag: 'latest',
+        serviceType: 'ClusterIP',
+        ingressEnabled: false,
+      },
+    },
   },
 
   // Monitoring & Observability
@@ -1802,60 +1897,125 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     name: 'Prometheus',
     category: 'analytics',
     provider: 'generic',
+    generatorType: 'monitoring',
     icon: Gauge,
     color: '#E6522C',
-    description: 'Metrics monitoring',
+    description: 'Metrics monitoring — generates prometheus.yml scrape config',
     estimatedCost: { min: 0, max: 100 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        scrapeInterval: '15s',
+        evaluationInterval: '15s',
+        retentionTime: '15d',
+        port: 9090,
+      },
+    },
   },
   {
     id: 'grafana',
     name: 'Grafana',
     category: 'analytics',
     provider: 'generic',
+    generatorType: 'monitoring',
     icon: BarChart,
     color: '#F46800',
-    description: 'Visualization dashboards',
+    description: 'Visualization dashboards — documents Grafana datasource and dashboard config',
     estimatedCost: { min: 0, max: 100 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        datasource: 'prometheus',
+        port: 3000,
+        adminUser: 'admin',
+        authAnonymousEnabled: false,
+      },
+    },
   },
   {
     id: 'datadog',
     name: 'Datadog',
     category: 'analytics',
     provider: 'generic',
+    generatorType: 'monitoring',
     icon: Activity,
     color: '#632CA6',
-    description: 'Cloud monitoring platform',
+    description: 'Cloud monitoring platform — generates Datadog agent configuration',
     estimatedCost: { min: 15, max: 500 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        site: 'datadoghq.com',
+        env: 'production',
+        service: 'my-app',
+        logLevel: 'info',
+        apmEnabled: true,
+        logsEnabled: true,
+        processAgentEnabled: false,
+      },
+    },
   },
   {
     id: 'elastic-stack',
     name: 'ELK Stack',
     category: 'analytics',
     provider: 'generic',
+    generatorType: 'monitoring',
     icon: Search,
     color: '#005571',
-    description: 'Log aggregation & search',
+    description: 'Log aggregation & search — documents Elasticsearch/Logstash/Kibana setup',
     estimatedCost: { min: 0, max: 500 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        elasticsearchPort: 9200,
+        kibanaPort: 5601,
+        logstashPort: 5044,
+        heapSize: '1g',
+        indices: ['app-logs-*', 'nginx-access-*'],
+      },
+    },
   },
   {
     id: 'newrelic',
     name: 'New Relic',
     category: 'analytics',
     provider: 'generic',
+    generatorType: 'monitoring',
     icon: Eye,
     color: '#008C99',
-    description: 'Application performance monitoring',
+    description: 'Application performance monitoring — documents New Relic agent configuration',
     estimatedCost: { min: 0, max: 300 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        appName: 'my-app',
+        licenseKey: '${NEW_RELIC_LICENSE_KEY}',
+        distributedTracingEnabled: true,
+        logLevel: 'info',
+      },
+    },
   },
   {
     id: 'jaeger',
     name: 'Jaeger',
     category: 'analytics',
     provider: 'generic',
+    generatorType: 'monitoring',
     icon: Activity,
     color: '#60D0E4',
-    description: 'Distributed tracing',
+    description: 'Distributed tracing — documents Jaeger collector and UI configuration',
     estimatedCost: { min: 0, max: 0 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        collectorPort: 14268,
+        queryPort: 16686,
+        samplingType: 'probabilistic',
+        samplingParam: 0.1,
+        storageType: 'memory',
+      },
+    },
   },
 
   // Messaging & Queues
@@ -1864,30 +2024,64 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     name: 'RabbitMQ',
     category: 'service',
     provider: 'generic',
+    generatorType: 'docker',
     icon: MessageSquare,
     color: '#FF6600',
-    description: 'Message broker',
+    description: 'Message broker — generates a docker-compose or K8s manifest entry',
     estimatedCost: { min: 0, max: 200 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        defaultUser: 'admin',
+        defaultPass: '${RABBITMQ_PASSWORD}',
+        managementPort: 15672,
+        amqpPort: 5672,
+        vhost: '/',
+        replicaCount: 1,
+      },
+    },
   },
   {
     id: 'kafka',
     name: 'Apache Kafka',
     category: 'service',
     provider: 'generic',
+    generatorType: 'docker',
     icon: Activity,
     color: '#231F20',
-    description: 'Event streaming platform',
+    description: 'Event streaming platform — generates a docker-compose or K8s manifest entry',
     estimatedCost: { min: 50, max: 1000 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        brokerId: 1,
+        port: 9092,
+        partitions: 3,
+        replicationFactor: 1,
+        retentionHours: 168,
+        zookeeperConnect: 'zookeeper:2181',
+      },
+    },
   },
   {
     id: 'nats',
     name: 'NATS',
     category: 'service',
     provider: 'generic',
+    generatorType: 'docker',
     icon: Wifi,
     color: '#27AAE1',
-    description: 'Cloud native messaging',
+    description: 'Cloud native messaging — generates a docker-compose entry',
     estimatedCost: { min: 0, max: 100 },
+    cicd: {
+      tool: 'generic',
+      defaultConfig: {
+        port: 4222,
+        monitorPort: 8222,
+        clusterPort: 6222,
+        jetStreamEnabled: true,
+      },
+    },
   },
 
   // Security Services
@@ -1896,9 +2090,10 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     name: 'HashiCorp Vault',
     category: 'security',
     provider: 'generic',
+    generatorType: 'documentation',
     icon: Lock,
     color: '#000000',
-    description: 'Secrets management',
+    description: 'Secrets management — architectural annotation; secrets should be provided via environment variables',
     estimatedCost: { min: 0, max: 100 },
   },
   {
@@ -2029,6 +2224,30 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
 
 export function getComponentById(id: string): ComponentConfig | undefined {
   return COMPONENT_CATALOG.find(c => c.id === id)
+}
+
+/**
+ * Returns the effective generator type for a component.
+ * - If a component has a `terraform` field → 'terraform' (even if generatorType is unset)
+ * - Otherwise uses the explicit `generatorType` field
+ * - Falls back to 'documentation' for unknown/unclassified components
+ *
+ * This means AWS/Azure/GCP cloud components don't need an explicit generatorType field:
+ * their `terraform` field is authoritative.
+ */
+export function getEffectiveGeneratorType(component: ComponentConfig): GeneratorType {
+  if (component.terraform) return 'terraform'
+  return component.generatorType || 'documentation'
+}
+
+/** Human-readable label + color for each generator type — used in UI badges */
+export const GENERATOR_TYPE_META: Record<GeneratorType, { label: string; color: string; bgColor: string }> = {
+  terraform:     { label: 'Terraform',    color: '#7B42BC', bgColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
+  cicd:          { label: 'CI/CD',        color: '#2088FF', bgColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+  kubernetes:    { label: 'Kubernetes',   color: '#326CE5', bgColor: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  docker:        { label: 'Docker',       color: '#2496ED', bgColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' },
+  monitoring:    { label: 'Monitoring',   color: '#E6522C', bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+  documentation: { label: 'Annotation',  color: '#6B7280', bgColor: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400' },
 }
 
 export function getComponentsByCategory(category: ComponentConfig['category']): ComponentConfig[] {

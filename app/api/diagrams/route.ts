@@ -4,7 +4,7 @@ import { createDiagramSchema, uuidSchema, paginationSchema } from '@/lib/validat
 import { ApiError } from '@/lib/api-error'
 import { log } from '@/lib/logger'
 
-async function verifyProjectAccess(supabase: any, projectId: string, userId: string): Promise<void> {
+async function verifyProjectAccess(supabase: any, projectId: string, userId: string, userEmail: string): Promise<void> {
   const { data: project, error } = await supabase
     .from('projects')
     .select('id, user_id')
@@ -16,7 +16,7 @@ async function verifyProjectAccess(supabase: any, projectId: string, userId: str
   }
 
   if (project.user_id !== userId) {
-    // [B] Sprawdź shared access po user_id lub email
+    // [B] Check shared access by user_id first
     const { data: shareById } = await supabase
       .from('project_shares')
       .select('id')
@@ -25,12 +25,12 @@ async function verifyProjectAccess(supabase: any, projectId: string, userId: str
       .single()
 
     if (!shareById) {
-      const { data: { user } } = await supabase.auth.getUser()
+      // FIX BUG#6: use auth userId email directly, no extra getUser() call
       const { data: shareByEmail } = await supabase
         .from('project_shares')
         .select('id')
         .eq('project_id', projectId)
-        .eq('shared_with_email', user?.email)
+        .eq('shared_with_email', userEmail)
         .single()
 
       if (!shareByEmail) {
@@ -50,7 +50,7 @@ export const GET = createApiHandler(
     }
 
     const projectId = uuidSchema.parse(project_id)
-    await verifyProjectAccess(auth.supabase, projectId, auth.user.id)
+    await verifyProjectAccess(auth.supabase, projectId, auth.user.id, auth.user.email)
 
     const pagination = paginationSchema.parse({
       page: searchParams.get('page') || '1',
@@ -93,7 +93,7 @@ export const POST = createApiHandler(
     if (!body) {
       throw new ApiError(400, 'Missing request body', 'MISSING_BODY')
     }
-    await verifyProjectAccess(auth.supabase, body.project_id, auth.user.id)
+    await verifyProjectAccess(auth.supabase, body.project_id, auth.user.id, auth.user.email)
 
     // Check payload size (max 10MB for diagram data)
     const payloadSize = JSON.stringify(body.data).length

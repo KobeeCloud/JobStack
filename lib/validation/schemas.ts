@@ -1,13 +1,16 @@
 import { z } from 'zod'
 
-// UUID validation - also accepts mock IDs for development
+// UUID validation — in production only accept real UUIDs, in dev also allow mock IDs
 export const uuidSchema = z.string().min(1, 'ID is required').refine(
   (val) => {
-    // Accept standard UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    // Also accept mock IDs like "pro-1234567-abcdef" or "demo-project-001"
-    const mockIdRegex = /^[a-z]{3,}-[a-z0-9-]+$/i
-    return uuidRegex.test(val) || mockIdRegex.test(val)
+    if (uuidRegex.test(val)) return true
+    // FIX BUG#5: mock IDs only allowed in non-production environments
+    if (process.env.NODE_ENV !== 'production') {
+      const mockIdRegex = /^[a-z]{3,}-[a-z0-9-]+$/i
+      return mockIdRegex.test(val)
+    }
+    return false
   },
   'Invalid ID format'
 )
@@ -17,12 +20,18 @@ export const cloudProviderSchema = z.enum(['azure', 'aws', 'gcp', 'vercel', 'net
 export const projectTypeSchema = z.enum(['iaas', 'paas', 'saas', 'hosting'])
 
 // Project schemas
+export const environmentSchema = z.enum(['development', 'staging', 'production'])
 export const createProjectSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
   description: z.string().max(1000, 'Description must be less than 1000 characters').optional().nullable(),
   cloud_provider: cloudProviderSchema.optional(),
-  project_types: z.array(projectTypeSchema).optional(), // Allow multiple types: ['iaas', 'paas']
+  project_types: z.array(projectTypeSchema).optional(),
+  region: z.string().max(100).optional().nullable(),
+  environment: environmentSchema.optional().default('development'),
+  organization_id: z.string().uuid('Invalid organization ID').optional().nullable(),
+  templateId: z.string().uuid('Invalid template ID').optional().nullable(),
 })
+export type EnvironmentType = z.infer<typeof environmentSchema>
 
 export const updateProjectSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters').optional(),
@@ -165,6 +174,7 @@ export const paginationSchema = z.object({
 
 // Type exports
 export type CreateProjectInput = z.infer<typeof createProjectSchema>
+export type CloudProviderInput = z.infer<typeof cloudProviderSchema>
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>
 export type CreateDiagramInput = z.infer<typeof createDiagramSchema>
 export type UpdateDiagramInput = z.infer<typeof updateDiagramSchema>

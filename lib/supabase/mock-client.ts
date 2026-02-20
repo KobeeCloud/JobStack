@@ -40,17 +40,31 @@ const mockStorage: {
     {
       id: 'tpl-startup',
       name: 'Startup Stack',
-      description: 'Simple web app with database and CDN',
+      description: 'Simple web app with database and CDN — EC2 + RDS + CloudFront',
       category: 'startup',
       cloud_provider: 'aws',
       nodes: [
-        { id: 'web-1', type: 'compute', position: { x: 100, y: 100 }, data: { label: 'Web Server', provider: 'aws', service: 'EC2', specs: { instance: 't3.medium' }, monthlyCost: 30 } },
-        { id: 'db-1', type: 'database', position: { x: 300, y: 100 }, data: { label: 'PostgreSQL', provider: 'aws', service: 'RDS', specs: { instance: 'db.t3.micro' }, monthlyCost: 15 } },
-        { id: 'cdn-1', type: 'network', position: { x: 100, y: 250 }, data: { label: 'CloudFront CDN', provider: 'aws', service: 'CloudFront', monthlyCost: 10 } },
+        {
+          id: 'web-1', type: 'custom', position: { x: 200, y: 150 },
+          data: { componentId: 'aws-ec2', label: 'Web Server', config: { size: 't3-medium', replicas: 2, osImage: 'ubuntu-22.04' } },
+        },
+        {
+          id: 'db-1', type: 'custom', position: { x: 500, y: 150 },
+          data: { componentId: 'aws-rds', label: 'PostgreSQL DB', config: { sku: 'db.t3.micro', maxSizeGb: 100, backupRetentionDays: 7 } },
+        },
+        {
+          id: 'cdn-1', type: 'custom', position: { x: 200, y: -50 },
+          data: { componentId: 'aws-cloudfront', label: 'CloudFront CDN', config: {} },
+        },
+        {
+          id: 's3-1', type: 'custom', position: { x: 500, y: -50 },
+          data: { componentId: 'aws-s3', label: 'Static Assets', config: { size: 50 } },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'web-1', target: 'db-1' },
-        { id: 'e2', source: 'cdn-1', target: 'web-1' },
+        { id: 'e1', source: 'web-1', target: 'db-1', animated: true },
+        { id: 'e2', source: 'cdn-1', target: 'web-1', animated: false },
+        { id: 'e3', source: 'cdn-1', target: 's3-1', animated: false },
       ],
       is_public: true,
       created_at: '2024-01-01T00:00:00Z',
@@ -59,19 +73,41 @@ const mockStorage: {
     {
       id: 'tpl-microservices',
       name: 'Microservices Architecture',
-      description: 'Kubernetes cluster with API Gateway and message queue',
+      description: 'Kubernetes cluster with API Gateway, SQS, and Redis — production-grade',
       category: 'microservices',
       cloud_provider: 'aws',
       nodes: [
-        { id: 'k8s-1', type: 'compute', position: { x: 200, y: 150 }, data: { label: 'Kubernetes Cluster', provider: 'aws', service: 'EKS', specs: { nodes: 3 }, monthlyCost: 150 } },
-        { id: 'api-1', type: 'network', position: { x: 200, y: 0 }, data: { label: 'API Gateway', provider: 'aws', service: 'API Gateway', monthlyCost: 25 } },
-        { id: 'mq-1', type: 'storage', position: { x: 400, y: 150 }, data: { label: 'Message Queue', provider: 'aws', service: 'SQS', monthlyCost: 5 } },
-        { id: 'cache-1', type: 'database', position: { x: 0, y: 150 }, data: { label: 'Redis Cache', provider: 'aws', service: 'ElastiCache', monthlyCost: 20 } },
+        {
+          id: 'apigw-1', type: 'custom', position: { x: 250, y: -50 },
+          data: { componentId: 'aws-api-gateway', label: 'API Gateway', config: {} },
+        },
+        {
+          id: 'eks-1', type: 'custom', position: { x: 250, y: 150 },
+          data: { componentId: 'aws-eks', label: 'EKS Cluster', config: { replicas: 3 } },
+        },
+        {
+          id: 'ecr-1', type: 'custom', position: { x: 500, y: 0 },
+          data: { componentId: 'aws-ecr', label: 'Container Registry', config: {} },
+        },
+        {
+          id: 'sqs-1', type: 'custom', position: { x: 500, y: 200 },
+          data: { componentId: 'aws-sqs', label: 'Message Queue', config: {} },
+        },
+        {
+          id: 'cache-1', type: 'custom', position: { x: 0, y: 200 },
+          data: { componentId: 'aws-elasticache', label: 'Redis Cache', config: {} },
+        },
+        {
+          id: 'rds-1', type: 'custom', position: { x: 250, y: 350 },
+          data: { componentId: 'aws-rds', label: 'Primary DB', config: { sku: 'db.t3.medium', backupRetentionDays: 14 } },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'api-1', target: 'k8s-1' },
-        { id: 'e2', source: 'k8s-1', target: 'mq-1' },
-        { id: 'e3', source: 'k8s-1', target: 'cache-1' },
+        { id: 'e1', source: 'apigw-1', target: 'eks-1', animated: true },
+        { id: 'e2', source: 'ecr-1', target: 'eks-1', animated: false },
+        { id: 'e3', source: 'eks-1', target: 'sqs-1', animated: true },
+        { id: 'e4', source: 'eks-1', target: 'cache-1', animated: true },
+        { id: 'e5', source: 'eks-1', target: 'rds-1', animated: true },
       ],
       is_public: true,
       created_at: '2024-01-02T00:00:00Z',
@@ -80,19 +116,36 @@ const mockStorage: {
     {
       id: 'tpl-serverless',
       name: 'Serverless Application',
-      description: 'Lambda functions with DynamoDB and S3',
+      description: 'API Gateway + Lambda + DynamoDB + S3 — zero-ops deployment',
       category: 'startup',
       cloud_provider: 'aws',
       nodes: [
-        { id: 'lambda-1', type: 'compute', position: { x: 150, y: 100 }, data: { label: 'Lambda Functions', provider: 'aws', service: 'Lambda', monthlyCost: 0 } },
-        { id: 'dynamo-1', type: 'database', position: { x: 350, y: 100 }, data: { label: 'DynamoDB', provider: 'aws', service: 'DynamoDB', monthlyCost: 5 } },
-        { id: 's3-1', type: 'storage', position: { x: 150, y: 250 }, data: { label: 'S3 Bucket', provider: 'aws', service: 'S3', monthlyCost: 3 } },
-        { id: 'apigw-1', type: 'network', position: { x: 150, y: -50 }, data: { label: 'API Gateway', provider: 'aws', service: 'API Gateway', monthlyCost: 10 } },
+        {
+          id: 'apigw-1', type: 'custom', position: { x: 250, y: -50 },
+          data: { componentId: 'aws-api-gateway', label: 'API Gateway', config: {} },
+        },
+        {
+          id: 'lambda-1', type: 'custom', position: { x: 250, y: 150 },
+          data: { componentId: 'aws-lambda', label: 'Lambda Functions', config: { replicas: 1 } },
+        },
+        {
+          id: 'dynamo-1', type: 'custom', position: { x: 500, y: 150 },
+          data: { componentId: 'aws-dynamodb', label: 'DynamoDB Table', config: {} },
+        },
+        {
+          id: 's3-1', type: 'custom', position: { x: 0, y: 150 },
+          data: { componentId: 'aws-s3', label: 'S3 Bucket', config: { size: 100 } },
+        },
+        {
+          id: 'cw-1', type: 'custom', position: { x: 250, y: 350 },
+          data: { componentId: 'aws-cloudwatch', label: 'CloudWatch Logs', config: {} },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'apigw-1', target: 'lambda-1' },
-        { id: 'e2', source: 'lambda-1', target: 'dynamo-1' },
-        { id: 'e3', source: 'lambda-1', target: 's3-1' },
+        { id: 'e1', source: 'apigw-1', target: 'lambda-1', animated: true },
+        { id: 'e2', source: 'lambda-1', target: 'dynamo-1', animated: true },
+        { id: 'e3', source: 'lambda-1', target: 's3-1', animated: false },
+        { id: 'e4', source: 'lambda-1', target: 'cw-1', animated: false },
       ],
       is_public: true,
       created_at: '2024-01-03T00:00:00Z',
@@ -101,23 +154,131 @@ const mockStorage: {
     {
       id: 'tpl-data-pipeline',
       name: 'Data Analytics Pipeline',
-      description: 'ETL pipeline with data warehouse and BI tools',
+      description: 'Kinesis → Glue ETL → Redshift warehouse — real-time analytics',
       category: 'enterprise',
       cloud_provider: 'aws',
       nodes: [
-        { id: 'kinesis-1', type: 'storage', position: { x: 0, y: 100 }, data: { label: 'Kinesis Stream', provider: 'aws', service: 'Kinesis', monthlyCost: 25 } },
-        { id: 'glue-1', type: 'compute', position: { x: 200, y: 100 }, data: { label: 'Glue ETL', provider: 'aws', service: 'Glue', monthlyCost: 50 } },
-        { id: 'redshift-1', type: 'database', position: { x: 400, y: 100 }, data: { label: 'Redshift', provider: 'aws', service: 'Redshift', monthlyCost: 180 } },
-        { id: 'quicksight-1', type: 'network', position: { x: 400, y: 250 }, data: { label: 'QuickSight', provider: 'aws', service: 'QuickSight', monthlyCost: 24 } },
+        {
+          id: 'kinesis-1', type: 'custom', position: { x: 0, y: 150 },
+          data: { componentId: 'aws-kinesis', label: 'Kinesis Stream', config: {} },
+        },
+        {
+          id: 'lambda-1', type: 'custom', position: { x: 250, y: 150 },
+          data: { componentId: 'aws-lambda', label: 'Stream Processor', config: {} },
+        },
+        {
+          id: 'redshift-1', type: 'custom', position: { x: 500, y: 150 },
+          data: { componentId: 'aws-redshift', label: 'Redshift DWH', config: {} },
+        },
+        {
+          id: 's3-1', type: 'custom', position: { x: 250, y: -50 },
+          data: { componentId: 'aws-s3', label: 'Data Lake (S3)', config: { size: 10000 } },
+        },
+        {
+          id: 'glue-1', type: 'custom', position: { x: 500, y: -50 },
+          data: { componentId: 'aws-glue', label: 'Glue ETL Jobs', config: {} },
+        },
+        {
+          id: 'cw-1', type: 'custom', position: { x: 750, y: 150 },
+          data: { componentId: 'aws-cloudwatch', label: 'Monitoring', config: {} },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'kinesis-1', target: 'glue-1' },
-        { id: 'e2', source: 'glue-1', target: 'redshift-1' },
-        { id: 'e3', source: 'redshift-1', target: 'quicksight-1' },
+        { id: 'e1', source: 'kinesis-1', target: 'lambda-1', animated: true },
+        { id: 'e2', source: 'lambda-1', target: 's3-1', animated: true },
+        { id: 'e3', source: 's3-1', target: 'glue-1', animated: false },
+        { id: 'e4', source: 'glue-1', target: 'redshift-1', animated: false },
+        { id: 'e5', source: 'redshift-1', target: 'cw-1', animated: false },
       ],
       is_public: true,
       created_at: '2024-01-04T00:00:00Z',
       updated_at: '2024-01-04T00:00:00Z',
+    },
+    {
+      id: 'tpl-azure-web',
+      name: 'Azure Web Application',
+      description: 'App Service + SQL Database + Redis + Key Vault — standard Azure stack',
+      category: 'startup',
+      cloud_provider: 'azure',
+      nodes: [
+        {
+          id: 'appgw-1', type: 'custom', position: { x: 250, y: -50 },
+          data: { componentId: 'azure-app-gw', label: 'Application Gateway', config: {} },
+        },
+        {
+          id: 'app-1', type: 'custom', position: { x: 250, y: 150 },
+          data: { componentId: 'azure-app-service', label: 'App Service', config: { sku: 'S1', runtime: 'node|20-lts', alwaysOn: true } },
+        },
+        {
+          id: 'sql-1', type: 'custom', position: { x: 500, y: 150 },
+          data: { componentId: 'azure-sql', label: 'Azure SQL', config: { sku: 'S2', maxSizeGb: 50, backupRetentionDays: 7 } },
+        },
+        {
+          id: 'redis-1', type: 'custom', position: { x: 0, y: 150 },
+          data: { componentId: 'azure-redis', label: 'Redis Cache', config: {} },
+        },
+        {
+          id: 'kv-1', type: 'custom', position: { x: 250, y: 350 },
+          data: { componentId: 'azure-key-vault', label: 'Key Vault', config: {} },
+        },
+        {
+          id: 'ai-1', type: 'custom', position: { x: 500, y: 350 },
+          data: { componentId: 'azure-app-insights', label: 'App Insights', config: {} },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'appgw-1', target: 'app-1', animated: true },
+        { id: 'e2', source: 'app-1', target: 'sql-1', animated: true },
+        { id: 'e3', source: 'app-1', target: 'redis-1', animated: true },
+        { id: 'e4', source: 'app-1', target: 'kv-1', animated: false },
+        { id: 'e5', source: 'app-1', target: 'ai-1', animated: false },
+      ],
+      is_public: true,
+      created_at: '2024-01-05T00:00:00Z',
+      updated_at: '2024-01-05T00:00:00Z',
+    },
+    {
+      id: 'tpl-azure-aks',
+      name: 'Azure Kubernetes (AKS)',
+      description: 'AKS cluster with ACR, SQL, Key Vault, and App Insights',
+      category: 'microservices',
+      cloud_provider: 'azure',
+      nodes: [
+        {
+          id: 'appgw-1', type: 'custom', position: { x: 300, y: -50 },
+          data: { componentId: 'azure-app-gw', label: 'Application Gateway', config: {} },
+        },
+        {
+          id: 'aks-1', type: 'custom', position: { x: 300, y: 150 },
+          data: { componentId: 'azure-aks', label: 'AKS Cluster', config: { replicas: 3 } },
+        },
+        {
+          id: 'acr-1', type: 'custom', position: { x: 600, y: 50 },
+          data: { componentId: 'azure-acr', label: 'Container Registry', config: {} },
+        },
+        {
+          id: 'sql-1', type: 'custom', position: { x: 600, y: 250 },
+          data: { componentId: 'azure-sql', label: 'Azure SQL', config: { sku: 'P1', maxSizeGb: 250 } },
+        },
+        {
+          id: 'kv-1', type: 'custom', position: { x: 0, y: 150 },
+          data: { componentId: 'azure-key-vault', label: 'Key Vault', config: {} },
+        },
+        {
+          id: 'ai-1', type: 'custom', position: { x: 300, y: 350 },
+          data: { componentId: 'azure-app-insights', label: 'App Insights', config: {} },
+        },
+      ],
+      edges: [
+        { id: 'e1', source: 'appgw-1', target: 'aks-1', animated: true },
+        { id: 'e2', source: 'acr-1', target: 'aks-1', animated: false },
+        { id: 'e3', source: 'aks-1', target: 'sql-1', animated: true },
+        { id: 'e4', source: 'aks-1', target: 'kv-1', animated: false },
+        { id: 'e5', source: 'aks-1', target: 'ai-1', animated: false },
+      ],
+      is_public: true,
+      created_at: '2024-01-06T00:00:00Z',
+      updated_at: '2024-01-06T00:00:00Z',
     },
   ],
 }

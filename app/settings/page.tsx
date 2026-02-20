@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, User, Shield, Bell, Palette, Key, Database } from 'lucide-react'
+import { ArrowLeft, User, Shield, Bell, Palette, Key, Database, CreditCard } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SettingsForm, DeleteAccountButton } from './settings-form'
@@ -153,6 +153,32 @@ export default async function SettingsPage() {
                     </p>
                   </div>
                   <ExportDataButton />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Billing Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <CardTitle>Billing &amp; Plan</CardTitle>
+                </div>
+                <CardDescription>
+                  Manage your subscription and payment details
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Current plan</p>
+                    <p className="text-sm text-muted-foreground">
+                      Free — all features available during launch period
+                    </p>
+                  </div>
+                  <Link href="/settings/billing">
+                    <Button variant="outline" size="sm">View plans</Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

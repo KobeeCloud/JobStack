@@ -30,7 +30,7 @@ import {
   HardDrive,
   Network
 } from 'lucide-react'
-import { COMPONENT_CATALOG } from '@/lib/catalog'
+import { COMPONENT_CATALOG, getEffectiveGeneratorType, GENERATOR_TYPE_META } from '@/lib/catalog'
 
 // ========================================================
 // REALISTIC CONNECTION RULES — Component-level validation
@@ -401,6 +401,9 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   const { setNodes, getNodes, deleteElements } = useReactFlow()
   const componentId = data.componentId || data.component || ''
   const category = getComponentCategory(componentId)
+  const catalogEntry = COMPONENT_CATALOG.find(c => c.id === componentId)
+  const generatorType = catalogEntry ? getEffectiveGeneratorType(catalogEntry) : 'documentation'
+  const generatorMeta = GENERATOR_TYPE_META[generatorType]
 
   const getProviderColor = () => {
     switch (data.provider) {
@@ -463,7 +466,12 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
                   <span className="font-medium text-sm truncate">{data.label}</span>
                   {data.status && <StatusIndicator status={data.status} />}
                 </div>
-                {data.provider && <Badge variant="outline" className="text-[10px] px-1 py-0 mt-1">{data.provider.toUpperCase()}</Badge>}
+                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                  {data.provider && <Badge variant="outline" className="text-[10px] px-1 py-0">{data.provider.toUpperCase()}</Badge>}
+                  {generatorType !== 'terraform' && (
+                    <Badge className={`text-[10px] px-1 py-0 ${generatorMeta.bgColor}`}>{generatorMeta.label}</Badge>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>

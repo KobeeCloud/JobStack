@@ -42,30 +42,72 @@ export const POST = createApiHandler(
       throw new Error('Missing request body')
     }
 
-    // Build settings object with project types
+    // Build settings object with project types, region, and environment
     const settings: Record<string, unknown> = {}
     if (body.project_types && Array.isArray(body.project_types)) {
       settings.project_types = body.project_types
     }
+    if (body.region) {
+      settings.region = body.region
+    }
+    if (body.environment) {
+      settings.environment = body.environment
+    }
+
+    // Build insert payload — include organization_id if provided
+    const insertPayload: Record<string, unknown> = {
+      user_id: auth.user.id,
+      name: body.name,
+      description: body.description || null,
+      cloud_provider: body.cloud_provider || 'azure',
+      settings,
+    }
+    if (body.organization_id) {
+      insertPayload.organization_id = body.organization_id
+    }
 
     const { data: project, error } = await auth.supabase
       .from('projects')
-      .insert({
-        user_id: auth.user.id,
-        name: body.name,
-        description: body.description || null,
-        cloud_provider: body.cloud_provider || 'azure',
-        settings: settings,
-      })
+      .insert(insertPayload)
       .select()
       .single()
 
     if (error) {
-      log.error('Failed to create project', error, { userId: auth.user.id, body });
-      return NextResponse.json({ error: error.message || 'Failed to create project', details: error.details || error }, { status: 500 });
+      log.error('Failed to create project', error, { userId: auth.user.id, body })
+      return NextResponse.json({ error: error.message || 'Failed to create project', details: error.details || error }, { status: 500 })
     }
 
-    log.info('Project created', { projectId: project.id, userId: auth.user.id })
+    log.info('Project created', { projectId: project.id, userId: auth.user.id, organization_id: body.organization_id ?? null })
+
+    // If a template was selected, load it and create an initial diagram
+    if (body.templateId) {
+      const { data: template } = await auth.supabase
+        .from('templates')
+        .select('nodes, edges, name')
+        .eq('id', body.templateId)
+        .single()
+
+      if (template) {
+        const { error: diagramError } = await auth.supabase
+          .from('diagrams')
+          .insert({
+            project_id: project.id,
+            name: template.name ?? 'Main Diagram',
+            nodes: template.nodes ?? [],
+            edges: template.edges ?? [],
+          })
+
+        if (diagramError) {
+          log.error('Failed to create initial diagram from template', diagramError, {
+            projectId: project.id,
+            templateId: body.templateId,
+          })
+          // Non-fatal — project was created, diagram creation failed
+        } else {
+          log.info('Initial diagram created from template', { projectId: project.id, templateId: body.templateId })
+        }
+      }
+    }
 
     return NextResponse.json(project, { status: 201 })
   },

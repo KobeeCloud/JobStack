@@ -33,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import {
   useCustomComponents,
   type CustomComponentRecord,
@@ -377,7 +377,6 @@ export function CustomComponentPanel({
 }: CustomComponentPanelProps) {
   const { components, loading, createComponent, updateComponent, deleteComponent, duplicateComponent } =
     useCustomComponents({ organizationId })
-  const { toast } = useToast()
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingComponent, setEditingComponent] = useState<CustomComponentRecord | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -417,57 +416,45 @@ export function CustomComponentPanel({
       try {
         if (editingComponent) {
           await updateComponent(editingComponent.id, data)
-          toast({ title: 'Updated', description: `${data.name} updated successfully` })
+          toast.success('Updated', { description: `${data.name} updated successfully` })
         } else {
           await createComponent(data)
-          toast({ title: 'Created', description: `${data.name} created successfully` })
+          toast.success('Created', { description: `${data.name} created successfully` })
         }
       } catch (err) {
-        toast({
-          title: 'Error',
-          description: err instanceof Error ? err.message : 'Operation failed',
-          variant: 'destructive',
-        })
+        toast.error('Error', { description: err instanceof Error ? err.message : 'Operation failed' })
         throw err // re-throw so dialog stays open
       } finally {
         setSaving(false)
         setEditingComponent(null)
       }
     },
-    [editingComponent, createComponent, updateComponent, toast]
+    [editingComponent, createComponent, updateComponent]
   )
 
   const handleDelete = useCallback(async () => {
     if (!deletingId) return
     try {
       await deleteComponent(deletingId)
-      toast({ title: 'Deleted', description: 'Component deleted successfully' })
+      toast.success('Deleted', { description: 'Component deleted successfully' })
     } catch (err) {
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Failed to delete',
-        variant: 'destructive',
-      })
+      toast.error('Error', { description: err instanceof Error ? err.message : 'Failed to delete' })
     } finally {
       setDeletingId(null)
       setDeleteDialogOpen(false)
     }
-  }, [deletingId, deleteComponent, toast])
+  }, [deletingId, deleteComponent])
 
   const handleDuplicate = useCallback(
     async (comp: CustomComponentRecord) => {
       try {
         await duplicateComponent(comp)
-        toast({ title: 'Duplicated', description: `${comp.name} duplicated` })
+        toast.success('Duplicated', { description: `${comp.name} duplicated` })
       } catch (err) {
-        toast({
-          title: 'Error',
-          description: err instanceof Error ? err.message : 'Failed to duplicate',
-          variant: 'destructive',
-        })
+      toast.error('Error', { description: err instanceof Error ? err.message : 'Failed to delete' })
       }
     },
-    [duplicateComponent, toast]
+    [duplicateComponent]
   )
 
   if (!organizationId) {

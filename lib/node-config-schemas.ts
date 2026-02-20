@@ -215,6 +215,98 @@ export const functionAppConfigSchema = z.object({
 })
 
 // ==========================================
+// CI/CD & DEVOPS CONFIGURATION
+// ==========================================
+export const githubActionsConfigSchema = z.object({
+  triggers: z.array(z.enum(['push', 'pull_request', 'schedule', 'workflow_dispatch', 'release'])).optional(),
+  branches: z.array(z.string()).optional(),
+  runsOn: z.enum(['ubuntu-latest', 'ubuntu-22.04', 'ubuntu-20.04', 'windows-latest', 'macos-latest', 'self-hosted']).optional(),
+  stages: z.array(z.string()).optional(),
+  nodeVersion: z.string().optional(),
+  pythonVersion: z.string().optional(),
+  dockerRegistry: z.string().optional(),
+  deployTarget: z.enum(['kubernetes', 'ecs', 'appservice', 'lambda', 'custom', 'none']).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const gitlabCIConfigSchema = z.object({
+  triggers: z.array(z.string()).optional(),
+  branches: z.array(z.string()).optional(),
+  runsOn: z.enum(['docker', 'shell', 'kubernetes', 'self-hosted']).optional(),
+  stages: z.array(z.string()).optional(),
+  deployTarget: z.enum(['kubernetes', 'ecs', 'appservice', 'lambda', 'custom', 'none']).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const jenkinsConfigSchema = z.object({
+  triggers: z.array(z.string()).optional(),
+  branches: z.array(z.string()).optional(),
+  runsOn: z.string().optional(),
+  stages: z.array(z.string()).optional(),
+  deployTarget: z.enum(['kubernetes', 'ecs', 'appservice', 'lambda', 'custom', 'none']).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const argoCDConfigSchema = z.object({
+  repoUrl: z.string().optional(),
+  targetRevision: z.string().optional(),
+  appNamespace: z.string().optional(),
+  destinationNamespace: z.string().optional(),
+  syncPolicy: z.enum(['automated', 'manual']).optional(),
+  selfHeal: z.boolean().optional(),
+  prune: z.boolean().optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const helmConfigSchema = z.object({
+  chartName: z.string().optional(),
+  chartVersion: z.string().optional(),
+  replicaCount: z.number().min(1).max(100).optional(),
+  imageRepository: z.string().optional(),
+  imageTag: z.string().optional(),
+  serviceType: z.enum(['ClusterIP', 'NodePort', 'LoadBalancer']).optional(),
+  ingressEnabled: z.boolean().optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const datadogConfigSchema = z.object({
+  site: z.enum(['datadoghq.com', 'datadoghq.eu', 'us3.datadoghq.com', 'us5.datadoghq.com']).optional(),
+  env: z.string().optional(),
+  service: z.string().optional(),
+  logLevel: z.enum(['debug', 'info', 'warn', 'error']).optional(),
+  apmEnabled: z.boolean().optional(),
+  logsEnabled: z.boolean().optional(),
+  processAgentEnabled: z.boolean().optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const prometheusConfigSchema = z.object({
+  scrapeInterval: z.string().optional(),
+  evaluationInterval: z.string().optional(),
+  retentionTime: z.string().optional(),
+  port: z.number().optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const rabbitmqConfigSchema = z.object({
+  defaultUser: z.string().optional(),
+  managementPort: z.number().optional(),
+  amqpPort: z.number().optional(),
+  vhost: z.string().optional(),
+  replicaCount: z.number().min(1).max(10).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const kafkaConfigSchema = z.object({
+  brokerId: z.number().optional(),
+  port: z.number().optional(),
+  partitions: z.number().min(1).max(100).optional(),
+  replicationFactor: z.number().min(1).max(10).optional(),
+  retentionHours: z.number().optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
 // GENERIC CONFIGURATION
 // ==========================================
 export const genericConfigSchema = z.object({
@@ -276,6 +368,23 @@ export const CONFIG_SCHEMAS: Record<string, z.ZodSchema> = {
   'aws-lambda': functionAppConfigSchema,
   'gcp-cloud-functions': functionAppConfigSchema,
 
+  // ──────────────────────────────────────────
+  // CI/CD & DevOps
+  // ──────────────────────────────────────────
+  'github-actions': githubActionsConfigSchema,
+  'gitlab-ci':      gitlabCIConfigSchema,
+  'jenkins':        jenkinsConfigSchema,
+  'argocd':         argoCDConfigSchema,
+  'helm':           helmConfigSchema,
+
+  // Monitoring
+  'prometheus':     prometheusConfigSchema,
+  'datadog':        datadogConfigSchema,
+
+  // Messaging
+  'rabbitmq':       rabbitmqConfigSchema,
+  'kafka':          kafkaConfigSchema,
+
   // Default for everything else
   'default': genericConfigSchema,
 }
@@ -296,6 +405,17 @@ export type AksConfig = z.infer<typeof aksConfigSchema>
 export type AppServiceConfig = z.infer<typeof appServiceConfigSchema>
 export type GenericConfig = z.infer<typeof genericConfigSchema>
 
+// CI/CD types
+export type GitHubActionsConfig = z.infer<typeof githubActionsConfigSchema>
+export type GitLabCIConfig = z.infer<typeof gitlabCIConfigSchema>
+export type JenkinsConfig = z.infer<typeof jenkinsConfigSchema>
+export type ArgoCDConfig = z.infer<typeof argoCDConfigSchema>
+export type HelmConfig = z.infer<typeof helmConfigSchema>
+export type DatadogConfig = z.infer<typeof datadogConfigSchema>
+export type PrometheusConfig = z.infer<typeof prometheusConfigSchema>
+export type RabbitMQConfig = z.infer<typeof rabbitmqConfigSchema>
+export type KafkaConfig = z.infer<typeof kafkaConfigSchema>
+
 // Union type for all configs
 export type NodeConfig =
   | VmConfig
@@ -307,3 +427,12 @@ export type NodeConfig =
   | AksConfig
   | AppServiceConfig
   | GenericConfig
+  | GitHubActionsConfig
+  | GitLabCIConfig
+  | JenkinsConfig
+  | ArgoCDConfig
+  | HelmConfig
+  | DatadogConfig
+  | PrometheusConfig
+  | RabbitMQConfig
+  | KafkaConfig

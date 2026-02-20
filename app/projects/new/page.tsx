@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -9,16 +9,33 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft, ArrowRight, Loader2, Server,
-  Cloud, Globe, Check, ChevronRight, Boxes
+  Cloud, Globe, Check, ChevronRight, Boxes, Building2, MapPin
 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { createProjectSchema, type CreateProjectInput } from '@/lib/validation/schemas'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
+
+type EnvironmentType = 'development' | 'staging' | 'production'
+
+interface OrganizationOption {
+  id: string
+  name: string
+  slug: string
+  plan: string
+  role: string
+}
 
 const ProviderLogo = ({ provider }: { provider: string }) => {
   const colors: Record<string, string> = {
@@ -135,14 +152,32 @@ const providers: ProviderConfig[] = [
 function NewProjectPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { toast } = useToast()
 
   const [step, setStep] = useState(1)
   const [selectedTypes, setSelectedTypes] = useState<ProjectType[]>([])
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider | null>(null)
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
+  const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentType>('development')
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
+  const [organizations, setOrganizations] = useState<OrganizationOption[]>([])
+  const [orgsLoading, setOrgsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const templateId = searchParams.get('template')
+
+  // Fetch user's organizations on mount
+  useEffect(() => {
+    let cancelled = false
+    setOrgsLoading(true)
+    fetch('/api/organizations')
+      .then((res) => res.ok ? res.json() : { organizations: [] })
+      .then((data) => {
+        if (!cancelled) setOrganizations(data.organizations ?? [])
+      })
+      .catch(() => { /* non-fatal */ })
+      .finally(() => { if (!cancelled) setOrgsLoading(false) })
+    return () => { cancelled = true }
+  }, [])
 
   const { register, handleSubmit, formState: { errors } } = useForm<CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
@@ -161,8 +196,9 @@ function NewProjectPageContent() {
         return [...prev, type]
       }
     })
-    // Reset provider when types change
+    // Reset provider + region when types change
     setSelectedProvider(null)
+    setSelectedRegion(null)
   }
 
   // Get available providers based on selected types
@@ -184,7 +220,10 @@ function NewProjectPageContent() {
           ...data,
           cloud_provider: selectedProvider,
           project_types: selectedTypes,
-          templateId
+          region: selectedRegion ?? undefined,
+          environment: selectedEnvironment,
+          organization_id: selectedOrgId ?? undefined,
+          templateId: templateId ?? undefined,
         })
       })
 
@@ -194,18 +233,11 @@ function NewProjectPageContent() {
       }
 
       const project = await response.json()
-      toast({
-        title: 'Project created!',
-        description: data.name + ' is ready for design'
-      })
+      toast.success('Project created!', { description: data.name + ' is ready for design' })
 
       router.push('/projects/' + project.id)
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create project'
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to create project' })
     } finally {
       setIsSubmitting(false)
     }
@@ -338,7 +370,7 @@ function NewProjectPageContent() {
                       className={'cursor-pointer transition-all hover:border-primary ' +
                         (isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary' : '')
                       }
-                      onClick={() => setSelectedProvider(provider.id)}
+                      onClick={() => { setSelectedProvider(provider.id); setSelectedRegion(null) }}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between">
@@ -364,6 +396,29 @@ function NewProjectPageContent() {
                   )
                 })}
               </div>
+
+              {/* Region selector — shown once a provider is selected */}
+              {selectedProviderConfig && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Deployment Region <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Select
+                    value={selectedRegion ?? ''}
+                    onValueChange={(val) => setSelectedRegion(val || null)}
+                  >
+                    <SelectTrigger className="w-full md:w-72">
+                      <SelectValue placeholder="Select a region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedProviderConfig.regions.map((region) => (
+                        <SelectItem key={region} value={region}>{region}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="flex justify-between">
                 <Button
@@ -416,6 +471,63 @@ function NewProjectPageContent() {
               </Card>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Environment selector */}
+                <div className="space-y-2">
+                  <Label>Environment</Label>
+                  <div className="flex gap-2">
+                    {(['development', 'staging', 'production'] as EnvironmentType[]).map((env) => (
+                      <button
+                        key={env}
+                        type="button"
+                        onClick={() => setSelectedEnvironment(env)}
+                        className={
+                          'flex-1 py-2 px-3 rounded-md border text-sm font-medium capitalize transition-all ' +
+                          (selectedEnvironment === env
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-background text-muted-foreground hover:border-primary/50')
+                        }
+                      >
+                        {env}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Organization selector (optional) */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Organization <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  {orgsLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Loading organizations...
+                    </div>
+                  ) : organizations.length > 0 ? (
+                    <Select
+                      value={selectedOrgId ?? 'personal'}
+                      onValueChange={(val) => setSelectedOrgId(val === 'personal' ? null : val)}
+                    >
+                      <SelectTrigger className="w-full md:w-80">
+                        <SelectValue placeholder="Personal project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="personal">Personal project</SelectItem>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id}>
+                            {org.name}
+                            <span className="ml-2 text-xs text-muted-foreground capitalize">({org.role})</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No organizations yet — this will be a personal project.
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Project Name</Label>

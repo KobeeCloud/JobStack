@@ -4,7 +4,7 @@ import { updateProjectSchema, uuidSchema } from '@/lib/validation/schemas'
 import { ApiError } from '@/lib/api-error'
 import { log } from '@/lib/logger'
 
-async function verifyProjectAccess(supabase: any, projectId: string, userId: string): Promise<void> {
+async function verifyProjectAccess(supabase: any, projectId: string, userId: string, userEmail: string): Promise<void> {
   const { data: project, error } = await supabase
     .from('projects')
     .select('id, user_id')
@@ -17,7 +17,7 @@ async function verifyProjectAccess(supabase: any, projectId: string, userId: str
 
   // Check if user owns the project or has shared access
   if (project.user_id !== userId) {
-    // [B] Sprawdź shared access po user_id lub email
+    // Check shared access by user_id first, then by email
     const { data: shareById } = await supabase
       .from('project_shares')
       .select('id')
@@ -30,7 +30,7 @@ async function verifyProjectAccess(supabase: any, projectId: string, userId: str
         .from('project_shares')
         .select('id')
         .eq('project_id', projectId)
-        .eq('shared_with_email', (await supabase.auth.getUser()).data.user?.email)
+        .eq('shared_with_email', userEmail)
         .single()
 
       if (!shareByEmail) {
@@ -49,7 +49,7 @@ export const GET = createApiHandler(
     const params = await context.params
     const projectId = uuidSchema.parse(params.id)
 
-    await verifyProjectAccess(auth.supabase, projectId, auth.user.id)
+    await verifyProjectAccess(auth.supabase, projectId, auth.user.id, auth.user.email ?? '')
 
     const { data: project, error } = await auth.supabase
       .from('projects')
@@ -80,7 +80,7 @@ export const PUT = createApiHandler(
     const params = await context.params
     const projectId = uuidSchema.parse(params.id)
 
-    await verifyProjectAccess(auth.supabase, projectId, auth.user.id)
+    await verifyProjectAccess(auth.supabase, projectId, auth.user.id, auth.user.email ?? '')
 
     const { data: project, error } = await auth.supabase
       .from('projects')
@@ -122,7 +122,7 @@ export const DELETE = createApiHandler(
     const params = await context.params
     const projectId = uuidSchema.parse(params.id)
 
-    await verifyProjectAccess(auth.supabase, projectId, auth.user.id)
+    await verifyProjectAccess(auth.supabase, projectId, auth.user.id, auth.user.email ?? '')
 
     const { error } = await auth.supabase
       .from('projects')

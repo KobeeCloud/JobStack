@@ -13,7 +13,8 @@ import {
   Box, Copy
 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
-import { useToast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface Template {
   id: string
@@ -35,10 +36,10 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'web',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'cloud', position: { x: 250, y: 50 }, data: { label: 'Load Balancer', category: 'networking' } },
-      { id: '2', type: 'cloud', position: { x: 100, y: 200 }, data: { label: 'Web Server 1', category: 'backend' } },
-      { id: '3', type: 'cloud', position: { x: 400, y: 200 }, data: { label: 'Web Server 2', category: 'backend' } },
-      { id: '4', type: 'cloud', position: { x: 250, y: 350 }, data: { label: 'Database', category: 'database' } },
+      { id: '1', type: 'custom', position: { x: 250, y: 50 }, data: { componentId: 'aws-alb', label: 'Load Balancer' } },
+      { id: '2', type: 'custom', position: { x: 100, y: 200 }, data: { componentId: 'aws-ec2', label: 'Web Server 1' } },
+      { id: '3', type: 'custom', position: { x: 400, y: 200 }, data: { componentId: 'aws-ec2', label: 'Web Server 2' } },
+      { id: '4', type: 'custom', position: { x: 250, y: 350 }, data: { componentId: 'aws-rds', label: 'Database' } },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -54,14 +55,14 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'microservices',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'cloud', position: { x: 300, y: 50 }, data: { label: 'API Gateway', category: 'networking' } },
-      { id: '2', type: 'cloud', position: { x: 100, y: 180 }, data: { label: 'User Service', category: 'backend' } },
-      { id: '3', type: 'cloud', position: { x: 300, y: 180 }, data: { label: 'Order Service', category: 'backend' } },
-      { id: '4', type: 'cloud', position: { x: 500, y: 180 }, data: { label: 'Payment Service', category: 'backend' } },
-      { id: '5', type: 'cloud', position: { x: 300, y: 320 }, data: { label: 'Message Queue', category: 'service' } },
-      { id: '6', type: 'cloud', position: { x: 100, y: 450 }, data: { label: 'Users DB', category: 'database' } },
-      { id: '7', type: 'cloud', position: { x: 300, y: 450 }, data: { label: 'Orders DB', category: 'database' } },
-      { id: '8', type: 'cloud', position: { x: 500, y: 450 }, data: { label: 'Payments DB', category: 'database' } },
+      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-api-gateway', label: 'API Gateway' } },
+      { id: '2', type: 'custom', position: { x: 100, y: 180 }, data: { componentId: 'aws-ec2', label: 'User Service' } },
+      { id: '3', type: 'custom', position: { x: 300, y: 180 }, data: { componentId: 'aws-ec2', label: 'Order Service' } },
+      { id: '4', type: 'custom', position: { x: 500, y: 180 }, data: { componentId: 'aws-ec2', label: 'Payment Service' } },
+      { id: '5', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'aws-sqs', label: 'Message Queue' } },
+      { id: '6', type: 'custom', position: { x: 100, y: 450 }, data: { componentId: 'aws-rds', label: 'Users DB' } },
+      { id: '7', type: 'custom', position: { x: 300, y: 450 }, data: { componentId: 'aws-rds', label: 'Orders DB' } },
+      { id: '8', type: 'custom', position: { x: 500, y: 450 }, data: { componentId: 'aws-rds', label: 'Payments DB' } },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -82,11 +83,11 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'serverless',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'cloud', position: { x: 300, y: 50 }, data: { label: 'API Gateway', category: 'networking' } },
-      { id: '2', type: 'cloud', position: { x: 150, y: 180 }, data: { label: 'Lambda Auth', category: 'backend' } },
-      { id: '3', type: 'cloud', position: { x: 450, y: 180 }, data: { label: 'Lambda API', category: 'backend' } },
-      { id: '4', type: 'cloud', position: { x: 300, y: 320 }, data: { label: 'DynamoDB', category: 'database' } },
-      { id: '5', type: 'cloud', position: { x: 500, y: 320 }, data: { label: 'S3 Storage', category: 'storage' } },
+      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-api-gateway', label: 'API Gateway' } },
+      { id: '2', type: 'custom', position: { x: 150, y: 180 }, data: { componentId: 'aws-lambda', label: 'Lambda Auth' } },
+      { id: '3', type: 'custom', position: { x: 450, y: 180 }, data: { componentId: 'aws-lambda', label: 'Lambda API' } },
+      { id: '4', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'dynamodb', label: 'DynamoDB' } },
+      { id: '5', type: 'custom', position: { x: 500, y: 320 }, data: { componentId: 'aws-s3', label: 'S3 Storage' } },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -102,9 +103,9 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'web',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'cloud', position: { x: 300, y: 50 }, data: { label: 'Route 53', category: 'networking' } },
-      { id: '2', type: 'cloud', position: { x: 300, y: 180 }, data: { label: 'CloudFront', category: 'networking' } },
-      { id: '3', type: 'cloud', position: { x: 300, y: 320 }, data: { label: 'S3 Bucket', category: 'storage' } },
+      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-route53', label: 'Route 53' } },
+      { id: '2', type: 'custom', position: { x: 300, y: 180 }, data: { componentId: 'aws-cloudfront', label: 'CloudFront' } },
+      { id: '3', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'aws-s3', label: 'S3 Bucket' } },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -118,11 +119,11 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'analytics',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'cloud', position: { x: 100, y: 150 }, data: { label: 'Data Source', category: 'service' } },
-      { id: '2', type: 'cloud', position: { x: 300, y: 150 }, data: { label: 'Kinesis Stream', category: 'service' } },
-      { id: '3', type: 'cloud', position: { x: 500, y: 150 }, data: { label: 'Lambda Process', category: 'backend' } },
-      { id: '4', type: 'cloud', position: { x: 300, y: 300 }, data: { label: 'S3 Data Lake', category: 'storage' } },
-      { id: '5', type: 'cloud', position: { x: 500, y: 300 }, data: { label: 'Redshift', category: 'database' } },
+      { id: '1', type: 'custom', position: { x: 100, y: 150 }, data: { componentId: 'aws-ec2', label: 'Data Source' } },
+      { id: '2', type: 'custom', position: { x: 300, y: 150 }, data: { componentId: 'aws-kinesis', label: 'Kinesis Stream' } },
+      { id: '3', type: 'custom', position: { x: 500, y: 150 }, data: { componentId: 'aws-lambda', label: 'Lambda Process' } },
+      { id: '4', type: 'custom', position: { x: 300, y: 300 }, data: { componentId: 'aws-s3', label: 'S3 Data Lake' } },
+      { id: '5', type: 'custom', position: { x: 500, y: 300 }, data: { componentId: 'aws-rds', label: 'Data Warehouse' } },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -138,12 +139,12 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'containers',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'cloud', position: { x: 300, y: 50 }, data: { label: 'ALB Ingress', category: 'networking' } },
-      { id: '2', type: 'cloud', position: { x: 300, y: 180 }, data: { label: 'EKS Cluster', category: 'devops' } },
-      { id: '3', type: 'cloud', position: { x: 100, y: 320 }, data: { label: 'Node Group 1', category: 'backend' } },
-      { id: '4', type: 'cloud', position: { x: 300, y: 320 }, data: { label: 'Node Group 2', category: 'backend' } },
-      { id: '5', type: 'cloud', position: { x: 500, y: 320 }, data: { label: 'Node Group 3', category: 'backend' } },
-      { id: '6', type: 'cloud', position: { x: 300, y: 450 }, data: { label: 'RDS Database', category: 'database' } },
+      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-alb', label: 'ALB Ingress' } },
+      { id: '2', type: 'custom', position: { x: 300, y: 180 }, data: { componentId: 'aws-eks', label: 'EKS Cluster' } },
+      { id: '3', type: 'custom', position: { x: 100, y: 320 }, data: { componentId: 'aws-ec2', label: 'Node Group 1' } },
+      { id: '4', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'aws-ec2', label: 'Node Group 2' } },
+      { id: '5', type: 'custom', position: { x: 500, y: 320 }, data: { componentId: 'aws-ec2', label: 'Node Group 3' } },
+      { id: '6', type: 'custom', position: { x: 300, y: 450 }, data: { componentId: 'aws-rds', label: 'RDS Database' } },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -180,7 +181,7 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const { toast } = useToast()
+  const router = useRouter()
 
   useEffect(() => {
     loadTemplates()
@@ -215,11 +216,7 @@ export default function TemplatesPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      toast({
-        title: 'Authentication required',
-        description: 'Please log in to use templates',
-        variant: 'destructive',
-      })
+      toast.error('Authentication required', { description: 'Please log in to use templates' })
       return
     }
 
@@ -251,19 +248,12 @@ export default function TemplatesPage() {
 
       if (diagramError) throw diagramError
 
-      toast({
-        title: 'Project created!',
-        description: 'Template has been applied to your new project',
-      })
+      toast.success('Project created!', { description: 'Template has been applied to your new project' })
 
       // Redirect to the new project
-      window.location.href = `/projects/${project.id}`
+      router.push(`/projects/${project.id}`)
     } catch (error: unknown) {
-      toast({
-        title: 'Error',
-        description: (error as Error).message || 'Failed to create project from template',
-        variant: 'destructive',
-      })
+      toast.error('Error', { description: (error as Error).message || 'Failed to create project from template' })
     }
   }
 

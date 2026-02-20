@@ -35,6 +35,8 @@ import {
   Shield,
   FlaskConical,
   Cloud,
+  Library,
+  GitBranch,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -56,6 +58,7 @@ interface DiagramToolbarProps {
   onGenerateCloudFormation?: () => void
   onGenerateARM?: () => void
   onGeneratePulumi?: () => void
+  onGenerateCICD?: () => void
   onExportImage?: (format: 'png' | 'svg') => void
   onUndo?: () => void
   onRedo?: () => void
@@ -73,6 +76,8 @@ interface DiagramToolbarProps {
   aiAnalyzing?: boolean
   complianceScanning?: boolean
   testing?: boolean
+  // Templates
+  onShowTemplates?: () => void
   // Version history
   diagramId?: string
   onRestoreVersion?: () => void
@@ -100,6 +105,7 @@ export function DiagramToolbar({
   onGenerateCloudFormation,
   onGenerateARM,
   onGeneratePulumi,
+  onGenerateCICD,
   onExportImage,
   onUndo,
   onRedo,
@@ -116,6 +122,7 @@ export function DiagramToolbar({
   aiAnalyzing = false,
   complianceScanning = false,
   testing = false,
+  onShowTemplates,
   diagramId,
   onRestoreVersion,
 }: DiagramToolbarProps) {
@@ -304,6 +311,24 @@ export function DiagramToolbar({
           </Tooltip>
         )}
 
+        {onShowTemplates && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onShowTemplates}
+                aria-label="Templates"
+              >
+                <Library className="h-4 w-4 mr-1.5" />
+                Templates
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Browse & Apply Templates</TooltipContent>
+          </Tooltip>
+        )}
+
         <Separator orientation="vertical" className="h-6 mx-1" />
 
         {/* Export Dropdown */}
@@ -359,6 +384,12 @@ export function DiagramToolbar({
               <DropdownMenuItem onClick={onGeneratePulumi}>
                 <FileCode className="h-4 w-4 mr-2" />
                 Pulumi (TypeScript)
+              </DropdownMenuItem>
+            )}
+            {onGenerateCICD && (
+              <DropdownMenuItem onClick={onGenerateCICD}>
+                <GitBranch className="h-4 w-4 mr-2" />
+                CI/CD & Config Files
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -423,6 +454,12 @@ export function DiagramToolbar({
               <DropdownMenuItem onClick={onGeneratePulumi}>
                 <FileCode className="h-4 w-4 mr-2" />
                 Pulumi (TypeScript)
+              </DropdownMenuItem>
+            )}
+            {onGenerateCICD && (
+              <DropdownMenuItem onClick={onGenerateCICD}>
+                <GitBranch className="h-4 w-4 mr-2" />
+                CI/CD & Config Files
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

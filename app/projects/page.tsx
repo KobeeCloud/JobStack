@@ -25,10 +25,11 @@ export default async function ProjectsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // FIX BUG#7: Remove user_id filter — RLS policy already handles visibility
+  // This now shows: (1) user-owned projects AND (2) organization projects where user is a member
   const { data: projects, count } = await supabase
     .from('projects')
-    .select('*', { count: 'exact' })
-    .eq('user_id', user.id)
+    .select('*, organizations!organization_id(name, slug)', { count: 'exact' })
     .order('updated_at', { ascending: false })
 
   const providerColors: Record<string, string> = {

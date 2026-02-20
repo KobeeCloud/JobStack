@@ -28,7 +28,7 @@ import { DiagramSearch } from '@/components/diagram/diagram-search'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
 import { NodeConfigPanel } from '@/components/diagram/node-config-panel'
 import { calculateInfrastructureCost } from '@/lib/cost-calculator'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { useHistory } from '@/hooks/use-history'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
@@ -41,6 +41,7 @@ import { TestResultsPanel } from '@/components/testing/test-results-panel'
 import { MultiCloudComparePanel } from '@/components/multi-cloud/multi-cloud-compare-panel'
 import { CustomComponentPanel } from '@/components/custom/custom-component-panel'
 import { ProjectShareDialog } from '@/components/project-share-dialog'
+import { TemplateDialog } from '@/components/diagram/template-dialog'
 import { analyzeArchitecture } from '@/lib/ai/architecture-analyzer'
 import { runComplianceScan } from '@/lib/compliance/compliance-scanner'
 import { testDiagram } from '@/lib/testing/infrastructure-tester'
@@ -102,12 +103,16 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
   const [multiCloudPanelOpen, setMultiCloudPanelOpen] = useState(false)
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null)
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
 
   const { zoomIn, zoomOut, fitView, screenToFlowPosition, getNodes, setCenter } = useReactFlow()
   const router = useRouter()
-  const { toast } = useToast()
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const hasUnsavedChanges = useRef(false)
+  // FIX BUG#3: track diagramId in a ref so save-on-unmount cleanup gets fresh value
+  const diagramIdRef = useRef<string | null>(null)
+  // FIX BUG#4: store latest handleSave to avoid stale closure in keyboard shortcut effect
+  const handleSaveRef = useRef<() => Promise<void>>(() => Promise.resolve())
 
   // History for undo/redo
   const { canUndo, canRedo, undo, redo, pushState } = useHistory()
@@ -131,7 +136,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       isUndoRedoAction.current = true
       setNodes(state.nodes)
       setEdges(state.edges)
-      toast({ title: 'Undo', description: 'Restored previous state' })
+      toast.success('Undo', { description: 'Restored previous state' })
     }
   }, [undo, setNodes, setEdges, toast])
 
@@ -142,20 +147,24 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       isUndoRedoAction.current = true
       setNodes(state.nodes)
       setEdges(state.edges)
-      toast({ title: 'Redo', description: 'Restored next state' })
+      toast.success('Redo', { description: 'Restored next state' })
     }
   }, [redo, setNodes, setEdges, toast])
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+      // FIX BUG#8: navigator.platform is deprecated since Chrome 110
+      const isMac = /Mac|iPhone|iPad|iPod/i.test(
+        (navigator as any).userAgentData?.platform ?? navigator.platform
+      )
       const modKey = isMac ? e.metaKey : e.ctrlKey
 
       // Ctrl/Cmd + S - Save
       if (modKey && e.key === 's') {
         e.preventDefault()
-        handleSave()
+        // FIX BUG#4: use ref to avoid stale closure — always calls latest handleSave
+        handleSaveRef.current()
         return
       }
 
@@ -188,7 +197,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             selected: false,
           }))
           setNodes(nds => [...nds, ...newNodes])
-          toast({ title: 'Duplicated', description: `${newNodes.length} node(s) duplicated` })
+          toast.success('Duplicated', { description: `${newNodes.length} node(s) duplicated` })
         }
         return
       }
@@ -220,7 +229,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   // Load project and diagram
   useEffect(() => {
     if (!projectId) {
-      toast({ title: 'Error', description: 'Project ID is missing' });
+      toast.error('Error', { description: 'Project ID is missing' });
       router.push('/dashboard');
       return;
     }
@@ -234,7 +243,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const projectRes = await fetchWithTimeout(`/api/projects/${projectId}`, {}, 10000)
         if (!projectRes.ok) {
           if (projectRes.status === 404) {
-            toast({ title: 'Project not found', description: 'This project does not exist' })
+            toast.error('Project not found', { description: 'This project does not exist' })
             router.push('/dashboard')
             return
           }
@@ -255,17 +264,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           if (lastDiagram.data?.nodes) setNodes(lastDiagram.data.nodes)
           if (lastDiagram.data?.edges) setEdges(lastDiagram.data.edges)
           setLastSaved(new Date(lastDiagram.updated_at))
-          toast({
-            title: 'Diagram Loaded',
-            description: `Loaded ${lastDiagram.data?.nodes?.length || 0} components`,
-          })
+          toast.success('Diagram Loaded', { description: `Loaded ${lastDiagram.data?.nodes?.length || 0} components` })
         }
       } catch (error) {
         if (!cancelled) {
-          toast({
-            title: 'Error',
-            description: error instanceof Error ? error.message : 'Failed to load project',
-          })
+          toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to load project' })
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -355,10 +358,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             if (updatedDiagram.data?.edges) {
               setEdges(updatedDiagram.data.edges)
             }
-            toast({
-              title: 'Diagram Updated',
-              description: 'Changes from another user',
-            })
+            toast.info('Diagram Updated', { description: 'Changes from another user' })
           }
         }
       )
@@ -394,13 +394,20 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }, [nodes, edges])
 
-  // Save on unmount
+  // FIX BUG#3: Keep diagramIdRef in sync so cleanup closure always has fresh value
+  useEffect(() => {
+    diagramIdRef.current = diagramId
+  }, [diagramId])
+
+  // Save on unmount — uses diagramIdRef to avoid stale closure (BUG#3)
   useEffect(() => {
     return () => {
       if (hasUnsavedChanges.current && (nodes.length > 0 || edges.length > 0)) {
-        // Final save attempt
-        fetch('/api/diagrams', {
-          method: 'POST',
+        const currentDiagramId = diagramIdRef.current
+        const url = currentDiagramId ? `/api/diagrams/${currentDiagramId}` : '/api/diagrams'
+        const method = currentDiagramId ? 'PUT' : 'POST'
+        fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             project_id: projectId,
@@ -428,11 +435,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           if (sourceComponentId && targetComponentId) {
             const error = getConnectionError(sourceComponentId, targetComponentId)
             if (error) {
-              toast({
-                title: 'Invalid Connection',
-                description: error,
-                variant: 'destructive'
-              })
+              toast.error('Invalid Connection', { description: error })
               return
             }
           }
@@ -576,10 +579,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             return node
           })
         )
-        toast({
-          title: 'Component Nested',
-          description: `${draggedNode.data?.label} → ${targetContainer.data?.label}`,
-        })
+        toast.success('Component Nested', { description: `${draggedNode.data?.label} → ${targetContainer.data?.label}` })
       } else if (targetContainer && targetContainer.id === draggedNode.parentId) {
         // Still inside the same parent — auto-resize if child overflows
         const containerW = (targetContainer.style?.width as number) || 400
@@ -625,10 +625,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
               return node
             })
           )
-          toast({
-            title: 'Component Removed',
-            description: `${draggedNode.data?.label} removed from ${oldParent.data?.label}`,
-          })
+          toast.success('Component Removed', { description: `${draggedNode.data?.label} removed from ${oldParent.data?.label}` })
         }
       }
     },
@@ -794,10 +791,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           return [...updated, newNode]
         })
       } catch {
-        toast({
-          title: 'Error',
-          description: 'Failed to add component',
-        })
+        toast.error('Error', { description: 'Failed to add component' })
       }
     },
     [setNodes, toast, screenToFlowPosition, nodes]
@@ -827,29 +821,26 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const data = await res.json()
         if (data.id && !diagramId) setDiagramId(data.id)
         setLastSaved(new Date())
-        toast({ title: 'Saved', description: 'Diagram saved successfully' })
+        toast.success('Saved', { description: 'Diagram saved successfully' })
       } else {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Failed to save')
       }
     } catch (error) {
       hasUnsavedChanges.current = true
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to save diagram',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to save diagram' })
     } finally {
       setSaving(false)
     }
   }
+  // FIX BUG#4: Update handleSaveRef on every render (after handleSave is defined).
+  // Keyboard shortcut useEffect calls handleSaveRef.current() so it always has
+  // the latest closure with fresh nodes/edges/diagramId. Ref updates don't cause re-renders.
+  handleSaveRef.current = handleSave
 
   const handleGenerateCode = async () => {
     if (nodes.length === 0) {
-      toast({
-        title: 'No Components',
-        description: 'Add cloud components (AWS, Azure, GCP) to generate Terraform code.',
-        variant: 'destructive'
-      })
+      toast.warning('No Components', { description: 'Add cloud components (AWS, Azure, GCP) to generate Terraform code.' })
       return
     }
 
@@ -877,28 +868,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           ? errors.map((e: { nodeLabel: string; error: string }) => `• ${e.nodeLabel}: ${e.error}`).join('\n')
           : errorMessage
 
-        toast({
-          title: 'Cannot Generate Terraform',
-          description: (
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              <p className="font-medium text-sm">Please fix the following issues:</p>
-              <div className="text-xs space-y-1 whitespace-pre-wrap">
-                {errorList}
-              </div>
-              {warnings.length > 0 && (
-                <div className="text-xs text-muted-foreground mt-2 border-t pt-2">
-                  <p className="font-medium">Warnings:</p>
-                  <ul className="list-disc list-inside">
-                    {warnings.slice(0, 3).map((w: string, i: number) => (
-                      <li key={i}>{w}</li>
-                    ))}
-                    {warnings.length > 3 && <li>...and {warnings.length - 3} more</li>}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ) as any,
-          variant: 'destructive',
+        toast.error('Cannot Generate Terraform', {
+          description: errorList + (warnings.length > 0 ? `\n⚠ Warnings: ${warnings.slice(0, 3).join('; ')}` : ''),
         })
         return
       }
@@ -926,16 +897,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         ? `Generated ${data.files.length} files (${data.skippedCount} components skipped)`
         : `Generated ${data.files.length} Terraform files`
 
-      toast({
-        title: 'Terraform Generated',
-        description: successMessage
-      })
+      toast.success('Terraform Generated', { description: successMessage })
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to generate Terraform code',
-        variant: 'destructive'
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate Terraform code' })
     }
   }
 
@@ -948,18 +912,15 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       a.download = 'diagram.json'
       a.click()
       URL.revokeObjectURL(url)
-      toast({ title: 'Exported', description: 'Diagram exported successfully' })
+      toast.success('Exported', { description: 'Diagram exported successfully' })
     } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to export diagram',
-      })
+      toast.error('Error', { description: 'Failed to export diagram' })
     }
   }
 
   const handleGenerateCloudFormation = async () => {
     if (nodes.length === 0) {
-      toast({ title: 'No Components', description: 'Add cloud components to generate CloudFormation.', variant: 'destructive' })
+      toast.warning('No Components', { description: 'Add cloud components to generate CloudFormation.' })
       return
     }
     try {
@@ -972,15 +933,15 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       a.download = 'cloudformation-template.yaml'
       a.click()
       URL.revokeObjectURL(url)
-      toast({ title: 'CloudFormation Generated', description: 'Template exported as YAML' })
+      toast.success('CloudFormation Generated', { description: 'Template exported as YAML' })
     } catch (error) {
-      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to generate CloudFormation', variant: 'destructive' })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate CloudFormation' })
     }
   }
 
   const handleGenerateARM = async () => {
     if (nodes.length === 0) {
-      toast({ title: 'No Components', description: 'Add cloud components to generate ARM template.', variant: 'destructive' })
+      toast.warning('No Components', { description: 'Add cloud components to generate ARM template.' })
       return
     }
     try {
@@ -993,15 +954,15 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       a.download = 'arm-template.json'
       a.click()
       URL.revokeObjectURL(url)
-      toast({ title: 'ARM Template Generated', description: 'Template exported as JSON' })
+      toast.success('ARM Template Generated', { description: 'Template exported as JSON' })
     } catch (error) {
-      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to generate ARM template', variant: 'destructive' })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate ARM template' })
     }
   }
 
   const handleGeneratePulumi = async () => {
     if (nodes.length === 0) {
-      toast({ title: 'No Components', description: 'Add cloud components to generate Pulumi code.', variant: 'destructive' })
+      toast.warning('No Components', { description: 'Add cloud components to generate Pulumi code.' })
       return
     }
     try {
@@ -1014,16 +975,67 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       a.download = 'index.ts'
       a.click()
       URL.revokeObjectURL(url)
-      toast({ title: 'Pulumi Generated', description: 'Infrastructure code exported as TypeScript' })
+      toast.success('Pulumi Generated', { description: 'Infrastructure code exported as TypeScript' })
     } catch (error) {
-      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to generate Pulumi code', variant: 'destructive' })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate Pulumi code' })
     }
   }
+
+  const handleGenerateCICD = async () => {
+    if (nodes.length === 0) {
+      toast.warning('No Components', { description: 'Add CI/CD, monitoring, or messaging components to generate config files.' })
+      return
+    }
+    try {
+      const { generateCICDConfigs } = await import('@/lib/generators/cicd')
+      const result = generateCICDConfigs(nodes, edges)
+
+      if (result.outputs.length === 0) {
+        const exampleTools = 'GitHub Actions, GitLab CI, Jenkins, ArgoCD, Helm, Datadog, Prometheus, RabbitMQ, Kafka'
+        toast.warning('No CI/CD Components Found', { description: `Add third-party tools to your diagram: ${exampleTools}` })
+        return
+      }
+
+      if (result.outputs.length === 1) {
+        // Single file — download directly
+        const out = result.outputs[0]
+        const blob = new Blob([out.content], { type: 'text/plain' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = out.filename.replace(/\//g, '_')
+        a.click()
+        URL.revokeObjectURL(url)
+      } else {
+        // Multiple files — ZIP them
+        const JSZip = (await import('jszip')).default
+        const zip = new JSZip()
+        for (const out of result.outputs) {
+          zip.file(out.filename, out.content)
+        }
+        const blob = await zip.generateAsync({ type: 'blob' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'cicd-configs.zip'
+        a.click()
+        URL.revokeObjectURL(url)
+      }
+
+      const skippedMsg = result.skipped.length > 0
+        ? ` · ${result.skipped.length} annotation-only component(s) skipped`
+        : ''
+      toast.success('CI/CD Files Generated', { description: `${result.outputs.length} file(s) exported${skippedMsg}` })
+    } catch (error) {
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate CI/CD configs' })
+    }
+  }
+
 
   // AI Analysis
   const handleAIAnalysis = async () => {
     if (nodes.length === 0) {
-      toast({ title: 'No components', description: 'Add components to analyze' })
+      toast.warning('No components', { description: 'Add components to analyze' })
       return
     }
 
@@ -1032,15 +1044,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       setAiPanelOpen(true)
       const issues = await analyzeArchitecture(nodes, edges)
       setAiIssues(issues)
-      toast({
-        title: 'Analysis Complete',
-        description: `Found ${issues.length} recommendations`
-      })
+      toast.success('Analysis Complete', { description: `Found ${issues.length} recommendations` })
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to analyze architecture',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to analyze architecture' })
     } finally {
       setAiAnalyzing(false)
     }
@@ -1049,7 +1055,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   // Compliance Scanning
   const handleComplianceScan = async (framework: 'cis' | 'gdpr' | 'soc2' | 'pci-dss' | 'hipaa') => {
     if (nodes.length === 0) {
-      toast({ title: 'No components', description: 'Add components to scan' })
+      toast.warning('No components', { description: 'Add components to scan' })
       return
     }
 
@@ -1065,15 +1071,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
       const report = await runComplianceScan(nodes, edges, frameworkMap[framework])
       setComplianceReport(report)
-      toast({
-        title: 'Scan Complete',
-        description: `Score: ${report.score}% - ${report.findings.length} findings`
-      })
+      toast.success('Scan Complete', { description: `Score: ${report.score}% - ${report.findings.length} findings` })
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to run compliance scan',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to run compliance scan' })
     } finally {
       setComplianceScanning(false)
     }
@@ -1082,7 +1082,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   // Infrastructure Testing
   const handleRunTests = async () => {
     if (nodes.length === 0) {
-      toast({ title: 'No components', description: 'Add components to test' })
+      toast.warning('No components', { description: 'Add components to test' })
       return
     }
 
@@ -1092,15 +1092,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       const results = await testDiagram(nodes, edges)
       setTestResults(results)
       const passed = results.filter(r => r.status === 'pass').length
-      toast({
-        title: 'Tests Complete',
-        description: `${passed}/${results.length} tests passed`
-      })
+      toast.success('Tests Complete', { description: `${passed}/${results.length} tests passed` })
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to run tests',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to run tests' })
     } finally {
       setTesting(false)
     }
@@ -1130,7 +1124,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
 
     setNodes((nds) => [...nds, newNode])
-    toast({ title: 'Component Added', description: `Added ${provider.toUpperCase()} component` })
+    toast.success('Component Added', { description: `Added ${provider.toUpperCase()} component` })
   }, [screenToFlowPosition, setNodes, toast])
 
   const costData = calculateInfrastructureCost(nodes)
@@ -1256,10 +1250,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onGenerateCloudFormation={handleGenerateCloudFormation}
             onGenerateARM={handleGenerateARM}
             onGeneratePulumi={handleGeneratePulumi}
+            onGenerateCICD={handleGenerateCICD}
             onAIAnalysis={handleAIAnalysis}
             onComplianceScan={() => setCompliancePanelOpen(true)}
             onRunTests={handleRunTests}
             onMultiCloud={() => setMultiCloudPanelOpen(true)}
+            onShowTemplates={() => setTemplateDialogOpen(true)}
             onUndo={handleUndo}
             onRedo={handleRedo}
             canUndo={canUndo}
@@ -1286,17 +1282,34 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 a.href = dataUrl
                 a.download = `diagram.${format}`
                 a.click()
-                toast({ title: 'Exported', description: `Diagram exported as ${format.toUpperCase()}` })
+                toast.success('Exported', { description: `Diagram exported as ${format.toUpperCase()}` })
               } catch {
-                toast({
-                  title: 'Error',
-                  description: `Failed to export as ${format.toUpperCase()}`,
-                })
+                toast.error('Error', { description: `Failed to export as ${format.toUpperCase()}` })
               }
             }}
           />
         </div>
         <CostSidebar costData={costData} />
+
+        {/* Template Dialog */}
+        <TemplateDialog
+          open={templateDialogOpen}
+          onClose={() => setTemplateDialogOpen(false)}
+          onApply={(template) => {
+            // Normalize node types: containers get 'container', rest get 'custom'
+            const normalizedNodes = (template.data.nodes || []).map((node: any) => ({
+              ...node,
+              type: CONTAINER_COMPONENTS.includes(node.data?.componentId)
+                ? 'container'
+                : 'custom',
+            }))
+            setNodes(normalizedNodes)
+            setEdges(template.data.edges || [])
+            hasUnsavedChanges.current = true
+            toast.success('Template Applied', { description: `Loaded "${template.name}" — ${normalizedNodes.length} components` })
+            setTimeout(() => fitView({ padding: 0.2 }), 100)
+          }}
+        />
 
         {/* AI Assistant Panel */}
         {aiPanelOpen && (

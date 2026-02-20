@@ -49,7 +49,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
 import Image from 'next/image'
 
@@ -93,7 +93,6 @@ interface PageProps {
 export default function OrganizationManagePage({ params }: PageProps) {
   const resolvedParams = use(params)
   const router = useRouter()
-  const { toast } = useToast()
 
   const [organization, setOrganization] = useState<Organization | null>(null)
   const [members, setMembers] = useState<Member[]>([])
@@ -128,7 +127,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
       const orgRes = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}`, {}, 10000)
       if (!orgRes.ok) {
         if (orgRes.status === 404) {
-          toast({ title: 'Error', description: 'Organization not found' })
+          toast.error('Error', { description: 'Organization not found' })
           router.push('/organizations')
           return
         }
@@ -148,10 +147,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
         }
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to load organization',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to load organization' })
     } finally {
       setLoading(false)
     }
@@ -174,15 +170,12 @@ export default function OrganizationManagePage({ params }: PageProps) {
       }
 
       const data = await res.json()
-      toast({ title: 'Invite sent', description: `Invitation sent to ${inviteEmail}` })
+      toast.success('Invite sent', { description: `Invitation sent to ${inviteEmail}` })
       setInviteEmail('')
       setInviteDialogOpen(false)
       setInvites([...invites, data.invite])
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to send invite',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to send invite' })
     } finally {
       setInviting(false)
     }
@@ -198,13 +191,10 @@ export default function OrganizationManagePage({ params }: PageProps) {
         throw new Error('Failed to delete invite')
       }
 
-      toast({ title: 'Invite cancelled', description: 'Invitation has been cancelled' })
+      toast.success('Invite cancelled', { description: 'Invitation has been cancelled' })
       setInvites(invites.filter(i => i.id !== inviteId))
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to cancel invite',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to cancel invite' })
     }
   }
 
@@ -218,13 +208,10 @@ export default function OrganizationManagePage({ params }: PageProps) {
         throw new Error('Failed to remove member')
       }
 
-      toast({ title: 'Member removed', description: 'Member has been removed from the organization' })
+      toast.success('Member removed', { description: 'Member has been removed from the organization' })
       setMembers(members.filter(m => m.id !== memberId))
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to remove member',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to remove member' })
     }
   }
 
@@ -233,7 +220,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
     await navigator.clipboard.writeText(link)
     setCopiedToken(token)
     setTimeout(() => setCopiedToken(null), 2000)
-    toast({ title: 'Copied', description: 'Invite link copied to clipboard' })
+    toast.success('Copied', { description: 'Invite link copied to clipboard' })
   }
 
   const handleEditOrganization = async () => {
@@ -258,12 +245,9 @@ export default function OrganizationManagePage({ params }: PageProps) {
       const data = await res.json()
       setOrganization(data.organization)
       setEditDialogOpen(false)
-      toast({ title: 'Updated', description: 'Organization updated successfully' })
+      toast.success('Updated', { description: 'Organization updated successfully' })
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update organization',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to update organization' })
     } finally {
       setSaving(false)
     }
@@ -281,13 +265,10 @@ export default function OrganizationManagePage({ params }: PageProps) {
         throw new Error(error.error || 'Failed to delete organization')
       }
 
-      toast({ title: 'Deleted', description: 'Organization has been deleted' })
+      toast.success('Deleted', { description: 'Organization has been deleted' })
       router.push('/organizations')
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to delete organization',
-      })
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to delete organization' })
       setDeleting(false)
     }
   }
