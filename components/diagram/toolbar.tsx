@@ -39,6 +39,7 @@ import {
   GitBranch,
   Boxes,
   Building2,
+  Zap,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -85,6 +86,7 @@ interface DiagramToolbarProps {
   // Wizards
   onK8sWizard?: () => void
   onGovernanceWizard?: () => void
+  onQuickBuild?: () => void
   // Version history
   diagramId?: string
   onRestoreVersion?: () => void
@@ -134,6 +136,7 @@ export function DiagramToolbar({
   onShowTemplates,
   onK8sWizard,
   onGovernanceWizard,
+  onQuickBuild,
   diagramId,
   onRestoreVersion,
 }: DiagramToolbarProps) {
@@ -387,6 +390,24 @@ export function DiagramToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent>Cloud Governance Wizard (Landing Zone)</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onQuickBuild && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                onClick={onQuickBuild}
+                aria-label="Quick Build"
+              >
+                <Zap className="h-4 w-4 mr-1.5" />
+                Quick Build
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Scaffold a full infrastructure pattern in one click</TooltipContent>
           </Tooltip>
         )}
 

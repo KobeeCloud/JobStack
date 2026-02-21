@@ -531,25 +531,37 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
   const category = getComponentCategory(componentId)
 
   const getProviderBg = () => {
-    if (componentId.includes('landing-zone')) return 'bg-indigo-900/10 border-indigo-600'
+    if (componentId.includes('landing-zone'))    return 'bg-indigo-900/10 border-indigo-600'
     if (componentId.includes('management-group')) return 'bg-violet-500/5 border-violet-500'
-    if (componentId.includes('subscription') && data.provider === 'azure') return 'bg-blue-500/8 border-blue-500'
+    if (componentId.includes('subscription'))    return 'bg-sky-500/10 border-sky-500'
+    if (componentId.includes('resource-group'))  return 'bg-blue-400/5 border-blue-400'
     switch (data.provider) {
-      case 'aws': return 'bg-orange-500/5 border-orange-400'
+      case 'aws':   return 'bg-orange-500/5 border-orange-400'
       case 'azure': return 'bg-blue-500/5 border-blue-400'
-      case 'gcp': return 'bg-red-500/5 border-red-400'
-      default: return 'bg-muted/30 border-border'
+      case 'gcp':   return 'bg-red-500/5 border-red-400'
+      default:      return 'bg-muted/30 border-border'
     }
+  }
+
+  // Header background for depth indication
+  const getHeaderBg = () => {
+    if (componentId.includes('landing-zone'))    return 'bg-indigo-700/25 border-indigo-600/40'
+    if (componentId.includes('management-group')) return 'bg-violet-600/20 border-violet-500/40'
+    if (componentId.includes('subscription'))    return 'bg-sky-600/20 border-sky-500/40'
+    if (componentId.includes('resource-group'))  return 'bg-blue-500/15 border-blue-400/40'
+    if (componentId.includes('vnet') || componentId.includes('vpc')) return 'bg-blue-400/10 border-blue-400/30'
+    if (componentId.includes('subnet'))          return 'bg-muted/40 border-border/60'
+    return 'bg-background/60 border-dashed'
   }
 
   // Visual differentiation for container depth
   const getContainerStyle = () => {
-    if (componentId.includes('landing-zone')) return 'border-solid border-4'
-    if (componentId.includes('management-group')) return 'border-dashed border-3'
-    if (componentId.includes('subscription')) return 'border-solid border-2'
-    if (componentId.includes('resource-group')) return 'border-dashed border-2'
+    if (componentId.includes('landing-zone'))    return 'border-solid border-[4px]'
+    if (componentId.includes('management-group')) return 'border-dashed border-[3px]'
+    if (componentId.includes('subscription'))    return 'border-solid border-[3px]'
+    if (componentId.includes('resource-group'))  return 'border-dashed border-2'
     if (componentId.includes('vnet') || componentId.includes('vpc')) return 'border-solid border-2'
-    if (componentId.includes('subnet')) return 'border-dotted border-2'
+    if (componentId.includes('subnet'))          return 'border-dotted border-2'
     if (componentId.includes('availability-set')) return 'border-dashed border-2'
     return 'border-dashed border-2'
   }
@@ -662,10 +674,21 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
           <Handle id="right-target" type="target" position={Position.Right} className="w-3 h-3 bg-primary/80 border-2 border-background" style={{ top: '70%' }} />
 
           {/* Header bar */}
-          <div className="absolute top-0 left-0 right-0 px-3 py-2 border-b border-dashed flex items-center gap-2 bg-background/60 backdrop-blur-sm rounded-t-lg z-10">
+          <div className={`absolute top-0 left-0 right-0 px-3 py-2 border-b flex items-center gap-2 backdrop-blur-sm rounded-t-lg z-10 ${getHeaderBg()}`}>
             {data.icon ? <span className="text-xl">{data.icon}</span> : <CategoryIcon className="w-5 h-5 text-muted-foreground" />}
             <span className="font-semibold text-sm">{data.label}</span>
-            {data.provider && <Badge variant="outline" className="text-[10px] px-1 py-0 ml-auto">{data.provider.toUpperCase()}</Badge>}
+            <div className="flex items-center gap-1 ml-auto">
+              {componentId.includes('subscription') && (
+                <span className="text-[10px] bg-sky-500/20 text-sky-400 px-1.5 py-0.5 rounded font-medium">Subscription</span>
+              )}
+              {componentId.includes('management-group') && (
+                <span className="text-[10px] bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded font-medium">Mgmt Group</span>
+              )}
+              {componentId.includes('landing-zone') && (
+                <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded font-medium">Landing Zone</span>
+              )}
+              {data.provider && <Badge variant="outline" className="text-[10px] px-1 py-0">{data.provider.toUpperCase()}</Badge>}
+            </div>
           </div>
 
           {/* Hint text */}

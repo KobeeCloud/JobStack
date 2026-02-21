@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler } from '@/lib/api-helpers'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { ApiError } from '@/lib/api-error'
 import { log } from '@/lib/logger'
 
@@ -39,8 +40,9 @@ export const GET = createApiHandler(
       throw new ApiError(403, 'You are not a member of this organization', 'FORBIDDEN')
     }
 
-    // Get all members with their profiles
-    const { data: members, error: membersError } = await auth.supabase
+    // Get all members with their profiles — use admin client to bypass RLS on profiles
+    const adminClient = createAdminClient()
+    const { data: members, error: membersError } = await adminClient
       .from('organization_members')
       .select(`
         id,

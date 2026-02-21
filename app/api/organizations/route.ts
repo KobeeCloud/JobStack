@@ -17,7 +17,9 @@ const createOrgSchema = z.object({
 
 export const GET = createApiHandler(
   async (_request: NextRequest, { auth }) => {
-    const { data: memberships, error } = await auth.supabase
+    // Use admin client to bypass RLS — user can always see their own memberships
+    const adminClient = createAdminClient()
+    const { data: memberships, error } = await adminClient
       .from('organization_members')
       .select(`
         role,
@@ -39,7 +41,7 @@ export const GET = createApiHandler(
     }
 
     type MemberRow = { role: string; joined_at: string; organization: Record<string, unknown> | null }
-    const organizations = ((memberships ?? []) as MemberRow[])
+    const organizations = ((memberships ?? []) as unknown as MemberRow[])
       .filter((m) => m.organization != null)
       .map((m) => ({
         ...(m.organization as Record<string, unknown>),

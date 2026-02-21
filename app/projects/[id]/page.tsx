@@ -53,6 +53,7 @@ import { CodePreviewDialog } from '@/components/diagram/code-preview-dialog'
 import type { CodeFile } from '@/components/diagram/code-preview-dialog'
 import { K8sWizard } from '@/components/diagram/k8s-wizard'
 import { GovernanceWizard } from '@/components/diagram/governance-wizard'
+import { QuickBuildModal } from '@/components/diagram/quick-build-modal'
 
 const nodeTypes = { custom: CustomNode, container: ContainerNode }
 const edgeTypes = { default: LabeledEdge }
@@ -113,6 +114,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
   const [showK8sWizard, setShowK8sWizard] = useState(false)
   const [showGovernanceWizard, setShowGovernanceWizard] = useState(false)
+  const [showQuickBuild, setShowQuickBuild] = useState(false)
 
   // Code generation state
   const [terraformDirty, setTerraformDirty] = useState(false)
@@ -1441,20 +1443,37 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                     Browse templates
                   </button>
                   <button
-                    onClick={() => {
-                      // Drop a landing zone at center as a quick-start
-                      const lzNode = {
-                        id: `container-${Date.now()}`,
-                        type: 'container',
-                        position: { x: 50, y: 50 },
-                        data: { label: 'Landing Zone', componentId: 'azure-landing-zone', provider: 'azure', width: 1100, height: 800 },
-                        style: { width: 1100, height: 800 },
-                      }
-                      setNodes([lzNode as any])
-                    }}
-                    className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
+                    onClick={() => setShowQuickBuild(true)}
+                    className="px-3 py-1.5 text-sm bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors font-medium"
                   >
-                    Add Landing Zone
+                    ⚡ Quick Build
+                  </button>
+                  <button
+                    onClick={() => {
+                      const rg = { id: `container-${Date.now()}`, type: 'container', position: { x: 80, y: 80 }, data: { label: 'my-resource-group', componentId: 'azure-resource-group', provider: 'azure', width: 600, height: 400 }, style: { width: 600, height: 400 } }
+                      setNodes([rg as any])
+                    }}
+                    className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Azure: Add Resource Group
+                  </button>
+                  <button
+                    onClick={() => {
+                      const vpc = { id: `container-${Date.now()}`, type: 'container', position: { x: 80, y: 80 }, data: { label: 'my-vpc', componentId: 'aws-vpc', provider: 'aws', width: 600, height: 400 }, style: { width: 600, height: 400 } }
+                      setNodes([vpc as any])
+                    }}
+                    className="px-3 py-1.5 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors"
+                  >
+                    AWS: Add VPC
+                  </button>
+                  <button
+                    onClick={() => {
+                      const vpc = { id: `container-${Date.now()}`, type: 'container', position: { x: 80, y: 80 }, data: { label: 'my-vpc', componentId: 'gcp-vpc', provider: 'gcp', width: 600, height: 400 }, style: { width: 600, height: 400 } }
+                      setNodes([vpc as any])
+                    }}
+                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    GCP: Add VPC Network
                   </button>
                 </div>
               </div>
@@ -1486,6 +1505,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onShowTemplates={() => setTemplateDialogOpen(true)}
             onK8sWizard={() => setShowK8sWizard(true)}
             onGovernanceWizard={() => setShowGovernanceWizard(true)}
+            onQuickBuild={() => setShowQuickBuild(true)}
             onUndo={handleUndo}
             onRedo={handleRedo}
             canUndo={canUndo}
@@ -1565,6 +1585,19 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             hasUnsavedChanges.current = true
             toast.success('K8s Cluster Added', { description: `Generated ${positioned.length} nodes` })
             setTimeout(() => fitView({ padding: 0.15 }), 150)
+          }}
+        />
+
+        {/* Quick Build Modal */}
+        <QuickBuildModal
+          open={showQuickBuild}
+          onOpenChange={setShowQuickBuild}
+          onApply={(newNodes, newEdges) => {
+            setNodes(nds => [...nds, ...newNodes])
+            setEdges(eds => [...eds, ...newEdges])
+            hasUnsavedChanges.current = true
+            toast.success('Quick Build Applied', { description: `Added ${newNodes.length} components to canvas` })
+            setTimeout(() => fitView({ padding: 0.12 }), 150)
           }}
         />
 
