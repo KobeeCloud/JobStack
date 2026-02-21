@@ -398,7 +398,8 @@ interface CustomNodeProps {
 }
 
 export const CustomNode = memo(function CustomNode({ id, data, selected }: CustomNodeProps) {
-  const { setNodes, getNodes, deleteElements } = useReactFlow()
+  const { setNodes, getNodes, deleteElements, getNode } = useReactFlow()
+  const isNested = !!getNode(id)?.parentId
   const componentId = data.componentId || data.component || ''
   const category = getComponentCategory(componentId)
   const catalogEntry = COMPONENT_CATALOG.find(c => c.id === componentId)
@@ -438,7 +439,12 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <Card className={`min-w-[180px] shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group relative ${selected ? 'ring-2 ring-primary ring-offset-2' : ''} ${getProviderColor()}`}>
+        <Card className={`min-w-[180px] shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer group relative ${selected ? 'ring-2 ring-primary ring-offset-2' : ''} ${isNested ? 'ring-1 ring-indigo-400/50 bg-indigo-50/10' : ''} ${getProviderColor()}`}>
+          {isNested && (
+            <div className="absolute -top-2 left-2 z-10">
+              <span className="text-[9px] bg-indigo-500 text-white px-1.5 py-0.5 rounded-full font-medium leading-none">grouped</span>
+            </div>
+          )}
           <NodeResizer minWidth={150} minHeight={60} isVisible={selected} lineClassName="border-primary" handleClassName="h-3 w-3 bg-primary border-2 border-background rounded" />
 
           {data.security?.nsg && <SecurityIndicator type="nsg" />}
@@ -506,6 +512,9 @@ interface ContainerNodeProps {
     componentId?: string
     component?: string
     category?: string
+    // Persisted dimensions — more reliable than style prop across React Flow renders
+    width?: number
+    height?: number
     security?: { nsg?: boolean; firewall?: boolean; waf?: boolean; ddos?: boolean; encryption?: boolean }
   }
   selected: boolean
@@ -554,12 +563,18 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
     setNodes([...nodes, newNode])
   }, [getNodes, id, setNodes])
 
-  // Handle resize — update node style so the visual size stays in sync
+  // Handle resize — update BOTH node.style (React Flow wrapper) AND node.data (component read)
+  // This dual-write ensures the container renders correctly regardless of whether React Flow
+  // passes the style prop down to the custom component (varies by version).
   const handleResize = useCallback((_event: any, params: { width: number; height: number }) => {
     setNodes((nds) =>
       nds.map((node) =>
         node.id === id
-          ? { ...node, style: { ...node.style, width: params.width, height: params.height } }
+          ? {
+              ...node,
+              style: { ...node.style, width: params.width, height: params.height },
+              data: { ...node.data, width: params.width, height: params.height },
+            }
           : node
       )
     )
@@ -577,8 +592,9 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
   }
 
   const defaults = getDefaultSize()
-  const width = (style?.width as number) || defaults.width
-  const height = (style?.height as number) || defaults.height
+  // Prefer data.width/height (explicit, persisted), fall back to style prop, then defaults
+  const width = (data.width as number) || (style?.width as number) || defaults.width
+  const height = (data.height as number) || (style?.height as number) || defaults.height
 
   const getMinSize = () => {
     if (componentId.includes('resource-group')) return { minWidth: 400, minHeight: 300 }

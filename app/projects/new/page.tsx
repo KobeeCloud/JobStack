@@ -157,6 +157,7 @@ function NewProjectPageContent() {
   const [selectedTypes, setSelectedTypes] = useState<ProjectType[]>([])
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
+  const [drRegion, setDrRegion] = useState<string | null>(null)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentType>('development')
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   const [organizations, setOrganizations] = useState<OrganizationOption[]>([])
@@ -199,6 +200,7 @@ function NewProjectPageContent() {
     // Reset provider + region when types change
     setSelectedProvider(null)
     setSelectedRegion(null)
+    setDrRegion(null)
   }
 
   // Get available providers based on selected types
@@ -221,6 +223,7 @@ function NewProjectPageContent() {
           cloud_provider: selectedProvider,
           project_types: selectedTypes,
           region: selectedRegion ?? undefined,
+          dr_region: drRegion ?? undefined,
           environment: selectedEnvironment,
           organization_id: selectedOrgId ?? undefined,
           templateId: templateId ?? undefined,
@@ -370,7 +373,7 @@ function NewProjectPageContent() {
                       className={'cursor-pointer transition-all hover:border-primary ' +
                         (isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary' : '')
                       }
-                      onClick={() => { setSelectedProvider(provider.id); setSelectedRegion(null) }}
+                      onClick={() => { setSelectedProvider(provider.id); setSelectedRegion(null); setDrRegion(null) }}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between">
@@ -417,6 +420,32 @@ function NewProjectPageContent() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {/* DR / Failover region — shown after primary region is selected */}
+              {selectedProviderConfig && selectedRegion && selectedProviderConfig.regions.length > 1 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    DR / Failover Region <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Select
+                    value={drRegion ?? ''}
+                    onValueChange={(val) => setDrRegion(val || null)}
+                  >
+                    <SelectTrigger className="w-full md:w-72">
+                      <SelectValue placeholder="Select DR region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedProviderConfig.regions
+                        .filter((r) => r !== selectedRegion)
+                        .map((region) => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Used for disaster recovery; infrastructure will target both regions.</p>
                 </div>
               )}
 

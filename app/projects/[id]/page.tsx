@@ -125,6 +125,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const diagramIdRef = useRef<string | null>(null)
   // FIX BUG#4: store latest handleSave to avoid stale closure in keyboard shortcut effect
   const handleSaveRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  // Track when WE last saved so realtime listener can distinguish our save from others
+  const lastLocalSaveAt = useRef<number>(0)
 
   // History for undo/redo
   const { canUndo, canRedo, undo, redo, pushState } = useHistory()
@@ -330,6 +332,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           const data = await res.json()
           if (data.id && !diagramId) setDiagramId(data.id)
           setLastSaved(new Date())
+          lastLocalSaveAt.current = Date.now() // mark autosave timestamp
         } else {
           hasUnsavedChanges.current = true // Retry on next interval
           const errorData = await res.json()
@@ -375,7 +378,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             if (updatedDiagram.data?.edges) {
               setEdges(updatedDiagram.data.edges)
             }
-            toast.info('Diagram Updated', { description: 'Changes from another user' })
+            // Only show notification if update came from a different user
+            // (grace period: 4s after our own save to allow for realtime round-trip)
+            if (Date.now() - lastLocalSaveAt.current > 4000) {
+              toast.info('Diagram Updated', { description: 'Changes from another user' })
+            }
           }
         }
       )
@@ -788,6 +795,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             componentId: componentId,
             provider: component.provider,
             category: component.category,
+            // Store dimensions in data so ContainerNode can read them reliably
+            ...(containerSize && { width: containerSize.width, height: containerSize.height }),
             ...(component.isCustom && {
               isCustom: true,
               icon: component.icon,
@@ -818,6 +827,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     try {
       setSaving(true)
       hasUnsavedChanges.current = false
+      lastLocalSaveAt.current = Date.now() // mark as our own save
 
       const payload = {
         project_id: projectId,

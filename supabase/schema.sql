@@ -386,6 +386,42 @@ ALTER TABLE public.project_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
+-- FUNKCJE POMOCNICZE DLA RLS (SECURITY DEFINER — omijają RLS)
+-- UWAGA: muszą być zdefiniowane PRZED politykami RLS, które z nich korzystają
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.is_org_member(p_org_id UUID, p_user_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE organization_id = p_org_id AND user_id = p_user_id
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.get_org_role(p_org_id UUID, p_user_id UUID)
+RETURNS org_role AS $$
+    SELECT role FROM public.organization_members
+    WHERE organization_id = p_org_id AND user_id = p_user_id
+    LIMIT 1;
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.is_org_owner(p_org_id UUID, p_user_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.organizations
+        WHERE id = p_org_id AND owner_id = p_user_id
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.is_org_admin_or_owner(p_org_id UUID, p_user_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.organization_members
+        WHERE organization_id = p_org_id AND user_id = p_user_id AND role IN ('owner', 'admin')
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- ============================================================================
 -- POLITYKI RLS
 -- ============================================================================
 
@@ -658,46 +694,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- ============================================================================
--- FUNKCJE POMOCNICZE DLA RLS (SECURITY DEFINER — omijają RLS)
--- Rozwiązują problem nieskończonej rekurencji w politykach organization_members
--- ============================================================================
-
--- Sprawdza czy user jest członkiem organizacji
-CREATE OR REPLACE FUNCTION public.is_org_member(p_org_id UUID, p_user_id UUID)
-RETURNS BOOLEAN AS $$
-    SELECT EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = p_org_id AND user_id = p_user_id
-    );
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
--- Sprawdza czy user ma określoną rolę w organizacji
-CREATE OR REPLACE FUNCTION public.get_org_role(p_org_id UUID, p_user_id UUID)
-RETURNS org_role AS $$
-    SELECT role FROM public.organization_members
-    WHERE organization_id = p_org_id AND user_id = p_user_id
-    LIMIT 1;
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
--- Sprawdza czy user jest właścicielem organizacji
-CREATE OR REPLACE FUNCTION public.is_org_owner(p_org_id UUID, p_user_id UUID)
-RETURNS BOOLEAN AS $$
-    SELECT EXISTS (
-        SELECT 1 FROM public.organizations
-        WHERE id = p_org_id AND owner_id = p_user_id
-    );
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
-
--- Sprawdza czy user ma rolę admin lub owner w organizacji
-CREATE OR REPLACE FUNCTION public.is_org_admin_or_owner(p_org_id UUID, p_user_id UUID)
-RETURNS BOOLEAN AS $$
-    SELECT EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = p_org_id AND user_id = p_user_id AND role IN ('owner', 'admin')
-    );
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ============================================================================
 -- TRIGGERY
