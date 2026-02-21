@@ -2,188 +2,308 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Cloud, Database, Server, Zap, Globe, Lock, ArrowRight } from 'lucide-react'
+import { Code2, LayoutDashboard, DollarSign } from 'lucide-react'
 
-const demoNodes = [
-  { id: 1, icon: Globe, label: 'CDN', color: '#F38020', x: 50, y: 50 },
-  { id: 2, icon: Server, label: 'Next.js', color: '#000000', x: 200, y: 50 },
-  { id: 3, icon: Zap, label: 'Lambda', color: '#FF9900', x: 350, y: 50 },
-  { id: 4, icon: Database, label: 'PostgreSQL', color: '#336791', x: 200, y: 180 },
-  { id: 5, icon: Lock, label: 'Auth', color: '#6366F1', x: 350, y: 180 },
-  { id: 6, icon: Cloud, label: 'S3', color: '#FF9900', x: 500, y: 115 },
+// ─────────────────────────────────────────────────────────────────────────────
+// Data
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Phase = 'diagram' | 'terraform' | 'cost'
+const PHASES: Phase[] = ['diagram', 'terraform', 'cost']
+const PHASE_DURATION = 5200
+
+const W = 112
+const NODES = [
+  { id: 'agw', label: 'App Gateway', sub: 'WAF v2',          color: '#3b82f6', x: 180, y: 12,  icon: '⚖️' },
+  { id: 'vm1', label: 'Web Server',  sub: 'Standard_D2s_v3', color: '#22c55e', x: 42,  y: 110, icon: '🖥️' },
+  { id: 'vm2', label: 'API Server',  sub: 'Standard_D2s_v3', color: '#22c55e', x: 318, y: 110, icon: '⚙️' },
+  { id: 'sql', label: 'Azure SQL',   sub: 'S2 Standard',     color: '#a855f7', x: 148, y: 205, icon: '🗄️' },
+  { id: 'kv',  label: 'Key Vault',   sub: 'Standard SKU',    color: '#f59e0b', x: 358, y: 205, icon: '🔑' },
 ]
 
-const demoEdges = [
-  { from: 1, to: 2 },
-  { from: 2, to: 3 },
-  { from: 2, to: 4 },
-  { from: 3, to: 5 },
-  { from: 3, to: 6 },
-  { from: 5, to: 4 },
+const cx = (id: string) => NODES.find(n => n.id === id)!.x + W / 2
+const cy = (id: string) => NODES.find(n => n.id === id)!.y + 28
+
+const EDGES = [
+  { from: 'agw', to: 'vm1' }, { from: 'agw', to: 'vm2' },
+  { from: 'vm1', to: 'sql' }, { from: 'vm2', to: 'sql' },
+  { from: 'vm2', to: 'kv'  },
 ]
 
-function DiagramNode({ node, index, isVisible }: { node: typeof demoNodes[0], index: number, isVisible: boolean }) {
-  const Icon = node.icon
+const TF_LINES: { text: string; t: 'kw' | 'str' | 'val' | 'dim' | '' }[] = [
+  { text: 'resource "azurerm_virtual_network" "prod_vnet" {', t: 'kw' },
+  { text: '  name                = "${var.project_name}-vnet"', t: 'str' },
+  { text: '  address_space       = ["10.0.0.0/16"]',           t: 'val' },
+  { text: '  location            = var.azure_location',        t: 'val' },
+  { text: '  resource_group_name = azurerm_resource_group.rg.name', t: 'val' },
+  { text: '}',                                                 t: 'dim' },
+  { text: '',                                                  t: ''    },
+  { text: '# Attachment Associations — auto-generated',        t: 'dim' },
+  { text: 'resource "azurerm_subnet_network_security_group_association" "nsg_assoc" {', t: 'kw' },
+  { text: '  subnet_id                 = azurerm_subnet.web_subnet.id', t: 'val' },
+  { text: '  network_security_group_id = azurerm_network_security_group.prod_nsg.id', t: 'val' },
+  { text: '}',                                                 t: 'dim' },
+  { text: '',                                                  t: ''    },
+  { text: '# Traffic Flow — from LB → VM edge',               t: 'dim' },
+  { text: 'resource "azurerm_lb_backend_address_pool" "pool_lb" {', t: 'kw' },
+  { text: '  loadbalancer_id = azurerm_lb.prod_lb.id',         t: 'val' },
+  { text: '  name            = "BackendPool"',                 t: 'str' },
+  { text: '}',                                                 t: 'dim' },
+]
 
+const COSTS = [
+  { name: 'App Gateway WAF v2', cost: '$145', pct: 38, color: '#3b82f6' },
+  { name: 'VMs × 2  D2s_v3',   cost: '$148', pct: 40, color: '#22c55e' },
+  { name: 'Azure SQL S2',       cost: '$75',  pct: 20, color: '#a855f7' },
+  { name: 'Key Vault',          cost: '$5',   pct:  2, color: '#f59e0b' },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-views
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DiagramPhase() {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0 }}
-      animate={isVisible ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
-      transition={{ delay: index * 0.2, duration: 0.4, type: 'spring' }}
-      className="absolute flex flex-col items-center"
-      style={{ left: node.x, top: node.y }}
-    >
-      <motion.div
-        className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg border-2"
-        style={{ backgroundColor: `${node.color}15`, borderColor: node.color }}
-        whileHover={{ scale: 1.1 }}
-      >
-        <Icon className="w-8 h-8" style={{ color: node.color }} />
-      </motion.div>
-      <span className="mt-2 text-xs font-medium text-foreground/80">{node.label}</span>
-    </motion.div>
-  )
-}
-
-function DiagramEdge({ from, to, index, isVisible }: {
-  from: typeof demoNodes[0],
-  to: typeof demoNodes[0],
-  index: number,
-  isVisible: boolean
-}) {
-  const x1 = from.x + 32
-  const y1 = from.y + 32
-  const x2 = to.x + 32
-  const y2 = to.y + 32
-
-  return (
-    <motion.line
-      x1={x1}
-      y1={y1}
-      x2={x2}
-      y2={y2}
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeDasharray="5,5"
-      className="text-primary/30"
-      initial={{ pathLength: 0, opacity: 0 }}
-      animate={isVisible ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
-      transition={{ delay: 1.2 + index * 0.1, duration: 0.5 }}
-    />
-  )
-}
-
-export function AnimatedDiagramDemo() {
-  const [isVisible, setIsVisible] = useState(false)
-  const [showCode, setShowCode] = useState(false)
-
-  useEffect(() => {
-    const timer1 = setTimeout(() => setIsVisible(true), 500)
-    const timer2 = setTimeout(() => setShowCode(true), 2500)
-
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
-    }
-  }, [])
-
-  return (
-    <div className="relative w-full max-w-3xl mx-auto">
-      {/* Diagram Canvas */}
-      <div className="relative h-80 bg-gradient-to-br from-background to-muted/50 rounded-2xl border shadow-2xl overflow-hidden">
-        {/* Grid Background */}
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: 'radial-gradient(circle, hsl(var(--muted-foreground)) 1px, transparent 1px)',
-            backgroundSize: '20px 20px'
-          }}
-        />
-
-        {/* SVG for edges */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {demoEdges.map((edge, i) => {
-            const fromNode = demoNodes.find(n => n.id === edge.from)!
-            const toNode = demoNodes.find(n => n.id === edge.to)!
-            return (
-              <DiagramEdge
-                key={i}
-                from={fromNode}
-                to={toNode}
-                index={i}
-                isVisible={isVisible}
-              />
-            )
-          })}
-        </svg>
-
-        {/* Nodes */}
-        {demoNodes.map((node, i) => (
-          <DiagramNode
-            key={node.id}
-            node={node}
-            index={i}
-            isVisible={isVisible}
+    <div className="relative w-full h-full">
+      <svg className="absolute inset-0 w-full h-full pointer-events-none">
+        {EDGES.map((e, i) => (
+          <motion.line
+            key={i}
+            x1={cx(e.from)} y1={cy(e.from)}
+            x2={cx(e.to)}   y2={cy(e.to)}
+            stroke="hsl(var(--primary))" strokeWidth="1.5" strokeDasharray="5 3"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 0.35 }}
+            transition={{ delay: 0.9 + i * 0.13, duration: 0.55 }}
           />
         ))}
-
-        {/* Floating Labels */}
+      </svg>
+      {NODES.map((node, i) => (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ delay: 2 }}
-          className="absolute bottom-4 left-4 flex items-center gap-2 text-xs bg-background/80 backdrop-blur px-3 py-1.5 rounded-full border"
+          key={node.id}
+          className="absolute"
+          style={{ left: node.x, top: node.y, width: W }}
+          initial={{ opacity: 0, scale: 0.65, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ delay: i * 0.12, type: 'spring', stiffness: 300, damping: 24 }}
         >
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-muted-foreground">Auto-saving...</span>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ delay: 2.2 }}
-          className="absolute bottom-4 right-4 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20"
-        >
-          Est. Cost: $127/mo
-        </motion.div>
-      </div>
-
-      {/* Generated Code Preview */}
-      <AnimatePresence>
-        {showCode && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="mt-4 relative"
+          <div
+            className="rounded-xl border-2 px-3 py-2 shadow-sm"
+            style={{ borderColor: node.color, backgroundColor: `${node.color}16` }}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <ArrowRight className="w-4 h-4 text-primary animate-pulse" />
-              <span className="text-sm font-medium">Generated Terraform Code</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm leading-none">{node.icon}</span>
+              <span className="text-[11px] font-semibold truncate" style={{ color: node.color }}>
+                {node.label}
+              </span>
             </div>
-            <div className="bg-zinc-950 text-zinc-100 rounded-lg p-4 font-mono text-xs overflow-hidden">
-              <motion.pre
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <code>{`resource "aws_lambda_function" "api" {
-  function_name = "jobstack-api"
-  runtime       = "nodejs18.x"
-  handler       = "index.handler"
-  memory_size   = 256
+            <p className="text-[9px] text-muted-foreground mt-0.5 ml-5 truncate">{node.sub}</p>
+          </div>
+        </motion.div>
+      ))}
+      <motion.div
+        className="absolute bottom-0 left-0 flex items-center gap-1.5 text-[10px] bg-background/80 backdrop-blur px-2.5 py-1 rounded-full border"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="text-muted-foreground">Auto-saved</span>
+      </motion.div>
+    </div>
+  )
 }
 
-resource "aws_db_instance" "postgres" {
-  engine         = "postgres"
-  engine_version = "15"
-  instance_class = "db.t3.micro"
-}`}</code>
-              </motion.pre>
+function TerraformPhase() {
+  const [lines, setLines] = useState(0)
+  useEffect(() => {
+    setLines(0)
+    const t = setInterval(() => setLines(p => (p >= TF_LINES.length ? p : p + 1)), 88)
+    return () => clearInterval(t)
+  }, [])
+
+  const cls: Record<string, string> = {
+    kw:  'text-violet-400', str: 'text-emerald-300',
+    val: 'text-sky-300',    dim: 'text-zinc-600',
+    '': 'h-2 block',
+  }
+
+  return (
+    <div className="h-full bg-zinc-950 overflow-hidden font-mono text-[10.5px] leading-relaxed p-3">
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <div className="w-2.5 h-2.5 rounded-full bg-rose-500/70" />
+        <div className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
+        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
+        <span className="ml-2 text-zinc-600 text-[9.5px]">resources.tf — generated</span>
+      </div>
+      {TF_LINES.slice(0, lines).map((l, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
+          className={l.t === '' ? 'h-2' : cls[l.t]}
+        >
+          {l.text || null}
+        </motion.div>
+      ))}
+      {lines < TF_LINES.length && (
+        <motion.span
+          className="text-emerald-400"
+          animate={{ opacity: [1, 0, 1] }}
+          transition={{ repeat: Infinity, duration: 0.65 }}
+        >▋</motion.span>
+      )}
+    </div>
+  )
+}
+
+function CostPhase() {
+  return (
+    <div className="h-full p-5 flex flex-col justify-center gap-4">
+      <div>
+        <motion.p
+          className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+        >
+          Estimated monthly cost
+        </motion.p>
+        <motion.p
+          className="text-4xl font-bold text-primary"
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, type: 'spring' }}
+        >
+          $373<span className="text-base font-normal text-muted-foreground"> /mo</span>
+        </motion.p>
+      </div>
+      <div className="space-y-3.5">
+        {COSTS.map((c, i) => (
+          <div key={c.name}>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-muted-foreground">{c.name}</span>
+              <span className="font-mono font-semibold">{c.cost}</span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ backgroundColor: c.color }}
+                initial={{ width: 0 }}
+                animate={{ width: `${c.pct}%` }}
+                transition={{ delay: 0.3 + i * 0.15, duration: 0.85, ease: 'easeOut' }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function AnimatedDiagramDemo() {
+  const [idx, setIdx] = useState(0)
+  const phase = PHASES[idx]
+
+  useEffect(() => {
+    const t = setTimeout(() => setIdx(i => (i + 1) % PHASES.length), PHASE_DURATION)
+    return () => clearTimeout(t)
+  }, [idx])
+
+  const PHASE_META = {
+    diagram:   { icon: <LayoutDashboard className="h-3.5 w-3.5" />, label: 'Diagram'   },
+    terraform: { icon: <Code2            className="h-3.5 w-3.5" />, label: 'Terraform' },
+    cost:      { icon: <DollarSign       className="h-3.5 w-3.5" />, label: 'Costs'     },
+  }
+
+  return (
+    <div className="relative w-full max-w-[480px] mx-auto select-none">
+      {/* Ambient glow */}
+      <div className="absolute -inset-12 bg-primary/6 blur-3xl rounded-full pointer-events-none" />
+
+      {/* Window chrome */}
+      <motion.div
+        className="relative rounded-2xl border border-border/50 bg-card shadow-2xl overflow-hidden"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, type: 'spring', stiffness: 180 }}
+      >
+        {/* Title bar */}
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/40 border-b border-border/40">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-rose-400" />
+            <div className="w-3 h-3 rounded-full bg-amber-400" />
+            <div className="w-3 h-3 rounded-full bg-emerald-400" />
+          </div>
+          <p className="flex-1 text-center text-[11px] text-muted-foreground">
+            prod-azure-3tier.diagram — JobStack
+          </p>
+          <div className="w-12" />
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex items-center border-b border-border/40 bg-background/30">
+          {PHASES.map((p, i) => {
+            const meta = PHASE_META[p]
+            return (
+              <button
+                key={p}
+                onClick={() => setIdx(i)}
+                className={[
+                  'flex items-center gap-1.5 px-4 py-2 text-xs font-medium border-b-2 transition-all',
+                  phase === p
+                    ? 'border-primary text-primary bg-background/60'
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                ].join(' ')}
+              >
+                {meta.icon}{meta.label}
+              </button>
+            )
+          })}
+          <div className="flex-1 flex justify-end items-center pr-3">
+            <div className="h-1 w-14 rounded-full bg-muted overflow-hidden">
+              <motion.div
+                key={idx}
+                className="h-full bg-primary/50 rounded-full"
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: PHASE_DURATION / 1000, ease: 'linear' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="h-[272px] relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={phase}
+              className="absolute inset-0 p-3 w-full h-full"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.22 }}
+            >
+              {phase === 'diagram'   && <DiagramPhase />}
+              {phase === 'terraform' && <TerraformPhase />}
+              {phase === 'cost'      && <CostPhase />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      {/* Floating badges */}
+      <motion.div
+        className="absolute -top-2.5 -right-2 bg-emerald-500 text-white text-[10px] px-2.5 py-0.5 rounded-full font-semibold shadow-lg"
+        animate={{ y: [0, -4, 0] }}
+        transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut' }}
+      >
+        ✓ 0 errors
+      </motion.div>
+      <motion.div
+        className="absolute -bottom-2.5 -left-2 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 rounded-full font-semibold shadow-lg"
+        animate={{ y: [0, 4, 0] }}
+        transition={{ repeat: Infinity, duration: 2.8, ease: 'easeInOut', delay: 1 }}
+      >
+        ⚡ Live sync
+      </motion.div>
     </div>
   )
 }

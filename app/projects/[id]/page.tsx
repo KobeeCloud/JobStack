@@ -22,7 +22,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
-import { CustomNode, ContainerNode, AttachmentNode, isValidConnection, getComponentCategory, shouldUseParentChild, getConnectionError, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
+import { CustomNode, ContainerNode, AttachmentNode, isValidConnection, getComponentCategory, shouldUseParentChild, getConnectionError, getEdgeType, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { DiagramSearch } from '@/components/diagram/diagram-search'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
@@ -548,6 +548,17 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
               return
             }
           }
+
+          // Auto-assign semantic edge type based on component pair
+          const sourceComponentIdForType = (sourceNode.data as any).componentId || (sourceNode.data as any).component || ''
+          const targetComponentIdForType = (targetNode.data as any).componentId || (targetNode.data as any).component || ''
+          const edgeSemanticType = getEdgeType(sourceComponentIdForType, targetComponentIdForType)
+
+          setEdges((eds) => addEdge({
+            ...params,
+            data: { ...(params as any).data, edgeType: edgeSemanticType },
+          }, eds))
+          return
         }
       }
 

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { Node, Edge } from '@xyflow/react'
+import { getEdgeType } from '@/components/diagram/custom-nodes'
 
 /*
  * Quick Build Modal
@@ -337,11 +338,20 @@ function buildNodesAndEdges(
     } as Node
   })
 
-  const edges: Edge[] = (pattern.edges ?? []).map((e, idx) => ({
-    id: `edge-${now}-${idx}`,
-    source: idMap[e.from] ?? e.from,
-    target: idMap[e.to] ?? e.to,
-  }))
+  const edges: Edge[] = (pattern.edges ?? []).map((e, idx) => {
+    const srcNode = nodes.find(n => n.id === (idMap[e.from] ?? e.from))
+    const tgtNode = nodes.find(n => n.id === (idMap[e.to]   ?? e.to))
+    const srcCompId = (srcNode?.data as any)?.componentId || ''
+    const tgtCompId = (tgtNode?.data as any)?.componentId || ''
+    const edgeSemanticType = srcCompId && tgtCompId ? getEdgeType(srcCompId, tgtCompId) : 'flow'
+
+    return {
+      id: `edge-${now}-${idx}`,
+      source: idMap[e.from] ?? e.from,
+      target: idMap[e.to]   ?? e.to,
+      data:   { edgeType: edgeSemanticType },
+    }
+  })
 
   return { nodes, edges }
 }

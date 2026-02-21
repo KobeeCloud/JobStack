@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   Boxes, Code, DollarSign, Users, ArrowRight, Check, Sparkles,
   LayoutDashboard, LogOut, Building2, Cloud, Server, Globe, Container, Lock, AlertTriangle,
-  Undo2, Redo2, Search, Shield, Zap, BrainCircuit, TestTube2, FileCode2, Network
+  Shield, BrainCircuit, TestTube2, FileCode2, Github, GitBranch
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { LogoIcon } from '@/components/logo'
 import { AnimatedDiagramDemo } from '@/components/animated-diagram-demo'
+import { FeatureTabs } from '@/components/landing/feature-tabs'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
 
@@ -113,6 +114,30 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Stats bar */}
+      <section className="py-10 border-b">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div>
+              <p className="text-3xl font-bold text-primary">158+</p>
+              <p className="text-sm text-muted-foreground mt-1">Cloud Components</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-primary">3</p>
+              <p className="text-sm text-muted-foreground mt-1">Cloud Providers</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-primary">&lt; 60s</p>
+              <p className="text-sm text-muted-foreground mt-1">To Export Terraform</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-primary">100%</p>
+              <p className="text-sm text-muted-foreground mt-1">Free to Start</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Cloud Providers */}
       <section className="py-12 border-y bg-muted/30">
         <div className="container mx-auto px-4">
@@ -142,58 +167,18 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* New Features Highlight */}
-      <section className="py-16 bg-gradient-to-b from-background to-muted/30">
+      {/* Feature tabs — what JobStack generates */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-green-500/10 border-green-500/20 text-green-600 mb-4">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-sm font-medium">New Features</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-muted/50 mb-4">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm">Built for real cloud engineers</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Latest Updates</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">We've added powerful new features to make infrastructure design even better</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">From diagram to production</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">JobStack turns visual cloud architecture into the code and pipelines your team actually ships.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-green-500/20 bg-green-500/5">
-              <CardHeader className="pb-2">
-                <BrainCircuit className="h-8 w-8 text-green-600 mb-2" />
-                <CardTitle className="text-lg">AI Assistant</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Natural language commands to modify infrastructure. Ask AI to add load balancer, optimize costs, or suggest improvements.</p>
-              </CardContent>
-            </Card>
-            <Card className="border-blue-500/20 bg-blue-500/5">
-              <CardHeader className="pb-2">
-                <Network className="h-8 w-8 text-blue-600 mb-2" />
-                <CardTitle className="text-lg">Smart Connections</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Intelligent connection validation ensures your architecture follows real cloud patterns. Invalid connections are blocked.</p>
-              </CardContent>
-            </Card>
-            <Card className="border-purple-500/20 bg-purple-500/5">
-              <CardHeader className="pb-2">
-                <div className="flex gap-1">
-                  <Undo2 className="h-8 w-8 text-purple-600" />
-                  <Redo2 className="h-8 w-8 text-purple-600" />
-                </div>
-                <CardTitle className="text-lg">Undo/Redo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Full history support with keyboard shortcuts. Press Ctrl+Z to undo, Ctrl+Y to redo. Never lose your work.</p>
-              </CardContent>
-            </Card>
-            <Card className="border-orange-500/20 bg-orange-500/5">
-              <CardHeader className="pb-2">
-                <Search className="h-8 w-8 text-orange-600 mb-2" />
-                <CardTitle className="text-lg">Search & Filter</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Quickly find any component in complex diagrams. Filter by category or provider. Press Ctrl+F to search.</p>
-              </CardContent>
-            </Card>
-          </div>
+          <FeatureTabs />
         </div>
       </section>
 
@@ -271,27 +256,43 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Keyboard Shortcuts */}
-      <section className="py-16 border-y">
+      {/* GitHub CTA */}
+      <section className="py-20 bg-zinc-950 text-zinc-100">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Keyboard Shortcuts for Power Users</h2>
-            <p className="text-muted-foreground">Work faster with built-in shortcuts</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
-            {[
-              { key: 'Ctrl+S', action: 'Save' },
-              { key: 'Ctrl+Z', action: 'Undo' },
-              { key: 'Ctrl+Y', action: 'Redo' },
-              { key: 'Ctrl+D', action: 'Duplicate' },
-              { key: 'Ctrl+A', action: 'Select All' },
-              { key: 'Ctrl+F', action: 'Search' },
-            ].map((shortcut) => (
-              <div key={shortcut.key} className="flex flex-col items-center p-4 rounded-lg bg-muted/50 border">
-                <kbd className="px-3 py-1.5 rounded bg-background border text-sm font-mono mb-2">{shortcut.key}</kbd>
-                <span className="text-sm text-muted-foreground">{shortcut.action}</span>
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-700 bg-zinc-800/60 mb-6">
+              <Github className="h-4 w-4" />
+              <span className="text-sm text-zinc-300">Git-native workflows</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Infrastructure reviews<br />in your pull request
+            </h2>
+            <p className="text-zinc-400 max-w-xl mx-auto mb-10">
+              JobStack diagrams generate CI/CD pipelines that post Terraform Plan output directly as PR comments.
+              Review infra changes the same way you review code.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-4 text-left mb-10">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+                <GitBranch className="h-5 w-5 text-violet-400 mb-3" />
+                <p className="font-semibold text-sm mb-1">Push to branch</p>
+                <p className="text-xs text-zinc-500">Commit your diagram — pipeline triggers automatically</p>
               </div>
-            ))}
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+                <Github className="h-5 w-5 text-sky-400 mb-3" />
+                <p className="font-semibold text-sm mb-1">Plan on PR</p>
+                <p className="text-xs text-zinc-500">Terraform Plan posted as a comment with diff highlighting</p>
+              </div>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+                <Check className="h-5 w-5 text-emerald-400 mb-3" />
+                <p className="font-semibold text-sm mb-1">Apply on merge</p>
+                <p className="text-xs text-zinc-500">Protected environments gate production applies</p>
+              </div>
+            </div>
+            <Link href="/register">
+              <Button size="lg" variant="secondary">
+                <Github className="mr-2 h-4 w-4" /> Generate my pipeline
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

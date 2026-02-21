@@ -324,6 +324,61 @@ export function getConnectionError(sourceComponentId: string, targetComponentId:
   return null
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// getEdgeType — determines the semantic type of a new edge based on the two
+// component IDs being connected. Used in onConnect to auto-assign edge style
+// AND drives Terraform generation (backend pools, peering, connection strings).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Components that are "network" boundaries — peering goes between these
+const PEERING_COMPONENTS = new Set(['azure-vnet', 'aws-vpc', 'gcp-vpc'])
+
+// Data-plane targets (backends) — traffic flows INTO these from a load balancer
+const TRAFFIC_SOURCES = new Set([
+  'azure-lb', 'azure-app-gw', 'azure-front-door', 'azure-traffic-manager',
+  'aws-alb', 'aws-nlb', 'aws-api-gateway',
+  'gcp-cloud-lb', 'gcp-cloud-endpoints',
+])
+
+// Application-layer sources for service-to-data-store dependencies
+const APP_SOURCES = new Set([
+  'azure-app-service', 'azure-functions', 'azure-aks', 'azure-vm',
+  'aws-lambda', 'aws-ec2', 'aws-eks', 'aws-ecs',
+  'gcp-cloud-run', 'gcp-compute-instance', 'gcp-gke',
+  'generic-app', 'generic-service', 'generic-api',
+])
+
+// Data stores targeted by dependency edges
+const DATA_TARGETS = new Set([
+  'azure-sql', 'azure-cosmos', 'azure-blob', 'azure-key-vault',
+  'azure-storage-account', 'azure-redis', 'azure-service-bus',
+  'dynamodb', 'aws-rds', 'aws-elasticache', 'aws-s3', 'aws-sqs', 'aws-sns', 'aws-secrets-manager',
+  'gcp-cloud-sql', 'gcp-firestore', 'gcp-cloud-storage', 'gcp-pubsub', 'gcp-secret-manager',
+  'generic-database', 'generic-cache', 'generic-storage',
+])
+
+export type EdgeSemanticType = 'flow' | 'dependency' | 'peering'
+
+/**
+ * Returns the semantic edge type for a given source → target pair.
+ * This drives both the visual style and Terraform resource generation.
+ */
+export function getEdgeType(
+  sourceComponentId: string,
+  targetComponentId: string,
+): EdgeSemanticType {
+  if (PEERING_COMPONENTS.has(sourceComponentId) && PEERING_COMPONENTS.has(targetComponentId)) {
+    return 'peering'
+  }
+  if (TRAFFIC_SOURCES.has(sourceComponentId)) {
+    return 'flow'
+  }
+  if (APP_SOURCES.has(sourceComponentId) && DATA_TARGETS.has(targetComponentId)) {
+    return 'dependency'
+  }
+  return 'flow'
+}
+
 // ========================================================
 // UI HELPER COMPONENTS
 // ========================================================

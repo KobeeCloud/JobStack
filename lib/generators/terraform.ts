@@ -208,7 +208,7 @@ const AZURE_EXPLICIT_KEYS = new Set(['resource_group_name', 'virtual_network_nam
 
 export function generateTerraformWithValidation(
   nodes: Node<NodeData>[],
-  _edges: Edge[],
+  edges: Edge[],
   options?: { environment?: string; projectName?: string }
 ): TerraformResult {
   const environment = options?.environment || 'dev'
@@ -488,7 +488,318 @@ export function generateTerraformWithValidation(
     resourcesTf += `}\n\n`
   })
 
+  // ── Attachment node associations ─────────────────────────────────────────
+  // AttachmentNodes (NSG, Route Table, Firewall badges located inside containers)
+  // are linked to their parent via parentId — generate the Azure association resources.
+
+  let associationsTf = ''
+
+  nodes
+    .filter(n => n.type === 'attachment' && n.parentId)
+    .forEach(attachNode => {
+      const attachCompId = getNodeComponentId(attachNode)
+      if (!attachCompId) return
+
+      const parentNode = nodeMap.get(attachNode.parentId!)
+      if (!parentNode) return
+
+      const parentCompId = getNodeComponentId(parentNode)
+      if (!parentCompId) return
+
+      const parentComp = getComponentById(parentCompId)
+      const parentTfResource = parentComp?.terraform?.resource
+      if (!parentTfResource) return
+
+      const attachName = toTfName(String(attachNode.data?.label || attachCompId))
+      const parentName  = toTfName(String(parentNode.data?.label  || parentCompId))
+
+      if (associationsTf === '')
+        associationsTf += `# ─── Attachment Associations (auto-generated from diagram) ───────────\n\n`
+
+      // Azure NSG → Subnet
+      if (attachCompId === 'azure-nsg' && parentTfResource === 'azurerm_subnet') {
+        associationsTf += `resource "azurerm_subnet_network_security_group_association" "nsg_assoc_${attachName}" {\n`
+        associationsTf += `  subnet_id                 = azurerm_subnet.${parentName}.id\n`
+        associationsTf += `  network_security_group_id = azurerm_network_security_group.${attachName}.id\n`
+        associationsTf += `}\n\n`
+      }
+      // Azure Route Table → Subnet
+      if (attachCompId === 'azure-route-table' && parentTfResource === 'azurerm_subnet') {
+        associationsTf += `resource "azurerm_subnet_route_table_association" "rt_assoc_${attachName}" {\n`
+        associationsTf += `  subnet_id      = azurerm_subnet.${parentName}.id\n`
+        associationsTf += `  route_table_id = azurerm_route_table.${attachName}.id\n`
+        associationsTf += `}\n\n`
+      }
+      // Azure NSG → NIC
+      if (attachCompId === 'azure-nsg' && parentTfResource === 'azurerm_network_interface') {
+        associationsTf += `resource "azurerm_network_interface_security_group_association" "nsg_nic_${attachName}_${parentName}" {\n`
+        associationsTf += `  network_interface_id      = azurerm_network_interface.${parentName}.id\n`
+        associationsTf += `  network_security_group_id = azurerm_network_security_group.${attachName}.id\n`
+        associationsTf += `}\n\n`
+      }
+    })
+
+  if (associationsTf) resourcesTf += associationsTf
+
+  // ── Flow edges: LB/AppGW/ALB → backend pool / target group / listener ────
+
+  const lbListeners = new Set<string>()
+  let flowTf = ''
+
+  ;(edges || []).forEach(edge => {
+    const srcNode = nodeMap.get(edge.source)
+    const tgtNode = nodeMap.get(edge.target)
+    if (!srcNode || !tgtNode) return
+
+    const srcCompId = getNodeComponentId(srcNode)
+    const tgtCompId = getNodeComponentId(tgtNode)
+    if (!srcCompId || !tgtCompId) return
+
+    const srcComp = getComponentById(srcCompId)
+    const tgtComp = getComponentById(tgtCompId)
+    if (!srcComp?.terraform || !tgtComp?.terraform) return
+
+    const srcResource = srcComp.terraform.resource
+    const tgtResource = tgtComp.terraform.resource
+
+    const srcName = toTfName(String(srcNode.data?.label || srcCompId))
+    const tgtName = toTfName(String(tgtNode.data?.label || tgtCompId))
+
+    if (flowTf === '')
+      flowTf += `# ─── Traffic Flow Resources (auto-generated from edge connections) ──\n\n`
+
+    // Azure Load Balancer → VM
+    if (
+      srcResource === 'azurerm_lb' &&
+      (tgtResource === 'azurerm_linux_virtual_machine' || tgtResource === 'azurerm_windows_virtual_machine')
+    ) {
+      const poolName = `pool_${srcName}`
+      const nicRef   = implicitNics.get(tgtNode.id) || `nic_${tgtName}`
+
+      if (!lbListeners.has(`${srcName}_pool`)) {
+        lbListeners.add(`${srcName}_pool`)
+        flowTf += `resource "azurerm_lb_backend_address_pool" "${poolName}" {\n`
+        flowTf += `  loadbalancer_id = azurerm_lb.${srcName}.id\n`
+        flowTf += `  name            = "BackendPool"\n`
+        flowTf += `}\n\n`
+      }
+      flowTf += `resource "azurerm_network_interface_backend_address_pool_association" "bap_${nicRef}" {\n`
+      flowTf += `  network_interface_id    = azurerm_network_interface.${nicRef}.id\n`
+      flowTf += `  ip_configuration_name   = "internal"\n`
+      flowTf += `  backend_address_pool_id = azurerm_lb_backend_address_pool.${poolName}.id\n`
+      flowTf += `}\n\n`
+    }
+
+    // AWS ALB → EC2: target group + attachment + listener (once per LB)
+    if (srcResource === 'aws_lb' && tgtResource === 'aws_instance') {
+      const vpcNode = findAncestorByTfResource(tgtNode.id, nodeMap, 'aws_vpc')
+      const vpcRef  = vpcNode
+        ? `aws_vpc.${toTfName(String(vpcNode.data?.label || 'vpc'))}.id`
+        : 'var.vpc_id'
+      const tgName = `tg_${srcName}_${tgtName}`
+
+      flowTf += `resource "aws_lb_target_group" "${tgName}" {\n`
+      flowTf += `  name     = "\${var.project_name}-${tgName}"\n`
+      flowTf += `  port     = 80\n`
+      flowTf += `  protocol = "HTTP"\n`
+      flowTf += `  vpc_id   = ${vpcRef}\n`
+      flowTf += `  health_check {\n    path                = "/"\n    healthy_threshold   = 2\n    unhealthy_threshold = 3\n  }\n`
+      flowTf += `}\n\n`
+
+      flowTf += `resource "aws_lb_target_group_attachment" "attach_${srcName}_${tgtName}" {\n`
+      flowTf += `  target_group_arn = aws_lb_target_group.${tgName}.arn\n`
+      flowTf += `  target_id        = aws_instance.${tgtName}.id\n`
+      flowTf += `  port             = 80\n`
+      flowTf += `}\n\n`
+
+      if (!lbListeners.has(srcNode.id)) {
+        lbListeners.add(srcNode.id)
+        flowTf += `resource "aws_lb_listener" "listener_${srcName}" {\n`
+        flowTf += `  load_balancer_arn = aws_lb.${srcName}.arn\n`
+        flowTf += `  port              = "80"\n`
+        flowTf += `  protocol          = "HTTP"\n\n`
+        flowTf += `  default_action {\n    type = "forward"\n    target_group_arn = aws_lb_target_group.${tgName}.arn\n  }\n`
+        flowTf += `}\n\n`
+      }
+    }
+
+    // AWS API Gateway → Lambda: invoke permission
+    if (srcResource === 'aws_api_gateway_rest_api' && tgtResource === 'aws_lambda_function') {
+      flowTf += `resource "aws_lambda_permission" "perm_apigw_${tgtName}" {\n`
+      flowTf += `  statement_id  = "AllowExecutionFromAPIGateway"\n`
+      flowTf += `  action        = "lambda:InvokeFunction"\n`
+      flowTf += `  function_name = aws_lambda_function.${tgtName}.function_name\n`
+      flowTf += `  principal     = "apigateway.amazonaws.com"\n`
+      flowTf += `  source_arn    = "\${aws_api_gateway_rest_api.${srcName}.execution_arn}/*/*"\n`
+      flowTf += `}\n\n`
+    }
+  })
+
+  if (flowTf) resourcesTf += flowTf
+
+  // ── Peering edges: VNet↔VNet, VPC↔VPC, GCP Network↔Network ──────────────
+
+  const PEERING_TF_RESOURCES = new Set([
+    'azurerm_virtual_network', 'aws_vpc', 'google_compute_network',
+  ])
+  let peeringTf = ''
+
+  ;(edges || []).forEach(edge => {
+    const srcNode = nodeMap.get(edge.source)
+    const tgtNode = nodeMap.get(edge.target)
+    if (!srcNode || !tgtNode) return
+
+    const srcCompId = getNodeComponentId(srcNode)
+    const tgtCompId = getNodeComponentId(tgtNode)
+    if (!srcCompId || !tgtCompId) return
+
+    const srcComp = getComponentById(srcCompId)
+    const tgtComp = getComponentById(tgtCompId)
+    if (!srcComp?.terraform || !tgtComp?.terraform) return
+
+    if (
+      !PEERING_TF_RESOURCES.has(srcComp.terraform.resource) ||
+      !PEERING_TF_RESOURCES.has(tgtComp.terraform.resource)
+    ) return
+
+    const srcName = toTfName(String(srcNode.data?.label || srcCompId))
+    const tgtName = toTfName(String(tgtNode.data?.label || tgtCompId))
+
+    if (peeringTf === '')
+      peeringTf += `# ─── Network Peering (auto-generated from diagram peering edges) ────\n\n`
+
+    if (srcComp.terraform.resource === 'azurerm_virtual_network') {
+      const srcRg = getAzureRgRef(srcNode, nodeMap)
+      const tgtRg = getAzureRgRef(tgtNode, nodeMap)
+
+      peeringTf += `resource "azurerm_virtual_network_peering" "peer_${srcName}_to_${tgtName}" {\n`
+      peeringTf += `  name                         = "peer-${srcName}-to-${tgtName}"\n`
+      peeringTf += `  resource_group_name          = ${srcRg}\n`
+      peeringTf += `  virtual_network_name         = azurerm_virtual_network.${srcName}.name\n`
+      peeringTf += `  remote_virtual_network_id    = azurerm_virtual_network.${tgtName}.id\n`
+      peeringTf += `  allow_virtual_network_access = true\n`
+      peeringTf += `  allow_forwarded_traffic      = false\n`
+      peeringTf += `}\n\n`
+
+      peeringTf += `resource "azurerm_virtual_network_peering" "peer_${tgtName}_to_${srcName}" {\n`
+      peeringTf += `  name                         = "peer-${tgtName}-to-${srcName}"\n`
+      peeringTf += `  resource_group_name          = ${tgtRg}\n`
+      peeringTf += `  virtual_network_name         = azurerm_virtual_network.${tgtName}.name\n`
+      peeringTf += `  remote_virtual_network_id    = azurerm_virtual_network.${srcName}.id\n`
+      peeringTf += `  allow_virtual_network_access = true\n`
+      peeringTf += `  allow_forwarded_traffic      = false\n`
+      peeringTf += `}\n\n`
+    }
+
+    if (srcComp.terraform.resource === 'aws_vpc') {
+      peeringTf += `resource "aws_vpc_peering_connection" "peer_${srcName}_${tgtName}" {\n`
+      peeringTf += `  peer_vpc_id = aws_vpc.${tgtName}.id\n`
+      peeringTf += `  vpc_id      = aws_vpc.${srcName}.id\n`
+      peeringTf += `  auto_accept = true\n`
+      peeringTf += `  tags = { Name = "peer-${srcName}-${tgtName}", Environment = var.environment }\n`
+      peeringTf += `}\n\n`
+    }
+
+    if (srcComp.terraform.resource === 'google_compute_network') {
+      peeringTf += `resource "google_compute_network_peering" "peer_${srcName}_to_${tgtName}" {\n`
+      peeringTf += `  name         = "peer-${srcName}-to-${tgtName}"\n`
+      peeringTf += `  network      = google_compute_network.${srcName}.self_link\n`
+      peeringTf += `  peer_network = google_compute_network.${tgtName}.self_link\n`
+      peeringTf += `}\n\n`
+
+      peeringTf += `resource "google_compute_network_peering" "peer_${tgtName}_to_${srcName}" {\n`
+      peeringTf += `  name         = "peer-${tgtName}-to-${srcName}"\n`
+      peeringTf += `  network      = google_compute_network.${tgtName}.self_link\n`
+      peeringTf += `  peer_network = google_compute_network.${srcName}.self_link\n`
+      peeringTf += `}\n\n`
+    }
+  })
+
+  if (peeringTf) resourcesTf += peeringTf
+
   outputs.push({ code: resourcesTf, filename: 'resources.tf', provider: 'terraform' })
+
+  // ── connections.tf — dependency edges → connection string locals ───────────
+  // App → Data-store edges (edgeType: 'dependency') produce Terraform locals
+  // with the resolved endpoint/connection string. Reference them in app_settings.
+
+  const DATA_TF_RESOURCES = new Set([
+    'azurerm_mssql_server', 'azurerm_cosmosdb_account', 'azurerm_storage_account',
+    'azurerm_key_vault', 'azurerm_redis_cache', 'azurerm_servicebus_namespace',
+    'aws_db_instance', 'aws_dynamodb_table', 'aws_elasticache_cluster', 'aws_s3_bucket',
+    'aws_secretsmanager_secret', 'aws_sqs_queue',
+    'google_sql_database_instance', 'google_storage_bucket',
+  ])
+
+  let dependencyLocals = ''
+
+  ;(edges || []).forEach(edge => {
+    if ((edge.data as any)?.edgeType !== 'dependency') return
+
+    const srcNode = nodeMap.get(edge.source)
+    const tgtNode = nodeMap.get(edge.target)
+    if (!srcNode || !tgtNode) return
+
+    const srcCompId = getNodeComponentId(srcNode)
+    const tgtCompId = getNodeComponentId(tgtNode)
+    if (!srcCompId || !tgtCompId) return
+
+    const tgtComp = getComponentById(tgtCompId)
+    if (!tgtComp?.terraform || !DATA_TF_RESOURCES.has(tgtComp.terraform.resource)) return
+
+    const srcName = toTfName(String(srcNode.data?.label || srcCompId))
+    const tgtName = toTfName(String(tgtNode.data?.label || tgtCompId))
+
+    if (dependencyLocals === '') {
+      dependencyLocals += `# connections.tf\n# Service dependency connection strings — auto-generated from diagram edges.\n`
+      dependencyLocals += `# Reference these locals in your app_settings / environment_variables blocks.\n\n`
+      dependencyLocals += `locals {\n`
+    }
+
+    switch (tgtComp.terraform.resource) {
+      case 'azurerm_mssql_server':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = "Server=tcp:\${azurerm_mssql_server.${tgtName}.fully_qualified_domain_name},1433;User ID=\${var.db_admin_username};Password=\${var.db_admin_password};Encrypt=true;"\n`
+        break
+      case 'azurerm_cosmosdb_account':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_cosmosdb_account.${tgtName}.connection_strings[0]\n`
+        break
+      case 'azurerm_redis_cache':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_redis_cache.${tgtName}.primary_connection_string\n`
+        break
+      case 'azurerm_key_vault':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_key_vault.${tgtName}.vault_uri\n`
+        break
+      case 'azurerm_storage_account':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_storage_account.${tgtName}.primary_blob_endpoint\n`
+        break
+      case 'aws_dynamodb_table':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_dynamodb_table.${tgtName}.arn\n`
+        break
+      case 'aws_db_instance':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_db_instance.${tgtName}.endpoint\n`
+        break
+      case 'aws_s3_bucket':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_s3_bucket.${tgtName}.bucket_domain_name\n`
+        break
+      case 'aws_sqs_queue':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_sqs_queue.${tgtName}.url\n`
+        break
+      case 'aws_secretsmanager_secret':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_secretsmanager_secret.${tgtName}.arn\n`
+        break
+      case 'google_sql_database_instance':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = google_sql_database_instance.${tgtName}.connection_name\n`
+        break
+      case 'google_storage_bucket':
+        dependencyLocals += `  conn_${srcName}_to_${tgtName} = google_storage_bucket.${tgtName}.url\n`
+        break
+    }
+  })
+
+  if (dependencyLocals) {
+    dependencyLocals += `}\n`
+    outputs.push({ code: dependencyLocals, filename: 'connections.tf', provider: 'terraform' })
+  }
 
   // ── outputs.tf ─────────────────────────────────────────────────────────
   let outputsTf = '# outputs.tf\n# Exports useful resource attributes for use in other configurations.\n\n'
