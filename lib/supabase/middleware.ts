@@ -44,9 +44,10 @@ export async function updateSession(request: NextRequest) {
   // Enforce email verification for authenticated users on protected routes
   // Skip for OAuth users (they have identity providers) — their email is verified by the provider
   if (user && isProtectedRoute) {
-    const isOAuthUser = user.app_metadata?.provider !== 'email' &&
-                        (user.app_metadata?.providers?.length ?? 0) > 0 &&
-                        !user.app_metadata?.providers?.includes('email')
+    // OAuth users have their email verified by the provider—skip our own check.
+    // A user is OAuth if their primary provider is NOT 'email'.
+    const provider = user.app_metadata?.provider
+    const isOAuthUser = provider && provider !== 'email'
     const isEmailVerified = user.email_confirmed_at != null
     if (!isEmailVerified && !isOAuthUser) {
       const url = request.nextUrl.clone()

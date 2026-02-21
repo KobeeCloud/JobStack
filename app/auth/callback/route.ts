@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -48,6 +49,23 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      // Ensure a profile row exists (trigger may have failed or fired before
+      // raw_user_meta_data was populated for OAuth users)
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (authUser) {
+        const admin = createAdminClient()
+        await admin.from('profiles').upsert({
+          id: authUser.id,
+          email: authUser.email ?? '',
+          full_name: authUser.user_metadata?.full_name
+            || authUser.user_metadata?.name
+            || null,
+          avatar_url: authUser.user_metadata?.avatar_url
+            || authUser.user_metadata?.picture
+            || null,
+        }, { onConflict: 'id', ignoreDuplicates: false })
+      }
+
       // Build redirect response and set ALL cookies on it
       const response = NextResponse.redirect(redirectTo)
       cookiesToSet.forEach(({ name, value, options }) => {

@@ -222,6 +222,10 @@ export function getComponentCategory(componentId: string): string {
 // ========================================================
 
 export const CONTAINER_HIERARCHY: Record<string, string[]> = {
+  // Azure — Org hierarchy: Landing Zone → Management Group → Subscription → Resource Group
+  'azure-landing-zone': ['azure-management-group', 'azure-subscription'],
+  'azure-management-group': ['azure-management-group', 'azure-subscription'],
+  'azure-subscription': ['azure-resource-group'],
   // Azure — Resource Group contains everything
   'azure-resource-group': [
     'azure-vnet', 'azure-vm', 'azure-vmss', 'azure-storage-account', 'azure-nsg',
@@ -527,6 +531,9 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
   const category = getComponentCategory(componentId)
 
   const getProviderBg = () => {
+    if (componentId.includes('landing-zone')) return 'bg-indigo-900/10 border-indigo-600'
+    if (componentId.includes('management-group')) return 'bg-violet-500/5 border-violet-500'
+    if (componentId.includes('subscription') && data.provider === 'azure') return 'bg-blue-500/8 border-blue-500'
     switch (data.provider) {
       case 'aws': return 'bg-orange-500/5 border-orange-400'
       case 'azure': return 'bg-blue-500/5 border-blue-400'
@@ -537,6 +544,9 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
 
   // Visual differentiation for container depth
   const getContainerStyle = () => {
+    if (componentId.includes('landing-zone')) return 'border-solid border-4'
+    if (componentId.includes('management-group')) return 'border-dashed border-3'
+    if (componentId.includes('subscription')) return 'border-solid border-2'
     if (componentId.includes('resource-group')) return 'border-dashed border-2'
     if (componentId.includes('vnet') || componentId.includes('vpc')) return 'border-solid border-2'
     if (componentId.includes('subnet')) return 'border-dotted border-2'
@@ -584,6 +594,9 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
 
   // Default sizes based on container type
   const getDefaultSize = () => {
+    if (componentId.includes('landing-zone')) return { width: 1200, height: 900 }
+    if (componentId.includes('management-group')) return { width: 900, height: 650 }
+    if (componentId.includes('subscription')) return { width: 700, height: 500 }
     if (componentId.includes('resource-group')) return { width: 800, height: 600 }
     if (componentId.includes('vnet') || componentId.includes('vpc')) return { width: 600, height: 450 }
     if (componentId.includes('subnet')) return { width: 450, height: 300 }
@@ -597,6 +610,9 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
   const height = (data.height as number) || (style?.height as number) || defaults.height
 
   const getMinSize = () => {
+    if (componentId.includes('landing-zone')) return { minWidth: 600, minHeight: 400 }
+    if (componentId.includes('management-group')) return { minWidth: 400, minHeight: 300 }
+    if (componentId.includes('subscription')) return { minWidth: 350, minHeight: 250 }
     if (componentId.includes('resource-group')) return { minWidth: 400, minHeight: 300 }
     if (componentId.includes('vnet') || componentId.includes('vpc')) return { minWidth: 300, minHeight: 250 }
     if (componentId.includes('subnet')) return { minWidth: 200, minHeight: 150 }
@@ -606,6 +622,9 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
   const minSize = getMinSize()
 
   const getHintText = () => {
+    if (componentId.includes('landing-zone')) return 'Drop Management Groups or Subscriptions here'
+    if (componentId.includes('management-group')) return 'Drop child Management Groups or Subscriptions here'
+    if (componentId.includes('subscription')) return 'Drop Resource Groups here'
     if (componentId.includes('vnet') || componentId.includes('vpc')) return 'Drop subnets here'
     if (componentId.includes('subnet')) return 'Drop instances / services here'
     if (componentId.includes('resource-group')) return 'Drop resources here'

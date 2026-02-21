@@ -51,7 +51,6 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
-import Image from 'next/image'
 
 interface Organization {
   id: string
@@ -512,9 +511,10 @@ export default function OrganizationManagePage({ params }: PageProps) {
                   <TableRow key={member.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          {member.profiles.avatar_url ? (
-                            <Image
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                          {member.profiles?.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                               src={member.profiles.avatar_url}
                               alt=""
                               width={32}
@@ -527,10 +527,10 @@ export default function OrganizationManagePage({ params }: PageProps) {
                         </div>
                         <div>
                           <div className="font-medium">
-                            {member.profiles.full_name || 'Unknown'}
+                            {member.profiles?.full_name || 'Unknown'}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {member.profiles.email}
+                            {member.profiles?.email || '—'}
                           </div>
                         </div>
                       </div>

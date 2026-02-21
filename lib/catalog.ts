@@ -30,11 +30,13 @@ import {
   Gauge,
   Key,
   Package,
+  Building2,
+  CreditCard,
 } from 'lucide-react'
 
 export type ComponentCategory = 'frontend' | 'backend' | 'database' | 'cloud' | 'service' | 'devops' | 'security' | 'analytics' | 'networking' | 'compute' | 'storage' | 'identity' | 'containers' | 'ai' | 'monitoring'
 export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare' | 'vercel' | 'generic'
-export type ServiceType = 'iaas' | 'paas' | 'saas' | 'generic'
+export type ServiceType = 'iaas' | 'paas' | 'saas' | 'hosting' | 'generic'
 
 /**
  * generatorType describes what kind of code/config this component produces during export:
@@ -98,6 +100,60 @@ export interface ComponentConfig {
 }
 
 export const COMPONENT_CATALOG: ComponentConfig[] = [
+  // ==========================================
+  // AZURE — Organisation (Landing Zone / Management Groups)
+  // ==========================================
+  {
+    id: 'azure-landing-zone',
+    name: 'Landing Zone',
+    category: 'cloud',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Building2 as any,
+    color: '#4338CA',
+    description: 'Azure Landing Zone — top-level organisational boundary (tenant root group)',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['azure-management-group', 'azure-subscription'],
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_management_group',
+      defaultConfig: { display_name: 'Root Landing Zone' }
+    }
+  },
+  {
+    id: 'azure-management-group',
+    name: 'Management Group',
+    category: 'cloud',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: Building2 as any,
+    color: '#6366F1',
+    description: 'Azure Management Group — organises subscriptions and applies governance policies',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['azure-management-group', 'azure-subscription'],
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_management_group',
+      defaultConfig: { display_name: 'Management Group' }
+    }
+  },
+  {
+    id: 'azure-subscription',
+    name: 'Subscription',
+    category: 'cloud',
+    provider: 'azure',
+    serviceType: 'iaas',
+    icon: CreditCard as any,
+    color: '#0078D4',
+    description: 'Azure Subscription — billing container and access control boundary',
+    estimatedCost: { min: 0, max: 0 },
+    canContain: ['azure-resource-group'],
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_subscription',
+      defaultConfig: { subscription_name: 'Subscription' }
+    }
+  },
   // ==========================================
   // AZURE IaaS - Networking
   // ==========================================

@@ -452,6 +452,15 @@ CREATE POLICY "org_members_insert" ON public.organization_members FOR INSERT WIT
     public.is_org_owner(organization_id, auth.uid())
     -- Istniejący admin/owner może dodawać
     OR public.is_org_admin_or_owner(organization_id, auth.uid())
+    -- Twórca organizacji (owner_id) może dodać siebie jako pierwszego członka
+    OR (
+        user_id = auth.uid()
+        AND EXISTS (
+            SELECT 1 FROM public.organizations o
+            WHERE o.id = organization_members.organization_id
+            AND o.owner_id = auth.uid()
+        )
+    )
     -- Użytkownik może dodać siebie (np. po akceptacji zaproszenia)
     OR (
         user_id = auth.uid()
@@ -688,9 +697,22 @@ BEGIN
     VALUES (
         NEW.id,
         NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-        COALESCE(NEW.raw_user_meta_data->>'avatar_url', '')
-    );
+        NULLIF(COALESCE(
+            NEW.raw_user_meta_data->>'full_name',
+            NEW.raw_user_meta_data->>'name',
+            ''
+        ), ''),
+        NULLIF(COALESCE(
+            NEW.raw_user_meta_data->>'avatar_url',
+            NEW.raw_user_meta_data->>'picture',
+            ''
+        ), '')
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        email        = EXCLUDED.email,
+        full_name    = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+        avatar_url   = COALESCE(EXCLUDED.avatar_url, public.profiles.avatar_url),
+        updated_at   = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

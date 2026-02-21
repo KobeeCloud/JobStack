@@ -51,6 +51,8 @@ import type { InfrastructureTest } from '@/lib/testing/infrastructure-tester'
 import { LabeledEdge } from '@/components/diagram/labeled-edge'
 import { CodePreviewDialog } from '@/components/diagram/code-preview-dialog'
 import type { CodeFile } from '@/components/diagram/code-preview-dialog'
+import { K8sWizard } from '@/components/diagram/k8s-wizard'
+import { GovernanceWizard } from '@/components/diagram/governance-wizard'
 
 const nodeTypes = { custom: CustomNode, container: ContainerNode }
 const edgeTypes = { default: LabeledEdge }
@@ -109,6 +111,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const [multiCloudPanelOpen, setMultiCloudPanelOpen] = useState(false)
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
+  const [showK8sWizard, setShowK8sWizard] = useState(false)
+  const [showGovernanceWizard, setShowGovernanceWizard] = useState(false)
 
   // Code generation state
   const [terraformDirty, setTerraformDirty] = useState(false)
@@ -127,6 +131,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const handleSaveRef = useRef<() => Promise<void>>(() => Promise.resolve())
   // Track when WE last saved so realtime listener can distinguish our save from others
   const lastLocalSaveAt = useRef<number>(0)
+  // Cursor presence
+  const currentUserNameRef = useRef<string>('')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const presenceChannelRef = useRef<any>(null)
+  const lastCursorBroadcast = useRef<number>(0)
+  const [peerCursors, setPeerCursors] = useState<Record<string, { user_name: string; x: number; y: number }>>({})
 
   // History for undo/redo
   const { canUndo, canRedo, undo, redo, pushState } = useHistory()
@@ -316,7 +326,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const payload = {
           project_id: projectId,
           name: 'Main Diagram',
-          data: { nodes, edges },
+          data: { nodes, edges, last_edited_by_name: currentUserNameRef.current || undefined },
         }
 
         const url = diagramId ? `/api/diagrams/${diagramId}` : '/api/diagrams'
@@ -381,7 +391,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             // Only show notification if update came from a different user
             // (grace period: 4s after our own save to allow for realtime round-trip)
             if (Date.now() - lastLocalSaveAt.current > 4000) {
-              toast.info('Diagram Updated', { description: 'Changes from another user' })
+              const editorName = (payload.new as any)?.data?.last_edited_by_name
+              toast.info('Diagram Updated', {
+                description: editorName
+                  ? `${editorName} made changes`
+                  : 'Changes from another user',
+              })
             }
           }
         }
@@ -393,7 +408,64 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }, [diagramId, setNodes, setEdges, toast])
 
-  // Handle configure node event from custom nodes
+  // Fetch current user info for presence/change attribution
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then((result: Awaited<ReturnType<typeof supabase.auth.getUser>>) => {
+      const user = result.data?.user
+      if (user) {
+        currentUserNameRef.current =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split('@')[0] ||
+          'User'
+      }
+    })
+  }, [])
+
+  // Realtime cursor presence channel
+  useEffect(() => {
+    if (!diagramId) return
+    const supabase = createClient()
+    const presenceChannel = supabase.channel(`presence:${diagramId}`, {
+      config: { presence: { key: crypto.randomUUID() } },
+    })
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState()
+        const cursors: Record<string, { user_name: string; x: number; y: number }> = {}
+        Object.entries(state).forEach(([key, presences]) => {
+          const p = (presences as any[])[0]
+          if (p && p.user_name !== currentUserNameRef.current) {
+            cursors[key] = { user_name: p.user_name, x: p.x ?? 0, y: p.y ?? 0 }
+          }
+        })
+        setPeerCursors(cursors)
+      })
+      .subscribe(async (status: string) => {
+        if (status === 'SUBSCRIBED') {
+          presenceChannelRef.current = presenceChannel
+        }
+      })
+    return () => {
+      supabase.removeChannel(presenceChannel)
+      presenceChannelRef.current = null
+    }
+  }, [diagramId])
+
+  // Broadcast cursor position (throttled to 40 ms)
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!presenceChannelRef.current) return
+    const now = Date.now()
+    if (now - lastCursorBroadcast.current < 40) return
+    lastCursorBroadcast.current = now
+    const rect = e.currentTarget.getBoundingClientRect()
+    presenceChannelRef.current.track({
+      user_name: currentUserNameRef.current || 'User',
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    })
+  }, [])
   useEffect(() => {
     const handleConfigureNode = (e: Event) => {
       const customEvent = e as CustomEvent<{ nodeId: string }>
@@ -453,6 +525,17 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const targetNode = currentNodes.find(n => n.id === params.target)
 
         if (sourceNode && targetNode) {
+          // Guard: prevent edges between parent and child — containment already encodes the relationship
+          if (
+            sourceNode.parentId === targetNode.id ||
+            targetNode.parentId === sourceNode.id
+          ) {
+            toast.info('Already Connected', {
+              description: 'These components are linked via containment. No edge needed.',
+            })
+            return
+          }
+
           const sourceComponentId = (sourceNode.data as any).componentId || (sourceNode.data as any).component || ''
           const targetComponentId = (targetNode.data as any).componentId || (targetNode.data as any).component || ''
 
@@ -504,10 +587,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   }, [])
 
   // Helper: get node bounding box (absolute)
+  // Prefers data.width/height (written by ContainerNode resize) over style (may be stale)
   const getNodeBounds = useCallback((node: Node, allNodes: Node[]) => {
     const pos = getAbsolutePosition(node, allNodes)
-    const w = (node.style?.width as number) || (node.measured?.width as number) || 400
-    const h = (node.style?.height as number) || (node.measured?.height as number) || 300
+    const w = (node.data?.width as number) || (node.style?.width as number) || (node.measured?.width as number) || 400
+    const h = (node.data?.height as number) || (node.style?.height as number) || (node.measured?.height as number) || 300
     return { x: pos.x, y: pos.y, width: w, height: h }
   }, [getAbsolutePosition])
 
@@ -566,8 +650,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const childRelY = draggedAbs.y - containerAbs.y
 
         // Auto-resize container if child would overflow
-        const containerW = (targetContainer.style?.width as number) || 400
-        const containerH = (targetContainer.style?.height as number) || 300
+        const containerW = (targetContainer.data?.width as number) || (targetContainer.style?.width as number) || 400
+        const containerH = (targetContainer.data?.height as number) || (targetContainer.style?.height as number) || 300
         const padding = 20
         const headerHeight = 40
         const neededW = Math.max(containerW, childRelX + draggedW + padding)
@@ -598,6 +682,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                   width: neededW,
                   height: neededH,
                 },
+                data: {
+                  ...node.data,
+                  width: neededW,
+                  height: neededH,
+                },
               }
             }
             return node
@@ -606,8 +695,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         toast.success('Component Nested', { description: `${draggedNode.data?.label} → ${targetContainer.data?.label}` })
       } else if (targetContainer && targetContainer.id === draggedNode.parentId) {
         // Still inside the same parent — auto-resize if child overflows
-        const containerW = (targetContainer.style?.width as number) || 400
-        const containerH = (targetContainer.style?.height as number) || 300
+        const containerW = (targetContainer.data?.width as number) || (targetContainer.style?.width as number) || 400
+        const containerH = (targetContainer.data?.height as number) || (targetContainer.style?.height as number) || 300
         const padding = 20
         const childX = draggedNode.position.x
         const childY = draggedNode.position.y
@@ -622,6 +711,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                   ...node,
                   style: {
                     ...node.style,
+                    width: neededW,
+                    height: neededH,
+                  },
+                  data: {
+                    ...node.data,
                     width: neededW,
                     height: neededH,
                   },
@@ -832,7 +926,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       const payload = {
         project_id: projectId,
         name: 'Main Diagram',
-        data: { nodes, edges },
+        data: { nodes, edges, last_edited_by_name: currentUserNameRef.current || undefined },
       }
 
       const url = diagramId ? `/api/diagrams/${diagramId}` : '/api/diagrams'
@@ -1271,7 +1365,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             </div>
           )}
         </div>
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative overflow-hidden" onMouseMove={handleCanvasMouseMove}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -1314,6 +1408,59 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             />
           </ReactFlow>
 
+          {/* Peer cursor overlays */}
+          {Object.entries(peerCursors).map(([key, cursor]) => (
+            <div
+              key={key}
+              className="absolute pointer-events-none z-50"
+              style={{ left: `${cursor.x}%`, top: `${cursor.y}%`, transform: 'translate(-2px,-2px)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" className="drop-shadow">
+                <path d="M0 0 L0 11 L3 8.5 L5.5 13.5 L7.5 12.5 L5 7.5 L9 7.5 Z" fill="#6366f1" stroke="white" strokeWidth="1"/>
+              </svg>
+              <span className="absolute left-4 top-0 text-[10px] bg-indigo-500 text-white px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
+                {cursor.user_name}
+              </span>
+            </div>
+          ))}
+
+          {/* Empty canvas quick-start overlay */}
+          {nodes.length === 0 && !loading && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="text-center max-w-sm px-6 pointer-events-auto">
+                <div className="text-4xl mb-3">🏗️</div>
+                <h3 className="font-semibold text-lg mb-1">Start building your diagram</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Drag components from the left panel, or start with a template.
+                </p>
+                <div className="flex gap-2 justify-center flex-wrap">
+                  <button
+                    onClick={() => setTemplateDialogOpen(true)}
+                    className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Browse templates
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Drop a landing zone at center as a quick-start
+                      const lzNode = {
+                        id: `container-${Date.now()}`,
+                        type: 'container',
+                        position: { x: 50, y: 50 },
+                        data: { label: 'Landing Zone', componentId: 'azure-landing-zone', provider: 'azure', width: 1100, height: 800 },
+                        style: { width: 1100, height: 800 },
+                      }
+                      setNodes([lzNode as any])
+                    }}
+                    className="px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
+                  >
+                    Add Landing Zone
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Search Component */}
           <DiagramSearch
             nodes={nodes}
@@ -1337,6 +1484,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onRunTests={handleRunTests}
             onMultiCloud={() => setMultiCloudPanelOpen(true)}
             onShowTemplates={() => setTemplateDialogOpen(true)}
+            onK8sWizard={() => setShowK8sWizard(true)}
+            onGovernanceWizard={() => setShowGovernanceWizard(true)}
             onUndo={handleUndo}
             onRedo={handleRedo}
             canUndo={canUndo}
@@ -1400,6 +1549,38 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             hasUnsavedChanges.current = true
             toast.success('Template Applied', { description: `Loaded "${template.name}" — ${normalizedNodes.length} components` })
             setTimeout(() => fitView({ padding: 0.2 }), 100)
+          }}
+        />
+
+        {/* K8s Wizard */}
+        <K8sWizard
+          open={showK8sWizard}
+          onOpenChange={setShowK8sWizard}
+          onComplete={(newNodes, newEdges) => {
+            const cx = (window.innerWidth / 2) - 350
+            const cy = (window.innerHeight / 2) - 200
+            const positioned = newNodes.map(n => ({ ...n, position: { x: n.position.x + cx, y: n.position.y + cy } }))
+            setNodes(nds => [...nds, ...positioned])
+            setEdges(eds => [...eds, ...newEdges])
+            hasUnsavedChanges.current = true
+            toast.success('K8s Cluster Added', { description: `Generated ${positioned.length} nodes` })
+            setTimeout(() => fitView({ padding: 0.15 }), 150)
+          }}
+        />
+
+        {/* Governance Wizard */}
+        <GovernanceWizard
+          open={showGovernanceWizard}
+          onOpenChange={setShowGovernanceWizard}
+          onComplete={(newNodes, newEdges) => {
+            const cx = (window.innerWidth / 2) - 450
+            const cy = (window.innerHeight / 2) - 300
+            const positioned = newNodes.map(n => ({ ...n, position: { x: n.position.x + cx, y: n.position.y + cy } }))
+            setNodes(nds => [...nds, ...positioned])
+            setEdges(eds => [...eds, ...newEdges])
+            hasUnsavedChanges.current = true
+            toast.success('Governance Landing Zone Added', { description: `Generated ${positioned.length} nodes` })
+            setTimeout(() => fitView({ padding: 0.15 }), 150)
           }}
         />
 

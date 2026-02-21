@@ -29,9 +29,182 @@ interface NodeData {
   [key: string]: unknown
 }
 
+type NodeMap = Map<string, Node<NodeData>>
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
 function getNodeComponentId(node: Node<NodeData>): string | undefined {
   return node.data?.componentId || node.data?.component
 }
+
+/** Sanitise a node label into a valid Terraform resource name */
+function toTfName(label: string): string {
+  return (
+    label
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '') || 'resource'
+  )
+}
+
+/**
+ * Walk up the parentId chain until we find a node whose catalog component
+ * maps to the given Terraform resource type (e.g. 'azurerm_resource_group').
+ */
+function findAncestorByTfResource(
+  nodeId: string,
+  nodeMap: NodeMap,
+  tfResource: string
+): Node<NodeData> | null {
+  let current = nodeMap.get(nodeId)
+  while (current?.parentId) {
+    const parent = nodeMap.get(current.parentId)
+    if (!parent) break
+    const parentCompId = getNodeComponentId(parent)
+    if (parentCompId) {
+      const parentComp = getComponentById(parentCompId)
+      if (parentComp?.terraform?.resource === tfResource) return parent
+    }
+    current = parent
+  }
+  return null
+}
+
+/** Return the depth of a node in the hierarchy (0 = root, higher = deeper) */
+function getNodeDepth(node: Node<NodeData>, nodeMap: NodeMap): number {
+  let depth = 0
+  let current = node
+  while (current.parentId) {
+    const parent = nodeMap.get(current.parentId)
+    if (!parent) break
+    depth++
+    current = parent
+  }
+  return depth
+}
+
+// ─── Emit helpers ────────────────────────────────────────────────────────────
+
+function emitBlock(key: string, obj: Record<string, unknown>): string {
+  let s = `  ${key} {\n`
+  Object.entries(obj).forEach(([k, v]) => {
+    s += `    ${k} = ${JSON.stringify(v)}\n`
+  })
+  s += `  }\n`
+  return s
+}
+
+// ─── Azure-specific hierarchy helpers ────────────────────────────────────────
+
+/**
+ * For every Azure resource, derive resource_group_name from its ancestor RG.
+ * Falls back to var.azure_resource_group if the node is not inside any RG.
+ */
+function getAzureRgRef(node: Node<NodeData>, nodeMap: NodeMap): string {
+  const rgNode = findAncestorByTfResource(node.id, nodeMap, 'azurerm_resource_group')
+  if (rgNode) {
+    const rgName = toTfName(String(rgNode.data?.label || 'resource_group'))
+    return `azurerm_resource_group.${rgName}.name`
+  }
+  return 'var.azure_resource_group'
+}
+
+function getAzureVnetRef(node: Node<NodeData>, nodeMap: NodeMap): string | null {
+  const vnetNode = findAncestorByTfResource(node.id, nodeMap, 'azurerm_virtual_network')
+  if (vnetNode) {
+    return `azurerm_virtual_network.${toTfName(String(vnetNode.data?.label || 'vnet'))}.name`
+  }
+  return null
+}
+
+function getAzureSubnetRef(node: Node<NodeData>, nodeMap: NodeMap): string | null {
+  const subnetNode = findAncestorByTfResource(node.id, nodeMap, 'azurerm_subnet')
+  if (subnetNode) {
+    return `azurerm_subnet.${toTfName(String(subnetNode.data?.label || 'subnet'))}.id`
+  }
+  return null
+}
+
+/**
+ * Generate an IMPLICIT azurerm_network_interface resource for a VM
+ * that lives inside a subnet (and doesn't have an explicit NIC child node).
+ */
+function generateImplicitNic(
+  vmNode: Node<NodeData>,
+  vmName: string,
+  nodeMap: NodeMap
+): { nicTf: string; nicRefName: string } | null {
+  // If there's already an explicit NIC child node, skip implicit generation
+  const hasExplicitNic = Array.from(nodeMap.values()).some(n => {
+    const compId = getNodeComponentId(n)
+    const comp = compId ? getComponentById(compId) : null
+    return (
+      comp?.terraform?.resource === 'azurerm_network_interface' && n.parentId === vmNode.id
+    )
+  })
+  if (hasExplicitNic) return null
+
+  const subnetRef = getAzureSubnetRef(vmNode, nodeMap)
+  if (!subnetRef) return null
+
+  const rgRef = getAzureRgRef(vmNode, nodeMap)
+  const nicRefName = `nic_${vmName}`
+
+  let nicTf = `resource "azurerm_network_interface" "${nicRefName}" {\n`
+  nicTf += `  name                = "\${var.project_name}-nic-${vmName}"\n`
+  nicTf += `  location            = var.azure_location\n`
+  nicTf += `  resource_group_name = ${rgRef}\n\n`
+  nicTf += `  ip_configuration {\n`
+  nicTf += `    name                          = "internal"\n`
+  nicTf += `    subnet_id                     = ${subnetRef}\n`
+  nicTf += `    private_ip_address_allocation = "Dynamic"\n`
+  nicTf += `  }\n`
+  nicTf += `}\n\n`
+
+  return { nicTf, nicRefName }
+}
+
+/** Build ip_configuration block for an explicit NIC node */
+function buildNicIpConfigBlock(
+  node: Node<NodeData>,
+  nodeMap: NodeMap,
+  userConfig: Record<string, any>
+): string {
+  const subnetRef = getAzureSubnetRef(node, nodeMap) || 'var.subnet_id'
+  const allocation = userConfig.private_ip_address_allocation || 'Dynamic'
+
+  let block = `  ip_configuration {\n`
+  block += `    name                          = "internal"\n`
+  block += `    subnet_id                     = ${subnetRef}\n`
+  block += `    private_ip_address_allocation = "${allocation}"\n`
+  if (allocation === 'Static' && userConfig.private_ip_address) {
+    block += `    private_ip_address            = "${userConfig.private_ip_address}"\n`
+  }
+  block += `  }\n`
+  return block
+}
+
+// ─── OS image map ────────────────────────────────────────────────────────────
+
+const OS_IMAGE_MAP: Record<string, { publisher: string; offer: string; sku: string; version: string }> = {
+  'ubuntu-22.04': { publisher: 'Canonical', offer: '0001-com-ubuntu-server-jammy', sku: '22_04-lts-gen2', version: 'latest' },
+  'ubuntu-20.04': { publisher: 'Canonical', offer: '0001-com-ubuntu-server-focal', sku: '20_04-lts-gen2', version: 'latest' },
+  'windows-2022': { publisher: 'MicrosoftWindowsServer', offer: 'WindowsServer', sku: '2022-Datacenter', version: 'latest' },
+  'windows-2019': { publisher: 'MicrosoftWindowsServer', offer: 'WindowsServer', sku: '2019-Datacenter', version: 'latest' },
+  'rhel-9':       { publisher: 'RedHat', offer: 'RHEL', sku: '9-lvm-gen2', version: 'latest' },
+  'debian-12':    { publisher: 'Debian', offer: 'debian-12', sku: '12', version: 'latest' },
+}
+
+// Keys handled explicitly — excluded from generic config dump
+const VM_HANDLED_KEYS = new Set([
+  'osImage', 'os_disk_type', 'os_disk_size_gb', 'admin_username', 'ssh_key_data',
+  'availability_zone', 'identity_type', 'attachments', 'replicas', 'size', 'sku',
+  'private_ip_address_allocation', 'private_ip_address',
+])
+const AZURE_EXPLICIT_KEYS = new Set(['resource_group_name', 'virtual_network_name', 'location', 'name'])
+
+// ─── Main generator ──────────────────────────────────────────────────────────
 
 export function generateTerraformWithValidation(
   nodes: Node<NodeData>[],
@@ -56,78 +229,77 @@ export function generateTerraformWithValidation(
       files: [],
       errors: [{ nodeId: '', nodeLabel: 'Diagram', error: 'No components found. Add components to generate Terraform.' }],
       warnings: [],
-      skippedCount: 0
+      skippedCount: 0,
     }
   }
 
+  // Build nodeMap for O(1) ancestor lookup
+  const nodeMap: NodeMap = new Map(nodes.map(n => [n.id, n]))
+
   const validNodes: Node<NodeData>[] = []
-  const nodesByProvider: Record<string, Node<NodeData>[]> = {}
 
   nodes.forEach(node => {
     const componentId = getNodeComponentId(node)
-
     if (!componentId) {
       errors.push({ nodeId: node.id, nodeLabel: String(node.data?.label || 'Unknown'), error: 'Missing component ID' })
       skippedCount++
       return
     }
-
     const component = getComponentById(componentId)
-
     if (!component) {
       errors.push({ nodeId: node.id, nodeLabel: String(node.data?.label || componentId), error: `Unknown component: ${componentId}` })
       skippedCount++
       return
     }
-
     if (!component.terraform) {
       warnings.push(`${node.data?.label || component.name}: No Terraform support (skipped)`)
       skippedCount++
       return
     }
-
     validNodes.push(node)
     providers.add(component.terraform.provider)
-    if (!nodesByProvider[component.terraform.provider]) nodesByProvider[component.terraform.provider] = []
-    nodesByProvider[component.terraform.provider].push(node)
   })
 
   if (validNodes.length === 0) {
     return {
       success: false,
       files: [],
-      errors: errors.length > 0 ? errors : [{ nodeId: '', nodeLabel: 'Diagram', error: 'No components with Terraform support. Add AWS/Azure/GCP components.' }],
+      errors: errors.length > 0
+        ? errors
+        : [{ nodeId: '', nodeLabel: 'Diagram', error: 'No components with Terraform support. Add AWS/Azure/GCP components.' }],
       warnings,
-      skippedCount
+      skippedCount,
     }
   }
 
-  // Generate main.tf
+  // Sort by hierarchy depth — parents always before children in output
+  validNodes.sort((a, b) => getNodeDepth(a, nodeMap) - getNodeDepth(b, nodeMap))
+
+  // ── main.tf ────────────────────────────────────────────────────────────
   let mainTf = `# Generated by JobStack\n# Components: ${validNodes.length} | Skipped: ${skippedCount}\n# Environment: ${environment}\n\n`
   mainTf += 'terraform {\n  required_version = ">= 1.6"\n  required_providers {\n'
-  if (providers.has('aws')) mainTf += '    aws = { source = "hashicorp/aws", version = "~> 5.0" }\n'
-  if (providers.has('gcp')) mainTf += '    google = { source = "hashicorp/google", version = "~> 5.0" }\n'
-  if (providers.has('azure')) mainTf += '    azurerm = { source = "hashicorp/azurerm", version = "~> 3.0" }\n'
-  if (providers.has('vercel')) mainTf += '    vercel = { source = "vercel/vercel", version = "~> 1.0" }\n'
-  if (providers.has('cloudflare')) mainTf += '    cloudflare = { source = "cloudflare/cloudflare", version = "~> 4.0" }\n'
+  if (providers.has('aws'))        mainTf += '    aws        = { source = "hashicorp/aws",             version = "~> 5.0" }\n'
+  if (providers.has('gcp'))        mainTf += '    google     = { source = "hashicorp/google",          version = "~> 5.0" }\n'
+  if (providers.has('azure'))      mainTf += '    azurerm    = { source = "hashicorp/azurerm",         version = "~> 3.0" }\n'
+  if (providers.has('vercel'))     mainTf += '    vercel     = { source = "vercel/vercel",             version = "~> 1.0" }\n'
+  if (providers.has('cloudflare')) mainTf += '    cloudflare = { source = "cloudflare/cloudflare",    version = "~> 4.0" }\n'
   mainTf += '  }\n}\n\n'
 
-  if (providers.has('aws')) mainTf += `provider "aws" { region = var.aws_region }\n\n`
-  if (providers.has('gcp')) mainTf += `provider "google" { project = var.gcp_project\n  region = var.gcp_region }\n\n`
-  if (providers.has('azure')) mainTf += `provider "azurerm" { features {} }\n\n`
-  if (providers.has('vercel')) mainTf += `provider "vercel" { api_token = var.vercel_api_token }\n\n`
-  if (providers.has('cloudflare')) mainTf += `provider "cloudflare" { api_token = var.cloudflare_api_token }\n\n`
+  if (providers.has('aws'))        mainTf += `provider "aws" {\n  region = var.aws_region\n}\n\n`
+  if (providers.has('gcp'))        mainTf += `provider "google" {\n  project = var.gcp_project\n  region  = var.gcp_region\n}\n\n`
+  if (providers.has('azure'))      mainTf += `provider "azurerm" {\n  features {}\n}\n\n`
+  if (providers.has('vercel'))     mainTf += `provider "vercel" {\n  api_token = var.vercel_api_token\n}\n\n`
+  if (providers.has('cloudflare')) mainTf += `provider "cloudflare" {\n  api_token = var.cloudflare_api_token\n}\n\n`
 
   outputs.push({ code: mainTf, filename: 'main.tf', provider: 'terraform' })
 
-  // Generate backend.tf
+  // ── backend.tf ─────────────────────────────────────────────────────────
   const primaryProvider = providers.has('aws') ? 'aws'
     : providers.has('azure') ? 'azure'
     : providers.has('gcp') ? 'gcp'
     : 'local'
 
-  let backendTf = `# backend.tf — Remote state configuration\n# Generated by JobStack for environment: ${environment}\n#\n# Uncomment and configure ONE backend below, then run: terraform init\n\nterraform {\n`
-
+  let backendTf = `# backend.tf — Remote state configuration\n# Generated by JobStack for environment: ${environment}\n#\n# Uncomment ONE backend block, then run: terraform init\n\nterraform {\n`
   if (primaryProvider === 'aws') {
     backendTf += `  # --- AWS S3 Backend (recommended) ---\n  # backend "s3" {\n  #   bucket         = "${projectName}-terraform-state"\n  #   key            = "${projectName}/${environment}/terraform.tfstate"\n  #   region         = "eu-west-1"\n  #   dynamodb_table = "terraform-state-locks"\n  #   encrypt        = true\n  # }\n`
   } else if (primaryProvider === 'azure') {
@@ -138,81 +310,201 @@ export function generateTerraformWithValidation(
   backendTf += `\n  # --- Local Backend (default, NOT recommended for production) ---\n  backend "local" {}\n}\n`
   outputs.push({ code: backendTf, filename: 'backend.tf', provider: 'terraform' })
 
-  // Generate variables.tf
+  // ── variables.tf ───────────────────────────────────────────────────────
   let variablesTf = '# variables.tf\n# Declare all input variables here.\n\n'
-  if (providers.has('aws')) variablesTf += `variable "aws_region" {\n  description = "AWS region to deploy resources"\n  type        = string\n  default     = "eu-west-1"\n}\n\n`
+  if (providers.has('aws'))
+    variablesTf += `variable "aws_region" {\n  description = "AWS region to deploy resources"\n  type        = string\n  default     = "eu-west-1"\n}\n\n`
   if (providers.has('gcp')) {
-    variablesTf += 'variable "gcp_project" {\n  description = "GCP project ID"\n  type = string\n}\n\n'
+    variablesTf += 'variable "gcp_project" {\n  description = "GCP project ID"\n  type        = string\n}\n\n'
     variablesTf += 'variable "gcp_region" {\n  description = "GCP region"\n  type        = string\n  default     = "europe-west1"\n}\n\n'
   }
   if (providers.has('azure')) {
     variablesTf += 'variable "azure_location" {\n  description = "Azure location"\n  type        = string\n  default     = "West Europe"\n}\n\n'
-    variablesTf += 'variable "azure_resource_group" {\n  description = "Azure resource group name"\n  type        = string\n  default     = "rg-' + projectName + '"\n}\n\n'
+    variablesTf += `variable "azure_resource_group" {\n  description = "Fallback RG name (used only for nodes outside any Resource Group container)"\n  type        = string\n  default     = "rg-${projectName}"\n}\n\n`
   }
-  if (providers.has('vercel')) variablesTf += 'variable "vercel_api_token" {\n  description = "Vercel API token"\n  type        = string\n  sensitive   = true\n}\n\n'
-  if (providers.has('cloudflare')) variablesTf += 'variable "cloudflare_api_token" {\n  description = "Cloudflare API token"\n  type        = string\n  sensitive   = true\n}\n\n'
+  if (providers.has('vercel'))
+    variablesTf += 'variable "vercel_api_token" {\n  description = "Vercel API token"\n  type        = string\n  sensitive   = true\n}\n\n'
+  if (providers.has('cloudflare'))
+    variablesTf += 'variable "cloudflare_api_token" {\n  description = "Cloudflare API token"\n  type        = string\n  sensitive   = true\n}\n\n'
   variablesTf += `variable "environment" {\n  description = "Deployment environment (dev / staging / production)"\n  type        = string\n  default     = "${environment}"\n}\n\n`
   variablesTf += `variable "project_name" {\n  description = "Project name used as a naming prefix for all resources"\n  type        = string\n  default     = "${projectName}"\n}\n\n`
   outputs.push({ code: variablesTf, filename: 'variables.tf', provider: 'terraform' })
 
-  // Generate terraform.tfvars (environment-specific)
+  // ── terraform.tfvars ───────────────────────────────────────────────────
   let tfvars = `# terraform.tfvars — ${environment} environment\n# Generated by JobStack\n# Usage: terraform plan  (this file is loaded automatically)\n\nenvironment  = "${environment}"\nproject_name = "${projectName}"\n`
-  if (providers.has('aws')) tfvars += `aws_region   = "eu-west-1"\n`
-  if (providers.has('gcp')) tfvars += `gcp_project  = "<your-gcp-project-id>"\ngcp_region   = "europe-west1"\n`
-  if (providers.has('azure')) tfvars += `azure_location       = "West Europe"\nazure_resource_group = "rg-${projectName}-${environment}"\n`
+  if (providers.has('aws'))        tfvars += `aws_region   = "eu-west-1"\n`
+  if (providers.has('gcp'))        tfvars += `gcp_project  = "<your-gcp-project-id>"\ngcp_region   = "europe-west1"\n`
+  if (providers.has('azure'))      tfvars += `azure_location       = "West Europe"\nazure_resource_group = "rg-${projectName}-${environment}"\n`
   outputs.push({ code: tfvars, filename: 'terraform.tfvars', provider: 'terraform' })
 
-  // Generate resources.tf
-  let resourcesTf = `# resources.tf\n# All infrastructure resources for environment: ${environment}\n\n`
-  const noTagsResources = ['azurerm_subnet', 'azurerm_network_interface', 'aws_subnet', 'aws_security_group_rule', 'aws_route', 'google_compute_subnetwork', 'google_compute_firewall', 'vercel_', 'cloudflare_']
+  // ── resources.tf ───────────────────────────────────────────────────────
+  let resourcesTf = `# resources.tf\n# All infrastructure resources for environment: ${environment}\n# Resources are ordered by hierarchy depth (parents before children).\n# Implicit NICs are auto-generated when a VM sits inside a Subnet.\n\n`
+
+  const noTagsResources = [
+    'azurerm_subnet', 'azurerm_network_interface', 'azurerm_subscription',
+    'aws_subnet', 'aws_security_group_rule', 'aws_route',
+    'google_compute_subnetwork', 'google_compute_firewall',
+    'vercel_', 'cloudflare_',
+  ]
+
+  // Track implicit NICs: vmNodeId → nicRefName
+  const implicitNics = new Map<string, string>()
+  let implicitNicsTf = ''
 
   validNodes.forEach(node => {
     const componentId = getNodeComponentId(node)!
     const component = getComponentById(componentId)!
-    const resourceName = (node.data.label || component.name).toLowerCase().replace(/[^a-z0-9]/g, '_')
     const resourceType = component.terraform!.resource
-    const config = { ...component.terraform!.defaultConfig, ...node.data.config }
+    if (
+      resourceType === 'azurerm_linux_virtual_machine' ||
+      resourceType === 'azurerm_windows_virtual_machine'
+    ) {
+      const vmName = toTfName(String(node.data?.label || component.name))
+      const result = generateImplicitNic(node, vmName, nodeMap)
+      if (result) {
+        implicitNicsTf += result.nicTf
+        implicitNics.set(node.id, result.nicRefName)
+      }
+    }
+  })
 
-    resourcesTf += 'resource "' + resourceType + '" "' + resourceName + '" {\n'
-    if (resourceType.startsWith('azurerm_')) {
+  if (implicitNicsTf) {
+    resourcesTf += `# ─── Implicit Network Interfaces (auto-generated from diagram hierarchy) ───────\n`
+    resourcesTf += implicitNicsTf
+    resourcesTf += `# ─── Catalog Resources ──────────────────────────────────────────────────────────\n\n`
+  }
+
+  validNodes.forEach(node => {
+    const componentId = getNodeComponentId(node)!
+    const component = getComponentById(componentId)!
+    const resourceName = toTfName(String(node.data?.label || component.name))
+    const resourceType = component.terraform!.resource
+    const userConfig = { ...component.terraform!.defaultConfig, ...(node.data.config || {}) }
+
+    resourcesTf += `resource "${resourceType}" "${resourceName}" {\n`
+
+    // ── name / location ────────────────────────────────────────────────
+    if (resourceType.startsWith('azurerm_') || resourceType.startsWith('google_')) {
       resourcesTf += `  name = "\${var.project_name}-${resourceName}"\n`
-      resourcesTf += '  location = var.azure_location\n'
-      resourcesTf += '  resource_group_name = var.azure_resource_group\n'
-    } else if (resourceType.startsWith('google_')) {
-      resourcesTf += `  name = "\${var.project_name}-${resourceName}"\n`
-      resourcesTf += '  project = var.gcp_project\n'
+    }
+    if (resourceType.startsWith('azurerm_') && resourceType !== 'azurerm_subscription') {
+      resourcesTf += `  location            = var.azure_location\n`
+      // resource_group_name from hierarchy
+      const rgRef = getAzureRgRef(node, nodeMap)
+      resourcesTf += `  resource_group_name = ${rgRef}\n`
+    }
+    if (resourceType.startsWith('google_')) {
+      resourcesTf += `  project = var.gcp_project\n`
     }
 
-    Object.entries(config).forEach(([key, value]) => {
-      if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-        resourcesTf += '  ' + key + ' {\n'
-        Object.entries(value as Record<string, unknown>).forEach(([subKey, subValue]) => {
-          resourcesTf += '    ' + subKey + ' = ' + JSON.stringify(subValue) + '\n'
-        })
-        resourcesTf += '  }\n'
-      } else if (value !== null && value !== undefined) {
-        resourcesTf += '  ' + key + ' = ' + JSON.stringify(value) + '\n'
+    // ── Subnet → vnet reference ────────────────────────────────────────
+    if (resourceType === 'azurerm_subnet') {
+      const vnetRef = getAzureVnetRef(node, nodeMap)
+      if (vnetRef) {
+        resourcesTf += `  virtual_network_name = ${vnetRef}\n`
+      }
+    }
+
+    // ── VM: NIC IDs + os_disk + image + admin ──────────────────────────
+    const isLinuxVm = resourceType === 'azurerm_linux_virtual_machine'
+    const isWindowsVm = resourceType === 'azurerm_windows_virtual_machine'
+    if (isLinuxVm || isWindowsVm) {
+      // VM size
+      const vmSize = userConfig.size || userConfig.sku || 'Standard_B2s'
+      resourcesTf += `  size = "${vmSize}"\n`
+
+      // NIC reference
+      const nicRef = implicitNics.get(node.id)
+      if (nicRef) {
+        resourcesTf += `  network_interface_ids = [azurerm_network_interface.${nicRef}.id]\n`
+      }
+
+      // Admin credentials
+      const adminUser = userConfig.admin_username || 'azureuser'
+      resourcesTf += `  admin_username = "${adminUser}"\n`
+      if (isLinuxVm) {
+        const sshKey = userConfig.ssh_key_data
+        if (sshKey) {
+          resourcesTf += `  admin_ssh_key {\n    username   = "${adminUser}"\n    public_key = "${sshKey}"\n  }\n`
+        } else {
+          resourcesTf += `  admin_ssh_key {\n    username   = "${adminUser}"\n    public_key = file("~/.ssh/id_rsa.pub")\n  }\n`
+        }
+      } else {
+        const adminPass = userConfig.admin_password || 'REPLACE_ME_Pa\$\$word123!'
+        resourcesTf += `  admin_password = "${adminPass}"\n`
+      }
+
+      // os_disk
+      const osDiskType = userConfig.os_disk_type || 'Premium_LRS'
+      const osDiskSizeGb = userConfig.os_disk_size_gb || 64
+      resourcesTf += `  os_disk {\n    caching              = "ReadWrite"\n    storage_account_type = "${osDiskType}"\n    disk_size_gb         = ${osDiskSizeGb}\n  }\n`
+
+      // source_image_reference
+      const osImage: string = userConfig.osImage || 'ubuntu-22.04'
+      const img = OS_IMAGE_MAP[osImage] || OS_IMAGE_MAP['ubuntu-22.04']
+      resourcesTf += `  source_image_reference {\n    publisher = "${img.publisher}"\n    offer     = "${img.offer}"\n    sku       = "${img.sku}"\n    version   = "${img.version}"\n  }\n`
+
+      // Availability Zone
+      if (userConfig.availability_zone) {
+        resourcesTf += `  zone = "${userConfig.availability_zone}"\n`
+      }
+
+      // Managed Identity
+      if (userConfig.identity_type) {
+        resourcesTf += `  identity {\n    type = "${userConfig.identity_type}"\n  }\n`
+      }
+    }
+
+    // ── NIC: ip_configuration ─────────────────────────────────────────
+    if (resourceType === 'azurerm_network_interface') {
+      resourcesTf += buildNicIpConfigBlock(node, nodeMap, userConfig)
+    }
+
+    // ── Generic config keys (skip already-handled ones) ────────────────
+    const handledKeys = new Set([
+      ...Array.from(AZURE_EXPLICIT_KEYS),
+      ...Array.from(VM_HANDLED_KEYS),
+      'size', 'sku',
+    ])
+
+    Object.entries(userConfig).forEach(([key, value]) => {
+      if (handledKeys.has(key)) return
+      if (value === null || value === undefined) return
+      if (isLinuxVm || isWindowsVm) return // VM keys all handled above
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        resourcesTf += emitBlock(key, value as Record<string, unknown>)
+      } else {
+        resourcesTf += `  ${key} = ${JSON.stringify(value)}\n`
       }
     })
 
+    // ── Tags ──────────────────────────────────────────────────────────
     const supportsTags = resourceType.startsWith('aws_') || resourceType.startsWith('azurerm_') || resourceType.startsWith('google_')
     const excludeTags = noTagsResources.some(prefix => resourceType.startsWith(prefix))
     if (supportsTags && !excludeTags) {
-      resourcesTf += '  tags = {\n    Name = "${var.project_name}-' + resourceName + '"\n    Environment = var.environment\n    ManagedBy = "JobStack"\n  }\n'
+      resourcesTf += `  tags = {\n    Name        = "\${var.project_name}-${resourceName}"\n    Environment = var.environment\n    ManagedBy   = "JobStack"\n  }\n`
     }
-    resourcesTf += '}\n\n'
+
+    resourcesTf += `}\n\n`
   })
+
   outputs.push({ code: resourcesTf, filename: 'resources.tf', provider: 'terraform' })
 
-  // Generate outputs.tf
+  // ── outputs.tf ─────────────────────────────────────────────────────────
   let outputsTf = '# outputs.tf\n# Exports useful resource attributes for use in other configurations.\n\n'
+
+  implicitNics.forEach((nicRefName) => {
+    outputsTf += `output "${nicRefName}_id" {\n  value = azurerm_network_interface.${nicRefName}.id\n}\n\n`
+  })
+
   validNodes.forEach(node => {
     const componentId = getNodeComponentId(node)!
     const component = getComponentById(componentId)!
-    const resourceName = (node.data.label || component.name).toLowerCase().replace(/[^a-z0-9]/g, '_')
+    const resourceName = toTfName(String(node.data?.label || component.name))
     const resourceType = component.terraform!.resource
-    outputsTf += 'output "' + resourceName + '_id" {\n  value = ' + resourceType + '.' + resourceName + '.id\n}\n\n'
+    outputsTf += `output "${resourceName}_id" {\n  value = ${resourceType}.${resourceName}.id\n}\n\n`
   })
+
   outputs.push({ code: outputsTf, filename: 'outputs.tf', provider: 'terraform' })
 
   return { success: errors.length === 0, files: outputs, errors, warnings, skippedCount }
@@ -236,11 +528,19 @@ export function generateTerraformReadme(nodes: Node<NodeData>[]): string {
     return id && getComponentById(id)?.terraform
   })
   const cost = calculateTotalCost(nodes)
-  return '# Infrastructure as Code - JobStack\n\n## Overview\nComponents: ' + validNodes.length + '\nEstimated Cost: $' + cost.min + ' - $' + cost.max + '/month\n\n## Quick Start\n```bash\nterraform init\nterraform plan\nterraform apply\n```\n'
+  return (
+    '# Infrastructure as Code - JobStack\n\n' +
+    '## Overview\n' +
+    `Components: ${validNodes.length}\n` +
+    `Estimated Cost: $${cost.min} - $${cost.max}/month\n\n` +
+    '## Quick Start\n' +
+    '```bash\nterraform init\nterraform plan\nterraform apply\n```\n'
+  )
 }
 
 function calculateTotalCost(nodes: Node<NodeData>[]): { min: number; max: number } {
-  let min = 0, max = 0
+  let min = 0
+  let max = 0
   nodes.forEach(node => {
     const id = getNodeComponentId(node)
     if (id) {

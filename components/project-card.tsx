@@ -33,8 +33,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { MoreVertical, Trash2, Edit, Copy, ExternalLink, Loader2 } from 'lucide-react'
+import { MoreVertical, Trash2, Edit, Copy, ExternalLink, Loader2, GitBranch } from 'lucide-react'
 import { toast } from 'sonner'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface Project {
   id: string
@@ -55,9 +56,12 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
   const [isDuplicating, setIsDuplicating] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
   const [editName, setEditName] = useState(project.name)
   const [editDescription, setEditDescription] = useState(project.description || '')
   const [isUpdating, setIsUpdating] = useState(false)
+  const [duplicateName, setDuplicateName] = useState('')
+  const [duplicateEnv, setDuplicateEnv] = useState<'dev' | 'staging' | 'production'>('dev')
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -84,13 +88,17 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
 
   const handleDuplicate = async () => {
     setIsDuplicating(true)
+    const envSuffix = duplicateEnv === 'dev' ? 'DEV' : duplicateEnv === 'staging' ? 'STAGING' : 'PROD'
+    const newName = duplicateName.trim() || `${project.name} (${envSuffix})`
+    // Replica multiplier: staging 2x, production 3x relative to dev
+    const replicaMultiplier = duplicateEnv === 'staging' ? 2 : duplicateEnv === 'production' ? 3 : 1
     try {
       // Create a copy of the project
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: `${project.name} (Copy)`,
+          name: newName,
           description: project.description,
         }),
       })
@@ -101,20 +109,33 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
 
       const newProject = await response.json()
 
-      // Copy diagrams from original project
+      // Copy diagrams from original project and scale replicas
       try {
         const diagramsRes = await fetch(`/api/diagrams?project_id=${project.id}`)
         if (diagramsRes.ok) {
           const diagramsData = await diagramsRes.json()
           const diagrams = diagramsData?.data || diagramsData || []
           for (const diagram of diagrams) {
+            const scaledNodes = (diagram.nodes || []).map((node: any) => {
+              const replicas = node.data?.config?.replicas
+              if (replicas && replicaMultiplier > 1) {
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    config: { ...node.data.config, replicas: replicas * replicaMultiplier },
+                  },
+                }
+              }
+              return node
+            })
             await fetch('/api/diagrams', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 project_id: newProject.id,
                 name: diagram.name || 'Main Diagram',
-                nodes: diagram.nodes || [],
+                nodes: scaledNodes,
                 edges: diagram.edges || [],
                 viewport: diagram.viewport || { x: 0, y: 0, zoom: 1 },
               }),
@@ -126,10 +147,9 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
         console.warn('Failed to copy diagrams, project created without diagrams')
       }
 
-      toast.success('Project duplicated successfully')
+      toast.success('Project duplicated', { description: `Created "${newName}"` })
+      setShowDuplicateDialog(false)
       router.refresh()
-
-      // Navigate to the new project
       router.push(`/projects/${newProject.id}`)
     } catch (error) {
       toast.error('Failed to duplicate project')
@@ -222,7 +242,9 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleDuplicate()
+                      setDuplicateName('')
+                      setDuplicateEnv('dev')
+                      setShowDuplicateDialog(true)
                     }}
                     disabled={isDuplicating}
                   >
@@ -336,6 +358,59 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
               ) : (
                 'Save Changes'
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitBranch className="h-5 w-5 text-blue-400" />
+              Duplicate Project
+            </DialogTitle>
+            <DialogDescription>
+              Creates a copy of &ldquo;{project.name}&rdquo; including all diagrams. Use environment promotion to scale replicas automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="dupName">New Project Name</Label>
+              <Input
+                id="dupName"
+                placeholder={`${project.name} (${duplicateEnv.toUpperCase()})`}
+                value={duplicateName}
+                onChange={(e) => setDuplicateName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Target Environment</Label>
+              <Select value={duplicateEnv} onValueChange={(v: any) => setDuplicateEnv(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dev">Development (1× replicas)</SelectItem>
+                  <SelectItem value="staging">Staging (2× replicas)</SelectItem>
+                  <SelectItem value="production">Production (3× replicas)</SelectItem>
+                </SelectContent>
+              </Select>
+              {duplicateEnv !== 'dev' && (
+                <p className="text-xs text-muted-foreground">
+                  Nodes with a &ldquo;Replicas&rdquo; config will be scaled automatically.
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)} disabled={isDuplicating}>
+              Cancel
+            </Button>
+            <Button onClick={handleDuplicate} disabled={isDuplicating}>
+              {isDuplicating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
+              Duplicate
             </Button>
           </DialogFooter>
         </DialogContent>

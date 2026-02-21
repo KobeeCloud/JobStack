@@ -71,11 +71,16 @@ export function ComponentPalette({
       })
     }
 
-    // Filter by project types (iaas, paas, saas)
-    if (projectTypes && projectTypes.length > 0) {
+    // Filter by project types (iaas, paas, saas, hosting)
+    // For 'hosting' projects the provider filter already limits scope correctly —
+    // skip serviceType filtering so vercel/netlify/cloudflare components are visible.
+    const hasNonHostingType = projectTypes && projectTypes.some(
+      (t) => t === 'iaas' || t === 'paas' || t === 'saas'
+    )
+    if (projectTypes && projectTypes.length > 0 && hasNonHostingType) {
       filtered = filtered.filter((c) => {
         // Include generic components OR matching service type
-        if (!c.serviceType || c.serviceType === 'generic') return true
+        if (!c.serviceType || c.serviceType === 'generic' || c.serviceType === 'hosting') return true
         return projectTypes.includes(c.serviceType)
       })
     }

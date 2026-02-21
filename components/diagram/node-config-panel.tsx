@@ -158,6 +158,70 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <input type="checkbox" id="publicIp" checked={config.publicIp || false} onChange={(e) => updateConfig('publicIp', e.target.checked)} className="w-4 h-4" />
           <Label htmlFor="publicIp">Assign Public IP</Label>
         </div>
+
+        {/* ─── Azure-specific fields ─────────────────────────────── */}
+        {provider === 'azure' && (
+          <>
+            <div className="space-y-2">
+              <Label>Availability Zone</Label>
+              <Select value={config.availability_zone || ''} onValueChange={(v) => updateConfig('availability_zone', v || undefined)}>
+                <SelectTrigger><SelectValue placeholder="No preference" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No preference</SelectItem>
+                  <SelectItem value="1">Zone 1</SelectItem>
+                  <SelectItem value="2">Zone 2</SelectItem>
+                  <SelectItem value="3">Zone 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Admin Username</Label>
+              <Input placeholder="azureuser" value={config.admin_username || ''} onChange={(e) => updateConfig('admin_username', e.target.value)} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>SSH Public Key Data</Label>
+              <Input placeholder="ssh-rsa AAAA..." value={config.ssh_key_data || ''} onChange={(e) => updateConfig('ssh_key_data', e.target.value)} />
+              <p className="text-xs text-muted-foreground">Paste your public key or leave blank to use file(&quot;~/.ssh/id_rsa.pub&quot;)</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>OS Disk Type</Label>
+              <Select value={config.os_disk_type || 'Premium_LRS'} onValueChange={(v) => updateConfig('os_disk_type', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Standard_LRS">Standard HDD (Standard_LRS)</SelectItem>
+                  <SelectItem value="StandardSSD_LRS">Standard SSD (StandardSSD_LRS)</SelectItem>
+                  <SelectItem value="Premium_LRS">Premium SSD (Premium_LRS)</SelectItem>
+                  <SelectItem value="UltraSSD_LRS">Ultra SSD (UltraSSD_LRS)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>OS Disk Size (GB)</Label>
+              <Input type="number" min={30} max={4096} value={config.os_disk_size_gb || 64} onChange={(e) => updateConfig('os_disk_size_gb', parseInt(e.target.value))} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Managed Identity</Label>
+              <Select value={config.identity_type || ''} onValueChange={(v) => updateConfig('identity_type', v || undefined)}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="SystemAssigned">System Assigned</SelectItem>
+                  <SelectItem value="UserAssigned">User Assigned</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input type="checkbox" id="bootDiag" checked={config.boot_diagnostics_enabled || false} onChange={(e) => updateConfig('boot_diagnostics_enabled', e.target.checked)} className="w-4 h-4" />
+              <Label htmlFor="bootDiag" className="font-normal">Enable Boot Diagnostics</Label>
+            </div>
+          </>
+        )}
       </>
     )
   }
@@ -184,6 +248,29 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <Label>Address Prefix (CIDR)</Label>
           <Input placeholder="10.0.1.0/24" value={config.addressPrefix || ''} onChange={(e) => updateConfig('addressPrefix', e.target.value)} />
         </div>
+      )
+    }
+
+    if (componentInfo && componentInfo.id.includes('nic')) {
+      return (
+        <>
+          <div className="space-y-2">
+            <Label>Private IP Allocation</Label>
+            <Select value={config.private_ip_address_allocation || 'Dynamic'} onValueChange={(v) => updateConfig('private_ip_address_allocation', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Dynamic">Dynamic (auto-assigned)</SelectItem>
+                <SelectItem value="Static">Static (fixed IP)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {config.private_ip_address_allocation === 'Static' && (
+            <div className="space-y-2">
+              <Label>Private IP Address</Label>
+              <Input placeholder="10.0.1.10" value={config.private_ip_address || ''} onChange={(e) => updateConfig('private_ip_address', e.target.value)} />
+            </div>
+          )}
+        </>
       )
     }
 

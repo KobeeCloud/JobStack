@@ -37,6 +37,8 @@ import {
   Cloud,
   Library,
   GitBranch,
+  Boxes,
+  Building2,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -80,6 +82,9 @@ interface DiagramToolbarProps {
   testing?: boolean
   // Templates
   onShowTemplates?: () => void
+  // Wizards
+  onK8sWizard?: () => void
+  onGovernanceWizard?: () => void
   // Version history
   diagramId?: string
   onRestoreVersion?: () => void
@@ -127,6 +132,8 @@ export function DiagramToolbar({
   complianceScanning = false,
   testing = false,
   onShowTemplates,
+  onK8sWizard,
+  onGovernanceWizard,
   diagramId,
   onRestoreVersion,
 }: DiagramToolbarProps) {
@@ -344,6 +351,42 @@ export function DiagramToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent>Browse & Apply Templates</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onK8sWizard && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onK8sWizard}
+                aria-label="K8s Wizard"
+              >
+                <Boxes className="h-4 w-4 mr-1.5" />
+                K8s Wizard
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Kubernetes Cluster Wizard (AKS / EKS / GKE)</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onGovernanceWizard && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onGovernanceWizard}
+                aria-label="Governance Wizard"
+              >
+                <Building2 className="h-4 w-4 mr-1.5" />
+                Governance
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Cloud Governance Wizard (Landing Zone)</TooltipContent>
           </Tooltip>
         )}
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler } from '@/lib/api-helpers'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { ApiError } from '@/lib/api-error'
 import { log } from '@/lib/logger'
 import { z } from 'zod'
@@ -92,12 +93,21 @@ export const POST = createApiHandler(
       throw error
     }
 
-    // Add creator as owner member
-    await auth.supabase.from('organization_members').insert({
+    // Add creator as owner member — use admin client to bypass RLS
+    // (RLS insert policy requires existing membership, chicken-and-egg for first member)
+    const admin = createAdminClient()
+    const { error: memberError } = await admin.from('organization_members').insert({
       organization_id: org.id,
       user_id: auth.user.id,
       role: 'owner',
     })
+
+    if (memberError) {
+      log.error('Failed to add org creator as member', memberError, { orgId: org.id, userId: auth.user.id })
+      // Roll back org creation so dashboard stays consistent
+      await admin.from('organizations').delete().eq('id', org.id)
+      throw new ApiError(500, 'Failed to set up organization membership', 'MEMBER_INSERT_FAILED')
+    }
 
     log.info('Organization created', { orgId: org.id, slug, userId: auth.user.id })
     return NextResponse.json(org, { status: 201 })
