@@ -35,6 +35,7 @@ interface PatternNodeTemplate {
   category: string
   provider: 'azure' | 'aws' | 'gcp'
   isContainer?: boolean
+  nodeType?: 'attachment'  // renders as compact attachment badge, no connecting edges needed
   width?: number
   height?: number
   x: number
@@ -81,13 +82,12 @@ const PATTERNS: QuickBuildPattern[] = [
     ],
     nodes: [
       { id: 'rg', componentId: 'azure-resource-group', label: '{{prefix}}-rg', category: 'management', provider: 'azure', isContainer: true, width: 1000, height: 700, x: 50, y: 50 },
-      { id: 'vnet', componentId: 'azure-virtual-network', label: '{{prefix}}-vnet ({{cidr}})', category: 'networking', provider: 'azure', isContainer: true, width: 800, height: 500, x: 80, y: 100, parentTemplateId: 'rg', config: { address_space: ['{{cidr}}'] } },
+      { id: 'vnet', componentId: 'azure-vnet', label: '{{prefix}}-vnet ({{cidr}})', category: 'networking', provider: 'azure', isContainer: true, width: 800, height: 500, x: 80, y: 100, parentTemplateId: 'rg', config: { address_space: ['{{cidr}}'] } },
       { id: 'subnet', componentId: 'azure-subnet', label: '{{prefix}}-subnet', category: 'networking', provider: 'azure', isContainer: true, width: 600, height: 280, x: 80, y: 120, parentTemplateId: 'vnet', config: { address_prefixes: ['{{subnetCidr}}'] } },
-      { id: 'nsg', componentId: 'azure-network-security-group', label: '{{prefix}}-nsg', category: 'networking', provider: 'azure', x: 80, y: 380, parentTemplateId: 'vnet' },
+      { id: 'nsg', componentId: 'azure-nsg', label: '{{prefix}}-nsg', category: 'networking', provider: 'azure', nodeType: 'attachment', x: 80, y: 380, parentTemplateId: 'vnet' },
     ],
-    edges: [
-      { from: 'nsg', to: 'subnet' },
-    ],
+    edges: [],
+    // nsg is an attachment node inside vnet — no edge to subnet needed
   },
   {
     id: 'azure-aks-platform',
@@ -102,11 +102,11 @@ const PATTERNS: QuickBuildPattern[] = [
     ],
     nodes: [
       { id: 'rg', componentId: 'azure-resource-group', label: '{{prefix}}-rg', category: 'management', provider: 'azure', isContainer: true, width: 1100, height: 750, x: 50, y: 50 },
-      { id: 'vnet', componentId: 'azure-virtual-network', label: '{{prefix}}-vnet', category: 'networking', provider: 'azure', isContainer: true, width: 850, height: 500, x: 80, y: 100, parentTemplateId: 'rg' },
+      { id: 'vnet', componentId: 'azure-vnet', label: '{{prefix}}-vnet', category: 'networking', provider: 'azure', isContainer: true, width: 850, height: 500, x: 80, y: 100, parentTemplateId: 'rg' },
       { id: 'sysSubnet', componentId: 'azure-subnet', label: 'system-nodepool-subnet', category: 'networking', provider: 'azure', isContainer: true, width: 330, height: 200, x: 80, y: 130, parentTemplateId: 'vnet', config: { address_prefixes: ['10.10.1.0/24'] } },
       { id: 'userSubnet', componentId: 'azure-subnet', label: 'user-nodepool-subnet', category: 'networking', provider: 'azure', isContainer: true, width: 330, height: 200, x: 450, y: 130, parentTemplateId: 'vnet', config: { address_prefixes: ['10.10.2.0/24'] } },
-      { id: 'aks', componentId: 'azure-kubernetes-service', label: '{{prefix}}-aks', category: 'compute', provider: 'azure', x: 120, y: 420, parentTemplateId: 'rg' },
-      { id: 'acr', componentId: 'azure-container-registry', label: '{{prefix}}acr', category: 'containers', provider: 'azure', x: 500, y: 420, parentTemplateId: 'rg' },
+      { id: 'aks', componentId: 'azure-aks', label: '{{prefix}}-aks', category: 'compute', provider: 'azure', x: 120, y: 420, parentTemplateId: 'rg' },
+      { id: 'acr', componentId: 'azure-blob', label: '{{prefix}}acr', category: 'containers', provider: 'azure', x: 500, y: 420, parentTemplateId: 'rg' },
     ],
     edges: [
       { from: 'aks', to: 'acr' },
@@ -125,26 +125,24 @@ const PATTERNS: QuickBuildPattern[] = [
     ],
     nodes: [
       { id: 'rg', componentId: 'azure-resource-group', label: '{{prefix}}-rg', category: 'management', provider: 'azure', isContainer: true, width: 1200, height: 900, x: 50, y: 50 },
-      { id: 'vnet', componentId: 'azure-virtual-network', label: '{{prefix}}-vnet', category: 'networking', provider: 'azure', isContainer: true, width: 1000, height: 650, x: 80, y: 100, parentTemplateId: 'rg' },
+      { id: 'vnet', componentId: 'azure-vnet', label: '{{prefix}}-vnet', category: 'networking', provider: 'azure', isContainer: true, width: 1000, height: 650, x: 80, y: 100, parentTemplateId: 'rg' },
       { id: 'subGw', componentId: 'azure-subnet', label: 'AppGatewaySubnet', category: 'networking', provider: 'azure', isContainer: true, width: 260, height: 160, x: 80, y: 120, parentTemplateId: 'vnet', config: { address_prefixes: ['10.20.0.0/26'] } },
       { id: 'subWeb', componentId: 'azure-subnet', label: 'web-subnet', category: 'networking', provider: 'azure', isContainer: true, width: 280, height: 160, x: 380, y: 120, parentTemplateId: 'vnet', config: { address_prefixes: ['10.20.1.0/24'] } },
       { id: 'subApp', componentId: 'azure-subnet', label: 'app-subnet', category: 'networking', provider: 'azure', isContainer: true, width: 280, height: 160, x: 380, y: 320, parentTemplateId: 'vnet', config: { address_prefixes: ['10.20.2.0/24'] } },
       { id: 'subDb', componentId: 'azure-subnet', label: 'db-subnet', category: 'networking', provider: 'azure', isContainer: true, width: 280, height: 160, x: 380, y: 480, parentTemplateId: 'vnet', config: { address_prefixes: ['10.20.3.0/24'], delegation: 'Microsoft.DBforPostgreSQL/flexibleServers' } },
-      { id: 'agw', componentId: 'azure-application-gateway', label: '{{prefix}}-appgw', category: 'networking', provider: 'azure', x: 90, y: 150, parentTemplateId: 'subGw' },
-      { id: 'nsgWeb', componentId: 'azure-network-security-group', label: 'nsg-web', category: 'networking', provider: 'azure', x: 700, y: 140, parentTemplateId: 'vnet' },
-      { id: 'nsgApp', componentId: 'azure-network-security-group', label: 'nsg-app', category: 'networking', provider: 'azure', x: 700, y: 340, parentTemplateId: 'vnet' },
-      { id: 'nsgDb', componentId: 'azure-network-security-group', label: 'nsg-db', category: 'networking', provider: 'azure', x: 700, y: 500, parentTemplateId: 'vnet' },
-      { id: 'vm1', componentId: 'azure-virtual-machine', label: '{{prefix}}-web-vm1', category: 'compute', provider: 'azure', x: 200, y: 150, parentTemplateId: 'subWeb' },
-      { id: 'vm2', componentId: 'azure-virtual-machine', label: '{{prefix}}-app-vm1', category: 'compute', provider: 'azure', x: 200, y: 350, parentTemplateId: 'subApp' },
-      { id: 'sql', componentId: 'azure-sql-database', label: '{{prefix}}-sqldb', category: 'database', provider: 'azure', x: 200, y: 510, parentTemplateId: 'subDb' },
+      { id: 'agw', componentId: 'azure-app-gw', label: '{{prefix}}-appgw', category: 'networking', provider: 'azure', x: 90, y: 150, parentTemplateId: 'subGw' },
+      { id: 'nsgWeb', componentId: 'azure-nsg', label: 'nsg-web', category: 'networking', provider: 'azure', nodeType: 'attachment', x: 700, y: 140, parentTemplateId: 'vnet' },
+      { id: 'nsgApp', componentId: 'azure-nsg', label: 'nsg-app', category: 'networking', provider: 'azure', nodeType: 'attachment', x: 700, y: 340, parentTemplateId: 'vnet' },
+      { id: 'nsgDb', componentId: 'azure-nsg', label: 'nsg-db', category: 'networking', provider: 'azure', nodeType: 'attachment', x: 700, y: 500, parentTemplateId: 'vnet' },
+      { id: 'vm1', componentId: 'azure-vm', label: '{{prefix}}-web-vm1', category: 'compute', provider: 'azure', x: 200, y: 150, parentTemplateId: 'subWeb' },
+      { id: 'vm2', componentId: 'azure-vm', label: '{{prefix}}-app-vm1', category: 'compute', provider: 'azure', x: 200, y: 350, parentTemplateId: 'subApp' },
+      { id: 'sql', componentId: 'azure-sql', label: '{{prefix}}-sqldb', category: 'database', provider: 'azure', x: 200, y: 510, parentTemplateId: 'subDb' },
     ],
     edges: [
       { from: 'agw', to: 'vm1' },
       { from: 'vm1', to: 'vm2' },
       { from: 'vm2', to: 'sql' },
-      { from: 'nsgWeb', to: 'subWeb' },
-      { from: 'nsgApp', to: 'subApp' },
-      { from: 'nsgDb', to: 'subDb' },
+      // NSGs are attachment nodes — no edges needed; they sit inside vnet visually
     ],
   },
 
@@ -167,7 +165,7 @@ const PATTERNS: QuickBuildPattern[] = [
       { id: 'privSub', componentId: 'aws-subnet', label: 'private-subnet-1a', category: 'networking', provider: 'aws', isContainer: true, width: 420, height: 200, x: 580, y: 100, parentTemplateId: 'vpc', config: { cidr_block: '10.0.2.0/24', availability_zone: 'a' } },
       { id: 'igw', componentId: 'aws-internet-gateway', label: '{{prefix}}-igw', category: 'networking', provider: 'aws', x: 80, y: 430, parentTemplateId: 'vpc' },
       { id: 'nat', componentId: 'aws-nat-gateway', label: '{{prefix}}-nat', category: 'networking', provider: 'aws', x: 250, y: 430, parentTemplateId: 'vpc' },
-      { id: 'sg', componentId: 'aws-security-group', label: '{{prefix}}-sg-web', category: 'networking', provider: 'aws', x: 450, y: 430, parentTemplateId: 'vpc' },
+      { id: 'sg', componentId: 'aws-security-group', label: '{{prefix}}-sg-web', category: 'networking', provider: 'aws', nodeType: 'attachment', x: 450, y: 430, parentTemplateId: 'vpc' },
       { id: 'alb', componentId: 'aws-alb', label: '{{prefix}}-alb', category: 'networking', provider: 'aws', x: 650, y: 430, parentTemplateId: 'vpc', config: { load_balancer_type: 'application' } },
       { id: 'ec2a', componentId: 'aws-ec2', label: '{{prefix}}-ec2-1', category: 'compute', provider: 'aws', x: 90, y: 130, parentTemplateId: 'privSub' },
       { id: 'ec2b', componentId: 'aws-ec2', label: '{{prefix}}-ec2-2', category: 'compute', provider: 'aws', x: 250, y: 130, parentTemplateId: 'privSub' },
@@ -192,7 +190,7 @@ const PATTERNS: QuickBuildPattern[] = [
     nodes: [
       { id: 'apigw', componentId: 'aws-api-gateway', label: '{{prefix}}-gateway', category: 'appservices', provider: 'aws', x: 100, y: 200 },
       { id: 'lambda', componentId: 'aws-lambda', label: '{{prefix}}-handler', category: 'appservices', provider: 'aws', x: 400, y: 200, config: { runtime: 'nodejs20.x', architectures: ['arm64'], timeout: 30 } },
-      { id: 'dynamo', componentId: 'aws-dynamodb', label: '{{prefix}}-table', category: 'database', provider: 'aws', x: 700, y: 200 },
+      { id: 'dynamo', componentId: 'dynamodb', label: '{{prefix}}-table', category: 'database', provider: 'aws', x: 700, y: 200 },
       { id: 'sqs', componentId: 'aws-sqs', label: '{{prefix}}-dlq', category: 'messaging', provider: 'aws', x: 400, y: 420 },
     ],
     edges: [
@@ -218,11 +216,9 @@ const PATTERNS: QuickBuildPattern[] = [
       { id: 'sub2', componentId: 'aws-subnet', label: 'private-subnet-1b', category: 'networking', provider: 'aws', isContainer: true, width: 420, height: 200, x: 580, y: 100, parentTemplateId: 'vpc', config: { availability_zone: 'b' } },
       { id: 'natgw', componentId: 'aws-nat-gateway', label: '{{prefix}}-nat', category: 'networking', provider: 'aws', x: 80, y: 430, parentTemplateId: 'vpc' },
       { id: 'eks', componentId: 'aws-eks', label: '{{prefix}}-cluster', category: 'compute', provider: 'aws', x: 300, y: 430, parentTemplateId: 'vpc' },
-      { id: 'ecr', componentId: 'aws-ecr', label: '{{prefix}}-ecr', category: 'containers', provider: 'aws', x: 600, y: 430, parentTemplateId: 'vpc' },
     ],
-    edges: [
-      { from: 'eks', to: 'ecr' },
-    ],
+    edges: [],
+    // aws-ecr is not in the component catalog — removed from pattern to prevent broken config panel
   },
 
   // ── GCP ────────────────────────────────────────────────────────────────────
@@ -241,7 +237,7 @@ const PATTERNS: QuickBuildPattern[] = [
     nodes: [
       { id: 'vpc', componentId: 'gcp-vpc', label: '{{prefix}}-vpc', category: 'networking', provider: 'gcp', isContainer: true, width: 1000, height: 700, x: 50, y: 50, config: { auto_create_subnetworks: false, routing_mode: 'REGIONAL' } },
       { id: 'subnet', componentId: 'gcp-subnet', label: '{{prefix}}-subnet ({{cidr}})', category: 'networking', provider: 'gcp', isContainer: true, width: 700, height: 280, x: 80, y: 100, parentTemplateId: 'vpc', config: { private_ip_google_access: true } },
-      { id: 'fw', componentId: 'gcp-firewall', label: '{{prefix}}-fw-allow-http', category: 'networking', provider: 'gcp', x: 80, y: 450, parentTemplateId: 'vpc', config: { direction: 'INGRESS', priority: 1000, allow_ports: 'tcp:80,tcp:443', source_ranges: '0.0.0.0/0' } },
+      { id: 'fw', componentId: 'gcp-firewall', label: '{{prefix}}-fw-allow-http', category: 'networking', provider: 'gcp', nodeType: 'attachment', x: 80, y: 450, parentTemplateId: 'vpc', config: { direction: 'INGRESS', priority: 1000, allow_ports: 'tcp:80,tcp:443', source_ranges: '0.0.0.0/0' } },
       { id: 'vm1', componentId: 'gcp-compute-instance', label: '{{prefix}}-vm-1', category: 'compute', provider: 'gcp', x: 90, y: 110, parentTemplateId: 'subnet' },
       { id: 'vm2', componentId: 'gcp-compute-instance', label: '{{prefix}}-vm-2', category: 'compute', provider: 'gcp', x: 350, y: 110, parentTemplateId: 'subnet' },
       { id: 'lb', componentId: 'gcp-cloud-lb', label: '{{prefix}}-lb', category: 'networking', provider: 'gcp', x: 450, y: 450, parentTemplateId: 'vpc', config: { load_balancing_scheme: 'EXTERNAL_MANAGED', protocol: 'HTTPS' } },
@@ -265,7 +261,7 @@ const PATTERNS: QuickBuildPattern[] = [
     nodes: [
       { id: 'vpc', componentId: 'gcp-vpc', label: '{{prefix}}-vpc', category: 'networking', provider: 'gcp', isContainer: true, width: 1000, height: 650, x: 50, y: 50, config: { routing_mode: 'REGIONAL' } },
       { id: 'subnet', componentId: 'gcp-subnet', label: '{{prefix}}-nodes-subnet', category: 'networking', provider: 'gcp', isContainer: true, width: 700, height: 280, x: 80, y: 100, parentTemplateId: 'vpc', config: { private_ip_google_access: true, purpose: 'PRIVATE', log_config_enable: true } },
-      { id: 'fw', componentId: 'gcp-firewall', label: '{{prefix}}-fw-internal', category: 'networking', provider: 'gcp', x: 80, y: 430, parentTemplateId: 'vpc', config: { direction: 'INGRESS', source_tags: ['k8s-node'] } },
+      { id: 'fw', componentId: 'gcp-firewall', label: '{{prefix}}-fw-internal', category: 'networking', provider: 'gcp', nodeType: 'attachment', x: 80, y: 430, parentTemplateId: 'vpc', config: { direction: 'INGRESS', source_tags: ['k8s-node'] } },
       { id: 'gke', componentId: 'gcp-gke', label: '{{prefix}}-cluster', category: 'compute', provider: 'gcp', x: 350, y: 430, parentTemplateId: 'vpc' },
       { id: 'gcs', componentId: 'gcp-cloud-storage', label: '{{prefix}}-artifacts', category: 'storage', provider: 'gcp', x: 650, y: 430, parentTemplateId: 'vpc', config: { storage_class: 'STANDARD', uniform_bucket_level_access: true } },
     ],
@@ -323,7 +319,7 @@ function buildNodesAndEdges(
 
     return {
       id: realId,
-      type: isContainer ? 'container' : 'custom',
+      type: isContainer ? 'container' : tmpl.nodeType === 'attachment' ? 'attachment' : 'custom',
       position: parentRealId
         ? { x: tmpl.x, y: tmpl.y }
         : { x: canvasOffset.x + tmpl.x, y: canvasOffset.y + tmpl.y },

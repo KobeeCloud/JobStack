@@ -22,7 +22,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
-import { CustomNode, ContainerNode, isValidConnection, getComponentCategory, shouldUseParentChild, getConnectionError, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
+import { CustomNode, ContainerNode, AttachmentNode, isValidConnection, getComponentCategory, shouldUseParentChild, getConnectionError, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { DiagramSearch } from '@/components/diagram/diagram-search'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
@@ -55,7 +55,7 @@ import { K8sWizard } from '@/components/diagram/k8s-wizard'
 import { GovernanceWizard } from '@/components/diagram/governance-wizard'
 import { QuickBuildModal } from '@/components/diagram/quick-build-modal'
 
-const nodeTypes = { custom: CustomNode, container: ContainerNode }
+const nodeTypes = { custom: CustomNode, container: ContainerNode, attachment: AttachmentNode }
 const edgeTypes = { default: LabeledEdge }
 
 // Container component IDs that should use ContainerNode type

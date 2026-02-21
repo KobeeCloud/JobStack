@@ -713,3 +713,74 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
 })
 
 ContainerNode.displayName = 'ContainerNode'
+
+// ========================================================
+// ATTACHMENT NODE — compact "socket" badge for NSG, SG, Firewall, Route Table
+// Sits inside a parent container (parentId), no outgoing edges needed.
+// Double-click opens the config panel via custom event.
+// ========================================================
+const ATTACHMENT_ICONS: Record<string, string> = {
+  'azure-nsg': '🛡️',
+  'azure-firewall': '🔥',
+  'azure-route-table': '🗺️',
+  'aws-security-group': '🔒',
+  'gcp-firewall': '🔥',
+  'aws-waf': '🛡️',
+}
+
+export const AttachmentNode = memo(function AttachmentNode({
+  id,
+  data,
+  selected,
+}: {
+  id: string
+  data: any
+  selected: boolean
+}) {
+  const componentId: string = data?.componentId || data?.component || ''
+  const icon = ATTACHMENT_ICONS[componentId] || '🔐'
+  const label: string = data?.label || componentId
+
+  const handleConfigure = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('configure-node', { detail: { nodeId: id } }))
+  }, [id])
+
+  const { deleteElements } = useReactFlow()
+  const handleDelete = useCallback(() => {
+    deleteElements({ nodes: [{ id }] })
+  }, [id, deleteElements])
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <div
+          onDoubleClick={handleConfigure}
+          className={[
+            'flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium cursor-pointer select-none transition-all',
+            'bg-background/90 border-border shadow-sm hover:border-primary hover:shadow-md',
+            selected ? 'ring-2 ring-primary border-primary' : '',
+          ].join(' ')}
+          style={{ minWidth: 90 }}
+          title={`Double-click to configure ${label}`}
+        >
+          <span className="text-sm leading-none">{icon}</span>
+          <span className="truncate max-w-[140px] leading-tight">{label}</span>
+          {/* Hidden handles so React Flow is happy but won't render visible dots */}
+          <Handle type="target" position={Position.Top} className="!opacity-0 !w-1 !h-1 !min-w-0 !min-h-0" />
+          <Handle type="source" position={Position.Bottom} className="!opacity-0 !w-1 !h-1 !min-w-0 !min-h-0" />
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-48">
+        <ContextMenuItem onClick={handleConfigure}>
+          <Settings className="w-4 h-4 mr-2" />Configure
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={handleDelete} className="text-destructive">
+          <Trash2 className="w-4 h-4 mr-2" />Delete
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  )
+})
+
+AttachmentNode.displayName = 'AttachmentNode'

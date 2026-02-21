@@ -36,7 +36,54 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
   const generatorType = componentInfo ? getEffectiveGeneratorType(componentInfo) : 'documentation'
   const generatorMeta = GENERATOR_TYPE_META[generatorType]
 
-  if (!node || !componentInfo) return null
+  if (!node) return null
+
+  // Fallback for components not found in the catalog (e.g. from outdated templates)
+  if (!componentInfo) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            <span className="font-semibold text-sm">{String(node.data?.label || componentId || '')}</span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
+        </div>
+        <div className="p-4 space-y-4 overflow-y-auto flex-1">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md p-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>Component type <code className="font-mono">{String(componentId ?? '')}</code> not found in catalog. Basic editing only.</span>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Label</Label>
+            <Input
+              value={config.label ?? (node.data?.label as string) ?? ''}
+              onChange={(e) => setConfig((prev: any) => ({ ...prev, label: e.target.value }))}
+              placeholder="Component label"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Notes</Label>
+            <Input
+              value={config.notes ?? ''}
+              onChange={(e) => setConfig((prev: any) => ({ ...prev, notes: e.target.value }))}
+              placeholder="Optional notes or description..."
+            />
+          </div>
+        </div>
+        <div className="p-4 border-t flex gap-2">
+          <Button
+            size="sm"
+            className="flex-1"
+            onClick={() => { onUpdate(node.id, config); onClose() }}
+          >
+            Save
+          </Button>
+          <Button size="sm" variant="outline" onClick={onClose}>Cancel</Button>
+        </div>
+      </div>
+    )
+  }
 
   const handleSave = () => {
     const finalConfig = {

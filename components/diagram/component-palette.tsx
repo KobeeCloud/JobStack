@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { ComponentConfig, CloudProvider, ServiceType } from '@/lib/catalog'
 import { LucideIcon, Search, X, Filter } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -29,7 +29,13 @@ export function ComponentPalette({
 }: ComponentPaletteProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [activeProvider, setActiveProvider] = useState<string>(cloudProvider || 'all')
   const dragImageRef = useRef<HTMLDivElement>(null)
+
+  // Keep local provider in sync if the project's cloud_provider changes
+  useEffect(() => {
+    setActiveProvider(cloudProvider || 'all')
+  }, [cloudProvider])
 
   // Custom drag start handler with proper drag image
   const handleDragStart = useCallback((e: React.DragEvent, component: ComponentConfig) => {
@@ -62,12 +68,13 @@ export function ComponentPalette({
   const providerFilteredComponents = useMemo(() => {
     let filtered = components
 
-    // Filter by cloud provider - STRICT filtering
-    if (cloudProvider) {
+    // Filter by selected provider (local state — user can override)
+    const effectiveProvider = activeProvider === 'all' ? undefined : activeProvider as CloudProvider
+    if (effectiveProvider) {
       filtered = filtered.filter((c) => {
         // Only include components without provider (generic) OR exact match
         if (!c.provider || c.provider === 'generic') return true
-        return c.provider === cloudProvider
+        return c.provider === effectiveProvider
       })
     }
 
@@ -86,7 +93,7 @@ export function ComponentPalette({
     }
 
     return filtered
-  }, [components, cloudProvider, projectTypes])
+  }, [components, activeProvider, projectTypes])
 
   const categories = Array.from(new Set(providerFilteredComponents.map((c) => c.category)))
 
@@ -138,11 +145,23 @@ export function ComponentPalette({
       <div className="p-4 border-b space-y-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Components</h3>
-          {cloudProvider && (
-            <Badge variant="outline" className="text-xs capitalize">
-              {cloudProvider}
-            </Badge>
-          )}
+        </div>
+        {/* Provider switcher — always visible so user can filter regardless of project setting */}
+        <div className="flex gap-0.5 p-0.5 bg-muted rounded-lg">
+          {(['all', 'azure', 'aws', 'gcp'] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setActiveProvider(p)}
+              className={[
+                'flex-1 text-xs py-1 rounded-md transition-colors font-medium',
+                activeProvider === p
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              ].join(' ')}
+            >
+              {p === 'all' ? 'All' : p.toUpperCase()}
+            </button>
+          ))}
         </div>
         {projectTypes && projectTypes.length > 0 && (
           <div className="flex flex-wrap gap-1">
