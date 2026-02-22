@@ -1,4 +1,18 @@
 -- ============================================================================
+-- DEPRECATED — Ten plik nie jest już potrzebny.
+--
+-- Wszystkie poprawki rekurencji RLS zostały włączone do głównego pliku:
+--   supabase/schema.sql (wersja 4.0 — idempotentna)
+--
+-- Schema.sql zawiera już:
+--   - Funkcje SECURITY DEFINER (is_org_member, get_org_role, is_org_owner, is_org_admin_or_owner)
+--   - Bezpieczne polityki RLS na organization_members
+--   - DROP POLICY IF EXISTS + CREATE POLICY (idempotentne)
+--
+-- Ten plik zachowano wyłącznie dla historii. NIE uruchamiaj go osobno.
+-- ============================================================================
+
+-- ORYGINALNY OPIS:
 -- MIGRACJA: Naprawa nieskończonej rekurencji RLS w organization_members
 --
 -- PROBLEM: Polityki RLS na tabeli organization_members odwoływały się do
