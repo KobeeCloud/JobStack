@@ -1577,7 +1577,15 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_eks_cluster',
-      defaultConfig: {}
+      defaultConfig: {
+        kubernetes_version: '1.31',
+        endpoint_private_access: true,
+        endpoint_public_access: true,
+        instance_types: ['m5.large'],
+        desired_size: 2,
+        min_size: 1,
+        max_size: 5,
+      }
     }
   },
   {
@@ -1759,7 +1767,20 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_container_cluster',
-      defaultConfig: {}
+      defaultConfig: {
+        initial_node_count: 1,
+        remove_default_node_pool: true,
+        deletion_protection: false,
+        machine_type: 'n2-standard-2',
+        disk_size_gb: 100,
+        disk_type: 'pd-standard',
+        min_count: 1,
+        max_count: 5,
+        auto_repair: true,
+        auto_upgrade: true,
+        network: 'default',
+        subnetwork: 'default',
+      }
     }
   },
   {
@@ -1853,6 +1874,22 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Managed Kubernetes service',
     estimatedCost: { min: 73, max: 3000 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_kubernetes_cluster',
+      defaultConfig: {
+        dns_prefix: 'myaks',
+        kubernetes_version: '1.31',
+        node_count: 2,
+        vm_size: 'Standard_D2s_v3',
+        os_disk_size_gb: 128,
+        identity_type: 'SystemAssigned',
+        sku_tier: 'Free',
+        network_plugin: 'azure',
+        network_policy: 'azure',
+        load_balancer_sku: 'standard',
+      }
+    }
   },
   {
     id: 'azure-sql',

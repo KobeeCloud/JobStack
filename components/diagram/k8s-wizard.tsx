@@ -97,55 +97,61 @@ function generateK8sNodes(
 ): { nodes: Node[]; edges: Edge[] } {
   const nodes: Node[] = []
   const edges: Edge[] = []
-  const pid = PROVIDER_META[provider].prefix
-  const clusterId = `k8s-cluster-${Date.now()}`
-  let xOffset = 80
+  const now = Date.now()
 
-  // Container node: VPC/VNet/VPC
-  const containerLabel = provider === 'aks' ? 'Resource Group' : provider === 'eks' ? 'VPC' : 'GCP Project'
+  // ── outer container (RG / VPC / Project) ─────────────────────────────────
+  const containerLabel = provider === 'aks' ? `${clusterName}-rg` : provider === 'eks' ? `${clusterName}-vpc` : `${clusterName}-project`
   const containerCompId = provider === 'aks' ? 'azure-resource-group' : provider === 'eks' ? 'aws-vpc' : 'gcp-project'
-  const containerId = `k8s-container-${Date.now()}`
-  const clusterCompId = provider === 'aks' ? 'azure-aks' : provider === 'eks' ? 'aws-eks' : 'gcp-gke'
+  const clusterCompId   = provider === 'aks' ? 'azure-aks' : provider === 'eks' ? 'aws-eks' : 'gcp-gke'
 
+  // Width grows with addons count, min 780
+  const addonCols = Math.min(addons.length, 4)
+  const containerW = Math.max(780, addonCols * 164 + 80)
+  const containerH = addons.length > 0 ? 560 : 400
+
+  const containerId = `k8s-container-${now}`
   nodes.push({
     id: containerId,
     type: 'container',
     position: { x: 100, y: 100 },
-    data: {
-      label: `${clusterName}-rg`,
-      componentId: containerCompId,
-      config: {},
-    },
-    style: { width: 700, height: 500 },
+    data: { label: containerLabel, componentId: containerCompId, config: {} },
+    style: { width: containerW, height: containerH },
   } as Node)
 
-  // Cluster node
+  // ── cluster node ─────────────────────────────────────────────────────────
+  const clusterId = `k8s-cluster-${now}`
   nodes.push({
     id: clusterId,
     type: 'custom',
-    position: { x: 40, y: 60 },
+    position: { x: 40, y: 50 },
     parentId: containerId,
+    extent: 'parent' as const,
     data: {
       label: clusterName,
       componentId: clusterCompId,
       config: {
-        node_count: nodePools[0]?.minCount || 2,
+        dns_prefix: clusterName,
+        kubernetes_version: '1.31',
+        node_count: nodePools[0]?.minCount ?? 2,
         vm_size: nodePools[0]?.vmSize,
+        identity_type: 'SystemAssigned',
       },
     },
   } as Node)
 
-  // Node pool nodes
+  // ── node pool nodes ───────────────────────────────────────────────────────
   nodePools.forEach((pool, i) => {
-    const poolId = `k8s-pool-${Date.now()}-${i}`
+    const poolCompId = provider === 'aks' ? 'azure-aks-nodepool' : provider === 'eks' ? 'aws-eks-nodegroup' : 'gcp-gke'
+    const poolId = `k8s-pool-${now}-${i}`
     nodes.push({
       id: poolId,
       type: 'custom',
-      position: { x: 40 + i * 200, y: 180 },
+      position: { x: 200 + i * 170, y: 50 },
       parentId: containerId,
+      extent: 'parent' as const,
       data: {
         label: `${pool.name} pool`,
-        componentId: provider === 'aks' ? 'azure-aks-nodepool' : 'aws-eks-nodegroup',
+        componentId: poolCompId,
         config: {
           vm_size: pool.vmSize,
           min_count: pool.minCount,
@@ -154,31 +160,50 @@ function generateK8sNodes(
         },
       },
     } as Node)
-    edges.push({ id: `edge-cluster-pool-${i}`, source: clusterId, target: poolId, type: 'default' })
+    // Single clean "dependency" edge: cluster manages pool
+    edges.push({
+      id: `edge-pool-${now}-${i}`,
+      source: clusterId,
+      target: poolId,
+      type: 'labeled-edge',
+      data: { edgeType: 'dependency', label: 'manages' },
+    } as Edge)
   })
 
-  // Add-on nodes below the container
+  // ── addons — inside the container, NO edges, clean grid below the cluster ──
+  // Rendered as regular nodes positioned in a horizontal grid at the bottom.
   addons.forEach((addon, i) => {
     const addonCompMap: Record<Addon, string> = {
-      'ingress': 'k8s-ingress',
+      'ingress':      'k8s-ingress',
       'cert-manager': 'k8s-ingress',
-      'prometheus': 'prometheus',
-      'linkerd': 'istio',
-      'argo-cd': 'argocd',
-      'keda': 'k8s-ingress',
+      'prometheus':   'prometheus',
+      'linkerd':      'istio',
+      'argo-cd':      'argocd',
+      'keda':         'k8s-ingress',
     }
-    const addonId = `k8s-addon-${Date.now()}-${i}`
+    const col = i % 4
+    const row = Math.floor(i / 4)
+    const addonId = `k8s-addon-${now}-${i}`
     nodes.push({
       id: addonId,
       type: 'custom',
-      position: { x: 100 + i * 160, y: 620 + Math.floor(i / 4) * 100 },
+      position: { x: 40 + col * 164, y: 180 + row * 120 },
+      parentId: containerId,
+      extent: 'parent' as const,
       data: {
-        label: ALL_ADDONS.find(a => a.id === addon)?.label || addon,
-        componentId: addonCompMap[addon] || 'k8s-ingress',
+        label: ALL_ADDONS.find(a => a.id === addon)?.label ?? addon,
+        componentId: addonCompMap[addon] ?? 'k8s-ingress',
         config: {},
       },
     } as Node)
-    edges.push({ id: `edge-addon-${i}`, source: clusterId, target: addonId, type: 'default' })
+    // Light "dependency" edge from cluster to addon — optional, subdued
+    edges.push({
+      id: `edge-addon-${now}-${i}`,
+      source: clusterId,
+      target: addonId,
+      type: 'labeled-edge',
+      data: { edgeType: 'dependency' },
+    } as Edge)
   })
 
   return { nodes, edges }

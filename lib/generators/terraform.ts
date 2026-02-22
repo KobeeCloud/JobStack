@@ -481,10 +481,109 @@ export function generateTerraformWithValidation(
       }
     }
 
+    // ── Azure AKS: default_node_pool + identity blocks ────────────────
+    if (resourceType === 'azurerm_kubernetes_cluster') {
+      const vmSize = userConfig.vm_size || 'Standard_D2s_v3'
+      const nodeCount = userConfig.node_count ?? 2
+      const minCount = userConfig.min_count
+      const maxCount = userConfig.max_count
+      const autoscale = userConfig.enable_auto_scaling ?? (minCount != null && maxCount != null)
+      resourcesTf += `  default_node_pool {\n`
+      resourcesTf += `    name                = "system"\n`
+      resourcesTf += `    vm_size             = "${vmSize}"\n`
+      if (autoscale && minCount != null && maxCount != null) {
+        resourcesTf += `    auto_scaling_enabled = true\n`
+        resourcesTf += `    min_count           = ${minCount}\n`
+        resourcesTf += `    max_count           = ${maxCount}\n`
+      } else {
+        resourcesTf += `    node_count          = ${nodeCount}\n`
+      }
+      resourcesTf += `    os_disk_size_gb     = ${userConfig.os_disk_size_gb ?? 128}\n`
+      resourcesTf += `    type                = "VirtualMachineScaleSets"\n`
+      resourcesTf += `  }\n`
+      const identityType = userConfig.identity_type || 'SystemAssigned'
+      resourcesTf += `  identity {\n    type = "${identityType}"\n  }\n`
+      if (userConfig.kubernetes_version) {
+        resourcesTf += `  kubernetes_version = "${userConfig.kubernetes_version}"\n`
+      }
+      if (userConfig.dns_prefix) {
+        resourcesTf += `  dns_prefix = "${userConfig.dns_prefix}"\n`
+      }
+      if (userConfig.network_plugin) {
+        resourcesTf += `  network_profile {\n`
+        resourcesTf += `    network_plugin = "${userConfig.network_plugin}"\n`
+        if (userConfig.network_policy) {
+          resourcesTf += `    network_policy = "${userConfig.network_policy}"\n`
+        }
+        if (userConfig.load_balancer_sku) {
+          resourcesTf += `    load_balancer_sku = "${userConfig.load_balancer_sku}"\n`
+        }
+        resourcesTf += `  }\n`
+      }
+    }
+
+    // ── AWS EKS: role_arn + vpc_config ────────────────────────────────
+    if (resourceType === 'aws_eks_cluster') {
+      resourcesTf += `  role_arn = aws_iam_role.eks_cluster_role.arn\n`
+      resourcesTf += `  vpc_config {\n`
+      resourcesTf += `    endpoint_private_access = ${userConfig.endpoint_private_access ?? true}\n`
+      resourcesTf += `    endpoint_public_access  = ${userConfig.endpoint_public_access ?? true}\n`
+      resourcesTf += `  }\n`
+      if (userConfig.kubernetes_version) {
+        resourcesTf += `  version = "${userConfig.kubernetes_version}"\n`
+      }
+    }
+
+    // ── GCP GKE: remove_default_node_pool + node_config ───────────────
+    if (resourceType === 'google_container_cluster') {
+      resourcesTf += `  remove_default_node_pool = ${userConfig.remove_default_node_pool ?? true}\n`
+      resourcesTf += `  initial_node_count       = ${userConfig.initial_node_count ?? 1}\n`
+      resourcesTf += `  deletion_protection      = ${userConfig.deletion_protection ?? false}\n`
+      if (userConfig.machine_type || userConfig.disk_size_gb) {
+        resourcesTf += `  node_config {\n`
+        if (userConfig.machine_type) {
+          resourcesTf += `    machine_type = "${userConfig.machine_type}"\n`
+        }
+        if (userConfig.disk_size_gb) {
+          resourcesTf += `    disk_size_gb = ${userConfig.disk_size_gb}\n`
+        }
+        if (userConfig.disk_type) {
+          resourcesTf += `    disk_type = "${userConfig.disk_type}"\n`
+        }
+        resourcesTf += `  }\n`
+      }
+      if (userConfig.min_count != null || userConfig.max_count != null) {
+        resourcesTf += `  cluster_autoscaling {\n    enabled = true\n    resource_limits {\n      resource_type = "cpu"\n      minimum       = 1\n      maximum       = ${userConfig.max_count ?? 10}\n    }\n    resource_limits {\n      resource_type = "memory"\n      minimum       = 1\n      maximum       = ${(userConfig.max_count ?? 10) * 4}\n    }\n  }\n`
+      }
+      if (userConfig.network && userConfig.network !== 'default') {
+        resourcesTf += `  network    = "${userConfig.network}"\n`
+      }
+      if (userConfig.subnetwork && userConfig.subnetwork !== 'default') {
+        resourcesTf += `  subnetwork = "${userConfig.subnetwork}"\n`
+      }
+      if (userConfig.kubernetes_version) {
+        resourcesTf += `  min_master_version = "${userConfig.kubernetes_version}"\n`
+      }
+    }
+
     // ── Generic config keys (skip already-handled ones) ────────────────
+    const K8S_HANDLED_KEYS = new Set([
+      // AKS
+      'vm_size', 'node_count', 'min_count', 'max_count', 'enable_auto_scaling',
+      'os_disk_size_gb', 'identity_type', 'kubernetes_version', 'dns_prefix',
+      'network_plugin', 'network_policy', 'load_balancer_sku', 'sku_tier',
+      // EKS
+      'endpoint_private_access', 'endpoint_public_access', 'instance_types',
+      'desired_size', 'min_size', 'max_size',
+      // GKE
+      'initial_node_count', 'remove_default_node_pool', 'deletion_protection',
+      'machine_type', 'disk_size_gb', 'disk_type', 'auto_repair', 'auto_upgrade',
+      'network', 'subnetwork',
+    ])
     const handledKeys = new Set([
       ...Array.from(AZURE_EXPLICIT_KEYS),
       ...Array.from(VM_HANDLED_KEYS),
+      ...Array.from(K8S_HANDLED_KEYS),
       'size', 'sku',
       'security_rules', // handled above as security_rule blocks
     ])
