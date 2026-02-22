@@ -1,4 +1,10 @@
 import { Node, Edge } from '@xyflow/react'
+import {
+  buildNodeMap,
+  getNodeComponentId,
+  findAncestorName,
+  findConnectedNames,
+} from '@/lib/generators/core/graph-utils'
 
 /**
  * Azure ARM Template Generator
@@ -74,45 +80,23 @@ const ARM_MAPPINGS: Record<string, { type: string; apiVersion: string; defaultPr
 }
 
 function sanitizeARMName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9-]/g, '').substring(0, 24)
+  const cleaned = name.toLowerCase().replace(/[^a-z0-9-]/g, '')
+  // Truncate but ensure uniqueness will be handled by caller
+  return cleaned.substring(0, 24) || 'resource'
 }
 
-function getNodeComponentId(node: Node): string {
-  return (node.data as any)?.componentId || (node.data as any)?.component || node.type || ''
-}
-
-function buildNodeMap(nodes: Node[]): Map<string, Node> {
-  const m = new Map<string, Node>()
-  for (const n of nodes) m.set(n.id, n)
-  return m
-}
+// Removed duplicate getNodeComponentId — now imported from shared core
+// Removed duplicate buildNodeMap — now imported from shared core
 
 function findAncestor(nodeId: string, targetComponentId: string, nodeMap: Map<string, Node>, nodeIdToName: Map<string, string>): string | null {
-  let current = nodeMap.get(nodeId)
-  while (current?.parentId) {
-    const parent = nodeMap.get(current.parentId)
-    if (!parent) break
-    if (getNodeComponentId(parent) === targetComponentId) return nodeIdToName.get(parent.id) || null
-    current = parent
-  }
-  return null
+  return findAncestorName(nodeId, targetComponentId, nodeMap, nodeIdToName)
 }
 
 function findConnected(nodeId: string, targetTypes: string[], edges: Edge[], nodeMap: Map<string, Node>, nodeIdToName: Map<string, string>): string[] {
-  const results: string[] = []
-  for (const edge of edges) {
-    const otherId = edge.source === nodeId ? edge.target : edge.target === nodeId ? edge.source : null
-    if (!otherId) continue
-    const other = nodeMap.get(otherId)
-    if (other && targetTypes.includes(getNodeComponentId(other))) {
-      const name = nodeIdToName.get(otherId)
-      if (name) results.push(name)
-    }
-  }
-  return results
+  return findConnectedNames(nodeId, targetTypes, edges, nodeMap, nodeIdToName)
 }
 
-export function generateARM(nodes: Node[], edges: Edge[]): string {
+export function generateARM(nodes: Node[], edges: Edge[] = []): string {
   const template: ARMTemplate = {
     $schema: 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#',
     contentVersion: '1.0.0.0',
@@ -128,10 +112,18 @@ export function generateARM(nodes: Node[], edges: Edge[]): string {
   const nodeMap = buildNodeMap(nodes)
   const nodeIdToName = new Map<string, string>()
 
-  // First pass: assign names
+  // First pass: assign collision-safe names (BUG-1 fix)
+  const issuedArmNames = new Set<string>()
   for (const node of nodes) {
     if (!ARM_MAPPINGS[getNodeComponentId(node)]) continue
-    nodeIdToName.set(node.id, sanitizeARMName(String(node.data?.label || node.id)))
+    const baseName = sanitizeARMName(String(node.data?.label || node.id))
+    let name = baseName
+    let counter = 1
+    while (issuedArmNames.has(name)) {
+      name = sanitizeARMName(`${baseName}${counter++}`)
+    }
+    issuedArmNames.add(name)
+    nodeIdToName.set(node.id, name)
   }
 
   // Second pass: generate resources with context
@@ -191,7 +183,8 @@ export function generateARM(nodes: Node[], edges: Edge[]): string {
         location: "[parameters('location')]",
         properties: nicProps,
         dependsOn: [
-          `[resourceId('Microsoft.Network/virtualNetworks', concat(variables('resourcePrefix'), '${vnetRef || 'vnet'}'))]`,
+          // BUG-5 fix: only add VNet dep if a VNet reference actually exists
+          ...(vnetRef ? [`[resourceId('Microsoft.Network/virtualNetworks', concat(variables('resourcePrefix'), '${vnetRef}'))]`] : []),
           ...nsgNames.map(nsg => `[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('resourcePrefix'), '${nsg}'))]`),
         ],
         tags: { Environment: "[parameters('environment')]", ManagedBy: 'ARM', GeneratedFrom: 'JobStack' },
@@ -281,9 +274,9 @@ export function generateARM(nodes: Node[], edges: Edge[]): string {
 
     template.resources.push(resource)
 
-    // Outputs
+    // Outputs — BUG-3 fix: use concat() without nested brackets
     if (['azure-vnet', 'azure-blob', 'azure-storage-account', 'azure-sql', 'azure-aks', 'azure-keyvault', 'azure-key-vault', 'azure-app-service', 'azure-function', 'azure-functions', 'azure-cosmos', 'azure-cosmosdb'].includes(componentId)) {
-      template.outputs[`${baseName}Id`] = { type: 'string', value: `[resourceId('${mapping.type}', ${resourceName})]` }
+      template.outputs[`${baseName}Id`] = { type: 'string', value: `[resourceId('${mapping.type}', concat(variables('resourcePrefix'), '${baseName}'))]` }
     }
   }
 

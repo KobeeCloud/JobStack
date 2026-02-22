@@ -58,8 +58,9 @@ const DEFAULT_SNAP_CONFIG: SnapConfig = {
   containerPadding: 20,
 };
 
-// Container node types
-const CONTAINER_NODE_TYPES = [
+// Container node types — includes the generic 'container' type used by templates
+const CONTAINER_NODE_TYPES: readonly string[] = [
+  'container',
   'group',
   'vpc',
   'subnet',
@@ -70,7 +71,7 @@ const CONTAINER_NODE_TYPES = [
   'security-group',
   'cluster',
   'namespace',
-];
+] as const;
 
 // ============================================================================
 // Utility Functions
@@ -207,7 +208,7 @@ export function calculateSnapPosition(
     }
 
     const distance = getDistanceToBounds(nodeCenter, container);
-    
+
     // If inside container (negative distance = deeper inside)
     if (distance < 0 && distance < bestDistance) {
       bestDistance = distance;

@@ -1,4 +1,10 @@
 import { Node, Edge } from '@xyflow/react'
+import {
+  buildNodeMap,
+  getNodeComponentId,
+  findAncestorByComponentId,
+  findConnectedNodes,
+} from '@/lib/generators/core/graph-utils'
 
 /**
  * Pulumi TypeScript Generator
@@ -107,54 +113,38 @@ const PULUMI_MAPPINGS: Record<string, { package: string; type: string; imports: 
 }
 
 function sanitizeName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9]/g, '_').replace(/^[0-9]/, '_$&').toLowerCase()
+  return name.replace(/[^a-zA-Z0-9]/g, '_').replace(/^[0-9]/, '_$&').toLowerCase() || 'resource'
 }
 
-function getNodeComponentId(node: Node): string {
-  return (node.data as any)?.componentId || (node.data as any)?.component || node.type || ''
-}
-
-function buildNodeMap(nodes: Node[]): Map<string, Node> {
-  const m = new Map<string, Node>()
-  for (const n of nodes) m.set(n.id, n)
-  return m
-}
+// Removed duplicate getNodeComponentId — now imported from shared core
+// Removed duplicate buildNodeMap — now imported from shared core
+// Removed duplicate findAncestor — now imported from shared core as findAncestorByComponentId
+// Removed duplicate findConnectedNodes — now imported from shared core
 
 function findAncestor(nodeId: string, targetComponentId: string, nodeMap: Map<string, Node>): Node | null {
-  let current = nodeMap.get(nodeId)
-  while (current?.parentId) {
-    const parent = nodeMap.get(current.parentId)
-    if (!parent) break
-    if (getNodeComponentId(parent) === targetComponentId) return parent
-    current = parent
-  }
-  return null
+  return findAncestorByComponentId(nodeId, targetComponentId, nodeMap)
 }
 
-function findConnectedNodes(nodeId: string, targetTypes: string[], edges: Edge[], nodeMap: Map<string, Node>): Node[] {
-  const results: Node[] = []
-  for (const edge of edges) {
-    const otherId = edge.source === nodeId ? edge.target : edge.target === nodeId ? edge.source : null
-    if (!otherId) continue
-    const other = nodeMap.get(otherId)
-    if (other && targetTypes.includes(getNodeComponentId(other))) results.push(other)
-  }
-  return results
-}
-
-export function generatePulumi(nodes: Node[], edges: Edge[]): string {
+export function generatePulumi(nodes: Node[], edges: Edge[] = []): string {
   const resources: PulumiResource[] = []
   const imports = new Set<string>()
   const nodeMap = buildNodeMap(nodes)
   const nodeIdToVar = new Map<string, string>()
+  const issuedPulumiNames = new Set<string>()
 
-  // First pass: assign variable names and collect imports
+  // First pass: assign collision-safe variable names and collect imports (BUG-1 fix)
   for (const node of nodes) {
     const componentId = getNodeComponentId(node)
     const mapping = PULUMI_MAPPINGS[componentId]
     if (!mapping) continue
-    const varName = sanitizeName(String(node.data?.label || node.id))
-    nodeIdToVar.set(node.id, varName)
+    const baseName = sanitizeName(String(node.data?.label || node.id))
+    let name = baseName
+    let counter = 1
+    while (issuedPulumiNames.has(name)) {
+      name = `${baseName}_${counter++}`
+    }
+    issuedPulumiNames.add(name)
+    nodeIdToVar.set(node.id, name)
     mapping.imports.forEach(i => imports.add(i))
   }
 

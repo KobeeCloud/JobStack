@@ -33,7 +33,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Small VM for web servers, APIs (2 vCPU, 4GB RAM)',
     providers: {
       aws: {
-        componentId: 'ec2-instance',
+        componentId: 'aws-ec2',
         defaultSize: 't3.medium',
         defaultConfig: { instanceType: 't3.medium' },
         estimatedCost: { min: 30, max: 35 },
@@ -45,7 +45,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 30, max: 35 },
       },
       gcp: {
-        componentId: 'gcp-compute',
+        componentId: 'gcp-compute-instance',
         defaultSize: 'e2-medium',
         defaultConfig: { machineType: 'e2-medium' },
         estimatedCost: { min: 24, max: 28 },
@@ -59,7 +59,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Large VM for intensive workloads (8 vCPU, 32GB RAM)',
     providers: {
       aws: {
-        componentId: 'ec2-instance',
+        componentId: 'aws-ec2',
         defaultSize: 'm5.2xlarge',
         defaultConfig: { instanceType: 'm5.2xlarge' },
         estimatedCost: { min: 280, max: 320 },
@@ -71,7 +71,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 290, max: 330 },
       },
       gcp: {
-        componentId: 'gcp-compute',
+        componentId: 'gcp-compute-instance',
         defaultSize: 'n2-standard-8',
         defaultConfig: { machineType: 'n2-standard-8' },
         estimatedCost: { min: 243, max: 280 },
@@ -85,7 +85,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Managed PostgreSQL database with high availability',
     providers: {
       aws: {
-        componentId: 'rds',
+        componentId: 'aws-rds',
         defaultSize: 'db.t3.medium',
         defaultConfig: {
           engine: 'postgres',
@@ -105,7 +105,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 149, max: 170 },
       },
       gcp: {
-        componentId: 'cloud-sql',
+        componentId: 'gcp-cloud-sql',
         defaultSize: 'db-n1-standard-2',
         defaultConfig: {
           databaseVersion: 'POSTGRES_14',
@@ -122,17 +122,17 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Scalable object storage for files, backups, static content',
     providers: {
       aws: {
-        componentId: 's3',
+        componentId: 'aws-s3',
         defaultConfig: { storageClass: 'STANDARD', encryption: true },
         estimatedCost: { min: 0, max: 100 },
       },
       azure: {
-        componentId: 'azure-storage',
+        componentId: 'azure-blob',
         defaultConfig: { accountKind: 'StorageV2', tier: 'Standard', encryption: true },
         estimatedCost: { min: 0, max: 100 },
       },
       gcp: {
-        componentId: 'gcs',
+        componentId: 'gcp-cloud-storage',
         defaultConfig: { storageClass: 'STANDARD', encryption: true },
         estimatedCost: { min: 0, max: 100 },
       },
@@ -145,7 +145,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Application load balancer with HTTPS/TLS',
     providers: {
       aws: {
-        componentId: 'alb',
+        componentId: 'aws-alb',
         defaultConfig: { scheme: 'internet-facing', ipAddressType: 'ipv4' },
         estimatedCost: { min: 22, max: 30 },
       },
@@ -168,7 +168,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Isolated virtual network',
     providers: {
       aws: {
-        componentId: 'vpc',
+        componentId: 'aws-vpc',
         defaultConfig: { cidrBlock: '10.0.0.0/16' },
         estimatedCost: { min: 0, max: 0 },
       },
@@ -191,7 +191,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'In-memory cache for session state and frequent queries',
     providers: {
       aws: {
-        componentId: 'elasticache',
+        componentId: 'aws-elasticache',
         defaultSize: 'cache.t3.micro',
         defaultConfig: { engine: 'redis', nodeType: 'cache.t3.micro' },
         estimatedCost: { min: 12, max: 15 },
@@ -203,7 +203,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 16, max: 20 },
       },
       gcp: {
-        componentId: 'memorystore',
+        componentId: 'gcp-memorystore',
         defaultSize: 'basic-1gb',
         defaultConfig: { tier: 'BASIC', memorySizeGb: 1 },
         estimatedCost: { min: 13, max: 16 },
@@ -217,7 +217,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Global CDN for static content delivery',
     providers: {
       aws: {
-        componentId: 'cloudfront',
+        componentId: 'aws-cloudfront',
         defaultConfig: { priceClass: 'PriceClass_All' },
         estimatedCost: { min: 1, max: 50 },
       },
@@ -227,7 +227,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 0.81, max: 50 },
       },
       gcp: {
-        componentId: 'cloud-cdn',
+        componentId: 'gcp-cloud-cdn',
         defaultConfig: { cacheMode: 'CACHE_ALL_STATIC' },
         estimatedCost: { min: 0.75, max: 50 },
       },
@@ -344,29 +344,29 @@ function tryConvertComponent(
     { aws?: string; azure?: string; gcp?: string }
   > = {
     // VMs
-    'ec2-instance': { aws: 'ec2-instance', azure: 'azure-vm', gcp: 'gcp-compute' },
-    'azure-vm': { aws: 'ec2-instance', azure: 'azure-vm', gcp: 'gcp-compute' },
-    'gcp-compute': { aws: 'ec2-instance', azure: 'azure-vm', gcp: 'gcp-compute' },
+    'aws-ec2': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
+    'azure-vm': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
+    'gcp-compute-instance': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
 
     // Databases
-    rds: { aws: 'rds', azure: 'azure-sql', gcp: 'cloud-sql' },
-    'azure-sql': { aws: 'rds', azure: 'azure-sql', gcp: 'cloud-sql' },
-    'cloud-sql': { aws: 'rds', azure: 'azure-sql', gcp: 'cloud-sql' },
+    'aws-rds': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
+    'azure-sql': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
+    'gcp-cloud-sql': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
 
     // Storage
-    s3: { aws: 's3', azure: 'azure-storage', gcp: 'gcs' },
-    'azure-storage': { aws: 's3', azure: 'azure-storage', gcp: 'gcs' },
-    gcs: { aws: 's3', azure: 'azure-storage', gcp: 'gcs' },
+    'aws-s3': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
+    'azure-blob': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
+    'gcp-cloud-storage': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
 
     // Load Balancers
-    alb: { aws: 'alb', azure: 'azure-lb', gcp: 'gcp-lb' },
-    'azure-lb': { aws: 'alb', azure: 'azure-lb', gcp: 'gcp-lb' },
-    'gcp-lb': { aws: 'alb', azure: 'azure-lb', gcp: 'gcp-lb' },
+    'aws-alb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
+    'azure-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
+    'gcp-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
 
     // VPC/VNet
-    vpc: { aws: 'vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
-    'azure-vnet': { aws: 'vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
-    'gcp-vpc': { aws: 'vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
+    'aws-vpc': { aws: 'aws-vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
+    'azure-vnet': { aws: 'aws-vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
+    'gcp-vpc': { aws: 'aws-vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
   }
 
   const targetComponentId = conversions[sourceComponentId]?.[targetProvider]

@@ -2438,8 +2438,13 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
 ]
 
+// O(1) lookup map — built once at module load instead of O(n) linear scan per call
+const CATALOG_MAP = new Map<string, ComponentConfig>(
+  COMPONENT_CATALOG.map(c => [c.id, c])
+)
+
 export function getComponentById(id: string): ComponentConfig | undefined {
-  return COMPONENT_CATALOG.find(c => c.id === id)
+  return CATALOG_MAP.get(id)
 }
 
 /**
