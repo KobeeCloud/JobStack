@@ -89,7 +89,7 @@ function NewProjectPageContent() {
   const [organizations, setOrganizations] = useState<OrganizationOption[]>([])
   // Start as true so spinner shows immediately — avoids "no orgs" flash
   const [orgsLoading, setOrgsLoading] = useState(true)
-  const [orgsError, setOrgsError] = useState(false)
+  const [orgsError, setOrgsError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const templateId = searchParams.get('template')
@@ -98,17 +98,19 @@ function NewProjectPageContent() {
   useEffect(() => {
     let cancelled = false
     setOrgsLoading(true)
-    setOrgsError(false)
+    setOrgsError(null)
     fetch('/api/organizations')
       .then((res) => {
+        // 429 rate limit — not a real error, just skip silently
+        if (res.status === 429) return { organizations: [] }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
       .then((data) => {
         if (!cancelled) setOrganizations(data.organizations ?? [])
       })
-      .catch(() => {
-        if (!cancelled) setOrgsError(true)
+      .catch((err) => {
+        if (!cancelled) setOrgsError(err instanceof Error ? err.message : 'Failed to load')
       })
       .finally(() => {
         if (!cancelled) setOrgsLoading(false)
@@ -322,7 +324,7 @@ function NewProjectPageContent() {
                     </div>
                   ) : orgsError ? (
                     <p className="text-sm text-destructive">
-                      Could not load organizations — project will be personal.
+                      Could not load organizations ({orgsError}) — project will be personal.
                     </p>
                   ) : organizations.length > 0 ? (
                     <Select

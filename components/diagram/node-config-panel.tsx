@@ -211,10 +211,10 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <>
             <div className="space-y-2">
               <Label>Availability Zone</Label>
-              <Select value={config.availability_zone || ''} onValueChange={(v) => updateConfig('availability_zone', v || undefined)}>
+              <Select value={config.availability_zone || '__none__'} onValueChange={(v) => updateConfig('availability_zone', v === '__none__' ? undefined : v)}>
                 <SelectTrigger><SelectValue placeholder="No preference" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No preference</SelectItem>
+                  <SelectItem value="__none__">No preference</SelectItem>
                   <SelectItem value="1">Zone 1</SelectItem>
                   <SelectItem value="2">Zone 2</SelectItem>
                   <SelectItem value="3">Zone 3</SelectItem>
@@ -253,10 +253,10 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
 
             <div className="space-y-2">
               <Label>Managed Identity</Label>
-              <Select value={config.identity_type || ''} onValueChange={(v) => updateConfig('identity_type', v || undefined)}>
+              <Select value={config.identity_type || '__none__'} onValueChange={(v) => updateConfig('identity_type', v === '__none__' ? undefined : v)}>
                 <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   <SelectItem value="SystemAssigned">System Assigned</SelectItem>
                   <SelectItem value="UserAssigned">User Assigned</SelectItem>
                 </SelectContent>
@@ -275,10 +275,10 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <>
             <div className="space-y-2">
               <Label>Availability Zone</Label>
-              <Select value={config.availability_zone || ''} onValueChange={(v) => updateConfig('availability_zone', v || undefined)}>
+              <Select value={config.availability_zone || '__none__'} onValueChange={(v) => updateConfig('availability_zone', v === '__none__' ? undefined : v)}>
                 <SelectTrigger><SelectValue placeholder="No preference (auto-place)" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No preference</SelectItem>
+                  <SelectItem value="__none__">No preference</SelectItem>
                   <SelectItem value="a">Zone a</SelectItem>
                   <SelectItem value="b">Zone b</SelectItem>
                   <SelectItem value="c">Zone c</SelectItem>
@@ -623,10 +623,10 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
             <>
               <div className="space-y-2">
                 <Label>Availability Zone</Label>
-                <Select value={config.availability_zone || ''} onValueChange={(v) => updateConfig('availability_zone', v || undefined)}>
+                <Select value={config.availability_zone || '__none__'} onValueChange={(v) => updateConfig('availability_zone', v === '__none__' ? undefined : v)}>
                   <SelectTrigger><SelectValue placeholder="Any (AWS selects)" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
+                    <SelectItem value="__none__">Any</SelectItem>
                     <SelectItem value="a">AZ a (e.g. us-east-1a)</SelectItem>
                     <SelectItem value="b">AZ b</SelectItem>
                     <SelectItem value="c">AZ c</SelectItem>
@@ -1023,10 +1023,10 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           </div>
           <div className="space-y-2">
             <Label>Availability Zone</Label>
-            <Select value={config.zone || ''} onValueChange={(v) => updateConfig('zone', v || undefined)}>
+            <Select value={config.zone || '__none__'} onValueChange={(v) => updateConfig('zone', v === '__none__' ? undefined : v)}>
               <SelectTrigger><SelectValue placeholder="No preference" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No preference</SelectItem>
+                <SelectItem value="__none__">No preference</SelectItem>
                 <SelectItem value="1">Zone 1</SelectItem>
                 <SelectItem value="2">Zone 2</SelectItem>
                 <SelectItem value="3">Zone 3</SelectItem>
@@ -2857,10 +2857,10 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
 
       <div className="space-y-2">
         <Label>Environment (display only)</Label>
-        <Select value={config.environment || ''} onValueChange={(v) => updateConfig('environment', v || undefined)}>
+        <Select value={config.environment || '__none__'} onValueChange={(v) => updateConfig('environment', v === '__none__' ? undefined : v)}>
           <SelectTrigger><SelectValue placeholder="Select environment" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">None</SelectItem>
+            <SelectItem value="__none__">None</SelectItem>
             <SelectItem value="dev">Development</SelectItem>
             <SelectItem value="staging">Staging</SelectItem>
             <SelectItem value="production">Production</SelectItem>

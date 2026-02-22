@@ -17,14 +17,14 @@ const createOrgSchema = z.object({
 
 export const GET = createApiHandler(
   async (_request: NextRequest, { auth }) => {
-    // Use admin client to bypass RLS — user can always see their own memberships
-    const adminClient = createAdminClient()
-    const { data: memberships, error } = await adminClient
+    // Use the user's own authenticated client — RLS allows users to read their own memberships.
+    // Avoids requiring SUPABASE_SERVICE_ROLE_KEY for this read-only query.
+    const { data: memberships, error } = await auth.supabase
       .from('organization_members')
       .select(`
         role,
         joined_at,
-        organization:organizations (
+        organizations!organization_id (
           id,
           name,
           slug,
@@ -37,14 +37,15 @@ export const GET = createApiHandler(
 
     if (error) {
       log.error('Failed to fetch user organizations', error, { userId: auth.user.id })
-      throw error
+      // Return empty list rather than crashing — org selection is optional
+      return NextResponse.json({ organizations: [] })
     }
 
-    type MemberRow = { role: string; joined_at: string; organization: Record<string, unknown> | null }
+    type MemberRow = { role: string; joined_at: string; organizations: Record<string, unknown> | null }
     const organizations = ((memberships ?? []) as unknown as MemberRow[])
-      .filter((m) => m.organization != null)
+      .filter((m) => m.organizations != null)
       .map((m) => ({
-        ...(m.organization as Record<string, unknown>),
+        ...(m.organizations as Record<string, unknown>),
         role: m.role,
         joined_at: m.joined_at,
       }))
