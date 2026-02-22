@@ -32,7 +32,7 @@ interface PatternParam {
 interface PatternNodeTemplate {
   id: string              // unique within pattern (used in edge source/target)
   componentId: string     // catalog component id
-  label: string           // display label (may include {{prefix}}, {{cidr}})
+  label: string           // display label (may include {{prefix}}, {{cidr}}, {{idx}})
   category: string
   provider: 'azure' | 'aws' | 'gcp'
   isContainer?: boolean
@@ -43,6 +43,10 @@ interface PatternNodeTemplate {
   y: number
   parentTemplateId?: string  // nesting inside a container node
   config?: Record<string, unknown>
+  // Repeat: generates N copies of this node. N = parseInt(params[repeat])
+  repeat?: string        // param key whose value is the count
+  repeatOffsetX?: number // horizontal offset between copies (default: 160)
+  repeatOffsetY?: number // vertical offset between copies (default: 0)
 }
 
 interface PatternEdgeTemplate {
@@ -86,6 +90,7 @@ const PATTERNS: QuickBuildPattern[] = [
       { id: 'vnet', componentId: 'azure-vnet', label: '{{prefix}}-vnet ({{cidr}})', category: 'networking', provider: 'azure', isContainer: true, width: 800, height: 500, x: 80, y: 100, parentTemplateId: 'rg', config: { address_space: ['{{cidr}}'] } },
       { id: 'subnet', componentId: 'azure-subnet', label: '{{prefix}}-subnet', category: 'networking', provider: 'azure', isContainer: true, width: 600, height: 280, x: 80, y: 120, parentTemplateId: 'vnet', config: { address_prefixes: ['{{subnetCidr}}'] } },
       { id: 'nsg', componentId: 'azure-nsg', label: '{{prefix}}-nsg', category: 'networking', provider: 'azure', nodeType: 'attachment', x: 80, y: 380, parentTemplateId: 'vnet' },
+      { id: 'vm', componentId: 'azure-vm', label: '{{prefix}}-vm-{{idx}}', category: 'compute', provider: 'azure', x: 50, y: 80, parentTemplateId: 'subnet', repeat: 'vmCount', repeatOffsetX: 160, repeatOffsetY: 0, config: { size: 'Standard_D2s_v3' } },
     ],
     edges: [],
     // nsg is an attachment node inside vnet — no edge to subnet needed
@@ -305,7 +310,30 @@ function buildNodesAndEdges(
   const idMap: Record<string, string> = {}
   const now = Date.now()
 
-  const nodes: Node[] = pattern.nodes.map((tmpl, idx) => {
+  // Expand templates that have a `repeat` param — clone once per count with offset + {{idx}} label token
+  const expandedTemplates: PatternNodeTemplate[] = []
+  for (const tmpl of pattern.nodes) {
+    if (tmpl.repeat) {
+      const rawCount = parseInt(params[tmpl.repeat] ?? '1', 10)
+      const count = Math.min(Math.max(isNaN(rawCount) ? 1 : rawCount, 1), 10)
+      const oxStep = tmpl.repeatOffsetX ?? 160
+      const oyStep = tmpl.repeatOffsetY ?? 0
+      for (let i = 0; i < count; i++) {
+        expandedTemplates.push({
+          ...tmpl,
+          id: `${tmpl.id}_${i}`,
+          label: tmpl.label.replace('{{idx}}', String(i + 1)),
+          x: tmpl.x + i * oxStep,
+          y: tmpl.y + i * oyStep,
+          repeat: undefined,
+        })
+      }
+    } else {
+      expandedTemplates.push(tmpl)
+    }
+  }
+
+  const nodes: Node[] = expandedTemplates.map((tmpl, idx) => {
     const realId = `node-${now}-${idx}-${Math.random().toString(36).substring(2, 7)}`
     idMap[tmpl.id] = realId
 

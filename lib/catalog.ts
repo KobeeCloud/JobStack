@@ -222,7 +222,130 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_network_security_group',
-      defaultConfig: {}
+      defaultConfig: {
+        security_rules: [
+          {
+            name: 'Allow-HTTPS-Inbound',
+            priority: 100,
+            direction: 'Inbound',
+            access: 'Allow',
+            protocol: 'Tcp',
+            source_port_range: '*',
+            destination_port_range: '443',
+            source_address_prefix: 'Internet',
+            destination_address_prefix: '*',
+            description: 'Allow HTTPS inbound traffic'
+          },
+          {
+            name: 'Allow-HTTP-Inbound',
+            priority: 110,
+            direction: 'Inbound',
+            access: 'Allow',
+            protocol: 'Tcp',
+            source_port_range: '*',
+            destination_port_range: '80',
+            source_address_prefix: 'Internet',
+            destination_address_prefix: '*',
+            description: 'Allow HTTP inbound traffic'
+          },
+          {
+            name: 'Allow-SSH-Inbound',
+            priority: 120,
+            direction: 'Inbound',
+            access: 'Allow',
+            protocol: 'Tcp',
+            source_port_range: '*',
+            destination_port_range: '22',
+            source_address_prefix: 'VirtualNetwork',
+            destination_address_prefix: '*',
+            description: 'Allow SSH from VNet only'
+          },
+          {
+            name: 'Allow-RDP-Inbound',
+            priority: 130,
+            direction: 'Inbound',
+            access: 'Allow',
+            protocol: 'Tcp',
+            source_port_range: '*',
+            destination_port_range: '3389',
+            source_address_prefix: 'VirtualNetwork',
+            destination_address_prefix: '*',
+            description: 'Allow RDP from VNet only'
+          },
+          {
+            name: 'Allow-VNet-Inbound',
+            priority: 200,
+            direction: 'Inbound',
+            access: 'Allow',
+            protocol: '*',
+            source_port_range: '*',
+            destination_port_range: '*',
+            source_address_prefix: 'VirtualNetwork',
+            destination_address_prefix: 'VirtualNetwork',
+            description: 'Allow intra-VNet traffic'
+          },
+          {
+            name: 'Allow-AzureLoadBalancer-Inbound',
+            priority: 210,
+            direction: 'Inbound',
+            access: 'Allow',
+            protocol: '*',
+            source_port_range: '*',
+            destination_port_range: '*',
+            source_address_prefix: 'AzureLoadBalancer',
+            destination_address_prefix: '*',
+            description: 'Allow Azure Load Balancer probes'
+          },
+          {
+            name: 'Deny-All-Inbound',
+            priority: 4096,
+            direction: 'Inbound',
+            access: 'Deny',
+            protocol: '*',
+            source_port_range: '*',
+            destination_port_range: '*',
+            source_address_prefix: '*',
+            destination_address_prefix: '*',
+            description: 'Deny all other inbound traffic'
+          },
+          {
+            name: 'Allow-VNet-Outbound',
+            priority: 100,
+            direction: 'Outbound',
+            access: 'Allow',
+            protocol: '*',
+            source_port_range: '*',
+            destination_port_range: '*',
+            source_address_prefix: 'VirtualNetwork',
+            destination_address_prefix: 'VirtualNetwork',
+            description: 'Allow intra-VNet outbound'
+          },
+          {
+            name: 'Allow-Internet-Outbound',
+            priority: 110,
+            direction: 'Outbound',
+            access: 'Allow',
+            protocol: 'Tcp',
+            source_port_range: '*',
+            destination_port_range: '443',
+            source_address_prefix: '*',
+            destination_address_prefix: 'Internet',
+            description: 'Allow HTTPS outbound to Internet'
+          },
+          {
+            name: 'Deny-All-Outbound',
+            priority: 4096,
+            direction: 'Outbound',
+            access: 'Deny',
+            protocol: '*',
+            source_port_range: '*',
+            destination_port_range: '*',
+            source_address_prefix: '*',
+            destination_address_prefix: '*',
+            description: 'Deny all other outbound traffic'
+          }
+        ]
+      }
     }
   },
   {

@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft, ArrowRight, Loader2, Server,
-  Cloud, Globe, Check, ChevronRight, Boxes, Building2, MapPin
+  Cloud, Globe, Check, ChevronRight, Boxes, Building2
 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { createProjectSchema, type CreateProjectInput } from '@/lib/validation/schemas'
@@ -37,25 +37,7 @@ interface OrganizationOption {
   role: string
 }
 
-const ProviderLogo = ({ provider }: { provider: string }) => {
-  const colors: Record<string, string> = {
-    azure: 'text-blue-500',
-    aws: 'text-orange-500',
-    gcp: 'text-red-500',
-    vercel: 'text-foreground',
-    netlify: 'text-teal-500',
-    cloudflare: 'text-orange-400'
-  }
-
-  return (
-    <div className={`w-12 h-12 rounded-lg bg-muted flex items-center justify-center ${colors[provider] || ''}`}>
-      <Cloud className="w-6 h-6" />
-    </div>
-  )
-}
-
 type ProjectType = 'iaas' | 'paas' | 'saas' | 'hosting'
-type CloudProvider = 'azure' | 'aws' | 'gcp' | 'vercel' | 'netlify' | 'cloudflare'
 
 interface ProjectTypeConfig {
   id: ProjectType
@@ -63,14 +45,6 @@ interface ProjectTypeConfig {
   description: string
   icon: typeof Server
   features: string[]
-}
-
-interface ProviderConfig {
-  id: CloudProvider
-  name: string
-  description: string
-  regions: string[]
-  forTypes: ProjectType[]
 }
 
 const projectTypes: ProjectTypeConfig[] = [
@@ -104,64 +78,18 @@ const projectTypes: ProjectTypeConfig[] = [
   }
 ]
 
-const providers: ProviderConfig[] = [
-  {
-    id: 'azure',
-    name: 'Microsoft Azure',
-    description: 'Enterprise cloud with global presence',
-    regions: ['East US', 'West Europe', 'Southeast Asia', 'Australia East'],
-    forTypes: ['iaas', 'paas', 'saas']
-  },
-  {
-    id: 'aws',
-    name: 'Amazon Web Services',
-    description: 'Most comprehensive cloud platform',
-    regions: ['us-east-1', 'eu-west-1', 'ap-southeast-1', 'ap-northeast-1'],
-    forTypes: ['iaas', 'paas', 'saas']
-  },
-  {
-    id: 'gcp',
-    name: 'Google Cloud Platform',
-    description: 'AI-first cloud with strong analytics',
-    regions: ['us-central1', 'europe-west1', 'asia-east1', 'australia-southeast1'],
-    forTypes: ['iaas', 'paas', 'saas']
-  },
-  {
-    id: 'vercel',
-    name: 'Vercel',
-    description: 'Deploy Next.js with zero config',
-    regions: ['Global Edge Network'],
-    forTypes: ['hosting']
-  },
-  {
-    id: 'netlify',
-    name: 'Netlify',
-    description: 'JAMstack deployment platform',
-    regions: ['Global CDN'],
-    forTypes: ['hosting']
-  },
-  {
-    id: 'cloudflare',
-    name: 'Cloudflare Pages',
-    description: 'Ultra-fast edge hosting',
-    regions: ['200+ Edge Locations'],
-    forTypes: ['hosting']
-  }
-]
-
 function NewProjectPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [step, setStep] = useState(1)
   const [selectedTypes, setSelectedTypes] = useState<ProjectType[]>([])
-  const [selectedProvider, setSelectedProvider] = useState<CloudProvider | null>(null)
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null)
-  const [drRegion, setDrRegion] = useState<string | null>(null)
   const [selectedEnvironment, setSelectedEnvironment] = useState<EnvironmentType>('development')
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   const [organizations, setOrganizations] = useState<OrganizationOption[]>([])
-  const [orgsLoading, setOrgsLoading] = useState(false)
+  // Start as true so spinner shows immediately — avoids "no orgs" flash
+  const [orgsLoading, setOrgsLoading] = useState(true)
+  const [orgsError, setOrgsError] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const templateId = searchParams.get('template')
@@ -170,48 +98,37 @@ function NewProjectPageContent() {
   useEffect(() => {
     let cancelled = false
     setOrgsLoading(true)
+    setOrgsError(false)
     fetch('/api/organizations')
-      .then((res) => res.ok ? res.json() : { organizations: [] })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
       .then((data) => {
         if (!cancelled) setOrganizations(data.organizations ?? [])
       })
-      .catch(() => { /* non-fatal */ })
-      .finally(() => { if (!cancelled) setOrgsLoading(false) })
+      .catch(() => {
+        if (!cancelled) setOrgsError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setOrgsLoading(false)
+      })
     return () => { cancelled = true }
   }, [])
 
   const { register, handleSubmit, formState: { errors } } = useForm<CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
-    defaultValues: {
-      name: '',
-      description: ''
-    }
+    defaultValues: { name: '', description: '' }
   })
 
-  // Toggle type selection (multi-select)
   const toggleType = (type: ProjectType) => {
-    setSelectedTypes(prev => {
-      if (prev.includes(type)) {
-        return prev.filter(t => t !== type)
-      } else {
-        return [...prev, type]
-      }
-    })
-    // Reset provider + region when types change
-    setSelectedProvider(null)
-    setSelectedRegion(null)
-    setDrRegion(null)
+    setSelectedTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    )
   }
 
-  // Get available providers based on selected types
-  const availableProviders = selectedTypes.length > 0
-    ? providers.filter(p => selectedTypes.some(t => p.forTypes.includes(t)))
-    : []
-
-  const selectedProviderConfig = providers.find(p => p.id === selectedProvider)
-
   const onSubmit = async (data: CreateProjectInput) => {
-    if (selectedTypes.length === 0 || !selectedProvider) return
+    if (selectedTypes.length === 0) return
 
     setIsSubmitting(true)
     try {
@@ -220,10 +137,7 @@ function NewProjectPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          cloud_provider: selectedProvider,
           project_types: selectedTypes,
-          region: selectedRegion ?? undefined,
-          dr_region: drRegion ?? undefined,
           environment: selectedEnvironment,
           organization_id: selectedOrgId ?? undefined,
           templateId: templateId ?? undefined,
@@ -237,7 +151,6 @@ function NewProjectPageContent() {
 
       const project = await response.json()
       toast.success('Project created!', { description: data.name + ' is ready for design' })
-
       router.push('/projects/' + project.id)
     } catch (error) {
       toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to create project' })
@@ -247,54 +160,53 @@ function NewProjectPageContent() {
   }
 
   const canProceedToStep2 = selectedTypes.length > 0
-  const canProceedToStep3 = selectedProvider !== null
+  const STEPS = [{ num: 1, label: 'Type' }, { num: 2, label: 'Details' }]
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center">
+        <div className="container flex h-16 items-center gap-4">
           <Link href="/projects" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Projects
           </Link>
+          <div className="h-4 border-l" />
+          <div className="flex items-center gap-2">
+            <LogoIcon size={22} />
+            <span className="font-semibold text-sm">New Project</span>
+          </div>
         </div>
       </header>
 
       <main className="container py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center mb-8">
-            <div className="flex items-center gap-4">
-              {[
-                { num: 1, label: 'Type' },
-                { num: 2, label: 'Provider' },
-                { num: 3, label: 'Details' }
-              ].map((s, idx) => (
-                <div key={s.num} className="flex items-center">
-                  <div className={
-                    'w-10 h-10 rounded-full flex items-center justify-center font-semibold ' +
-                    (step >= s.num
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground')
-                  }>
-                    {step > s.num ? <Check className="w-5 h-5" /> : s.num}
-                  </div>
-                  <span className={'ml-2 ' + (step >= s.num ? 'text-foreground' : 'text-muted-foreground')}>
-                    {s.label}
-                  </span>
-                  {idx < 2 && (
-                    <ChevronRight className="w-5 h-5 mx-4 text-muted-foreground" />
-                  )}
+        <div className="max-w-3xl mx-auto">
+          {/* Step indicator */}
+          <div className="flex items-center justify-center mb-10">
+            {STEPS.map((s, idx) => (
+              <div key={s.num} className="flex items-center">
+                <div className={
+                  'w-10 h-10 rounded-full flex items-center justify-center font-semibold ' +
+                  (step >= s.num ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')
+                }>
+                  {step > s.num ? <Check className="w-5 h-5" /> : s.num}
                 </div>
-              ))}
-            </div>
+                <span className={'ml-2 text-sm font-medium ' + (step >= s.num ? 'text-foreground' : 'text-muted-foreground')}>
+                  {s.label}
+                </span>
+                {idx < STEPS.length - 1 && (
+                  <ChevronRight className="w-5 h-5 mx-4 text-muted-foreground" />
+                )}
+              </div>
+            ))}
           </div>
 
+          {/* ── Step 1: project type ─────────────────────────────────────── */}
           {step === 1 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h1 className="text-3xl font-bold">What are you building?</h1>
                 <p className="text-muted-foreground mt-2">
-                  Choose the type of cloud infrastructure you need
+                  Choose the type of cloud infrastructure you need. You can mix components from any cloud provider inside the diagram.
                 </p>
               </div>
 
@@ -302,7 +214,6 @@ function NewProjectPageContent() {
                 {projectTypes.map((type) => {
                   const Icon = type.icon
                   const isSelected = selectedTypes.includes(type.id)
-
                   return (
                     <Card
                       key={type.id}
@@ -325,14 +236,10 @@ function NewProjectPageContent() {
                         <CardTitle className="text-xl mt-3">{type.name}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-muted-foreground text-sm mb-4">
-                          {type.description}
-                        </p>
+                        <p className="text-muted-foreground text-sm mb-4">{type.description}</p>
                         <div className="flex flex-wrap gap-1.5">
                           {type.features.map((feature) => (
-                            <Badge key={feature} variant="secondary" className="text-xs">
-                              {feature}
-                            </Badge>
+                            <Badge key={feature} variant="secondary" className="text-xs">{feature}</Badge>
                           ))}
                         </div>
                       </CardContent>
@@ -342,165 +249,46 @@ function NewProjectPageContent() {
               </div>
 
               <div className="flex justify-end">
-                <Button
-                  onClick={() => setStep(2)}
-                  disabled={!canProceedToStep2}
-                  className="min-w-[140px]"
-                >
-                  Continue
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                <Button onClick={() => setStep(2)} disabled={!canProceedToStep2} className="min-w-[140px]">
+                  Continue <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
           )}
 
+          {/* ── Step 2: project details ──────────────────────────────────── */}
           {step === 2 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold">Choose your cloud</h1>
-                <p className="text-muted-foreground mt-2">
-                  Select the cloud provider for your {selectedTypes.map(t => projectTypes.find(pt => pt.id === t)?.name).filter(Boolean).join(' + ')} project
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {availableProviders.map((provider) => {
-                  const isSelected = selectedProvider === provider.id
-
-                  return (
-                    <Card
-                      key={provider.id}
-                      className={'cursor-pointer transition-all hover:border-primary ' +
-                        (isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary' : '')
-                      }
-                      onClick={() => { setSelectedProvider(provider.id); setSelectedRegion(null); setDrRegion(null) }}
-                    >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <ProviderLogo provider={provider.id} />
-                          {isSelected && (
-                            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                              <Check className="w-4 h-4 text-primary-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <CardTitle className="text-lg mt-3">{provider.name}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground text-sm mb-3">
-                          {provider.description}
-                        </p>
-                        <div className="text-xs text-muted-foreground">
-                          <span className="font-medium">Regions:</span>{' '}
-                          {provider.regions[0]}{provider.regions.length > 1 ? ' +' + (provider.regions.length - 1) + ' more' : ''}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-
-              {/* Region selector — shown once a provider is selected */}
-              {selectedProviderConfig && (
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    Deployment Region <span className="text-muted-foreground font-normal">(optional)</span>
-                  </Label>
-                  <Select
-                    value={selectedRegion ?? ''}
-                    onValueChange={(val) => setSelectedRegion(val || null)}
-                  >
-                    <SelectTrigger className="w-full md:w-72">
-                      <SelectValue placeholder="Select a region" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedProviderConfig.regions.map((region) => (
-                        <SelectItem key={region} value={region}>{region}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* DR / Failover region — shown after primary region is selected */}
-              {selectedProviderConfig && selectedRegion && selectedProviderConfig.regions.length > 1 && (
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    DR / Failover Region <span className="text-muted-foreground font-normal">(optional)</span>
-                  </Label>
-                  <Select
-                    value={drRegion ?? ''}
-                    onValueChange={(val) => setDrRegion(val || null)}
-                  >
-                    <SelectTrigger className="w-full md:w-72">
-                      <SelectValue placeholder="Select DR region" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedProviderConfig.regions
-                        .filter((r) => r !== selectedRegion)
-                        .map((region) => (
-                          <SelectItem key={region} value={region}>{region}</SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Used for disaster recovery; infrastructure will target both regions.</p>
-                </div>
-              )}
-
-              <div className="flex justify-between">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </Button>
-                <Button
-                  onClick={() => setStep(3)}
-                  disabled={!canProceedToStep3}
-                  className="min-w-[140px]"
-                >
-                  Continue
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h1 className="text-3xl font-bold">Name your project</h1>
                 <p className="text-muted-foreground mt-2">
-                  Give your {selectedProviderConfig?.name} project a name
+                  Give your project a name and configure basic settings.
                 </p>
               </div>
 
+              {/* Selected types summary */}
               <Card className="bg-muted/50">
                 <CardContent className="pt-4">
-                  <div className="flex items-center gap-4">
-                    <ProviderLogo provider={selectedProvider!} />
-                    <div>
-                      <p className="font-medium">{selectedProviderConfig?.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedTypes.map(t => projectTypes.find(pt => pt.id === t)?.name).filter(Boolean).join(' + ')}
-                      </p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedTypes.map(t => {
+                        const config = projectTypes.find(pt => pt.id === t)
+                        return config ? (
+                          <Badge key={t} variant="outline" className="capitalize">
+                            {config.name}
+                          </Badge>
+                        ) : null
+                      })}
                     </div>
-                    <div className="ml-auto flex flex-wrap gap-1.5 max-w-[300px] justify-end">
-                      {selectedTypes.flatMap(t => projectTypes.find(pt => pt.id === t)?.features || []).slice(0, 4).map((feature: string) => (
-                        <Badge key={feature} variant="secondary" className="text-xs">
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
+                    <p className="text-sm text-muted-foreground ml-auto">
+                      Use components from any cloud provider in the diagram editor
+                    </p>
                   </div>
                 </CardContent>
               </Card>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Environment selector */}
+                {/* Environment */}
                 <div className="space-y-2">
                   <Label>Environment</Label>
                   <div className="flex gap-2">
@@ -522,7 +310,7 @@ function NewProjectPageContent() {
                   </div>
                 </div>
 
-                {/* Organization selector (optional) */}
+                {/* Organization */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Building2 className="w-4 h-4" />
@@ -532,6 +320,10 @@ function NewProjectPageContent() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" /> Loading organizations...
                     </div>
+                  ) : orgsError ? (
+                    <p className="text-sm text-destructive">
+                      Could not load organizations — project will be personal.
+                    </p>
                   ) : organizations.length > 0 ? (
                     <Select
                       value={selectedOrgId ?? 'personal'}
@@ -552,11 +344,14 @@ function NewProjectPageContent() {
                     </Select>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      No organizations yet — this will be a personal project.
+                      No organizations yet —{' '}
+                      <Link href="/organizations/new" className="text-primary hover:underline">create one</Link>{' '}
+                      or this will be a personal project.
                     </p>
                   )}
                 </div>
 
+                {/* Name + description */}
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Project Name</Label>
@@ -566,49 +361,29 @@ function NewProjectPageContent() {
                       {...register('name')}
                       className={errors.name ? 'border-destructive' : ''}
                     />
-                    {errors.name && (
-                      <p className="text-sm text-destructive">{errors.name.message}</p>
-                    )}
+                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description (optional)</Label>
+                    <Label htmlFor="description">Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
                     <Textarea
                       id="description"
                       placeholder="Production infrastructure for our web application..."
                       {...register('description')}
                       rows={3}
                     />
-                    {errors.description && (
-                      <p className="text-sm text-destructive">{errors.description.message}</p>
-                    )}
+                    {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
                   </div>
                 </div>
 
-                <div className="flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(2)}
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
+                <div className="flex justify-between pt-2">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                    <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="min-w-[160px]"
-                  >
+                  <Button type="submit" disabled={isSubmitting} className="min-w-[160px]">
                     {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating...
-                      </>
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
                     ) : (
-                      <>
-                        Create Project
-                        <Boxes className="w-4 h-4 ml-2" />
-                      </>
+                      <>Create Project <Boxes className="w-4 h-4 ml-2" /></>
                     )}
                   </Button>
                 </div>

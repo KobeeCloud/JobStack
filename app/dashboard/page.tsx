@@ -9,7 +9,7 @@ import {
   Building2, Activity, Clock, TrendingUp, Layers,
   FileCode, Star, ArrowRight, Sparkles
 } from 'lucide-react'
-import { LogoIcon } from '@/components/logo'
+import { Logo } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { Suspense } from 'react'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -454,8 +454,7 @@ export default async function DashboardPage() {
         <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2" aria-label="JobStack Home">
-              <LogoIcon size={24} />
-              <span className="font-bold text-xl">JobStack</span>
+              <Logo size={24} />
             </Link>
 
             <div className="flex items-center gap-4">

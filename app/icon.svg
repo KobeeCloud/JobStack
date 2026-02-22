@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 50" width="62" height="50">
+  <defs>
+    <style>
+      .node        { fill: #2563eb; }
+      .conn        { stroke: #3b82f6; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .bridge      { stroke: #0f172a; stroke-width: 3; fill: none; stroke-linecap: round; }
+      .brace       { stroke: #0f172a; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+      .code        { stroke: #0f172a; stroke-width: 3; stroke-linecap: round; }
+      .code-accent { stroke: #2563eb; stroke-width: 3; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <circle cx="10" cy="14" r="4" class="node" />
+  <circle cx="10" cy="36" r="4" class="node" />
+  <path d="M 12 16 L 22 25 L 12 34" class="conn" />
+  <circle cx="23" cy="25" r="4" class="node" />
+
+  <line x1="27" y1="25" x2="30" y2="25" class="bridge" />
+
+  <path d="M 37 13 Q 34 13 34 17 L 34 21 Q 34 25 31 25 Q 34 25 34 29 L 34 33 Q 34 37 37 37" class="brace" />
+
+  <line x1="42" y1="15" x2="50" y2="15" class="code-accent" />
+  <line x1="42" y1="25" x2="55" y2="25" class="code" />
+  <line x1="42" y1="35" x2="47" y2="35" class="code" />
+</svg>

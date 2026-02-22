@@ -460,11 +460,33 @@ export function generateTerraformWithValidation(
       resourcesTf += buildNicIpConfigBlock(node, nodeMap, userConfig)
     }
 
+    // ── Azure NSG: security_rule blocks ───────────────────────────────
+    if (resourceType === 'azurerm_network_security_group') {
+      const rules = (userConfig.security_rules ?? []) as Record<string, unknown>[]
+      for (const rule of rules) {
+        resourcesTf += `  security_rule {\n`
+        resourcesTf += `    name                       = ${JSON.stringify(rule.name ?? '')}\n`
+        resourcesTf += `    priority                   = ${rule.priority ?? 100}\n`
+        resourcesTf += `    direction                  = ${JSON.stringify(rule.direction ?? 'Inbound')}\n`
+        resourcesTf += `    access                     = ${JSON.stringify(rule.access ?? 'Allow')}\n`
+        resourcesTf += `    protocol                   = ${JSON.stringify(rule.protocol ?? 'Tcp')}\n`
+        resourcesTf += `    source_port_range          = ${JSON.stringify(rule.source_port_range ?? '*')}\n`
+        resourcesTf += `    destination_port_range     = ${JSON.stringify(rule.destination_port_range ?? '*')}\n`
+        resourcesTf += `    source_address_prefix      = ${JSON.stringify(rule.source_address_prefix ?? '*')}\n`
+        resourcesTf += `    destination_address_prefix = ${JSON.stringify(rule.destination_address_prefix ?? '*')}\n`
+        if (rule.description) {
+          resourcesTf += `    description                = ${JSON.stringify(rule.description)}\n`
+        }
+        resourcesTf += `  }\n`
+      }
+    }
+
     // ── Generic config keys (skip already-handled ones) ────────────────
     const handledKeys = new Set([
       ...Array.from(AZURE_EXPLICIT_KEYS),
       ...Array.from(VM_HANDLED_KEYS),
       'size', 'sku',
+      'security_rules', // handled above as security_rule blocks
     ])
 
     Object.entries(userConfig).forEach(([key, value]) => {

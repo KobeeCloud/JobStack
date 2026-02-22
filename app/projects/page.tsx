@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Plus, ArrowLeft, FolderOpen, Search } from 'lucide-react'
-import { LogoIcon } from '@/components/logo'
+import { Logo } from '@/components/logo'
 import { ProjectCard } from '@/components/project-card'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
@@ -47,8 +47,7 @@ export default async function ProjectsPage() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <LogoIcon size={24} />
-              <span className="font-bold text-xl">JobStack</span>
+              <Logo size={24} />
             </Link>
             <span className="text-muted-foreground">/</span>
             <span className="font-medium">Projects</span>
