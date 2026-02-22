@@ -307,6 +307,349 @@ export const kafkaConfigSchema = z.object({
 })
 
 // ==========================================
+// OBJECT STORAGE CONFIGURATION
+// ==========================================
+export const s3ConfigSchema = z.object({
+  bucketName: z.string().optional(),
+  versioning: z.boolean().optional().default(false),
+  encryption: z.enum(['none', 'sse-s3', 'sse-kms', 'sse-c']).optional().default('sse-s3'),
+  accessControl: z.enum(['private', 'public-read', 'public-read-write', 'authenticated-read']).optional().default('private'),
+  lifecycleRules: z.array(z.object({
+    prefix: z.string().optional(),
+    transitionDays: z.number().optional(),
+    transitionStorageClass: z.string().optional(),
+    expirationDays: z.number().optional(),
+  })).optional(),
+  corsRules: z.array(z.object({
+    allowedOrigins: z.array(z.string()),
+    allowedMethods: z.array(z.enum(['GET', 'PUT', 'POST', 'DELETE', 'HEAD'])),
+    allowedHeaders: z.array(z.string()).optional(),
+  })).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// CONTAINER SERVICE CONFIGURATION
+// ==========================================
+export const ecsConfigSchema = z.object({
+  clusterName: z.string().optional(),
+  launchType: z.enum(['ec2', 'fargate', 'external']).optional().default('fargate'),
+  desiredCount: z.number().min(0).max(100).optional().default(1),
+  cpu: z.number().optional(), // vCPU units (256, 512, 1024, 2048, 4096)
+  memory: z.number().optional(), // MB
+  containerImage: z.string().optional(),
+  containerPort: z.number().optional(),
+  enableServiceDiscovery: z.boolean().optional().default(false),
+  tags: z.record(z.string()).optional(),
+})
+
+export const cloudRunConfigSchema = z.object({
+  image: z.string().optional(),
+  port: z.number().optional().default(8080),
+  cpu: z.string().optional(), // e.g., "1", "2"
+  memory: z.string().optional(), // e.g., "512Mi", "1Gi"
+  minInstances: z.number().min(0).optional().default(0),
+  maxInstances: z.number().min(1).max(1000).optional().default(100),
+  concurrency: z.number().min(1).max(1000).optional().default(80),
+  allowUnauthenticated: z.boolean().optional().default(false),
+  env: z.record(z.string()).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// CACHE CONFIGURATION
+// ==========================================
+export const cacheConfigSchema = z.object({
+  engine: z.enum(['redis', 'memcached']).optional().default('redis'),
+  nodeType: z.string().optional(), // e.g., "cache.t3.micro"
+  numCacheNodes: z.number().min(1).max(20).optional().default(1),
+  engineVersion: z.string().optional(),
+  port: z.number().optional().default(6379),
+  snapshotRetentionLimit: z.number().optional(),
+  transitEncryptionEnabled: z.boolean().optional().default(true),
+  atRestEncryptionEnabled: z.boolean().optional().default(true),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// CDN CONFIGURATION
+// ==========================================
+export const cdnConfigSchema = z.object({
+  origins: z.array(z.object({
+    domainName: z.string(),
+    originId: z.string().optional(),
+    protocol: z.enum(['http-only', 'https-only', 'match-viewer']).optional(),
+  })).optional(),
+  defaultCacheBehavior: z.object({
+    viewerProtocolPolicy: z.enum(['allow-all', 'https-only', 'redirect-to-https']).optional(),
+    cachePolicyId: z.string().optional(),
+    ttl: z.number().optional(),
+  }).optional(),
+  priceClass: z.string().optional(),
+  wafEnabled: z.boolean().optional().default(false),
+  customDomain: z.string().optional(),
+  sslCertificateArn: z.string().optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// DNS CONFIGURATION
+// ==========================================
+export const dnsConfigSchema = z.object({
+  zoneName: z.string().optional(),
+  zoneType: z.enum(['public', 'private']).optional().default('public'),
+  records: z.array(z.object({
+    name: z.string(),
+    type: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'SRV', 'PTR']),
+    ttl: z.number().optional().default(300),
+    values: z.array(z.string()),
+  })).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// MESSAGE QUEUE CONFIGURATION
+// ==========================================
+export const queueConfigSchema = z.object({
+  queueName: z.string().optional(),
+  fifo: z.boolean().optional().default(false),
+  visibilityTimeout: z.number().min(0).max(43200).optional().default(30),
+  messageRetentionPeriod: z.number().optional().default(345600), // seconds
+  maxMessageSize: z.number().optional(), // bytes
+  delaySeconds: z.number().optional().default(0),
+  deadLetterQueue: z.boolean().optional().default(false),
+  maxReceiveCount: z.number().optional().default(5),
+  encryption: z.boolean().optional().default(true),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// NOTIFICATION / SNS CONFIGURATION
+// ==========================================
+export const notificationConfigSchema = z.object({
+  topicName: z.string().optional(),
+  displayName: z.string().optional(),
+  fifo: z.boolean().optional().default(false),
+  encryption: z.boolean().optional().default(true),
+  subscriptions: z.array(z.object({
+    protocol: z.enum(['email', 'sms', 'http', 'https', 'sqs', 'lambda', 'application']),
+    endpoint: z.string(),
+  })).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// API GATEWAY CONFIGURATION
+// ==========================================
+export const apiGatewayConfigSchema = z.object({
+  apiName: z.string().optional(),
+  apiType: z.enum(['rest', 'http', 'websocket']).optional().default('rest'),
+  stageName: z.string().optional().default('prod'),
+  authorizationType: z.enum(['none', 'api_key', 'iam', 'cognito', 'lambda']).optional().default('none'),
+  throttling: z.object({
+    rateLimit: z.number().optional(),
+    burstLimit: z.number().optional(),
+  }).optional(),
+  cors: z.boolean().optional().default(true),
+  loggingLevel: z.enum(['OFF', 'ERROR', 'INFO']).optional().default('ERROR'),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// SECRET STORE CONFIGURATION
+// ==========================================
+export const secretStoreConfigSchema = z.object({
+  name: z.string().optional(),
+  sku: z.enum(['standard', 'premium']).optional().default('standard'),
+  enableSoftDelete: z.boolean().optional().default(true),
+  softDeleteRetentionDays: z.number().min(7).max(90).optional().default(90),
+  enablePurgeProtection: z.boolean().optional().default(false),
+  enableRbac: z.boolean().optional().default(true),
+  networkAcls: z.object({
+    defaultAction: z.enum(['allow', 'deny']).optional().default('deny'),
+    ipRules: z.array(z.string()).optional(),
+  }).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// APPLICATION GATEWAY / WAF CONFIGURATION
+// ==========================================
+export const appGatewayConfigSchema = z.object({
+  sku: z.enum(['standard_v2', 'waf_v2']).optional().default('standard_v2'),
+  tier: z.enum(['standard_v2', 'waf_v2']).optional().default('standard_v2'),
+  capacity: z.number().min(1).max(125).optional().default(2),
+  enableHttp2: z.boolean().optional().default(true),
+  wafMode: z.enum(['detection', 'prevention']).optional(),
+  wafRuleSetVersion: z.string().optional(),
+  sslPolicy: z.string().optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// BASTION CONFIGURATION
+// ==========================================
+export const bastionConfigSchema = z.object({
+  sku: z.enum(['basic', 'standard']).optional().default('basic'),
+  scaleUnits: z.number().min(2).max(50).optional().default(2),
+  copyPasteEnabled: z.boolean().optional().default(true),
+  fileCopyEnabled: z.boolean().optional().default(false),
+  tunneling: z.boolean().optional().default(false),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// FIREWALL CONFIGURATION
+// ==========================================
+export const firewallConfigSchema = z.object({
+  sku: z.enum(['standard', 'premium']).optional().default('standard'),
+  threatIntelMode: z.enum(['alert', 'deny', 'off']).optional().default('alert'),
+  dnsProxyEnabled: z.boolean().optional().default(false),
+  rules: z.array(z.object({
+    name: z.string(),
+    priority: z.number().min(100).max(65000),
+    action: z.enum(['allow', 'deny']),
+    ruleType: z.enum(['application', 'network', 'nat']),
+    protocols: z.array(z.string()).optional(),
+    sourceAddresses: z.array(z.string()).optional(),
+    destinationAddresses: z.array(z.string()).optional(),
+    destinationPorts: z.array(z.string()).optional(),
+  })).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// EVENT STREAMING CONFIGURATION
+// ==========================================
+export const eventStreamConfigSchema = z.object({
+  namespaceName: z.string().optional(),
+  sku: z.enum(['basic', 'standard', 'premium']).optional().default('standard'),
+  capacity: z.number().min(1).max(40).optional().default(1),
+  partitionCount: z.number().min(1).max(32).optional().default(4),
+  messageRetentionDays: z.number().min(1).max(7).optional().default(1),
+  captureEnabled: z.boolean().optional().default(false),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// DATA ANALYTICS CONFIGURATION
+// ==========================================
+export const bigQueryConfigSchema = z.object({
+  datasetId: z.string().optional(),
+  location: z.string().optional().default('US'),
+  defaultTableExpirationMs: z.number().optional(),
+  maxTimeTravelHours: z.number().optional().default(168),
+  deleteContentsOnDestroy: z.boolean().optional().default(false),
+  labels: z.record(z.string()).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// IDENTITY / AUTH CONFIGURATION
+// ==========================================
+export const cognitoConfigSchema = z.object({
+  userPoolName: z.string().optional(),
+  mfa: z.enum(['off', 'on', 'optional']).optional().default('optional'),
+  passwordMinLength: z.number().min(6).max(99).optional().default(8),
+  passwordRequireLowercase: z.boolean().optional().default(true),
+  passwordRequireUppercase: z.boolean().optional().default(true),
+  passwordRequireNumbers: z.boolean().optional().default(true),
+  passwordRequireSymbols: z.boolean().optional().default(true),
+  autoVerifiedAttributes: z.array(z.enum(['email', 'phone_number'])).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// NETWORK GATEWAY CONFIGURATION
+// ==========================================
+export const natGatewayConfigSchema = z.object({
+  allocationMethod: z.enum(['static', 'dynamic']).optional().default('static'),
+  sku: z.enum(['standard']).optional().default('standard'),
+  idleTimeoutMinutes: z.number().min(4).max(120).optional().default(4),
+  tags: z.record(z.string()).optional(),
+})
+
+export const vpnGatewayConfigSchema = z.object({
+  type: z.enum(['vpn', 'expressroute']).optional().default('vpn'),
+  vpnType: z.enum(['route-based', 'policy-based']).optional().default('route-based'),
+  sku: z.string().optional(), // e.g., "VpnGw1", "VpnGw2"
+  generation: z.enum(['generation1', 'generation2']).optional(),
+  enableBgp: z.boolean().optional().default(false),
+  activeActive: z.boolean().optional().default(false),
+  tags: z.record(z.string()).optional(),
+})
+
+export const routeTableConfigSchema = z.object({
+  disableBgpRoutePropagation: z.boolean().optional().default(false),
+  routes: z.array(z.object({
+    name: z.string(),
+    addressPrefix: z.string(),
+    nextHopType: z.enum(['internet', 'virtual-appliance', 'virtual-network-gateway', 'vnet-local', 'none']),
+    nextHopIpAddress: z.string().optional(),
+  })).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+export const internetGatewayConfigSchema = z.object({
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// FILE STORAGE CONFIGURATION
+// ==========================================
+export const efsConfigSchema = z.object({
+  performanceMode: z.enum(['generalPurpose', 'maxIO']).optional().default('generalPurpose'),
+  throughputMode: z.enum(['bursting', 'provisioned', 'elastic']).optional().default('bursting'),
+  encrypted: z.boolean().optional().default(true),
+  lifecyclePolicy: z.enum(['AFTER_7_DAYS', 'AFTER_14_DAYS', 'AFTER_30_DAYS', 'AFTER_60_DAYS', 'AFTER_90_DAYS']).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// STEP FUNCTIONS / WORKFLOW CONFIGURATION
+// ==========================================
+export const stepFunctionsConfigSchema = z.object({
+  type: z.enum(['STANDARD', 'EXPRESS']).optional().default('STANDARD'),
+  loggingLevel: z.enum(['ALL', 'ERROR', 'FATAL', 'OFF']).optional().default('ALL'),
+  tracingEnabled: z.boolean().optional().default(true),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// SERVICE BUS CONFIGURATION
+// ==========================================
+export const serviceBusConfigSchema = z.object({
+  sku: z.enum(['basic', 'standard', 'premium']).optional().default('standard'),
+  capacity: z.number().min(1).max(16).optional(),
+  zoneRedundant: z.boolean().optional().default(false),
+  queues: z.array(z.object({
+    name: z.string(),
+    maxSizeInMb: z.number().optional(),
+    enablePartitioning: z.boolean().optional(),
+    maxDeliveryCount: z.number().optional().default(10),
+  })).optional(),
+  topics: z.array(z.object({
+    name: z.string(),
+    maxSizeInMb: z.number().optional(),
+    enablePartitioning: z.boolean().optional(),
+  })).optional(),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
+// AUTO SCALING CONFIGURATION
+// ==========================================
+export const autoScalingConfigSchema = z.object({
+  minCapacity: z.number().min(0).max(100).optional().default(1),
+  maxCapacity: z.number().min(1).max(100).optional().default(4),
+  desiredCapacity: z.number().optional(),
+  cooldown: z.number().optional().default(300),
+  healthCheckType: z.enum(['ec2', 'elb']).optional().default('ec2'),
+  healthCheckGracePeriod: z.number().optional().default(300),
+  tags: z.record(z.string()).optional(),
+})
+
+// ==========================================
 // GENERIC CONFIGURATION
 // ==========================================
 export const genericConfigSchema = z.object({
@@ -318,13 +661,21 @@ export const genericConfigSchema = z.object({
 
 // Map component IDs to their config schemas
 export const CONFIG_SCHEMAS: Record<string, z.ZodSchema> = {
+  // ──────────────────────────────────────────
   // Compute
+  // ──────────────────────────────────────────
   'azure-vm': vmConfigSchema,
-  'aws-ec2': vmConfigSchema,
-  'gcp-compute': vmConfigSchema,
   'azure-vmss': vmConfigSchema,
+  'aws-ec2': vmConfigSchema,
+  'gcp-compute-instance': vmConfigSchema,
+  'gcp-compute-engine': vmConfigSchema,
+  'azure-availability-set': genericConfigSchema,
+  'aws-auto-scaling': autoScalingConfigSchema,
+  'gcp-instance-group': autoScalingConfigSchema,
 
+  // ──────────────────────────────────────────
   // Networking
+  // ──────────────────────────────────────────
   'azure-vnet': vnetConfigSchema,
   'aws-vpc': vnetConfigSchema,
   'gcp-vpc': vnetConfigSchema,
@@ -336,37 +687,106 @@ export const CONFIG_SCHEMAS: Record<string, z.ZodSchema> = {
   'gcp-firewall': nsgConfigSchema,
   'azure-nic': nicConfigSchema,
   'azure-public-ip': publicIpConfigSchema,
-  'aws-eip': publicIpConfigSchema,
-  'gcp-external-ip': publicIpConfigSchema,
+  'aws-elastic-ip': publicIpConfigSchema,
   'azure-lb': loadBalancerConfigSchema,
   'aws-elb': loadBalancerConfigSchema,
   'aws-alb': loadBalancerConfigSchema,
-  'gcp-lb': loadBalancerConfigSchema,
+  'aws-nlb': loadBalancerConfigSchema,
+  'gcp-cloud-lb': loadBalancerConfigSchema,
+  'azure-nat-gateway': natGatewayConfigSchema,
+  'aws-nat-gateway': natGatewayConfigSchema,
+  'gcp-cloud-nat': natGatewayConfigSchema,
+  'azure-route-table': routeTableConfigSchema,
+  'aws-route-table': routeTableConfigSchema,
+  'aws-internet-gateway': internetGatewayConfigSchema,
+  'azure-vpn-gateway': vpnGatewayConfigSchema,
+  'azure-express-route': vpnGatewayConfigSchema,
+  'azure-ddos-protection': genericConfigSchema,
+  'azure-traffic-manager': dnsConfigSchema,
 
+  // ──────────────────────────────────────────
   // Storage
-  'azure-storage': storageAccountConfigSchema,
-  'azure-disk': diskConfigSchema,
+  // ──────────────────────────────────────────
+  'azure-storage-account': storageAccountConfigSchema,
+  'azure-blob': s3ConfigSchema,
+  'azure-file-share': efsConfigSchema,
+  'azure-managed-disk': diskConfigSchema,
+  'aws-s3': s3ConfigSchema,
   'aws-ebs': diskConfigSchema,
-  'gcp-disk': diskConfigSchema,
+  'aws-efs': efsConfigSchema,
+  'gcp-cloud-storage': s3ConfigSchema,
+  'gcp-persistent-disk': diskConfigSchema,
 
+  // ──────────────────────────────────────────
   // Databases
+  // ──────────────────────────────────────────
   'azure-sql': sqlServerConfigSchema,
-  'azure-sql-database': sqlDatabaseConfigSchema,
-  'azure-cosmosdb': cosmosDbConfigSchema,
+  'azure-cosmos': cosmosDbConfigSchema,
   'aws-rds': sqlServerConfigSchema,
-  'gcp-cloudsql': sqlServerConfigSchema,
+  'gcp-cloud-sql': sqlServerConfigSchema,
+  'gcp-bigquery': bigQueryConfigSchema,
 
+  // ──────────────────────────────────────────
+  // Cache
+  // ──────────────────────────────────────────
+  'aws-elasticache': cacheConfigSchema,
+
+  // ──────────────────────────────────────────
   // Containers
+  // ──────────────────────────────────────────
   'azure-aks': aksConfigSchema,
   'aws-eks': aksConfigSchema,
   'gcp-gke': aksConfigSchema,
-  'azure-aci': aciConfigSchema,
+  'aws-ecs': ecsConfigSchema,
+  'gcp-cloud-run': cloudRunConfigSchema,
 
-  // PaaS
+  // ──────────────────────────────────────────
+  // PaaS / Serverless
+  // ──────────────────────────────────────────
   'azure-app-service': appServiceConfigSchema,
   'azure-functions': functionAppConfigSchema,
   'aws-lambda': functionAppConfigSchema,
   'gcp-cloud-functions': functionAppConfigSchema,
+  'aws-step-functions': stepFunctionsConfigSchema,
+
+  // ──────────────────────────────────────────
+  // CDN
+  // ──────────────────────────────────────────
+  'aws-cloudfront': cdnConfigSchema,
+  'azure-front-door': cdnConfigSchema,
+  'gcp-cloud-cdn': cdnConfigSchema,
+
+  // ──────────────────────────────────────────
+  // DNS
+  // ──────────────────────────────────────────
+  'aws-route53': dnsConfigSchema,
+
+  // ──────────────────────────────────────────
+  // Messaging / Event Streaming
+  // ──────────────────────────────────────────
+  'aws-sqs': queueConfigSchema,
+  'aws-sns': notificationConfigSchema,
+  'azure-service-bus': serviceBusConfigSchema,
+  'azure-event-hub': eventStreamConfigSchema,
+  'gcp-pubsub': queueConfigSchema,
+  'aws-kinesis': eventStreamConfigSchema,
+  'aws-eventbridge': eventStreamConfigSchema,
+
+  // ──────────────────────────────────────────
+  // API Gateway
+  // ──────────────────────────────────────────
+  'aws-api-gateway': apiGatewayConfigSchema,
+
+  // ──────────────────────────────────────────
+  // Security / Secrets / Identity
+  // ──────────────────────────────────────────
+  'azure-key-vault': secretStoreConfigSchema,
+  'aws-secrets-manager': secretStoreConfigSchema,
+  'aws-cognito': cognitoConfigSchema,
+  'azure-ad': genericConfigSchema,
+  'azure-bastion': bastionConfigSchema,
+  'azure-firewall': firewallConfigSchema,
+  'azure-app-gw': appGatewayConfigSchema,
 
   // ──────────────────────────────────────────
   // CI/CD & DevOps
@@ -377,13 +797,22 @@ export const CONFIG_SCHEMAS: Record<string, z.ZodSchema> = {
   'argocd':         argoCDConfigSchema,
   'helm':           helmConfigSchema,
 
+  // ──────────────────────────────────────────
   // Monitoring
+  // ──────────────────────────────────────────
   'prometheus':     prometheusConfigSchema,
   'datadog':        datadogConfigSchema,
 
-  // Messaging
+  // ──────────────────────────────────────────
+  // Messaging (Self-hosted)
+  // ──────────────────────────────────────────
   'rabbitmq':       rabbitmqConfigSchema,
   'kafka':          kafkaConfigSchema,
+
+  // ──────────────────────────────────────────
+  // Firebase
+  // ──────────────────────────────────────────
+  'gcp-firebase': genericConfigSchema,
 
   // Default for everything else
   'default': genericConfigSchema,
@@ -405,6 +834,42 @@ export type AksConfig = z.infer<typeof aksConfigSchema>
 export type AppServiceConfig = z.infer<typeof appServiceConfigSchema>
 export type GenericConfig = z.infer<typeof genericConfigSchema>
 
+// Storage types
+export type S3Config = z.infer<typeof s3ConfigSchema>
+export type DiskConfig = z.infer<typeof diskConfigSchema>
+export type EfsConfig = z.infer<typeof efsConfigSchema>
+
+// Container types
+export type EcsConfig = z.infer<typeof ecsConfigSchema>
+export type CloudRunConfig = z.infer<typeof cloudRunConfigSchema>
+
+// Network types
+export type NatGatewayConfig = z.infer<typeof natGatewayConfigSchema>
+export type VpnGatewayConfig = z.infer<typeof vpnGatewayConfigSchema>
+export type RouteTableConfig = z.infer<typeof routeTableConfigSchema>
+export type FirewallConfig = z.infer<typeof firewallConfigSchema>
+export type BastionConfig = z.infer<typeof bastionConfigSchema>
+export type AppGatewayConfig = z.infer<typeof appGatewayConfigSchema>
+
+// Messaging types
+export type QueueConfig = z.infer<typeof queueConfigSchema>
+export type NotificationConfig = z.infer<typeof notificationConfigSchema>
+export type ServiceBusConfig = z.infer<typeof serviceBusConfigSchema>
+export type EventStreamConfig = z.infer<typeof eventStreamConfigSchema>
+
+// CDN / DNS types
+export type CdnConfig = z.infer<typeof cdnConfigSchema>
+export type DnsConfig = z.infer<typeof dnsConfigSchema>
+
+// API / Auth types
+export type ApiGatewayConfig = z.infer<typeof apiGatewayConfigSchema>
+export type SecretStoreConfig = z.infer<typeof secretStoreConfigSchema>
+export type CognitoConfig = z.infer<typeof cognitoConfigSchema>
+
+// Cache / Analytics types
+export type CacheConfig = z.infer<typeof cacheConfigSchema>
+export type BigQueryConfig = z.infer<typeof bigQueryConfigSchema>
+
 // CI/CD types
 export type GitHubActionsConfig = z.infer<typeof githubActionsConfigSchema>
 export type GitLabCIConfig = z.infer<typeof gitlabCIConfigSchema>
@@ -415,6 +880,8 @@ export type DatadogConfig = z.infer<typeof datadogConfigSchema>
 export type PrometheusConfig = z.infer<typeof prometheusConfigSchema>
 export type RabbitMQConfig = z.infer<typeof rabbitmqConfigSchema>
 export type KafkaConfig = z.infer<typeof kafkaConfigSchema>
+export type StepFunctionsConfig = z.infer<typeof stepFunctionsConfigSchema>
+export type AutoScalingConfig = z.infer<typeof autoScalingConfigSchema>
 
 // Union type for all configs
 export type NodeConfig =
@@ -427,6 +894,23 @@ export type NodeConfig =
   | AksConfig
   | AppServiceConfig
   | GenericConfig
+  | S3Config
+  | EcsConfig
+  | CloudRunConfig
+  | CacheConfig
+  | CdnConfig
+  | DnsConfig
+  | QueueConfig
+  | NotificationConfig
+  | ApiGatewayConfig
+  | SecretStoreConfig
+  | AppGatewayConfig
+  | BastionConfig
+  | FirewallConfig
+  | EventStreamConfig
+  | BigQueryConfig
+  | CognitoConfig
+  | ServiceBusConfig
   | GitHubActionsConfig
   | GitLabCIConfig
   | JenkinsConfig

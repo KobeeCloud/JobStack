@@ -62,6 +62,7 @@ const CFN_MAPPINGS: Record<string, { type: string; defaultProps: Record<string, 
   'aws-secrets-manager': { type: 'AWS::SecretsManager::Secret', defaultProps: {} },
   'aws-iam-role': { type: 'AWS::IAM::Role', defaultProps: { AssumeRolePolicyDocument: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Principal: { Service: 'ec2.amazonaws.com' }, Action: 'sts:AssumeRole' }] } } },
   'aws-aurora': { type: 'AWS::RDS::DBCluster', defaultProps: { Engine: 'aurora-postgresql', EngineVersion: '15.4' } },
+  'aws-aurora-serverless': { type: 'AWS::RDS::DBCluster', defaultProps: { Engine: 'aurora-postgresql', EngineMode: 'serverless', EngineVersion: '15.4', ScalingConfiguration: { AutoPause: true, MinCapacity: 2, MaxCapacity: 16 } } },
   'aws-kinesis': { type: 'AWS::Kinesis::Stream', defaultProps: { StreamModeDetails: { StreamMode: 'ON_DEMAND' } } },
   'aws-step-functions': { type: 'AWS::StepFunctions::StateMachine', defaultProps: { StateMachineType: 'STANDARD' } },
   'aws-eventbridge': { type: 'AWS::Events::EventBus', defaultProps: {} },
@@ -154,7 +155,7 @@ export function generateCloudFormation(nodes: Node[], edges: Edge[] = [], format
       if (vpc) { props.VpcId = { Ref: vpc }; deps.push(vpc) }
     }
 
-    if (['aws-ec2', 'aws-rds', 'aws-aurora', 'aws-elasticache', 'aws-nat-gateway'].includes(componentId) && subnetRef) {
+    if (['aws-ec2', 'aws-rds', 'aws-aurora', 'aws-aurora-serverless', 'aws-elasticache', 'aws-nat-gateway'].includes(componentId) && subnetRef) {
       props.SubnetId = { Ref: subnetRef }; deps.push(subnetRef)
       if (vpcRef) deps.push(vpcRef)
     }
@@ -174,11 +175,11 @@ export function generateCloudFormation(nodes: Node[], edges: Edge[] = [], format
     }
 
     // --- Edge-based cross-references ---
-    if (['aws-ec2', 'aws-alb', 'aws-nlb', 'aws-rds', 'aws-aurora', 'aws-elasticache', 'aws-ecs', 'aws-eks'].includes(componentId)) {
+    if (['aws-ec2', 'aws-alb', 'aws-nlb', 'aws-rds', 'aws-aurora', 'aws-aurora-serverless', 'aws-elasticache', 'aws-ecs', 'aws-eks'].includes(componentId)) {
       const sgs = findConnected(node.id, ['aws-security-group'], edges, nodeMap, nodeIdToName)
       if (sgs.length > 0) {
         if (['aws-alb', 'aws-nlb'].includes(componentId)) props.SecurityGroups = sgs.map(s => ({ Ref: s }))
-        else if (['aws-rds', 'aws-aurora'].includes(componentId)) props.VPCSecurityGroups = sgs.map(s => ({ Ref: s }))
+        else if (['aws-rds', 'aws-aurora', 'aws-aurora-serverless'].includes(componentId)) props.VPCSecurityGroups = sgs.map(s => ({ Ref: s }))
         else props.SecurityGroupIds = sgs.map(s => ({ Ref: s }))
         deps.push(...sgs)
       }
@@ -218,7 +219,7 @@ export function generateCloudFormation(nodes: Node[], edges: Edge[] = [], format
 
     template.Resources[resName] = { Type: mapping.type, Properties: props, ...(deps.length > 0 && { DependsOn: [...new Set(deps)] }) }
 
-    if (['aws-vpc', 'aws-s3', 'aws-rds', 'aws-alb', 'aws-eks', 'aws-api-gateway', 'aws-lambda', 'aws-ecs', 'aws-cloudfront', 'aws-aurora'].includes(componentId)) {
+    if (['aws-vpc', 'aws-s3', 'aws-rds', 'aws-alb', 'aws-eks', 'aws-api-gateway', 'aws-lambda', 'aws-ecs', 'aws-cloudfront', 'aws-aurora', 'aws-aurora-serverless'].includes(componentId)) {
       template.Outputs[`${resName}Id`] = { Description: `ID of ${node.data?.label || resName}`, Value: { Ref: resName }, Export: { Name: { 'Fn::Sub': `\${AWS::StackName}-${resName}Id` } } }
     }
   }

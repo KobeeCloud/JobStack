@@ -167,7 +167,14 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Azure Resource Group - container for related resources',
     estimatedCost: { min: 0, max: 0 },
-    canContain: ['azure-vnet', 'azure-vm', 'azure-storage', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql'],
+    canContain: [
+      'azure-vnet', 'azure-vm', 'azure-vmss', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql',
+      'azure-aks', 'azure-functions', 'azure-app-service', 'azure-key-vault', 'azure-cosmos',
+      'azure-storage-account', 'azure-managed-disk', 'azure-public-ip', 'azure-nic',
+      'azure-firewall', 'azure-bastion', 'azure-nat-gateway', 'azure-service-bus', 'azure-event-hub',
+      'azure-front-door', 'azure-traffic-manager', 'azure-route-table', 'azure-availability-set',
+      'azure-blob', 'azure-file-share', 'azure-express-route', 'azure-ddos-protection', 'azure-vpn-gateway'
+    ],
     terraform: {
       provider: 'azure',
       resource: 'azurerm_resource_group',
@@ -184,7 +191,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Azure Virtual Network (VNet) - isolated network in Azure',
     estimatedCost: { min: 0, max: 5 },
-    canContain: ['azure-subnet'],
+    canContain: ['azure-subnet', 'azure-bastion', 'azure-firewall', 'azure-vpn-gateway'],
     terraform: {
       provider: 'azure',
       resource: 'azurerm_virtual_network',
@@ -683,7 +690,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#FF9900',
     description: 'AWS Virtual Private Cloud - isolated network',
     estimatedCost: { min: 0, max: 5 },
-    canContain: ['aws-subnet'],
+    canContain: ['aws-subnet', 'aws-internet-gateway', 'aws-nat-gateway', 'aws-route-table', 'aws-security-group'],
     terraform: {
       provider: 'aws',
       resource: 'aws_vpc',
@@ -903,7 +910,11 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_s3_bucket',
-      defaultConfig: {}
+      defaultConfig: {
+        versioning: {
+          enabled: true
+        }
+      }
     }
   },
   {
@@ -951,7 +962,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#4285F4',
     description: 'GCP VPC - virtual private cloud',
     estimatedCost: { min: 0, max: 5 },
-    canContain: ['gcp-subnet'],
+    canContain: ['gcp-subnet', 'gcp-cloud-nat', 'gcp-firewall'],
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_network',
@@ -1369,24 +1380,6 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     }
   },
   {
-    id: 'aws-s3',
-    name: 'AWS S3',
-    category: 'cloud',
-    icon: HardDrive,
-    color: '#FF9900',
-    description: 'Object storage service',
-    estimatedCost: { min: 0, max: 50 },
-    terraform: {
-      provider: 'aws',
-      resource: 'aws_s3_bucket',
-      defaultConfig: {
-        versioning: {
-          enabled: true
-        }
-      }
-    }
-  },
-  {
     id: 'aws-api-gateway',
     name: 'AWS API Gateway',
     category: 'cloud',
@@ -1551,18 +1544,33 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     }
   },
   {
-    id: 'aws-ec2',
-    name: 'AWS EC2',
-    category: 'cloud',
+    id: 'aws-aurora',
+    name: 'AWS Aurora',
+    category: 'database',
     provider: 'aws',
-    icon: Server,
+    icon: Database,
     color: '#FF9900',
-    description: 'Virtual servers in the cloud',
-    estimatedCost: { min: 10, max: 2000 },
+    description: 'High-performance managed relational database compatible with MySQL and PostgreSQL',
+    estimatedCost: { min: 60, max: 2000 },
     terraform: {
       provider: 'aws',
-      resource: 'aws_instance',
-      defaultConfig: { instance_type: 't3.micro' }
+      resource: 'aws_rds_cluster',
+      defaultConfig: { engine: 'aurora-postgresql', engine_version: '15.4' }
+    }
+  },
+  {
+    id: 'aws-aurora-serverless',
+    name: 'AWS Aurora Serverless',
+    category: 'database',
+    provider: 'aws',
+    icon: Database,
+    color: '#FF9900',
+    description: 'On-demand auto-scaling Aurora database — scales capacity automatically',
+    estimatedCost: { min: 5, max: 1500 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_rds_cluster',
+      defaultConfig: { engine: 'aurora-postgresql', engine_mode: 'serverless', engine_version: '15.4' }
     }
   },
   {
@@ -1600,21 +1608,6 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_sns_topic',
-      defaultConfig: {}
-    }
-  },
-  {
-    id: 'aws-cloudfront',
-    name: 'AWS CloudFront',
-    category: 'service',
-    provider: 'aws',
-    icon: Globe,
-    color: '#FF9900',
-    description: 'Content delivery network',
-    estimatedCost: { min: 0, max: 200 },
-    terraform: {
-      provider: 'aws',
-      resource: 'aws_cloudfront_distribution',
       defaultConfig: {}
     }
   },
@@ -1675,21 +1668,6 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_cloudwatch_event_bus',
-      defaultConfig: {}
-    }
-  },
-  {
-    id: 'aws-route53',
-    name: 'AWS Route 53',
-    category: 'service',
-    provider: 'aws',
-    icon: Globe,
-    color: '#FF9900',
-    description: 'DNS and domain management',
-    estimatedCost: { min: 0.50, max: 50 },
-    terraform: {
-      provider: 'aws',
-      resource: 'aws_route53_zone',
       defaultConfig: {}
     }
   },
@@ -1799,21 +1777,6 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     }
   },
   {
-    id: 'gcp-cloud-storage',
-    name: 'GCP Cloud Storage',
-    category: 'cloud',
-    provider: 'gcp',
-    icon: HardDrive,
-    color: '#4285F4',
-    description: 'Object storage service',
-    estimatedCost: { min: 0, max: 100 },
-    terraform: {
-      provider: 'gcp',
-      resource: 'google_storage_bucket',
-      defaultConfig: {}
-    }
-  },
-  {
     id: 'gcp-pubsub',
     name: 'GCP Pub/Sub',
     category: 'service',
@@ -1856,16 +1819,6 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
 
   // Additional Azure Services
   {
-    id: 'azure-vm',
-    name: 'Azure Virtual Machine',
-    category: 'cloud',
-    provider: 'azure',
-    icon: Server,
-    color: '#0078D4',
-    description: 'Virtual machines on Azure',
-    estimatedCost: { min: 10, max: 2000 },
-  },
-  {
     id: 'azure-aks',
     name: 'Azure AKS',
     category: 'cloud',
@@ -1888,6 +1841,27 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         network_plugin: 'azure',
         network_policy: 'azure',
         load_balancer_sku: 'standard',
+      }
+    }
+  },
+  {
+    id: 'azure-container-apps',
+    name: 'Azure Container Apps',
+    category: 'cloud',
+    provider: 'azure',
+    icon: Container,
+    color: '#0078D4',
+    description: 'Serverless container hosting — run microservices without managing infrastructure',
+    estimatedCost: { min: 0, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_container_app',
+      defaultConfig: {
+        revision_mode: 'Single',
+        ingress_external_enabled: true,
+        ingress_target_port: 80,
+        min_replicas: 0,
+        max_replicas: 10,
       }
     }
   },

@@ -233,6 +233,213 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
       },
     },
   },
+  {
+    genericId: 'generic-container-orchestrator',
+    genericName: 'Kubernetes Cluster',
+    category: 'compute',
+    description: 'Managed Kubernetes for container orchestration',
+    providers: {
+      aws: {
+        componentId: 'aws-eks',
+        defaultConfig: { kubernetes_version: '1.31' },
+        estimatedCost: { min: 73, max: 3000 },
+      },
+      azure: {
+        componentId: 'azure-aks',
+        defaultConfig: { kubernetes_version: '1.31', sku_tier: 'Free' },
+        estimatedCost: { min: 73, max: 3000 },
+      },
+      gcp: {
+        componentId: 'gcp-gke',
+        defaultConfig: { clusterVersion: '1.31' },
+        estimatedCost: { min: 73, max: 3000 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-serverless-function',
+    genericName: 'Serverless Function',
+    category: 'compute',
+    description: 'Event-driven serverless compute — pay per invocation',
+    providers: {
+      aws: {
+        componentId: 'aws-lambda',
+        defaultConfig: { runtime: 'nodejs20.x', memorySize: 256 },
+        estimatedCost: { min: 0, max: 50 },
+      },
+      azure: {
+        componentId: 'azure-functions',
+        defaultConfig: { runtime: 'node', sku: 'Y1' },
+        estimatedCost: { min: 0, max: 50 },
+      },
+      gcp: {
+        componentId: 'gcp-cloud-functions',
+        defaultConfig: { runtime: 'nodejs20', memoryMb: 256 },
+        estimatedCost: { min: 0, max: 50 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-message-queue',
+    genericName: 'Message Queue',
+    category: 'messaging',
+    description: 'Managed message queue for async decoupled processing',
+    providers: {
+      aws: {
+        componentId: 'aws-sqs',
+        defaultConfig: { fifo: false },
+        estimatedCost: { min: 0, max: 25 },
+      },
+      azure: {
+        componentId: 'azure-service-bus',
+        defaultConfig: { sku: 'Standard' },
+        estimatedCost: { min: 10, max: 50 },
+      },
+      gcp: {
+        componentId: 'gcp-pubsub',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 25 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-api-gateway',
+    genericName: 'API Gateway',
+    category: 'networking',
+    description: 'Managed API gateway with throttling and auth',
+    providers: {
+      aws: {
+        componentId: 'aws-api-gateway',
+        defaultConfig: { apiType: 'REST' },
+        estimatedCost: { min: 3, max: 100 },
+      },
+      azure: {
+        componentId: 'azure-app-gw',
+        defaultConfig: { sku: 'Standard_v2' },
+        estimatedCost: { min: 18, max: 200 },
+      },
+      gcp: {
+        componentId: 'gcp-cloud-lb',
+        defaultConfig: { loadBalancingScheme: 'EXTERNAL' },
+        estimatedCost: { min: 18, max: 100 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-nosql-database',
+    genericName: 'NoSQL Database',
+    category: 'database',
+    description: 'Managed NoSQL/document database with global distribution',
+    providers: {
+      aws: {
+        componentId: 'aws-dynamodb',
+        defaultConfig: { billingMode: 'PAY_PER_REQUEST' },
+        estimatedCost: { min: 0, max: 500 },
+      },
+      azure: {
+        componentId: 'azure-cosmos',
+        defaultConfig: { kind: 'GlobalDocumentDB', consistencyLevel: 'Session' },
+        estimatedCost: { min: 25, max: 1000 },
+      },
+      gcp: {
+        componentId: 'gcp-firestore',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 500 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-secret-store',
+    genericName: 'Secret Store',
+    category: 'security',
+    description: 'Managed secrets and key management',
+    providers: {
+      aws: {
+        componentId: 'aws-secrets-manager',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 10 },
+      },
+      azure: {
+        componentId: 'azure-key-vault',
+        defaultConfig: { sku: 'standard' },
+        estimatedCost: { min: 0, max: 10 },
+      },
+      gcp: {
+        componentId: 'gcp-secret-manager',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 10 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-dns',
+    genericName: 'DNS Service',
+    category: 'networking',
+    description: 'Managed DNS with global routing and health checks',
+    providers: {
+      aws: {
+        componentId: 'aws-route53',
+        defaultConfig: {},
+        estimatedCost: { min: 0.5, max: 10 },
+      },
+      azure: {
+        componentId: 'azure-traffic-manager',
+        defaultConfig: {},
+        estimatedCost: { min: 0.5, max: 10 },
+      },
+      gcp: {
+        componentId: 'gcp-cloud-dns',
+        defaultConfig: {},
+        estimatedCost: { min: 0.2, max: 10 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-container-apps',
+    genericName: 'Serverless Containers',
+    category: 'compute',
+    description: 'Serverless container hosting — run containers without managing clusters',
+    providers: {
+      aws: {
+        componentId: 'aws-ecs',
+        defaultConfig: { launchType: 'FARGATE' },
+        estimatedCost: { min: 10, max: 500 },
+      },
+      azure: {
+        componentId: 'azure-container-apps',
+        defaultConfig: { revision_mode: 'Single' },
+        estimatedCost: { min: 0, max: 500 },
+      },
+      gcp: {
+        componentId: 'gcp-cloud-run',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 500 },
+      },
+    },
+  },
+  {
+    genericId: 'generic-firewall',
+    genericName: 'Network Security / Firewall',
+    category: 'security',
+    description: 'Network security rules and firewalling',
+    providers: {
+      aws: {
+        componentId: 'aws-security-group',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 0 },
+      },
+      azure: {
+        componentId: 'azure-nsg',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 0 },
+      },
+      gcp: {
+        componentId: 'gcp-firewall',
+        defaultConfig: {},
+        estimatedCost: { min: 0, max: 0 },
+      },
+    },
+  },
 ]
 
 export function getCloudAgnosticComponent(genericId: string): CloudAgnosticMapping | undefined {
@@ -347,26 +554,100 @@ function tryConvertComponent(
     'aws-ec2': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
     'azure-vm': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
     'gcp-compute-instance': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
+    'gcp-compute-engine': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-engine' },
 
-    // Databases
+    // Databases (relational)
     'aws-rds': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
     'azure-sql': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
     'gcp-cloud-sql': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
 
-    // Storage
+    // NoSQL / Document DB
+    'azure-cosmos': { aws: 'aws-dynamodb', azure: 'azure-cosmos', gcp: 'gcp-firestore' },
+
+    // Object Storage
     'aws-s3': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
     'azure-blob': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
     'gcp-cloud-storage': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
 
     // Load Balancers
-    'aws-alb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
-    'azure-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
-    'gcp-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
+    'aws-alb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
+    'aws-nlb': { aws: 'aws-nlb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
+    'azure-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
+    'gcp-cloud-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
 
     // VPC/VNet
     'aws-vpc': { aws: 'aws-vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
     'azure-vnet': { aws: 'aws-vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
     'gcp-vpc': { aws: 'aws-vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
+
+    // Subnets
+    'aws-subnet': { aws: 'aws-subnet', azure: 'azure-subnet', gcp: 'gcp-subnet' },
+    'azure-subnet': { aws: 'aws-subnet', azure: 'azure-subnet', gcp: 'gcp-subnet' },
+    'gcp-subnet': { aws: 'aws-subnet', azure: 'azure-subnet', gcp: 'gcp-subnet' },
+
+    // Container Orchestration (Kubernetes)
+    'aws-eks': { aws: 'aws-eks', azure: 'azure-aks', gcp: 'gcp-gke' },
+    'azure-aks': { aws: 'aws-eks', azure: 'azure-aks', gcp: 'gcp-gke' },
+    'gcp-gke': { aws: 'aws-eks', azure: 'azure-aks', gcp: 'gcp-gke' },
+
+    // Container Services (non-K8s)
+    'aws-ecs': { aws: 'aws-ecs', azure: 'azure-aks', gcp: 'gcp-cloud-run' },
+    'gcp-cloud-run': { aws: 'aws-ecs', azure: 'azure-app-service', gcp: 'gcp-cloud-run' },
+
+    // Serverless Functions
+    'aws-lambda': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-functions' },
+    'azure-functions': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-functions' },
+    'gcp-cloud-functions': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-functions' },
+
+    // Message Queues
+    'aws-sqs': { aws: 'aws-sqs', azure: 'azure-service-bus', gcp: 'gcp-pubsub' },
+    'azure-service-bus': { aws: 'aws-sqs', azure: 'azure-service-bus', gcp: 'gcp-pubsub' },
+    'gcp-pubsub': { aws: 'aws-sqs', azure: 'azure-service-bus', gcp: 'gcp-pubsub' },
+
+    // Notification / Event Topics
+    'aws-sns': { aws: 'aws-sns', azure: 'azure-event-hub', gcp: 'gcp-pubsub' },
+    'azure-event-hub': { aws: 'aws-sns', azure: 'azure-event-hub', gcp: 'gcp-pubsub' },
+
+    // API Gateway
+    'aws-api-gateway': { aws: 'aws-api-gateway', azure: 'azure-app-gw', gcp: 'gcp-cloud-lb' },
+    'azure-app-gw': { aws: 'aws-api-gateway', azure: 'azure-app-gw', gcp: 'gcp-cloud-lb' },
+
+    // CDN
+    'aws-cloudfront': { aws: 'aws-cloudfront', azure: 'azure-front-door', gcp: 'gcp-cloud-cdn' },
+    'azure-front-door': { aws: 'aws-cloudfront', azure: 'azure-front-door', gcp: 'gcp-cloud-cdn' },
+    'gcp-cloud-cdn': { aws: 'aws-cloudfront', azure: 'azure-front-door', gcp: 'gcp-cloud-cdn' },
+
+    // DNS
+    'aws-route53': { aws: 'aws-route53', azure: 'azure-traffic-manager', gcp: 'gcp-cloud-dns' },
+    'azure-traffic-manager': { aws: 'aws-route53', azure: 'azure-traffic-manager', gcp: 'gcp-cloud-dns' },
+
+    // Secret Store
+    'aws-secrets-manager': { aws: 'aws-secrets-manager', azure: 'azure-key-vault', gcp: 'gcp-secret-manager' },
+    'azure-key-vault': { aws: 'aws-secrets-manager', azure: 'azure-key-vault', gcp: 'gcp-secret-manager' },
+
+    // Cache
+    'aws-elasticache': { aws: 'aws-elasticache', azure: 'azure-redis', gcp: 'gcp-memorystore' },
+
+    // Firewall / NSG
+    'aws-security-group': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall' },
+    'azure-nsg': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall' },
+    'gcp-firewall': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall' },
+
+    // NAT Gateway
+    'aws-nat-gateway': { aws: 'aws-nat-gateway', azure: 'azure-nat-gateway', gcp: 'gcp-cloud-nat' },
+    'azure-nat-gateway': { aws: 'aws-nat-gateway', azure: 'azure-nat-gateway', gcp: 'gcp-cloud-nat' },
+    'gcp-cloud-nat': { aws: 'aws-nat-gateway', azure: 'azure-nat-gateway', gcp: 'gcp-cloud-nat' },
+
+    // PaaS / App Service
+    'azure-app-service': { aws: 'aws-ecs', azure: 'azure-app-service', gcp: 'gcp-cloud-run' },
+
+    // Event Streaming
+    'aws-kinesis': { aws: 'aws-kinesis', azure: 'azure-event-hub', gcp: 'gcp-pubsub' },
+    'aws-eventbridge': { aws: 'aws-eventbridge', azure: 'azure-event-hub', gcp: 'gcp-pubsub' },
+
+    // Identity
+    'aws-cognito': { aws: 'aws-cognito', azure: 'azure-ad', gcp: 'gcp-firebase' },
+    'azure-ad': { aws: 'aws-cognito', azure: 'azure-ad', gcp: 'gcp-firebase' },
   }
 
   const targetComponentId = conversions[sourceComponentId]?.[targetProvider]
