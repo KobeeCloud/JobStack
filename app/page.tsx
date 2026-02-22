@@ -8,14 +8,17 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/logo'
-import { AnimatedDiagramDemo } from '@/components/animated-diagram-demo'
 import { FeatureTabs } from '@/components/landing/feature-tabs'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { getTranslations } from 'next-intl/server'
+// SR-8: Lazy-load the animated demo via a client wrapper (ssr:false requires 'use client')
+import { LazyAnimatedDiagramDemo as AnimatedDiagramDemo } from '@/components/landing/lazy-animated-diagram'
 
 export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const t = await getTranslations('footer')
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -68,6 +71,8 @@ export default async function Home() {
         </div>
       </nav>
 
+      {/* SR-2: Semantic <main> landmark for screen readers */}
+      <main>
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -384,15 +389,16 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      </main>
 
       <footer className="border-t py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2"><Logo size={20} /></div>
-            <p className="text-sm text-muted-foreground">© 2026 KobeCloud Jakub Pospieszny. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">{t('copyright', { year: new Date().getFullYear() })}</p>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="/privacy" className="hover:text-foreground">Polityka Prywatności</Link>
-              <Link href="/terms" className="hover:text-foreground">Regulamin</Link>
+              <Link href="/privacy" className="hover:text-foreground">{t('privacy')}</Link>
+              <Link href="/terms" className="hover:text-foreground">{t('terms')}</Link>
             </div>
           </div>
         </div>

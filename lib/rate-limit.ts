@@ -1,7 +1,40 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
-// Initialize Redis client (use environment variables or fallback to mock)
+// ── In-memory sliding-window fallback (ST-3) ────────────────────────────────
+// Used when Upstash Redis is not configured so that rate-limiting still works.
+const inMemoryStore = new Map<string, { count: number; resetAt: number }>()
+
+function inMemoryLimit(
+  identifier: string,
+  maxRequests: number,
+  windowMs: number,
+): { success: boolean; limit: number; remaining: number; reset: number } {
+  const now = Date.now()
+  const entry = inMemoryStore.get(identifier)
+  if (!entry || now > entry.resetAt) {
+    inMemoryStore.set(identifier, { count: 1, resetAt: now + windowMs })
+    return { success: true, limit: maxRequests, remaining: maxRequests - 1, reset: now + windowMs }
+  }
+  entry.count++
+  const remaining = Math.max(0, maxRequests - entry.count)
+  return {
+    success: entry.count <= maxRequests,
+    limit: maxRequests,
+    remaining,
+    reset: entry.resetAt,
+  }
+}
+
+// Periodically purge expired entries so the Map doesn't grow forever.
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, entry] of inMemoryStore) {
+    if (now > entry.resetAt) inMemoryStore.delete(key)
+  }
+}, 60_000)
+
+// ── Redis-backed rate limiter (when available) ───────────────────────────────
 let redis: Redis | null = null
 let ratelimit: Ratelimit | null = null
 
@@ -22,15 +55,14 @@ try {
     })
   }
 } catch {
-  // Fallback to no rate limiting if Redis is not configured
-  // This is fine for free tier - rate limiting is optional
+  // Redis init failed — the in-memory fallback will be used automatically.
 }
 
 // Rate limiters for different endpoints
 export const generalRateLimit = ratelimit
   ? ratelimit
   : {
-      limit: async () => ({ success: true, limit: 100, remaining: 100, reset: Date.now() }),
+      limit: async (id: string) => inMemoryLimit(id, 100, 60_000),
     }
 
 export const authRateLimit = ratelimit
@@ -40,17 +72,12 @@ export const authRateLimit = ratelimit
       analytics: true,
     })
   : {
-      limit: async () => ({ success: true, limit: 5, remaining: 5, reset: Date.now() }),
+      limit: async (id: string) => inMemoryLimit(id, 5, 60_000),
     }
 
 export async function checkRateLimit(
   identifier: string,
   limiter: typeof generalRateLimit = generalRateLimit
 ): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
-  if (!ratelimit) {
-    // No rate limiting configured - allow all requests
-    return { success: true, limit: 100, remaining: 100, reset: Date.now() }
-  }
-
   return await limiter.limit(identifier)
 }

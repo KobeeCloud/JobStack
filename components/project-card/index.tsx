@@ -12,30 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { MoreVertical, Trash2, Edit, Copy, ExternalLink, Loader2, GitBranch } from 'lucide-react'
+import { MoreVertical, Trash2, Edit, Copy, ExternalLink, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DeleteDialog } from './delete-dialog'
+import { EditDialog } from './edit-dialog'
+import { DuplicateDialog } from './duplicate-dialog'
 
 interface Project {
   id: string
@@ -90,10 +71,8 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
     setIsDuplicating(true)
     const envSuffix = duplicateEnv === 'dev' ? 'DEV' : duplicateEnv === 'staging' ? 'STAGING' : 'PROD'
     const newName = duplicateName.trim() || `${project.name} (${envSuffix})`
-    // Replica multiplier: staging 2x, production 3x relative to dev
     const replicaMultiplier = duplicateEnv === 'staging' ? 2 : duplicateEnv === 'production' ? 3 : 1
     try {
-      // Create a copy of the project
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,7 +122,6 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
           }
         }
       } catch {
-        // Diagram copy failed — project still created, just empty
         console.warn('Failed to copy diagrams, project created without diagrams')
       }
 
@@ -283,138 +261,36 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{project.name}&quot;? This action cannot be undone.
-              All diagrams and data associated with this project will be permanently deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        projectName={project.name}
+        isDeleting={isDeleting}
+        onConfirm={handleDelete}
+      />
 
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Project</DialogTitle>
-            <DialogDescription>
-              Update your project details.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name">Name</Label>
-              <Input
-                id="edit-name"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="Project name"
-                disabled={isUpdating}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Optional description"
-                rows={3}
-                disabled={isUpdating}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={isUpdating}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdate} disabled={isUpdating}>
-              {isUpdating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                'Save Changes'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        editName={editName}
+        setEditName={setEditName}
+        editDescription={editDescription}
+        setEditDescription={setEditDescription}
+        isUpdating={isUpdating}
+        onSave={handleUpdate}
+      />
 
-      {/* Duplicate Dialog */}
-      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <GitBranch className="h-5 w-5 text-blue-400" />
-              Duplicate Project
-            </DialogTitle>
-            <DialogDescription>
-              Creates a copy of &ldquo;{project.name}&rdquo; including all diagrams. Use environment promotion to scale replicas automatically.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="dupName">New Project Name</Label>
-              <Input
-                id="dupName"
-                placeholder={`${project.name} (${duplicateEnv.toUpperCase()})`}
-                value={duplicateName}
-                onChange={(e) => setDuplicateName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Target Environment</Label>
-              <Select value={duplicateEnv} onValueChange={(v: any) => setDuplicateEnv(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dev">Development (1× replicas)</SelectItem>
-                  <SelectItem value="staging">Staging (2× replicas)</SelectItem>
-                  <SelectItem value="production">Production (3× replicas)</SelectItem>
-                </SelectContent>
-              </Select>
-              {duplicateEnv !== 'dev' && (
-                <p className="text-xs text-muted-foreground">
-                  Nodes with a &ldquo;Replicas&rdquo; config will be scaled automatically.
-                </p>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)} disabled={isDuplicating}>
-              Cancel
-            </Button>
-            <Button onClick={handleDuplicate} disabled={isDuplicating}>
-              {isDuplicating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
-              Duplicate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DuplicateDialog
+        open={showDuplicateDialog}
+        onOpenChange={setShowDuplicateDialog}
+        projectName={project.name}
+        duplicateName={duplicateName}
+        setDuplicateName={setDuplicateName}
+        duplicateEnv={duplicateEnv}
+        setDuplicateEnv={setDuplicateEnv}
+        isDuplicating={isDuplicating}
+        onDuplicate={handleDuplicate}
+      />
     </>
   )
 }

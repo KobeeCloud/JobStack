@@ -7,8 +7,17 @@ export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Use mock client if env vars not configured
+  // ST-2: In production, block protected routes when Supabase is unconfigured
   if (!url || !key || url.includes('your-project') || key.includes('your-')) {
+    if (process.env.NODE_ENV === 'production') {
+      const protectedPaths = ['/dashboard', '/projects', '/organizations', '/settings', '/templates']
+      const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
+      if (isProtectedRoute) {
+        const loginUrl = request.nextUrl.clone()
+        loginUrl.pathname = '/login'
+        return NextResponse.redirect(loginUrl)
+      }
+    }
     return supabaseResponse
   }
 

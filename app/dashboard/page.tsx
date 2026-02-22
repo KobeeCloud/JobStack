@@ -15,6 +15,8 @@ import { Suspense } from 'react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { DashboardCharts } from '@/components/dashboard-charts'
+import { RelativeTime } from '@/components/relative-time'
+import { getTranslations } from 'next-intl/server'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,15 +39,13 @@ interface Project {
   cloud_provider: string
 }
 
-// Stats component
-async function DashboardStats() {
+// Stats component — BUG-1: accepts userId to avoid redundant getUser() calls
+async function DashboardStats({ userId }: { userId: string }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
 
   const [projectsRes, orgsRes] = await Promise.all([
-    supabase.from('projects').select('id, status, created_at', { count: 'exact' }).eq('user_id', user.id),
-    supabase.from('organizations').select('id', { count: 'exact' }).eq('owner_id', user.id)
+    supabase.from('projects').select('id, status, created_at', { count: 'exact' }).eq('user_id', userId),
+    supabase.from('organizations').select('id', { count: 'exact' }).eq('owner_id', userId)
   ])
 
   const projectCount = projectsRes.count || 0
@@ -169,32 +169,18 @@ interface RecentProject {
   cloud_provider: string
 }
 
-// Recent Activity component
-async function RecentActivity() {
+// Recent Activity component — BUG-1: accepts userId prop
+async function RecentActivity({ userId }: { userId: string }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
 
   const { data: recentProjects } = await supabase
     .from('projects')
     .select('id, name, updated_at, status, cloud_provider')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false })
     .limit(5)
 
   if (!recentProjects || recentProjects.length === 0) return null
-
-  // Calculate relative time during render (server-side)
-  const getTimeAgo = (date: string) => {
-    const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000)
-    if (seconds < 60) return 'just now'
-    const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return `${minutes}m ago`
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours}h ago`
-    const days = Math.floor(hours / 24)
-    return `${days}d ago`
-  }
 
   const getProviderColor = (provider: string) => {
     switch (provider) {
@@ -238,7 +224,7 @@ async function RecentActivity() {
                     {project.cloud_provider}
                   </span>
                   <span>•</span>
-                  <span>{getTimeAgo(project.updated_at)}</span>
+                  <RelativeTime date={project.updated_at} />
                 </div>
               </div>
               <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="text-xs">
@@ -253,15 +239,13 @@ async function RecentActivity() {
 }
 
 // Projects List
-async function ProjectsList() {
+async function ProjectsList({ userId }: { userId: string }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const { data: projects, error } = await supabase
     .from('projects')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false })
     .limit(50)
 
@@ -346,15 +330,13 @@ function ProjectsListSkeleton() {
 }
 
 // Analytics data fetching
-async function AnalyticsDashboard() {
+async function AnalyticsDashboard({ userId }: { userId: string }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
 
   const { data: projects } = await supabase
     .from('projects')
     .select('id, cloud_provider, status, created_at')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
 
   if (!projects || projects.length < 2) return null
 
@@ -393,11 +375,16 @@ async function AnalyticsDashboard() {
     return { month, count }
   })
 
-  // Get component counts from diagrams
-  const { data: diagrams } = await supabase
-    .from('diagrams')
-    .select('nodes, project_id')
-    .in('project_id', projects.map((p: { id: string }) => p.id))
+  // BUG-2: Only fetch diagram nodes for category counting — limit to most recent diagrams.
+  // For large datasets, consider a Postgres RPC that aggregates categories server-side.
+  const projectIds = projects.map((p: { id: string }) => p.id)
+  const { data: diagrams } = projectIds.length > 0
+    ? await supabase
+        .from('diagrams')
+        .select('nodes')
+        .in('project_id', projectIds)
+        .limit(100)
+    : { data: null }
 
   const categoryCounts: Record<string, number> = {}
   if (diagrams) {
@@ -431,6 +418,9 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // SR-3: Use i18n translations for footer
+  const footerT = await getTranslations('footer')
+
   // Get user profile for personalization
   const { data: profile } = await supabase
     .from('profiles')
@@ -438,12 +428,8 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  const greeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good morning'
-    if (hour < 18) return 'Good afternoon'
-    return 'Good evening'
-  }
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'there'
 
@@ -535,7 +521,7 @@ export default async function DashboardPage() {
           {/* Welcome Section */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">
-              {greeting()}, {displayName}! 👋
+              {greeting}, {displayName}! 👋
             </h1>
             <p className="text-muted-foreground">
               Here&apos;s what&apos;s happening with your infrastructure projects.
@@ -544,7 +530,7 @@ export default async function DashboardPage() {
 
           {/* Stats */}
           <Suspense fallback={<StatsLoadingSkeleton />}>
-            <DashboardStats />
+            <DashboardStats userId={user.id} />
           </Suspense>
 
           {/* Quick Actions */}
@@ -552,12 +538,12 @@ export default async function DashboardPage() {
 
           {/* Recent Activity */}
           <Suspense fallback={null}>
-            <RecentActivity />
+            <RecentActivity userId={user.id} />
           </Suspense>
 
           {/* Analytics Charts */}
           <Suspense fallback={null}>
-            <AnalyticsDashboard />
+            <AnalyticsDashboard userId={user.id} />
           </Suspense>
 
           {/* Projects Section */}
@@ -575,17 +561,17 @@ export default async function DashboardPage() {
           </div>
 
           <Suspense fallback={<ProjectsListSkeleton />}>
-            <ProjectsList />
+            <ProjectsList userId={user.id} />
           </Suspense>
         </main>
 
         {/* Footer */}
         <footer className="border-t py-6 mt-auto">
           <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>© 2026 JobStack. All rights reserved.</p>
+            <p>{footerT('copyright', { year: new Date().getFullYear() })}</p>
             <div className="flex items-center gap-4">
-              <Link href="/privacy" className="hover:text-foreground transition-colors">Polityka Prywatności</Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">Regulamin</Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">{footerT('privacy')}</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">{footerT('terms')}</Link>
             </div>
           </div>
         </footer>

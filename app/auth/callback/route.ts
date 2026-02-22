@@ -5,7 +5,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+  // ST-1: Validate `next` is a safe relative path to prevent open redirects
+  const rawNext = requestUrl.searchParams.get('next') ?? '/dashboard'
+  const isSafeRedirect = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\')
+  const next = isSafeRedirect ? rawNext : '/dashboard'
   const error_param = requestUrl.searchParams.get('error')
   const error_description = requestUrl.searchParams.get('error_description')
   const origin = requestUrl.origin

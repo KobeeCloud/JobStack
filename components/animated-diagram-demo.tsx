@@ -116,7 +116,15 @@ function TerraformPhase() {
   const [lines, setLines] = useState(0)
   useEffect(() => {
     setLines(0)
-    const t = setInterval(() => setLines(p => (p >= TF_LINES.length ? p : p + 1)), 88)
+    const t = setInterval(() => {
+      setLines(p => {
+        if (p >= TF_LINES.length) {
+          clearInterval(t)
+          return p
+        }
+        return p + 1
+      })
+    }, 88)
     return () => clearInterval(t)
   }, [])
 

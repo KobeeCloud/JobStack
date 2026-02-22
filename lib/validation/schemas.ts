@@ -135,7 +135,7 @@ export const estimateCostSchema = z.object({
 // Auth schemas
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
 export const registerSchema = z.object({
@@ -149,7 +149,7 @@ export const registerSchema = z.object({
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
   confirmPassword: z.string(),
   consent: z.literal(true, {
-    errorMap: () => ({ message: 'Musisz zaakceptować Regulamin i Politykę Prywatności' }),
+    errorMap: () => ({ message: 'You must accept the Terms of Service and Privacy Policy' }),
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",

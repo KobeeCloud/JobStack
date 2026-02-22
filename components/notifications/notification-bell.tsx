@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, type MouseEvent } from 'react'
+import { useState, useEffect, useRef, useCallback, type MouseEvent } from 'react'
 import Link from 'next/link'
 import { Bell, Check, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 interface Notification {
   id: string
@@ -21,6 +22,7 @@ interface Notification {
   is_read: boolean
   link?: string | null
   created_at: string
+  user_id?: string
 }
 
 function timeAgo(date: string): string {
@@ -34,12 +36,12 @@ function timeAgo(date: string): string {
 }
 
 const typeIcon: Record<string, string> = {
-  invite: '📨',
-  share: '🔗',
-  comment: '💬',
+  invite: '\ud83d\udce8',
+  share: '\ud83d\udd17',
+  comment: '\ud83d\udcac',
   mention: '@',
-  compliance: '⚠️',
-  system: '🔔',
+  compliance: '\u26a0\ufe0f',
+  system: '\ud83d\udd14',
 }
 
 export function NotificationBell() {
@@ -48,27 +50,67 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [markingAll, setMarkingAll] = useState(false)
+  // BUG-5: AbortController ref so in-flight fetches are cancelled on unmount
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchNotifications = useCallback(async () => {
+    // Cancel any previous in-flight request
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setLoading(true)
     try {
-      const res = await fetch('/api/notifications?limit=20')
+      const res = await fetch('/api/notifications?limit=20', { signal: controller.signal })
       if (!res.ok) return
       const data = await res.json()
       setNotifications(data.notifications ?? [])
       setUnreadCount(data.unreadCount ?? 0)
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
       // non-fatal
     } finally {
       setLoading(false)
     }
   }, [])
 
-  // Poll every 60s
+  // SR-4: Subscribe to Supabase Realtime for new notifications + fallback poll
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 60_000)
-    return () => clearInterval(interval)
+
+    // Set up Supabase Realtime channel for instant notifications
+    const supabase = createClient()
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    // Get user ID so we can filter the channel
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: any } }) => {
+      if (!user) return
+      channel = supabase
+        .channel('user-notifications')
+        .on(
+          'postgres_changes' as any,
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload: { new: Notification }) => {
+            setNotifications(prev => [payload.new as Notification, ...prev])
+            setUnreadCount(c => c + 1)
+          },
+        )
+        .subscribe()
+    })
+
+    // Keep a slow fallback poll (5 min) in case Realtime is unavailable
+    const interval = setInterval(fetchNotifications, 300_000)
+
+    return () => {
+      abortRef.current?.abort()
+      clearInterval(interval)
+      if (channel) supabase.removeChannel(channel)
+    }
   }, [fetchNotifications])
 
   // Refetch when popover opens
