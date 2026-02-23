@@ -8,12 +8,20 @@ export const GET = createApiHandler(
     // Fetch full Supabase user for metadata fields
     const { data: { user: fullUser } } = await auth.supabase.auth.getUser()
 
-    // 1. Profile data
+    // 1. Profile data — explicit columns, no internal flags
     const { data: profile } = await auth.supabase
       .from('profiles')
-      .select('*')
+      .select('id, email, full_name, avatar_url, created_at, updated_at, tos_accepted_at, privacy_accepted_at')
       .eq('id', user.id)
       .single()
+
+    // SECURITY: Strip OAuth provider tokens / refresh tokens from user_metadata
+    const safeMetadata = fullUser?.user_metadata
+      ? (() => {
+          const { provider_token, provider_refresh_token, ...safe } = fullUser.user_metadata as Record<string, unknown>
+          return safe
+        })()
+      : null
 
     const profileExport = {
       id: user.id,
@@ -21,7 +29,7 @@ export const GET = createApiHandler(
       email_verified: fullUser?.email_confirmed_at != null,
       created_at: fullUser?.created_at,
       last_sign_in: fullUser?.last_sign_in_at,
-      user_metadata: fullUser?.user_metadata,
+      user_metadata: safeMetadata,
       profile: profile || null,
     }
 
@@ -47,12 +55,12 @@ export const GET = createApiHandler(
       `)
       .eq('user_id', user.id)
 
-    // 4. Invitations sent/received
+    // 4. Invitations sent/received — SECURITY: exclude secret token
     // MEDIUM-009: Sanitize email for PostgREST filter to prevent injection
     const safeEmail = (user.email ?? '').replace(/[,()]/g, '')
     const { data: invites } = await auth.supabase
       .from('organization_invites')
-      .select('*')
+      .select('id, organization_id, email, role, invited_by, expires_at, created_at')
       .or(`invited_by.eq.${user.id},email.eq.${safeEmail}`)
 
     // Compose the full export

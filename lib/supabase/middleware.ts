@@ -41,7 +41,7 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Protected routes that require authentication
-  const protectedPaths = ['/dashboard', '/projects', '/organizations', '/settings', '/templates']
+  const protectedPaths = ['/dashboard', '/projects', '/organizations', '/settings', '/templates', '/accept-terms']
   const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
   if (!user && isProtectedRoute) {
@@ -54,7 +54,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isProtectedRoute) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('deleted_at')
+      .select('deleted_at, tos_accepted_at')
       .eq('id', user.id)
       .single()
 
@@ -65,6 +65,13 @@ export async function updateSession(request: NextRequest) {
       deletedUrl.pathname = '/login'
       deletedUrl.searchParams.set('error', 'account_deleted')
       return NextResponse.redirect(deletedUrl)
+    }
+
+    // COMPLIANCE: Enforce ToS consent before accessing protected routes
+    if (!profile?.tos_accepted_at && request.nextUrl.pathname !== '/accept-terms') {
+      const tosUrl = request.nextUrl.clone()
+      tosUrl.pathname = '/accept-terms'
+      return NextResponse.redirect(tosUrl)
     }
   }
 

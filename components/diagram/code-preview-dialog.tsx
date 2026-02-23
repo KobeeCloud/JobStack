@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Copy, Download, Check, FileCode } from 'lucide-react'
+import { Copy, Download, Check, FileCode, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export interface CodeFile {
@@ -69,6 +69,17 @@ export function CodePreviewDialog({
             </span>
           </DialogTitle>
         </DialogHeader>
+
+        {/* AS-IS liability disclaimer */}
+        <div className="mx-6 mb-2 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <p>
+            <strong>Provided &quot;AS IS&quot;.</strong> This generated code comes without any warranties of any kind.
+            The creator is not liable for infrastructure damage, data loss, cloud costs, security
+            breaches, or system downtime resulting from its use. Review thoroughly before applying to
+            any environment.
+          </p>
+        </div>
 
         {/* File tabs */}
         <div className="flex gap-0 border-b border-border overflow-x-auto shrink-0 px-2">

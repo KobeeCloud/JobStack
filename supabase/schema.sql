@@ -58,12 +58,18 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     avatar_url TEXT,
     subscription_tier subscription_tier DEFAULT 'free',
     subscription_ends_at TIMESTAMPTZ,
+    tos_accepted_at TIMESTAMPTZ DEFAULT NULL,
+    privacy_accepted_at TIMESTAMPTZ DEFAULT NULL,
     deleted_at TIMESTAMPTZ DEFAULT NULL,
     deletion_scheduled_for TIMESTAMPTZ DEFAULT NULL,
     settings JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- COMPLIANCE: Add consent timestamp columns for existing databases
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tos_accepted_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS privacy_accepted_at TIMESTAMPTZ DEFAULT NULL;
 
 -- ---- Organizacje ----
 CREATE TABLE IF NOT EXISTS public.organizations (

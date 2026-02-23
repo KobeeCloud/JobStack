@@ -23,8 +23,6 @@ export const GET = createApiHandler(
         ip_address,
         created_at,
         actor:profiles!user_id (
-          id,
-          email,
           full_name,
           avatar_url
         )

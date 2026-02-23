@@ -32,10 +32,10 @@ export const GET = createApiHandler(
       throw new ApiError(403, 'Only owners and admins can view invites', 'FORBIDDEN')
     }
 
-    // Get all pending invites
+    // Get all pending invites — SECURITY: exclude secret token from response
     const { data: invites, error } = await auth.supabase
       .from('organization_invites')
-      .select('*')
+      .select('id, organization_id, email, role, invited_by, expires_at, created_at')
       .eq('organization_id', id)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -153,7 +153,9 @@ export const POST = createApiHandler(
 
     log.info('Organization invite sent', { orgId: id, invitedEmailHash: normalizedEmail.replace(/(.{2}).*@/, '$1***@'), invitedBy: auth.user.id })
 
-    return NextResponse.json({ invite })
+    // SECURITY: Strip secret token from response — only sent via email
+    const { token: _secret, ...safeInvite } = invite as Record<string, unknown>
+    return NextResponse.json({ invite: safeInvite })
   },
   { requireAuth: true, method: 'POST' }
 )

@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const rawNext = requestUrl.searchParams.get('next') ?? '/dashboard'
   const isSafeRedirect = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\')
   const next = isSafeRedirect ? rawNext : '/dashboard'
+  const consentGiven = requestUrl.searchParams.get('consent') === 'true'
   const error_param = requestUrl.searchParams.get('error')
   const error_description = requestUrl.searchParams.get('error_description')
   const origin = requestUrl.origin
@@ -72,6 +73,15 @@ export async function GET(request: NextRequest) {
           if (profileError) {
             // Log but don't block — the on_auth_user_created trigger is a fallback
             console.error('Profile upsert failed (non-blocking):', profileError.message)
+          }
+
+          // COMPLIANCE: Record ToS consent if user came from registration with consent=true
+          if (consentGiven) {
+            const now = new Date().toISOString()
+            await admin.from('profiles').update({
+              tos_accepted_at: now,
+              privacy_accepted_at: now,
+            }).eq('id', authUser.id)
           }
         } catch (adminError) {
           // Admin client not configured (e.g. missing SERVICE_ROLE_KEY) —

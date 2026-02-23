@@ -34,12 +34,13 @@ export const PATCH = createApiHandler(
     if (parsed.data.events !== undefined) updates.events = parsed.data.events
     if (parsed.data.is_active !== undefined) updates.is_active = parsed.data.is_active
 
+    // SECURITY: Explicit select to avoid leaking webhook secret
     const { data, error } = await auth.supabase
       .from('webhooks')
       .update(updates)
       .eq('id', id)
       .eq('user_id', auth.user.id)
-      .select()
+      .select('id, name, url, events, is_active, created_at, updated_at')
       .single()
 
     if (error) throw error

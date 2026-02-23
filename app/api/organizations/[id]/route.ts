@@ -41,17 +41,15 @@ export const GET = createApiHandler(
     }
 
     // Get all members with their profiles — use admin client to bypass RLS on profiles
+    // SECURITY: Do NOT expose email or internal user_id of other members
     const adminClient = createAdminClient()
     const { data: members, error: membersError } = await adminClient
       .from('organization_members')
       .select(`
         id,
-        user_id,
         role,
         joined_at,
         profiles (
-          id,
-          email,
           full_name,
           avatar_url
         )
