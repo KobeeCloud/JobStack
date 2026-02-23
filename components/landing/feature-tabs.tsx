@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
 import { Check } from 'lucide-react'
 import { TABS, type TabId } from './feature-tabs-data'
 import { CodeLine } from './code-highlighter'
@@ -15,6 +15,7 @@ export function FeatureTabs() {
   const tab = TABS.find(t => t.id === active)!
 
   return (
+    <LazyMotion features={domAnimation}>
     <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-xl">
       <div className="grid lg:grid-cols-[220px_1fr]">
         {/* ── left sidebar – vertical tabs ── */}
@@ -31,7 +32,7 @@ export function FeatureTabs() {
               ].join(' ')}
             >
               {active === t.id && (
-                <motion.div
+                <m.div
                   layoutId="tab-indicator"
                   className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary rounded-r-full"
                   transition={{ type: 'spring', stiffness: 400, damping: 32 }}
@@ -45,7 +46,7 @@ export function FeatureTabs() {
 
         {/* ── right panel ── */}
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key={active}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -103,9 +104,10 @@ export function FeatureTabs() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
     </div>
+    </LazyMotion>
   )
 }

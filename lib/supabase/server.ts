@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { createMockSupabaseClient } from './mock-client'
+import { createMockSupabaseClient } from '@/lib/testing/mock-client'
 import { log } from '../logger'
 
 export async function createClient() {

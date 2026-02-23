@@ -155,7 +155,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 18, max: 25 },
       },
       gcp: {
-        componentId: 'gcp-lb',
+        componentId: 'gcp-cloud-lb',
         defaultConfig: { loadBalancingScheme: 'EXTERNAL' },
         estimatedCost: { min: 18, max: 25 },
       },
@@ -332,7 +332,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Managed NoSQL/document database with global distribution',
     providers: {
       aws: {
-        componentId: 'aws-dynamodb',
+        componentId: 'dynamodb',
         defaultConfig: { billingMode: 'PAY_PER_REQUEST' },
         estimatedCost: { min: 0, max: 500 },
       },
@@ -562,7 +562,7 @@ function tryConvertComponent(
     'gcp-cloud-sql': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
 
     // NoSQL / Document DB
-    'azure-cosmos': { aws: 'aws-dynamodb', azure: 'azure-cosmos', gcp: 'gcp-firestore' },
+    'azure-cosmos': { aws: 'dynamodb', azure: 'azure-cosmos', gcp: 'gcp-firestore' },
 
     // Object Storage
     'aws-s3': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },

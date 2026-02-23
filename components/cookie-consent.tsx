@@ -52,11 +52,19 @@ export function CookieConsent() {
   }, [])
 
   const handleConsent = useCallback((choice: ConsentChoice) => {
+    const timestamp = new Date().toISOString()
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify({
       choice,
-      timestamp: new Date().toISOString(),
+      timestamp,
     } satisfies ConsentRecord))
     setShowBanner(false)
+
+    // Fire-and-forget: persist consent server-side for GDPR audit trail
+    fetch('/api/user/consent-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ choice, timestamp }),
+    }).catch(() => { /* best-effort — localStorage is the primary store */ })
 
     // Dispatch a custom event so other components can react to the choice
     window.dispatchEvent(new CustomEvent('cookie-consent-changed', { detail: { choice } }))

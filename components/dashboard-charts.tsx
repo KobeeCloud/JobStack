@@ -13,21 +13,36 @@ interface AnalyticsData {
   componentsByCategory: { name: string; count: number }[]
 }
 
+// Chart colors: Override via CSS custom properties (--chart-provider-*, --chart-status-*, --chart-palette-N)
+function getCSSVar(name: string, fallback: string): string {
+  if (typeof window === 'undefined') return fallback
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+
 const PROVIDER_COLORS: Record<string, string> = {
-  aws: '#FF9900',
-  azure: '#0078D4',
-  gcp: '#4285F4',
-  multi: '#8B5CF6',
+  aws: getCSSVar('--chart-provider-aws', '#FF9900'),
+  azure: getCSSVar('--chart-provider-azure', '#0078D4'),
+  gcp: getCSSVar('--chart-provider-gcp', '#4285F4'),
+  multi: getCSSVar('--chart-provider-multi', '#8B5CF6'),
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: '#94A3B8',
-  active: '#22C55E',
-  archived: '#F59E0B',
-  completed: '#3B82F6',
+  draft: getCSSVar('--chart-status-draft', '#94A3B8'),
+  active: getCSSVar('--chart-status-active', '#22C55E'),
+  archived: getCSSVar('--chart-status-archived', '#F59E0B'),
+  completed: getCSSVar('--chart-status-completed', '#3B82F6'),
 }
 
-const CHART_COLORS = ['#3B82F6', '#22C55E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316']
+const CHART_COLORS = [
+  getCSSVar('--chart-palette-0', '#3B82F6'),
+  getCSSVar('--chart-palette-1', '#22C55E'),
+  getCSSVar('--chart-palette-2', '#F59E0B'),
+  getCSSVar('--chart-palette-3', '#EF4444'),
+  getCSSVar('--chart-palette-4', '#8B5CF6'),
+  getCSSVar('--chart-palette-5', '#EC4899'),
+  getCSSVar('--chart-palette-6', '#06B6D4'),
+  getCSSVar('--chart-palette-7', '#F97316'),
+]
 
 export function DashboardCharts({ data }: { data: AnalyticsData }) {
   return (

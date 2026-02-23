@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { log } from '@/lib/logger'
 
 // Resend is optional — if not configured, emails are logged to console
 const resend = process.env.RESEND_API_KEY
@@ -16,7 +17,7 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   if (!resend) {
-    console.warn(`[EMAIL] Resend not configured — skipping email to: ${to}, subject: "${subject}". Set RESEND_API_KEY to enable.`)
+    log.warn('Resend not configured — skipping email', { subject })
     return { success: true, stub: true }
   }
 
@@ -30,13 +31,13 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
     })
 
     if (error) {
-      console.error('Email send error:', error)
+      log.error('Email send error', error as Error)
       return { success: false, error }
     }
 
     return { success: true, id: data?.id }
   } catch (error) {
-    console.error('Email send exception:', error)
+    log.error('Email send exception', error as Error)
     return { success: false, error }
   }
 }

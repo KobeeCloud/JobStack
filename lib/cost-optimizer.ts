@@ -40,7 +40,7 @@ const COST_ALTERNATIVES: Record<string, { alternative: string; reason: string; s
   ],
   'aws-rds': [
     { alternative: 'aws-aurora-serverless', reason: 'Aurora Serverless for variable DB loads', savingsPercent: 40 },
-    { alternative: 'aws-dynamodb', reason: 'DynamoDB for NoSQL workloads', savingsPercent: 50 },
+    { alternative: 'dynamodb', reason: 'DynamoDB for NoSQL workloads', savingsPercent: 50 },
   ],
   'aws-alb': [
     { alternative: 'aws-api-gateway', reason: 'API Gateway for API-only traffic', savingsPercent: 35 },
@@ -52,7 +52,7 @@ const COST_ALTERNATIVES: Record<string, { alternative: string; reason: string; s
     { alternative: 'azure-container-apps', reason: 'Container Apps for microservices', savingsPercent: 35 },
   ],
   'azure-sql': [
-    { alternative: 'azure-cosmosdb', reason: 'Cosmos DB for globally distributed data', savingsPercent: 25 },
+    { alternative: 'azure-cosmos', reason: 'Cosmos DB for globally distributed data', savingsPercent: 25 },
     { alternative: 'azure-sql-serverless', reason: 'SQL Serverless for intermittent usage', savingsPercent: 45 },
   ],
   'azure-app-gw': [
@@ -73,7 +73,7 @@ const COST_ALTERNATIVES: Record<string, { alternative: string; reason: string; s
 // Components that can use reserved pricing
 const RESERVED_ELIGIBLE = [
   'aws-ec2', 'aws-rds', 'aws-elasticache', 'aws-redshift',
-  'azure-vm', 'azure-sql', 'azure-cosmosdb',
+  'azure-vm', 'azure-sql', 'azure-cosmos',
   'gcp-compute-engine', 'gcp-cloud-sql',
 ]
 

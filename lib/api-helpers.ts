@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from './supabase/server'
-import { checkRateLimit } from './rate-limit'
+import { checkRateLimit, authRateLimit } from './rate-limit'
 import { handleApiError, ApiError } from './api-error'
 import { ZodSchema } from 'zod'
 
@@ -58,7 +58,8 @@ export async function applyRateLimit(
   request: NextRequest,
   limiter: typeof checkRateLimit = checkRateLimit
 ): Promise<void> {
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const forwarded = request.headers.get('x-forwarded-for')
+  const ip = forwarded ? forwarded.split(',')[0].trim() : request.headers.get('x-real-ip') || `anon-${Date.now()}`
   const result = await limiter(ip)
 
   if (!result.success) {
@@ -118,7 +119,7 @@ export function createApiHandler<T = unknown>(
       }
 
       // Call handler - pass routeContext for dynamic routes
-      return await handler(request, { auth: auth as any, body }, routeContext)
+      return await handler(request, { auth: auth as AuthenticatedRequest, body }, routeContext)
     } catch (error) {
       return handleApiError(error)
     }

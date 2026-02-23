@@ -71,7 +71,7 @@ function calculateNodeCost(node: Node): { min: number; max: number } | null {
   const config = (node.data?.config ?? {}) as Record<string, unknown>
 
   // ── VM / Compute instances ──
-  if (['azure-vm', 'aws-ec2', 'gcp-compute', 'azure-vmss'].includes(componentId)) {
+  if (['azure-vm', 'aws-ec2', 'gcp-compute-instance', 'azure-vmss'].includes(componentId)) {
     const size = (config.size as string || '').toLowerCase()
     if (size && VM_SIZE_COSTS[size]) {
       baseCostMin = VM_SIZE_COSTS[size]
@@ -113,7 +113,7 @@ function calculateNodeCost(node: Node): { min: number; max: number } | null {
   }
 
   // ── Storage accounts ──
-  if (['azure-storage', 'azure-blob', 'aws-s3', 'gcp-storage'].includes(componentId)) {
+  if (['azure-storage-account', 'azure-blob', 'aws-s3', 'gcp-cloud-storage'].includes(componentId)) {
     const tier = (config.accountTier as string || 'standard').toLowerCase()
     const replication = (config.replicationType as string || 'lrs').toLowerCase()
     const tierMult = STORAGE_TIER_MULTIPLIER[tier] ?? 1
@@ -123,7 +123,7 @@ function calculateNodeCost(node: Node): { min: number; max: number } | null {
   }
 
   // ── Managed disks ──
-  if (['azure-disk', 'aws-ebs', 'gcp-disk'].includes(componentId)) {
+  if (['azure-managed-disk', 'aws-ebs', 'gcp-persistent-disk'].includes(componentId)) {
     const diskSizeGb = Number(config.size) || 128
     const sku = (config.sku as string || 'premium_ssd').toLowerCase()
     const perGb = DISK_COST_PER_GB[sku] ?? 0.12
@@ -132,7 +132,7 @@ function calculateNodeCost(node: Node): { min: number; max: number } | null {
   }
 
   // ── SQL Database SKU ──
-  if (['azure-sql-database'].includes(componentId)) {
+  if (['azure-sql'].includes(componentId)) {
     const sku = (config.sku as string || '').toUpperCase()
     const sqlSkuCosts: Record<string, number> = {
       'S0': 15, 'S1': 30, 'S2': 75, 'S3': 150, 'S4': 300, 'S6': 600,
@@ -147,7 +147,7 @@ function calculateNodeCost(node: Node): { min: number; max: number } | null {
   }
 
   // ── Generic replicas multiplier (non-VM components with replicas) ──
-  if (config.replicas && !['azure-vm', 'aws-ec2', 'gcp-compute', 'azure-vmss'].includes(componentId)) {
+  if (config.replicas && !['azure-vm', 'aws-ec2', 'gcp-compute-instance', 'azure-vmss'].includes(componentId)) {
     const replicas = Number(config.replicas) || 1
     if (replicas > 1) {
       baseCostMin *= replicas

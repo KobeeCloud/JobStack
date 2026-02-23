@@ -52,13 +52,56 @@ export async function updateSession(request: NextRequest) {
 
   // MEDIUM-005: Soft-delete enforcement — block access for users with deleted_at set
   if (user && isProtectedRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('deleted_at, tos_accepted_at')
-      .eq('id', user.id)
-      .single()
+    // Cache profile status in a short-lived cookie to avoid a DB query on every request.
+    // The cookie stores JSON { deletedAt, tosAccepted, checkedAt }.
+    // It expires after 5 minutes, forcing a fresh check periodically.
+    const PROFILE_CACHE_COOKIE = '__js_profile_cache'
+    const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
-    if (profile?.deleted_at) {
+    let profileDeletedAt: string | null = null
+    let profileTosAccepted: boolean = false
+    let cacheHit = false
+
+    const cached = request.cookies.get(PROFILE_CACHE_COOKIE)?.value
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (parsed.checkedAt && Date.now() - parsed.checkedAt < CACHE_TTL_MS) {
+          profileDeletedAt = parsed.deletedAt ?? null
+          profileTosAccepted = !!parsed.tosAccepted
+          cacheHit = true
+        }
+      } catch {
+        // Corrupted cookie — ignore and refetch
+      }
+    }
+
+    if (!cacheHit) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('deleted_at, tos_accepted_at')
+        .eq('id', user.id)
+        .single()
+
+      profileDeletedAt = profile?.deleted_at ?? null
+      profileTosAccepted = !!profile?.tos_accepted_at
+
+      // Store result in cookie so subsequent requests skip the DB query
+      const cacheValue = JSON.stringify({
+        deletedAt: profileDeletedAt,
+        tosAccepted: profileTosAccepted,
+        checkedAt: Date.now(),
+      })
+      supabaseResponse.cookies.set(PROFILE_CACHE_COOKIE, cacheValue, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 300, // 5 minutes
+        path: '/',
+      })
+    }
+
+    if (profileDeletedAt) {
       // User account is scheduled for deletion — sign them out and redirect
       await supabase.auth.signOut()
       const deletedUrl = request.nextUrl.clone()
@@ -68,7 +111,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     // COMPLIANCE: Enforce ToS consent before accessing protected routes
-    if (!profile?.tos_accepted_at && request.nextUrl.pathname !== '/accept-terms') {
+    if (!profileTosAccepted && request.nextUrl.pathname !== '/accept-terms') {
       const tosUrl = request.nextUrl.clone()
       tosUrl.pathname = '/accept-terms'
       return NextResponse.redirect(tosUrl)

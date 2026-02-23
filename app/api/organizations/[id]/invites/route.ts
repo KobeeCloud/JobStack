@@ -74,6 +74,12 @@ export const POST = createApiHandler(
       throw new ApiError(403, 'Only owners and admins can send invites', 'FORBIDDEN')
     }
 
+    // SECURITY: Prevent role escalation — inviter cannot grant a higher role than their own
+    const ROLE_HIERARCHY: Record<string, number> = { viewer: 0, member: 1, admin: 2, owner: 3 }
+    if ((ROLE_HIERARCHY[role] ?? 0) > (ROLE_HIERARCHY[membership.role] ?? 0)) {
+      throw new ApiError(403, 'Cannot invite with a role higher than your own', 'ROLE_ESCALATION')
+    }
+
     // Check organization member limit
     const { data: org } = await auth.supabase
       .from('organizations')

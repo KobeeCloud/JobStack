@@ -1768,6 +1768,22 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     }
   },
   {
+    id: 'aws-redshift',
+    serviceType: 'paas',
+    name: 'AWS Redshift',
+    category: 'analytics',
+    provider: 'aws',
+    icon: Database,
+    color: '#FF9900',
+    description: 'Petabyte-scale data warehouse for analytics workloads',
+    estimatedCost: { min: 180, max: 5000 },
+    terraform: {
+      provider: 'aws',
+      resource: 'aws_redshift_cluster',
+      defaultConfig: { cluster_type: 'single-node', node_type: 'dc2.large', number_of_nodes: 1 }
+    }
+  },
+  {
     id: 'aws-kinesis',
     serviceType: 'paas',
     name: 'AWS Kinesis',
@@ -1783,7 +1799,6 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       defaultConfig: { shard_count: 1 }
     }
   },
-
   // Additional GCP Services
   {
     id: 'gcp-compute-engine',
@@ -1844,6 +1859,86 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       provider: 'gcp',
       resource: 'google_sql_database_instance',
       defaultConfig: { database_version: 'POSTGRES_14' }
+    }
+  },
+  {
+    id: 'gcp-firestore',
+    serviceType: 'paas',
+    name: 'GCP Firestore',
+    category: 'database',
+    provider: 'gcp',
+    icon: Database,
+    color: '#4285F4',
+    description: 'Serverless NoSQL document database with real-time sync',
+    estimatedCost: { min: 0, max: 500 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_firestore_database',
+      defaultConfig: { type: 'FIRESTORE_NATIVE', location_id: 'us-central1' }
+    }
+  },
+  {
+    id: 'gcp-spanner',
+    serviceType: 'paas',
+    name: 'GCP Cloud Spanner',
+    category: 'database',
+    provider: 'gcp',
+    icon: Database,
+    color: '#4285F4',
+    description: 'Globally distributed relational database with strong consistency',
+    estimatedCost: { min: 65, max: 5000 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_spanner_instance',
+      defaultConfig: { num_nodes: 1, display_name: 'Main Instance' }
+    }
+  },
+  {
+    id: 'gcp-memorystore',
+    serviceType: 'paas',
+    name: 'GCP Memorystore',
+    category: 'database',
+    provider: 'gcp',
+    icon: Database,
+    color: '#4285F4',
+    description: 'Managed Redis and Memcached in-memory data store',
+    estimatedCost: { min: 13, max: 500 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_redis_instance',
+      defaultConfig: { tier: 'BASIC', memory_size_gb: 1 }
+    }
+  },
+  {
+    id: 'gcp-secret-manager',
+    serviceType: 'paas',
+    name: 'GCP Secret Manager',
+    category: 'security',
+    provider: 'gcp',
+    icon: Key,
+    color: '#4285F4',
+    description: 'Managed secrets storage with automatic rotation',
+    estimatedCost: { min: 0, max: 10 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_secret_manager_secret',
+      defaultConfig: { replication: { automatic: true } }
+    }
+  },
+  {
+    id: 'gcp-cloud-dns',
+    serviceType: 'paas',
+    name: 'GCP Cloud DNS',
+    category: 'networking',
+    provider: 'gcp',
+    icon: Globe,
+    color: '#4285F4',
+    description: 'Scalable managed DNS service with global anycast',
+    estimatedCost: { min: 0.2, max: 10 },
+    terraform: {
+      provider: 'gcp',
+      resource: 'google_dns_managed_zone',
+      defaultConfig: { dns_name: 'example.com.', visibility: 'public' }
     }
   },
   {
@@ -2004,6 +2099,65 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         consistency_level: 'Session',
         geo_location_failover_priority: 0,
         enable_automatic_failover: false,
+      }
+    }
+  },
+  {
+    id: 'azure-redis',
+    serviceType: 'paas',
+    name: 'Azure Cache for Redis',
+    category: 'database',
+    provider: 'azure',
+    icon: Database,
+    color: '#0078D4',
+    description: 'Managed in-memory Redis cache for low-latency data access',
+    estimatedCost: { min: 16, max: 1000 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_redis_cache',
+      defaultConfig: {
+        capacity: 0,
+        family: 'C',
+        sku_name: 'Basic',
+        minimum_tls_version: '1.2',
+      }
+    }
+  },
+  {
+    id: 'azure-cdn',
+    serviceType: 'paas',
+    name: 'Azure CDN',
+    category: 'networking',
+    provider: 'azure',
+    icon: Globe,
+    color: '#0078D4',
+    description: 'Content delivery network for global static content distribution',
+    estimatedCost: { min: 0.81, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_cdn_profile',
+      defaultConfig: {
+        sku: 'Standard_Microsoft',
+      }
+    }
+  },
+  {
+    id: 'azure-sql-serverless',
+    serviceType: 'paas',
+    name: 'Azure SQL Serverless',
+    category: 'database',
+    provider: 'azure',
+    icon: Database,
+    color: '#0078D4',
+    description: 'Auto-pausing serverless SQL database for intermittent workloads',
+    estimatedCost: { min: 5, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_mssql_database',
+      defaultConfig: {
+        sku_name: 'GP_S_Gen5_1',
+        auto_pause_delay_in_minutes: 60,
+        min_capacity: 0.5,
       }
     }
   },

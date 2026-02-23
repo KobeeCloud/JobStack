@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
 import { Code2, LayoutDashboard, DollarSign } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ function DiagramPhase() {
     <div className="relative w-full h-full">
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
         {EDGES.map((e, i) => (
-          <motion.line
+          <m.line
             key={i}
             x1={cx(e.from)} y1={cy(e.from)}
             x2={cx(e.to)}   y2={cy(e.to)}
@@ -79,7 +79,7 @@ function DiagramPhase() {
         ))}
       </svg>
       {NODES.map((node, i) => (
-        <motion.div
+        <m.div
           key={node.id}
           className="absolute"
           style={{ left: node.x, top: node.y, width: W }}
@@ -99,15 +99,15 @@ function DiagramPhase() {
             </div>
             <p className="text-[9px] text-muted-foreground mt-0.5 ml-5 truncate">{node.sub}</p>
           </div>
-        </motion.div>
+        </m.div>
       ))}
-      <motion.div
+      <m.div
         className="absolute bottom-0 left-0 flex items-center gap-1.5 text-[10px] bg-background/80 backdrop-blur px-2.5 py-1 rounded-full border"
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}
       >
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
         <span className="text-muted-foreground">Auto-saved</span>
-      </motion.div>
+      </m.div>
     </div>
   )
 }
@@ -143,20 +143,20 @@ function TerraformPhase() {
         <span className="ml-2 text-zinc-600 text-[9.5px]">resources.tf — generated</span>
       </div>
       {TF_LINES.slice(0, lines).map((l, i) => (
-        <motion.div
+        <m.div
           key={i}
           initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
           className={l.t === '' ? 'h-2' : cls[l.t]}
         >
           {l.text || null}
-        </motion.div>
+        </m.div>
       ))}
       {lines < TF_LINES.length && (
-        <motion.span
+        <m.span
           className="text-emerald-400"
           animate={{ opacity: [1, 0, 1] }}
           transition={{ repeat: Infinity, duration: 0.65 }}
-        >▋</motion.span>
+        >▋</m.span>
       )}
     </div>
   )
@@ -166,18 +166,18 @@ function CostPhase() {
   return (
     <div className="h-full p-5 flex flex-col justify-center gap-4">
       <div>
-        <motion.p
+        <m.p
           className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
         >
           Estimated monthly cost
-        </motion.p>
-        <motion.p
+        </m.p>
+        <m.p
           className="text-4xl font-bold text-primary"
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, type: 'spring' }}
         >
           $373<span className="text-base font-normal text-muted-foreground"> /mo</span>
-        </motion.p>
+        </m.p>
       </div>
       <div className="space-y-3.5">
         {COSTS.map((c, i) => (
@@ -187,7 +187,7 @@ function CostPhase() {
               <span className="font-mono font-semibold">{c.cost}</span>
             </div>
             <div className="h-2 rounded-full bg-muted overflow-hidden">
-              <motion.div
+              <m.div
                 className="h-full rounded-full"
                 style={{ backgroundColor: c.color }}
                 initial={{ width: 0 }}
@@ -222,12 +222,13 @@ export function AnimatedDiagramDemo() {
   }
 
   return (
+    <LazyMotion features={domAnimation}>
     <div className="relative w-full max-w-[480px] mx-auto select-none">
       {/* Ambient glow */}
       <div className="absolute -inset-12 bg-primary/6 blur-3xl rounded-full pointer-events-none" />
 
       {/* Window chrome */}
-      <motion.div
+      <m.div
         className="relative rounded-2xl border border-border/50 bg-card shadow-2xl overflow-hidden"
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -267,7 +268,7 @@ export function AnimatedDiagramDemo() {
           })}
           <div className="flex-1 flex justify-end items-center pr-3">
             <div className="h-1 w-14 rounded-full bg-muted overflow-hidden">
-              <motion.div
+              <m.div
                 key={idx}
                 className="h-full bg-primary/50 rounded-full"
                 initial={{ width: '0%' }}
@@ -281,7 +282,7 @@ export function AnimatedDiagramDemo() {
         {/* Content */}
         <div className="h-[272px] relative overflow-hidden">
           <AnimatePresence mode="wait">
-            <motion.div
+            <m.div
               key={phase}
               className="absolute inset-0 p-3 w-full h-full"
               initial={{ opacity: 0, y: 6 }}
@@ -292,26 +293,27 @@ export function AnimatedDiagramDemo() {
               {phase === 'diagram'   && <DiagramPhase />}
               {phase === 'terraform' && <TerraformPhase />}
               {phase === 'cost'      && <CostPhase />}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Floating badges */}
-      <motion.div
+      <m.div
         className="absolute -top-2.5 -right-2 bg-emerald-500 text-white text-[10px] px-2.5 py-0.5 rounded-full font-semibold shadow-lg"
         animate={{ y: [0, -4, 0] }}
         transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut' }}
       >
         ✓ 0 errors
-      </motion.div>
-      <motion.div
+      </m.div>
+      <m.div
         className="absolute -bottom-2.5 -left-2 bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 rounded-full font-semibold shadow-lg"
         animate={{ y: [0, 4, 0] }}
         transition={{ repeat: Infinity, duration: 2.8, ease: 'easeInOut', delay: 1 }}
       >
         ⚡ Live sync
-      </motion.div>
+      </m.div>
     </div>
+    </LazyMotion>
   )
 }

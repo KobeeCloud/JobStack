@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { createMockSupabaseClient } from './mock-client'
+import { createMockSupabaseClient } from '@/lib/testing/mock-client'
 import { log } from '../logger'
 
 export function createClient() {

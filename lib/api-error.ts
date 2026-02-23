@@ -36,11 +36,15 @@ export function handleApiError(error: unknown): NextResponse {
   if (error instanceof ZodError) {
     log.warn('Validation Error', { errors: error.errors })
 
+    // In production, only expose field path + message — never the full Zod schema
+    const sanitizedDetails = process.env.NODE_ENV === 'development'
+      ? error.errors
+      : error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+
     return NextResponse.json(
       {
         error: 'Validation failed',
-        details: error.errors,
-        ...(process.env.NODE_ENV === 'development' && { fullError: error }),
+        details: sanitizedDetails,
       },
       { status: 400 }
     )

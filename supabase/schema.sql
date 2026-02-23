@@ -137,7 +137,11 @@ CREATE TABLE IF NOT EXISTS public.diagrams (
     viewport JSONB DEFAULT '{"x": 0, "y": 0, "zoom": 1}',
     thumbnail_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    -- JSONB validation: nodes and edges must be arrays
+    CONSTRAINT diagrams_nodes_is_array CHECK (jsonb_typeof(nodes) = 'array'),
+    CONSTRAINT diagrams_edges_is_array CHECK (jsonb_typeof(edges) = 'array'),
+    CONSTRAINT diagrams_viewport_is_object CHECK (jsonb_typeof(viewport) = 'object')
 );
 
 -- ---- Wersje diagramów ----
@@ -254,6 +258,21 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 -- TODO [MEDIUM-003]: Implement TTL/partitioning strategy for activity_log.
 -- Recommended: pg_partman with monthly partitions + auto-drop after 90 days,
 -- or a scheduled pg_cron job: DELETE FROM activity_log WHERE created_at < NOW() - INTERVAL '90 days';
+-- ↓ Cleanup function — schedule via pg_cron: SELECT cron.schedule('cleanup-activity-log', '0 3 * * *', $$SELECT cleanup_old_activity_logs()$$);
+CREATE OR REPLACE FUNCTION public.cleanup_old_activity_logs(retention_days INT DEFAULT 90)
+RETURNS INTEGER
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
+DECLARE
+  deleted_count INTEGER;
+BEGIN
+  DELETE FROM public.activity_log
+  WHERE created_at < NOW() - (retention_days || ' days')::INTERVAL;
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  RETURN deleted_count;
+END;
+$$;
+
 CREATE TABLE IF NOT EXISTS public.activity_log (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL NOT NULL,

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { log } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth error from provider
   if (error_param) {
-    console.error('OAuth callback error:', error_param, error_description)
+    log.error('OAuth callback error', undefined, { error_param, error_description: error_description ?? undefined })
     return NextResponse.redirect(
       `${origin}/login?error=${encodeURIComponent(error_description || error_param)}`
     )
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
 
           if (profileError) {
             // Log but don't block — the on_auth_user_created trigger is a fallback
-            console.error('Profile upsert failed (non-blocking):', profileError.message)
+            log.warn('Profile upsert failed (non-blocking)', { message: profileError.message })
           }
 
           // COMPLIANCE: Record ToS consent if user came from registration with consent=true
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
         } catch (adminError) {
           // Admin client not configured (e.g. missing SERVICE_ROLE_KEY) —
           // the DB trigger on auth.users should still create the profile row
-          console.error('Admin client unavailable for profile sync:', adminError)
+          log.error('Admin client unavailable for profile sync', adminError as Error)
         }
       }
 
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest) {
       return response
     }
 
-    console.error('Code exchange failed:', error.message)
+    log.error('Code exchange failed', undefined, { message: error.message })
   }
 
   // If there's no code or exchange failed, redirect to login with error

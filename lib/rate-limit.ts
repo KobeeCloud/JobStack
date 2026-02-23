@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { log } from '@/lib/logger'
 
 // ── In-memory sliding-window fallback (ST-3) ────────────────────────────────
 // Used when Upstash Redis is not configured so that rate-limiting still works.
@@ -56,6 +57,10 @@ try {
   }
 } catch {
   // Redis init failed — the in-memory fallback will be used automatically.
+}
+
+if (!ratelimit && process.env.NODE_ENV === 'production') {
+  log.warn('Upstash Redis not configured — rate limiting uses in-memory fallback (ineffective on serverless). Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.')
 }
 
 // Rate limiters for different endpoints
