@@ -1,5 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { createApiHandler } from '@/lib/api-helpers'
+import { z } from 'zod'
 
 export interface EmailPreferences {
   org_invites: boolean
@@ -15,16 +16,19 @@ const DEFAULT_PREFS: EmailPreferences = {
   weekly_digest: false,
 }
 
-export async function GET() {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+const emailPrefsSchema = z.object({
+  org_invites: z.boolean(),
+  project_shares: z.boolean(),
+  account_alerts: z.boolean(),
+  weekly_digest: z.boolean(),
+})
 
-    const { data: profile } = await supabase
+export const GET = createApiHandler(
+  async (request: NextRequest, { auth }) => {
+    const { data: profile } = await auth.supabase
       .from('profiles')
       .select('settings')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single()
 
     const prefs = {
@@ -33,25 +37,20 @@ export async function GET() {
     }
 
     return NextResponse.json(prefs)
-  } catch (error) {
-    console.error('Get email prefs error:', error)
-    return NextResponse.json({ error: 'Failed to get preferences' }, { status: 500 })
-  }
-}
+  },
+  { requireAuth: true, method: 'GET' }
+)
 
-export async function PUT(request: NextRequest) {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+export const PUT = createApiHandler(
+  async (request: NextRequest, { auth }) => {
     const body = await request.json()
+    const parsed = emailPrefsSchema.parse(body)
 
     // Get current settings
-    const { data: profile } = await supabase
+    const { data: profile } = await auth.supabase
       .from('profiles')
       .select('settings')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single()
 
     const currentSettings = profile?.settings || {}
@@ -59,23 +58,18 @@ export async function PUT(request: NextRequest) {
       ...currentSettings,
       email_preferences: {
         ...DEFAULT_PREFS,
-        org_invites: Boolean(body.org_invites),
-        project_shares: Boolean(body.project_shares),
-        account_alerts: Boolean(body.account_alerts),
-        weekly_digest: Boolean(body.weekly_digest),
+        ...parsed,
       },
     }
 
-    const { error } = await supabase
+    const { error } = await auth.supabase
       .from('profiles')
       .update({ settings: updatedSettings })
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
 
     if (error) throw error
 
     return NextResponse.json(updatedSettings.email_preferences)
-  } catch (error) {
-    console.error('Update email prefs error:', error)
-    return NextResponse.json({ error: 'Failed to update preferences' }, { status: 500 })
-  }
-}
+  },
+  { requireAuth: true, method: 'PUT' }
+)

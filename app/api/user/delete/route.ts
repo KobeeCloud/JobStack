@@ -1,70 +1,52 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createApiHandler } from '@/lib/api-helpers'
+import { log } from '@/lib/logger'
 
 const GRACE_PERIOD_DAYS = 7
 
-export async function POST() {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+// POST — schedule account deletion
+export const POST = createApiHandler(
+  async (request: NextRequest, { auth }) => {
     const scheduledFor = new Date()
     scheduledFor.setDate(scheduledFor.getDate() + GRACE_PERIOD_DAYS)
 
-    const { error } = await supabase
+    const { error } = await auth.supabase
       .from('profiles')
       .update({
         deleted_at: new Date().toISOString(),
         deletion_scheduled_for: scheduledFor.toISOString(),
       })
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
 
     if (error) throw error
+
+    log.info('Account deletion scheduled', { userId: auth.user.id, scheduledFor: scheduledFor.toISOString() })
 
     return NextResponse.json({
       message: 'Account deletion scheduled',
       deletion_scheduled_for: scheduledFor.toISOString(),
       grace_period_days: GRACE_PERIOD_DAYS,
     })
-  } catch (error) {
-    console.error('Schedule deletion error:', error)
-    return NextResponse.json(
-      { error: 'Failed to schedule account deletion' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { requireAuth: true, method: 'POST' }
+)
 
-// Cancel a scheduled deletion
-export async function DELETE() {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { error } = await supabase
+// DELETE — cancel a scheduled deletion
+export const DELETE = createApiHandler(
+  async (request: NextRequest, { auth }) => {
+    const { error } = await auth.supabase
       .from('profiles')
       .update({
         deleted_at: null,
         deletion_scheduled_for: null,
       })
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
 
     if (error) throw error
 
+    log.info('Account deletion cancelled', { userId: auth.user.id })
+
     return NextResponse.json({ message: 'Account deletion cancelled' })
-  } catch (error) {
-    console.error('Cancel deletion error:', error)
-    return NextResponse.json(
-      { error: 'Failed to cancel account deletion' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { requireAuth: true, method: 'DELETE' }
+)

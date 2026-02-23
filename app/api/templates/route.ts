@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createApiHandler } from '@/lib/api-helpers'
-import { createClient } from '@/lib/supabase/server'
 import { log } from '@/lib/logger'
 import { z } from 'zod'
 

@@ -56,17 +56,28 @@ export async function GET(request: NextRequest) {
       // raw_user_meta_data was populated for OAuth users)
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (authUser) {
-        const admin = createAdminClient()
-        await admin.from('profiles').upsert({
-          id: authUser.id,
-          email: authUser.email ?? '',
-          full_name: authUser.user_metadata?.full_name
-            || authUser.user_metadata?.name
-            || null,
-          avatar_url: authUser.user_metadata?.avatar_url
-            || authUser.user_metadata?.picture
-            || null,
-        }, { onConflict: 'id', ignoreDuplicates: false })
+        try {
+          const admin = createAdminClient()
+          const { error: profileError } = await admin.from('profiles').upsert({
+            id: authUser.id,
+            email: authUser.email ?? '',
+            full_name: authUser.user_metadata?.full_name
+              || authUser.user_metadata?.name
+              || null,
+            avatar_url: authUser.user_metadata?.avatar_url
+              || authUser.user_metadata?.picture
+              || null,
+          }, { onConflict: 'id', ignoreDuplicates: false })
+
+          if (profileError) {
+            // Log but don't block — the on_auth_user_created trigger is a fallback
+            console.error('Profile upsert failed (non-blocking):', profileError.message)
+          }
+        } catch (adminError) {
+          // Admin client not configured (e.g. missing SERVICE_ROLE_KEY) —
+          // the DB trigger on auth.users should still create the profile row
+          console.error('Admin client unavailable for profile sync:', adminError)
+        }
       }
 
       // Build redirect response and set ALL cookies on it

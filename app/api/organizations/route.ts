@@ -28,7 +28,7 @@ export const GET = createApiHandler(
           id,
           name,
           slug,
-          plan,
+          subscription_tier,
           max_members
         )
       `)
@@ -36,9 +36,13 @@ export const GET = createApiHandler(
       .order('joined_at', { ascending: true })
 
     if (error) {
-      log.error('Failed to fetch user organizations', error, { userId: auth.user.id })
+      log.error('Failed to fetch user organizations', error, {
+        userId: auth.user.id,
+        errorCode: error.code,
+        errorDetails: error.details,
+      })
       // Return empty list rather than crashing — org selection is optional
-      return NextResponse.json({ organizations: [] })
+      return NextResponse.json({ organizations: [], _debug: process.env.NODE_ENV === 'development' ? error.message : undefined })
     }
 
     type MemberRow = { role: string; joined_at: string; organizations: Record<string, unknown> | null }
@@ -85,7 +89,7 @@ export const POST = createApiHandler(
         slug,
         description: description || null,
         owner_id: auth.user.id,
-        plan: 'free',
+        subscription_tier: 'free',
         max_members: 5,
       })
       .select()

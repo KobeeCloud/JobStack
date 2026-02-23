@@ -73,9 +73,9 @@ export function FeatureTabs() {
             </div>
 
             {/* code preview */}
-            <div className="bg-zinc-950 flex flex-col overflow-hidden">
+            <div className="bg-zinc-950 dark:bg-zinc-900/80 flex flex-col overflow-hidden">
               {/* file bar */}
-              <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-800">
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-800 dark:border-zinc-700">
                 <div className="flex gap-1 mr-1">
                   <div className="w-2.5 h-2.5 rounded-full bg-rose-500/60" />
                   <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />

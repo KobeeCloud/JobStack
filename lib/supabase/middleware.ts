@@ -50,6 +50,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // MEDIUM-005: Soft-delete enforcement — block access for users with deleted_at set
+  if (user && isProtectedRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('deleted_at')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.deleted_at) {
+      // User account is scheduled for deletion — sign them out and redirect
+      await supabase.auth.signOut()
+      const deletedUrl = request.nextUrl.clone()
+      deletedUrl.pathname = '/login'
+      deletedUrl.searchParams.set('error', 'account_deleted')
+      return NextResponse.redirect(deletedUrl)
+    }
+  }
+
   // Enforce email verification for authenticated users on protected routes
   // Skip for OAuth users (they have identity providers) — their email is verified by the provider
   if (user && isProtectedRoute) {

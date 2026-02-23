@@ -293,7 +293,17 @@ export function generateTerraformWithValidation(
   }
 
   // Sort by hierarchy depth — parents always before children in output
-  validNodes.sort((a, b) => getNodeDepth(a, nodeMap) - getNodeDepth(b, nodeMap))
+  // Secondary sort by componentId + label ensures deterministic output
+  validNodes.sort((a, b) => {
+    const depthDiff = getNodeDepth(a, nodeMap) - getNodeDepth(b, nodeMap)
+    if (depthDiff !== 0) return depthDiff
+    const aCompId = getNodeComponentId(a) || ''
+    const bCompId = getNodeComponentId(b) || ''
+    if (aCompId !== bCompId) return aCompId.localeCompare(bCompId)
+    const aLabel = String(a.data?.label || '')
+    const bLabel = String(b.data?.label || '')
+    return aLabel.localeCompare(bLabel)
+  })
 
   // Track issued resource names to prevent collisions (BUG-1 fix)
   const issuedNames = new Set<string>()
@@ -304,6 +314,22 @@ export function generateTerraformWithValidation(
   for (const cycle of cycles) {
     const labels = cycle.map(id => nodeMap.get(id)?.data?.label || id).join(' → ')
     warnings.push(`Circular dependency detected: ${labels}. Generated code may need manual review.`)
+  }
+
+  // Pre-validate edges: warn about edges referencing skipped or unknown nodes
+  const validNodeIdSet = new Set(validNodeIds)
+  for (const edge of (edges || [])) {
+    const srcExists = validNodeIdSet.has(edge.source)
+    const tgtExists = validNodeIdSet.has(edge.target)
+    if (!srcExists && !tgtExists) continue // both missing — likely non-terraform nodes
+    if (!srcExists) {
+      const tgtLabel = nodeMap.get(edge.target)?.data?.label || edge.target
+      warnings.push(`Edge to "${tgtLabel}" has a source node (${edge.source}) that was skipped or is unknown.`)
+    }
+    if (!tgtExists) {
+      const srcLabel = nodeMap.get(edge.source)?.data?.label || edge.source
+      warnings.push(`Edge from "${srcLabel}" has a target node (${edge.target}) that was skipped or is unknown.`)
+    }
   }
 
   // ── main.tf ────────────────────────────────────────────────────────────
@@ -976,7 +1002,7 @@ export function generateTerraformWithValidation(
   validNodes.forEach(node => {
     const componentId = getNodeComponentId(node)!
     const component = getComponentById(componentId)!
-    const resourceName = toTfName(String(node.data?.label || component.name))
+    const resourceName = nodeIdToTfName.get(node.id) || toTfName(String(node.data?.label || component.name))
     const resourceType = component.terraform!.resource
     outputsTf += `output "${resourceName}_id" {\n  value = ${resourceType}.${resourceName}.id\n}\n\n`
   })

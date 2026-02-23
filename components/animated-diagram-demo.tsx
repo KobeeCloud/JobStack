@@ -135,7 +135,7 @@ function TerraformPhase() {
   }
 
   return (
-    <div className="h-full bg-zinc-950 overflow-hidden font-mono text-[10.5px] leading-relaxed p-3">
+    <div className="h-full bg-zinc-950 dark:bg-zinc-900/80 overflow-hidden font-mono text-[10.5px] leading-relaxed p-3">
       <div className="flex items-center gap-1.5 mb-2.5">
         <div className="w-2.5 h-2.5 rounded-full bg-rose-500/70" />
         <div className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />

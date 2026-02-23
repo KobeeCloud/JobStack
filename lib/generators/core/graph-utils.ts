@@ -433,9 +433,13 @@ export function buildInfraGraph(rawNodes: Node[], rawEdges: Edge[]): InfraGraph 
     })
   }
 
-  // Pass 5: Topological sort (parents first, then by depth)
+  // Pass 5: Topological sort (parents first, then deterministic by componentId + name)
   const topologicalOrder = [...nodeMap.values()]
-  topologicalOrder.sort((a, b) => a.depth - b.depth)
+  topologicalOrder.sort((a, b) => {
+    if (a.depth !== b.depth) return a.depth - b.depth
+    if (a.componentId !== b.componentId) return a.componentId.localeCompare(b.componentId)
+    return a.sanitizedName.localeCompare(b.sanitizedName)
+  })
 
   const roots = [...nodeMap.values()].filter(n => !n.parentNode)
 

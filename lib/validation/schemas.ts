@@ -116,6 +116,7 @@ export const updateDiagramSchema = z.object({
   nodes: z.array(nodeSchema).optional(),
   edges: z.array(edgeSchema).optional(),
   thumbnail_url: z.string().url().optional().nullable(),
+  version: z.number().int().min(0).optional(), // Optimistic locking (MEDIUM-001)
 })
 
 // Terraform generation schema

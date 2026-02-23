@@ -660,7 +660,7 @@ export function CustomComponentLibrary({
                 {comps.map((comp) => (
                   <div
                     key={comp.id}
-                    className="p-3 border rounded-lg bg-white hover:border-blue-300 transition-colors group"
+                    className="p-3 border rounded-lg bg-background hover:border-blue-300 transition-colors group"
                   >
                     <div className="flex items-center justify-between">
                       <button

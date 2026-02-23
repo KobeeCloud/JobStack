@@ -1,42 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createApiHandler } from '@/lib/api-helpers'
+import { ApiError } from '@/lib/api-error'
+import { uuidSchema } from '@/lib/validation/schemas'
 
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string; inviteId: string }> }
-) {
-  try {
-    const { id, inviteId } = await context.params
-    const supabase = await createClient()
+interface RouteContext {
+  params: Promise<{ id: string; inviteId: string }>
+}
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export const DELETE = createApiHandler(
+  async (request: NextRequest, { auth }, routeContext?: RouteContext) => {
+    const params = await routeContext?.params
+    if (!params?.id || !params?.inviteId) {
+      throw new ApiError(400, 'Missing route parameters', 'MISSING_PARAMS')
     }
 
+    const orgId = uuidSchema.parse(params.id)
+    const inviteId = uuidSchema.parse(params.inviteId)
+
     // Check if user is owner or admin
-    const { data: membership } = await supabase
+    const { data: membership } = await auth.supabase
       .from('organization_members')
       .select('role')
-      .eq('organization_id', id)
-      .eq('user_id', user.id)
+      .eq('organization_id', orgId)
+      .eq('user_id', auth.user.id)
       .single()
 
     if (!membership || !['owner', 'admin'].includes(membership.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      throw new ApiError(403, 'Only owners and admins can delete invites', 'FORBIDDEN')
     }
 
     // Delete invite
-    const { error } = await supabase
+    const { error } = await auth.supabase
       .from('organization_invites')
       .delete()
       .eq('id', inviteId)
-      .eq('organization_id', id)
+      .eq('organization_id', orgId)
 
     if (error) throw error
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-}
+  },
+  { requireAuth: true, method: 'DELETE' }
+)

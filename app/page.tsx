@@ -197,7 +197,7 @@ export default async function Home() {
               <CardHeader>
                 <Boxes className="h-10 w-10 text-primary mb-2 group-hover:scale-110 transition-transform" />
                 <CardTitle>Visual Diagram Builder</CardTitle>
-                <CardDescription>Drag and drop 70+ components to design your infrastructure. Connect services with intelligent validation.</CardDescription>
+                <CardDescription>Drag and drop 158+ components to design your infrastructure. Connect services with intelligent validation.</CardDescription>
               </CardHeader>
             </Card>
             <Card className="group hover:border-primary/50 transition-colors">
@@ -261,10 +261,10 @@ export default async function Home() {
       </section>
 
       {/* GitHub CTA */}
-      <section className="py-20 bg-zinc-950 text-zinc-100">
+      <section className="py-20 bg-zinc-950 text-zinc-100 dark:bg-zinc-900/80 dark:border-y dark:border-zinc-700">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-700 bg-zinc-800/60 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-700 bg-zinc-800/60 dark:bg-zinc-800 mb-6">
               <Github className="h-4 w-4" />
               <span className="text-sm text-zinc-300">Git-native workflows</span>
             </div>
@@ -276,20 +276,20 @@ export default async function Home() {
               Review infra changes the same way you review code.
             </p>
             <div className="grid sm:grid-cols-3 gap-4 text-left mb-10">
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 dark:bg-zinc-800/60 p-5">
                 <GitBranch className="h-5 w-5 text-violet-400 mb-3" />
                 <p className="font-semibold text-sm mb-1">Push to branch</p>
-                <p className="text-xs text-zinc-500">Commit your diagram — pipeline triggers automatically</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Commit your diagram — pipeline triggers automatically</p>
               </div>
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 dark:bg-zinc-800/60 p-5">
                 <Github className="h-5 w-5 text-sky-400 mb-3" />
                 <p className="font-semibold text-sm mb-1">Plan on PR</p>
-                <p className="text-xs text-zinc-500">Terraform Plan posted as a comment with diff highlighting</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Terraform Plan posted as a comment with diff highlighting</p>
               </div>
-              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 dark:bg-zinc-800/60 p-5">
                 <Check className="h-5 w-5 text-emerald-400 mb-3" />
                 <p className="font-semibold text-sm mb-1">Apply on merge</p>
-                <p className="text-xs text-zinc-500">Protected environments gate production applies</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Protected environments gate production applies</p>
               </div>
             </div>
             <Link href="/register">

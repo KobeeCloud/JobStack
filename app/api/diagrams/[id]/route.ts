@@ -114,12 +114,18 @@ export const PUT = createApiHandler(
       updateData.edges = body.data.edges || []
     }
 
-    const { data: diagram, error } = await auth.supabase
+    // Build the update query
+    let query = auth.supabase
       .from('diagrams')
       .update(updateData)
       .eq('id', diagramId)
-      .select()
-      .single()
+
+    // MEDIUM-001: Optimistic locking — if client sends version, enforce match
+    if (typeof body?.version === 'number') {
+      query = query.eq('version', body.version)
+    }
+
+    const { data: diagram, error } = await query.select().single()
 
     if (error) {
       logger.error('Failed to update diagram', error, { diagramId, userId: auth.user.id })
@@ -127,6 +133,9 @@ export const PUT = createApiHandler(
     }
 
     if (!diagram) {
+      if (typeof body?.version === 'number') {
+        throw new ApiError(409, 'Diagram was modified by another user. Refresh and try again.', 'VERSION_CONFLICT')
+      }
       throw new ApiError(404, 'Diagram not found', 'DIAGRAM_NOT_FOUND')
     }
 

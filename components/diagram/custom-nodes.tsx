@@ -58,41 +58,42 @@ const COMPONENT_CONNECTION_RULES: Record<string, string[]> = {
   // ---- Azure Load Balancing ----
   'azure-lb': ['azure-vm', 'azure-vmss', 'azure-nic', 'azure-public-ip', 'azure-app-gw'],
   'azure-app-gw': ['azure-vm', 'azure-vmss', 'azure-aks', 'azure-public-ip', 'azure-waf'],
-  'azure-front-door': ['azure-app-gw', 'azure-lb', 'azure-app-service', 'azure-function', 'azure-storage-account'],
+  'azure-front-door': ['azure-app-gw', 'azure-lb', 'azure-app-service', 'azure-functions', 'azure-storage-account'],
   'azure-traffic-manager': ['azure-app-service', 'azure-lb', 'azure-public-ip'],
   // ---- Azure Databases ----
-  'azure-sql': ['azure-vm', 'azure-app-service', 'azure-function', 'azure-aks', 'azure-container-instance'],
-  'azure-cosmos': ['azure-vm', 'azure-app-service', 'azure-function', 'azure-aks', 'azure-container-instance'],
-  'azure-mysql': ['azure-vm', 'azure-app-service', 'azure-function', 'azure-aks'],
-  'azure-postgresql': ['azure-vm', 'azure-app-service', 'azure-function', 'azure-aks'],
-  'azure-redis': ['azure-vm', 'azure-app-service', 'azure-function', 'azure-aks'],
+  'azure-sql': ['azure-vm', 'azure-app-service', 'azure-functions', 'azure-aks', 'azure-container-instance'],
+  'azure-cosmos': ['azure-vm', 'azure-app-service', 'azure-functions', 'azure-aks', 'azure-container-instance'],
+  'azure-mysql': ['azure-vm', 'azure-app-service', 'azure-functions', 'azure-aks'],
+  'azure-postgresql': ['azure-vm', 'azure-app-service', 'azure-functions', 'azure-aks'],
+  'azure-redis': ['azure-vm', 'azure-app-service', 'azure-functions', 'azure-aks'],
   // ---- Azure Storage ----
-  'azure-storage-account': ['azure-vm', 'azure-app-service', 'azure-function', 'azure-aks', 'azure-cdn'],
+  'azure-storage-account': ['azure-vm', 'azure-app-service', 'azure-functions', 'azure-aks', 'azure-cdn'],
   'azure-managed-disk': ['azure-vm', 'azure-vmss'],
   'azure-file-share': ['azure-vm', 'azure-aks'],
   // ---- Azure PaaS ----
   'azure-app-service': ['azure-sql', 'azure-cosmos', 'azure-storage-account', 'azure-redis', 'azure-key-vault', 'azure-service-bus', 'azure-event-hub', 'azure-app-insights', 'azure-mysql', 'azure-postgresql'],
-  'azure-function': ['azure-sql', 'azure-cosmos', 'azure-storage-account', 'azure-service-bus', 'azure-event-hub', 'azure-key-vault', 'azure-app-insights', 'azure-redis', 'azure-mysql', 'azure-postgresql'],
+  'azure-functions': ['azure-sql', 'azure-cosmos', 'azure-storage-account', 'azure-service-bus', 'azure-event-hub', 'azure-key-vault', 'azure-app-insights', 'azure-redis', 'azure-mysql', 'azure-postgresql'],
   'azure-logic-app': ['azure-sql', 'azure-cosmos', 'azure-storage-account', 'azure-service-bus', 'azure-event-hub'],
   // ---- Azure Containers ----
   'azure-aks': ['azure-acr', 'azure-sql', 'azure-cosmos', 'azure-storage-account', 'azure-key-vault', 'azure-lb', 'azure-app-gw', 'azure-redis', 'azure-mysql', 'azure-postgresql', 'azure-app-insights'],
-  'azure-acr': ['azure-aks', 'azure-app-service', 'azure-container-instance'],
+  'azure-acr': ['azure-aks', 'azure-app-service', 'azure-container-instance', 'azure-container-apps'],
   'azure-container-instance': ['azure-acr', 'azure-sql', 'azure-cosmos', 'azure-storage-account'],
+  'azure-container-apps': ['azure-acr', 'azure-sql', 'azure-cosmos', 'azure-storage-account', 'azure-key-vault', 'azure-service-bus', 'azure-event-hub', 'azure-redis', 'azure-app-insights'],
   // ---- Azure Security ----
-  'azure-key-vault': ['azure-vm', 'azure-app-service', 'azure-function', 'azure-aks'],
+  'azure-key-vault': ['azure-vm', 'azure-app-service', 'azure-functions', 'azure-aks'],
   'azure-waf': ['azure-app-gw', 'azure-front-door'],
   // ---- Azure Messaging ----
-  'azure-service-bus': ['azure-app-service', 'azure-function', 'azure-logic-app', 'azure-aks'],
-  'azure-event-hub': ['azure-app-service', 'azure-function', 'azure-stream-analytics', 'azure-databricks'],
-  'azure-event-grid': ['azure-function', 'azure-logic-app', 'azure-service-bus', 'azure-event-hub'],
+  'azure-service-bus': ['azure-app-service', 'azure-functions', 'azure-logic-app', 'azure-aks'],
+  'azure-event-hub': ['azure-app-service', 'azure-functions', 'azure-stream-analytics', 'azure-databricks'],
+  'azure-event-grid': ['azure-functions', 'azure-logic-app', 'azure-service-bus', 'azure-event-hub'],
   // ---- Azure AI / Analytics ----
-  'azure-cognitive-services': ['azure-app-service', 'azure-function', 'azure-aks'],
+  'azure-cognitive-services': ['azure-app-service', 'azure-functions', 'azure-aks'],
   'azure-machine-learning': ['azure-storage-account', 'azure-aks', 'azure-cognitive-services'],
   'azure-databricks': ['azure-storage-account', 'azure-sql', 'azure-cosmos', 'azure-event-hub'],
   'azure-synapse': ['azure-storage-account', 'azure-sql', 'azure-cosmos'],
   'azure-stream-analytics': ['azure-event-hub', 'azure-sql', 'azure-cosmos', 'azure-storage-account'],
   // ---- Azure Monitoring ----
-  'azure-app-insights': ['azure-app-service', 'azure-function', 'azure-aks', 'azure-vm'],
+  'azure-app-insights': ['azure-app-service', 'azure-functions', 'azure-aks', 'azure-vm'],
   'azure-monitor': ['azure-vm', 'azure-aks', 'azure-app-service', 'azure-sql'],
   'azure-log-analytics': ['azure-monitor', 'azure-app-insights', 'azure-vm', 'azure-aks'],
   // ---- Azure CDN / DNS ----
@@ -229,7 +230,7 @@ export const CONTAINER_HIERARCHY: Record<string, string[]> = {
   // Azure — Resource Group contains everything
   'azure-resource-group': [
     'azure-vnet', 'azure-vm', 'azure-vmss', 'azure-storage-account', 'azure-nsg',
-    'azure-lb', 'azure-app-gw', 'azure-sql', 'azure-cosmos', 'azure-function',
+    'azure-lb', 'azure-app-gw', 'azure-sql', 'azure-cosmos', 'azure-functions',
     'azure-aks', 'azure-acr', 'azure-key-vault', 'azure-app-service',
     'azure-firewall', 'azure-bastion', 'azure-vpn-gateway', 'azure-public-ip',
     'azure-nat-gateway', 'azure-ddos-protection', 'azure-front-door',
@@ -237,7 +238,7 @@ export const CONTAINER_HIERARCHY: Record<string, string[]> = {
     'azure-event-hub', 'azure-event-grid', 'azure-redis', 'azure-mysql',
     'azure-postgresql', 'azure-app-insights', 'azure-monitor', 'azure-log-analytics',
     'azure-cognitive-services', 'azure-machine-learning', 'azure-databricks',
-    'azure-synapse', 'azure-container-instance', 'azure-logic-app', 'azure-waf',
+    'azure-synapse', 'azure-container-instance', 'azure-container-apps', 'azure-logic-app', 'azure-waf',
     'azure-availability-set', 'azure-express-route', 'azure-subnet',
   ],
   // Azure — VNet contains ONLY Subnets (real Azure)

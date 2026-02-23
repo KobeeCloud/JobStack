@@ -77,9 +77,12 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     subscription_ends_at TIMESTAMPTZ,
     max_members INTEGER DEFAULT 10,
     settings JSONB DEFAULT '{}',
+    deleted_at TIMESTAMPTZ DEFAULT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- MEDIUM-004: Soft-delete for organizations. Query with WHERE deleted_at IS NULL.
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAULT NULL;
 
 -- ---- Członkowie organizacji ----
 CREATE TABLE IF NOT EXISTS public.organization_members (
@@ -185,6 +188,9 @@ CREATE TABLE IF NOT EXISTS public.exports (
 );
 
 -- ---- Webhooki ----
+-- TODO [LOW-004]: Implement webhook delivery retry mechanism.
+-- Recommended: A background worker (pg_cron or external) that retries failed deliveries
+-- with exponential backoff (max 5 retries). Track in a webhook_deliveries table.
 CREATE TABLE IF NOT EXISTS public.webhooks (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -239,6 +245,9 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 );
 
 -- ---- Dziennik aktywności ----
+-- TODO [MEDIUM-003]: Implement TTL/partitioning strategy for activity_log.
+-- Recommended: pg_partman with monthly partitions + auto-drop after 90 days,
+-- or a scheduled pg_cron job: DELETE FROM activity_log WHERE created_at < NOW() - INTERVAL '90 days';
 CREATE TABLE IF NOT EXISTS public.activity_log (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL NOT NULL,
@@ -279,12 +288,12 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 -- ============================================================================
 
 CREATE INDEX IF NOT EXISTS idx_profiles_deletion ON public.profiles (deletion_scheduled_for) WHERE deletion_scheduled_for IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_organizations_slug ON public.organizations(slug);
+-- LOW-001: Removed — redundant with UNIQUE constraint on slug (implicit index)
 CREATE INDEX IF NOT EXISTS idx_organizations_owner ON public.organizations(owner_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_user ON public.organization_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_org ON public.organization_members(organization_id);
 CREATE INDEX IF NOT EXISTS idx_org_invites_email ON public.organization_invites(email);
-CREATE INDEX IF NOT EXISTS idx_org_invites_token ON public.organization_invites(token);
+-- LOW-001: Removed — redundant with UNIQUE constraint on token (implicit index)
 CREATE INDEX IF NOT EXISTS idx_org_invites_org ON public.organization_invites(organization_id);
 CREATE INDEX IF NOT EXISTS idx_projects_user_id ON public.projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_organization_id ON public.projects(organization_id);
@@ -311,6 +320,12 @@ CREATE INDEX IF NOT EXISTS idx_project_tags_project ON public.project_tags(proje
 CREATE INDEX IF NOT EXISTS idx_project_tags_tag ON public.project_tags(tag);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON public.notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_unread ON public.notifications(user_id, is_read) WHERE is_read = false;
+
+-- LOW-002: Composite indexes for common query patterns
+CREATE INDEX IF NOT EXISTS idx_projects_user_updated ON public.projects(user_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_diagrams_project_updated ON public.diagrams(project_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON public.notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_webhooks_user_created ON public.webhooks(user_id, created_at DESC);
 
 -- ============================================================================
 -- RLS — WŁĄCZENIE (idempotentne — ENABLE na już włączonym jest no-op)
@@ -340,33 +355,39 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public.is_org_member(p_org_id UUID, p_user_id UUID)
 RETURNS BOOLEAN AS $$
-    SELECT EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = p_org_id AND user_id = p_user_id
-    );
+    SELECT p_user_id IS NOT DISTINCT FROM auth.uid()
+        AND EXISTS (
+            SELECT 1 FROM public.organization_members
+            WHERE organization_id = p_org_id AND user_id = p_user_id
+        );
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 CREATE OR REPLACE FUNCTION public.get_org_role(p_org_id UUID, p_user_id UUID)
 RETURNS org_role AS $$
-    SELECT role FROM public.organization_members
-    WHERE organization_id = p_org_id AND user_id = p_user_id
-    LIMIT 1;
+    SELECT CASE WHEN p_user_id IS DISTINCT FROM auth.uid() THEN NULL::org_role
+    ELSE (
+        SELECT role FROM public.organization_members
+        WHERE organization_id = p_org_id AND user_id = p_user_id
+        LIMIT 1
+    ) END;
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 CREATE OR REPLACE FUNCTION public.is_org_owner(p_org_id UUID, p_user_id UUID)
 RETURNS BOOLEAN AS $$
-    SELECT EXISTS (
-        SELECT 1 FROM public.organizations
-        WHERE id = p_org_id AND owner_id = p_user_id
-    );
+    SELECT p_user_id IS NOT DISTINCT FROM auth.uid()
+        AND EXISTS (
+            SELECT 1 FROM public.organizations
+            WHERE id = p_org_id AND owner_id = p_user_id
+        );
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 CREATE OR REPLACE FUNCTION public.is_org_admin_or_owner(p_org_id UUID, p_user_id UUID)
 RETURNS BOOLEAN AS $$
-    SELECT EXISTS (
-        SELECT 1 FROM public.organization_members
-        WHERE organization_id = p_org_id AND user_id = p_user_id AND role IN ('owner', 'admin')
-    );
+    SELECT p_user_id IS NOT DISTINCT FROM auth.uid()
+        AND EXISTS (
+            SELECT 1 FROM public.organization_members
+            WHERE organization_id = p_org_id AND user_id = p_user_id AND role IN ('owner', 'admin')
+        );
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ============================================================================
@@ -394,7 +415,9 @@ CREATE POLICY "orgs_select" ON public.organizations FOR SELECT USING (
     OR public.is_org_member(id, auth.uid())
 );
 CREATE POLICY "orgs_insert" ON public.organizations FOR INSERT WITH CHECK (owner_id = auth.uid());
-CREATE POLICY "orgs_update" ON public.organizations FOR UPDATE USING (owner_id = auth.uid());
+CREATE POLICY "orgs_update" ON public.organizations FOR UPDATE USING (
+    public.is_org_admin_or_owner(id, auth.uid())
+);
 CREATE POLICY "orgs_delete" ON public.organizations FOR DELETE USING (owner_id = auth.uid());
 
 -- ---- Organization Members (SECURITY DEFINER functions — bez rekurencji) ----
@@ -466,7 +489,10 @@ CREATE POLICY "projects_select" ON public.projects FOR SELECT USING (
 );
 CREATE POLICY "projects_insert" ON public.projects FOR INSERT WITH CHECK (
     user_id = auth.uid()
-    OR (organization_id IS NOT NULL AND public.is_org_admin_or_owner(organization_id, auth.uid()))
+    AND (
+        organization_id IS NULL
+        OR public.is_org_admin_or_owner(organization_id, auth.uid())
+    )
 );
 CREATE POLICY "projects_update" ON public.projects FOR UPDATE USING (
     user_id = auth.uid()
@@ -529,21 +555,24 @@ CREATE POLICY "diagram_versions_select" ON public.diagram_versions FOR SELECT US
     EXISTS (
         SELECT 1 FROM public.diagrams d
         JOIN public.projects p ON d.project_id = p.id
-        WHERE d.id = diagram_versions.diagram_id AND p.user_id = auth.uid()
+        WHERE d.id = diagram_versions.diagram_id
+        AND (p.user_id = auth.uid() OR (p.organization_id IS NOT NULL AND public.is_org_member(p.organization_id, auth.uid())))
     )
 );
 CREATE POLICY "diagram_versions_insert" ON public.diagram_versions FOR INSERT WITH CHECK (
     EXISTS (
         SELECT 1 FROM public.diagrams d
         JOIN public.projects p ON d.project_id = p.id
-        WHERE d.id = diagram_versions.diagram_id AND p.user_id = auth.uid()
+        WHERE d.id = diagram_versions.diagram_id
+        AND (p.user_id = auth.uid() OR (p.organization_id IS NOT NULL AND public.is_org_member(p.organization_id, auth.uid())))
     )
 );
 CREATE POLICY "diagram_versions_delete" ON public.diagram_versions FOR DELETE USING (
     EXISTS (
         SELECT 1 FROM public.diagrams d
         JOIN public.projects p ON d.project_id = p.id
-        WHERE d.id = diagram_versions.diagram_id AND p.user_id = auth.uid()
+        WHERE d.id = diagram_versions.diagram_id
+        AND (p.user_id = auth.uid() OR (p.organization_id IS NOT NULL AND public.is_org_admin_or_owner(p.organization_id, auth.uid())))
     )
 );
 
@@ -553,10 +582,23 @@ DROP POLICY IF EXISTS "templates_insert" ON public.templates;
 DROP POLICY IF EXISTS "templates_update" ON public.templates;
 DROP POLICY IF EXISTS "templates_delete" ON public.templates;
 
-CREATE POLICY "templates_select" ON public.templates FOR SELECT USING (is_public = true OR created_by = auth.uid());
-CREATE POLICY "templates_insert" ON public.templates FOR INSERT WITH CHECK (created_by = auth.uid());
-CREATE POLICY "templates_update" ON public.templates FOR UPDATE USING (created_by = auth.uid());
-CREATE POLICY "templates_delete" ON public.templates FOR DELETE USING (created_by = auth.uid());
+CREATE POLICY "templates_select" ON public.templates FOR SELECT USING (
+    is_public = true
+    OR created_by = auth.uid()
+    OR (organization_id IS NOT NULL AND public.is_org_member(organization_id, auth.uid()))
+);
+CREATE POLICY "templates_insert" ON public.templates FOR INSERT WITH CHECK (
+    created_by = auth.uid()
+    AND (organization_id IS NULL OR public.is_org_admin_or_owner(organization_id, auth.uid()))
+);
+CREATE POLICY "templates_update" ON public.templates FOR UPDATE USING (
+    created_by = auth.uid()
+    OR (organization_id IS NOT NULL AND public.is_org_admin_or_owner(organization_id, auth.uid()))
+);
+CREATE POLICY "templates_delete" ON public.templates FOR DELETE USING (
+    created_by = auth.uid()
+    OR (organization_id IS NOT NULL AND public.is_org_admin_or_owner(organization_id, auth.uid()))
+);
 
 -- ---- Project Shares ----
 DROP POLICY IF EXISTS "shares_select" ON public.project_shares;
@@ -585,19 +627,29 @@ DROP POLICY IF EXISTS "exports_select" ON public.exports;
 DROP POLICY IF EXISTS "exports_insert" ON public.exports;
 
 CREATE POLICY "exports_select" ON public.exports FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.projects WHERE id = exports.project_id AND user_id = auth.uid())
+    EXISTS (
+        SELECT 1 FROM public.projects
+        WHERE id = exports.project_id
+        AND (user_id = auth.uid() OR (organization_id IS NOT NULL AND public.is_org_member(organization_id, auth.uid())))
+    )
     OR EXISTS (
         SELECT 1 FROM public.diagrams d
         JOIN public.projects p ON d.project_id = p.id
-        WHERE d.id = exports.diagram_id AND p.user_id = auth.uid()
+        WHERE d.id = exports.diagram_id
+        AND (p.user_id = auth.uid() OR (p.organization_id IS NOT NULL AND public.is_org_member(p.organization_id, auth.uid())))
     )
 );
 CREATE POLICY "exports_insert" ON public.exports FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM public.projects WHERE id = exports.project_id AND user_id = auth.uid())
+    EXISTS (
+        SELECT 1 FROM public.projects
+        WHERE id = exports.project_id
+        AND (user_id = auth.uid() OR (organization_id IS NOT NULL AND public.is_org_member(organization_id, auth.uid())))
+    )
     OR EXISTS (
         SELECT 1 FROM public.diagrams d
         JOIN public.projects p ON d.project_id = p.id
-        WHERE d.id = exports.diagram_id AND p.user_id = auth.uid()
+        WHERE d.id = exports.diagram_id
+        AND (p.user_id = auth.uid() OR (p.organization_id IS NOT NULL AND public.is_org_member(p.organization_id, auth.uid())))
     )
 );
 
@@ -669,12 +721,30 @@ CREATE POLICY "project_tags_select" ON public.project_tags FOR SELECT USING (
 );
 CREATE POLICY "project_tags_insert" ON public.project_tags FOR INSERT WITH CHECK (
     EXISTS (SELECT 1 FROM public.projects WHERE id = project_tags.project_id AND user_id = auth.uid())
+    OR EXISTS (
+        SELECT 1 FROM public.projects p
+        WHERE p.id = project_tags.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_admin_or_owner(p.organization_id, auth.uid())
+    )
 );
 CREATE POLICY "project_tags_update" ON public.project_tags FOR UPDATE USING (
     EXISTS (SELECT 1 FROM public.projects WHERE id = project_tags.project_id AND user_id = auth.uid())
+    OR EXISTS (
+        SELECT 1 FROM public.projects p
+        WHERE p.id = project_tags.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_admin_or_owner(p.organization_id, auth.uid())
+    )
 );
 CREATE POLICY "project_tags_delete" ON public.project_tags FOR DELETE USING (
     EXISTS (SELECT 1 FROM public.projects WHERE id = project_tags.project_id AND user_id = auth.uid())
+    OR EXISTS (
+        SELECT 1 FROM public.projects p
+        WHERE p.id = project_tags.project_id
+        AND p.organization_id IS NOT NULL
+        AND public.is_org_admin_or_owner(p.organization_id, auth.uid())
+    )
 );
 
 -- ---- Notifications ----
@@ -769,6 +839,22 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- MEDIUM-001: Optimistic locking for concurrent diagram edits
+ALTER TABLE public.diagrams ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1;
+
+CREATE OR REPLACE FUNCTION public.handle_diagram_version()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.version = COALESCE(OLD.version, 0) + 1;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS set_diagram_version ON public.diagrams;
+CREATE TRIGGER set_diagram_version
+    BEFORE UPDATE ON public.diagrams
+    FOR EACH ROW EXECUTE FUNCTION public.handle_diagram_version();
+
 -- ============================================================================
 -- REALTIME (bezpieczne — owijamy w DO block na wypadek duplikatu)
 -- ============================================================================
@@ -800,7 +886,7 @@ END $$;
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON public.templates TO anon;
 GRANT SELECT ON public.custom_components TO anon;
-GRANT SELECT ON public.diagram_versions TO anon;
+-- HIGH-006: Removed anon GRANT on diagram_versions (no public use case)
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated;

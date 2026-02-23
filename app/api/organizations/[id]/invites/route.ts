@@ -1,35 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createApiHandler } from '@/lib/api-helpers'
+import { ApiError } from '@/lib/api-error'
 import { sendEmail, organizationInviteEmail } from '@/lib/email'
 import { log } from '@/lib/logger'
+import { z } from 'zod'
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await context.params
-    const supabase = await createClient()
+interface RouteContext {
+  params: Promise<{ id: string }>
+}
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+const createInviteSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  role: z.enum(['owner', 'admin', 'member', 'viewer']).default('member'),
+})
+
+export const GET = createApiHandler(
+  async (request: NextRequest, { auth }, routeContext?: RouteContext) => {
+    const params = await routeContext?.params
+    const id = params?.id
+    if (!id) throw new ApiError(400, 'Organization ID is required', 'MISSING_ID')
 
     // Check if user is owner or admin of organization
-    const { data: membership } = await supabase
+    const { data: membership } = await auth.supabase
       .from('organization_members')
       .select('role')
       .eq('organization_id', id)
-      .eq('user_id', user.id)
+      .eq('user_id', auth.user.id)
       .single()
 
     if (!membership || !['owner', 'admin'].includes(membership.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      throw new ApiError(403, 'Only owners and admins can view invites', 'FORBIDDEN')
     }
 
     // Get all pending invites
-    const { data: invites, error } = await supabase
+    const { data: invites, error } = await auth.supabase
       .from('organization_invites')
       .select('*')
       .eq('organization_id', id)
@@ -38,78 +42,65 @@ export async function GET(
 
     if (error) throw error
 
-    // FIX BUG#2: Return correct key 'invites' (frontend reads invitesData.invites)
     return NextResponse.json({ invites: invites || [] })
-  } catch (error: any) {
-    log.error('Failed to fetch invites', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-}
+  },
+  { requireAuth: true, method: 'GET' }
+)
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await context.params
+export const POST = createApiHandler(
+  async (request: NextRequest, { auth }, routeContext?: RouteContext) => {
+    const params = await routeContext?.params
+    const id = params?.id
+    if (!id) throw new ApiError(400, 'Organization ID is required', 'MISSING_ID')
+
     const body = await request.json()
-    const { email, role = 'member' } = body
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    const parsed = createInviteSchema.safeParse(body)
+    if (!parsed.success) {
+      throw new ApiError(400, parsed.error.errors[0]?.message ?? 'Invalid input', 'VALIDATION_ERROR')
     }
 
-    const normalizedEmail = email.trim().toLowerCase()
-
-    const supabase = await createClient()
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const normalizedEmail = parsed.data.email.trim().toLowerCase()
+    const role = parsed.data.role
 
     // Check if user is owner or admin
-    const { data: membership } = await supabase
+    const { data: membership } = await auth.supabase
       .from('organization_members')
       .select('role')
       .eq('organization_id', id)
-      .eq('user_id', user.id)
+      .eq('user_id', auth.user.id)
       .single()
 
     if (!membership || !['owner', 'admin'].includes(membership.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      throw new ApiError(403, 'Only owners and admins can send invites', 'FORBIDDEN')
     }
 
     // Check organization member limit
-    const { data: org } = await supabase
+    const { data: org } = await auth.supabase
       .from('organizations')
       .select('max_members, name')
       .eq('id', id)
       .single()
 
     if (org) {
-      const { count: currentMemberCount } = await supabase
+      const { count: currentMemberCount } = await auth.supabase
         .from('organization_members')
         .select('id', { count: 'exact', head: true })
         .eq('organization_id', id)
 
       if ((currentMemberCount || 0) >= (org.max_members || 10)) {
-        return NextResponse.json(
-          { error: `Organization has reached the maximum member limit (${org.max_members})` },
-          { status: 400 }
-        )
+        throw new ApiError(400, `Organization has reached the maximum member limit (${org.max_members})`, 'MEMBER_LIMIT_REACHED')
       }
     }
 
-    // FIX BUG#1: Check if the INVITED email is already a member (not the inviting user)
-    const { data: inviteeProfile } = await supabase
+    // Check if the INVITED email is already a member
+    const { data: inviteeProfile } = await auth.supabase
       .from('profiles')
       .select('id')
       .eq('email', normalizedEmail)
       .single()
 
     if (inviteeProfile) {
-      const { data: existingMember } = await supabase
+      const { data: existingMember } = await auth.supabase
         .from('organization_members')
         .select('id')
         .eq('organization_id', id)
@@ -117,32 +108,32 @@ export async function POST(
         .single()
 
       if (existingMember) {
-        return NextResponse.json({ error: 'User is already a member of this organization' }, { status: 400 })
+        throw new ApiError(400, 'User is already a member of this organization', 'ALREADY_MEMBER')
       }
     }
 
     // Get inviter profile for email
-    const { data: inviterProfile } = await supabase
+    const { data: inviterProfile } = await auth.supabase
       .from('profiles')
       .select('full_name, email')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single()
 
     // Create invite
-    const { data: invite, error } = await supabase
+    const { data: invite, error } = await auth.supabase
       .from('organization_invites')
       .insert({
         organization_id: id,
         email: normalizedEmail,
         role,
-        invited_by: user.id,
+        invited_by: auth.user.id,
       })
       .select()
       .single()
 
     if (error) {
       if (error.code === '23505') {
-        return NextResponse.json({ error: 'An invite for this email already exists' }, { status: 400 })
+        throw new ApiError(400, 'An invite for this email already exists', 'DUPLICATE_INVITE')
       }
       throw error
     }
@@ -160,12 +151,9 @@ export async function POST(
       html: emailContent.html,
     })
 
-    log.info('Organization invite sent', { orgId: id, invitedEmail: normalizedEmail, invitedBy: user.id })
+    log.info('Organization invite sent', { orgId: id, invitedEmail: normalizedEmail, invitedBy: auth.user.id })
 
-    // FIX BUG#2: Return key 'invite' (frontend reads data.invite)
     return NextResponse.json({ invite })
-  } catch (error: any) {
-    log.error('Failed to create invite', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-}
+  },
+  { requireAuth: true, method: 'POST' }
+)

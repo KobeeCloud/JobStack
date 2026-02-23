@@ -22,13 +22,13 @@ export function Logo({ size = 32, className = '' }: LogoProps) {
     >
       <defs>
         <style>{`
-          .js-text-job    { font-family: 'Inter', 'Segoe UI', sans-serif; font-weight: 800; font-size: 28px; fill: #0f172a; }
+          .js-text-job    { font-family: 'Inter', 'Segoe UI', sans-serif; font-weight: 800; font-size: 28px; fill: currentColor; }
           .js-text-stack  { font-family: 'Inter', 'Segoe UI', sans-serif; font-weight: 800; font-size: 28px; fill: #2563eb; }
           .js-node        { fill: #2563eb; }
           .js-conn        { stroke: #3b82f6; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-          .js-bridge      { stroke: #0f172a; stroke-width: 3; fill: none; stroke-linecap: round; }
-          .js-brace       { stroke: #0f172a; stroke-width: 2.5; fill: none; stroke-linecap: round; }
-          .js-code        { stroke: #0f172a; stroke-width: 3; stroke-linecap: round; }
+          .js-bridge      { stroke: currentColor; stroke-width: 3; fill: none; stroke-linecap: round; }
+          .js-brace       { stroke: currentColor; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+          .js-code        { stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
           .js-code-accent { stroke: #2563eb; stroke-width: 3; stroke-linecap: round; }
         `}</style>
       </defs>
@@ -81,9 +81,9 @@ export function LogoIcon({ size = 24, className = '' }: LogoProps) {
         <style>{`
           .js-icon-node        { fill: #2563eb; }
           .js-icon-conn        { stroke: #3b82f6; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-          .js-icon-bridge      { stroke: #0f172a; stroke-width: 3; fill: none; stroke-linecap: round; }
-          .js-icon-brace       { stroke: #0f172a; stroke-width: 2.5; fill: none; stroke-linecap: round; }
-          .js-icon-code        { stroke: #0f172a; stroke-width: 3; stroke-linecap: round; }
+          .js-icon-bridge      { stroke: currentColor; stroke-width: 3; fill: none; stroke-linecap: round; }
+          .js-icon-brace       { stroke: currentColor; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+          .js-icon-code        { stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
           .js-icon-code-accent { stroke: #2563eb; stroke-width: 3; stroke-linecap: round; }
         `}</style>
       </defs>

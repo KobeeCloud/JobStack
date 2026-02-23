@@ -14,7 +14,7 @@ export const GET = createApiHandler(
     const { data: projects, error, count } = await auth.supabase
       .from('projects')
       .select('*', { count: 'exact' })
-      .eq('user_id', auth.user.id)
+      .or(`user_id.eq.${auth.user.id},organization_id.not.is.null`)
       .order('updated_at', { ascending: false })
       .range((pagination.page - 1) * pagination.limit, pagination.page * pagination.limit - 1)
 

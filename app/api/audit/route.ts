@@ -17,8 +17,8 @@ export const GET = createApiHandler(
         `
         id,
         action,
-        entity_type,
-        entity_id,
+        resource_type,
+        resource_id,
         metadata,
         ip_address,
         created_at,

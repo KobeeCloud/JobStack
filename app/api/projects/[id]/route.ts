@@ -89,7 +89,6 @@ export const PUT = createApiHandler(
         updated_at: new Date().toISOString(),
       })
       .eq('id', projectId)
-      .eq('user_id', auth.user.id)
       .select()
       .single()
 
@@ -128,7 +127,6 @@ export const DELETE = createApiHandler(
       .from('projects')
       .delete()
       .eq('id', projectId)
-      .eq('user_id', auth.user.id)
 
     if (error) {
       log.error('Failed to delete project', error, { projectId, userId: auth.user.id })

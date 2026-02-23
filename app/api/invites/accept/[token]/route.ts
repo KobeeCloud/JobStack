@@ -1,86 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createApiHandler } from '@/lib/api-helpers'
+import { ApiError } from '@/lib/api-error'
+import { log } from '@/lib/logger'
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ token: string }> }
-) {
-  try {
-    const { token } = await context.params
-    const supabase = await createClient()
+interface RouteContext {
+  params: Promise<{ token: string }>
+}
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+export const POST = createApiHandler(
+  async (request: NextRequest, { auth }, routeContext?: RouteContext) => {
+    const params = await routeContext?.params
+    const token = params?.token
+    if (!token) throw new ApiError(400, 'Token is required', 'MISSING_TOKEN')
 
     // Get invite
-    const { data: invite, error: inviteError } = await supabase
+    const { data: invite, error: inviteError } = await auth.supabase
       .from('organization_invites')
       .select('*')
       .eq('token', token)
       .single()
 
     if (inviteError || !invite) {
-      return NextResponse.json({ error: 'Invalid invite' }, { status: 404 })
+      throw new ApiError(404, 'Invalid invite', 'INVITE_NOT_FOUND')
     }
 
     // Check if expired
     if (new Date(invite.expires_at) < new Date()) {
-      return NextResponse.json({ error: 'Invite expired' }, { status: 400 })
+      throw new ApiError(400, 'Invite expired', 'INVITE_EXPIRED')
     }
 
     // Check if email matches
-    if (invite.email !== user.email) {
-      return NextResponse.json({ error: 'Invite is for different email' }, { status: 400 })
+    if (invite.email !== auth.user.email) {
+      throw new ApiError(403, 'Invite is for a different email', 'EMAIL_MISMATCH')
     }
 
     // Ensure profile exists
-    const { data: profile } = await supabase
+    const { data: profile } = await auth.supabase
       .from('profiles')
       .select('id')
-      .eq('id', user.id)
+      .eq('id', auth.user.id)
       .single()
 
     if (!profile) {
-      const { error: createProfileError } = await supabase
+      // Fetch full user object for metadata
+      const { data: { user: fullUser } } = await auth.supabase.auth.getUser()
+      const { error: createProfileError } = await auth.supabase
         .from('profiles')
         .insert({
-          id: user.id,
-          email: user.email!,
-          full_name: user.user_metadata?.full_name || null,
-          avatar_url: user.user_metadata?.avatar_url || null,
+          id: auth.user.id,
+          email: auth.user.email!,
+          full_name: fullUser?.user_metadata?.full_name || null,
+          avatar_url: fullUser?.user_metadata?.avatar_url || null,
         })
 
       if (createProfileError) {
-        return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
+        throw new ApiError(500, 'Failed to create profile', 'PROFILE_CREATE_FAILED')
       }
     }
 
     // Add user to organization
-    const { error: memberError } = await supabase
+    const { error: memberError } = await auth.supabase
       .from('organization_members')
       .insert({
         organization_id: invite.organization_id,
-        user_id: user.id,
+        user_id: auth.user.id,
         role: invite.role,
       })
 
     if (memberError) {
       if (memberError.code === '23505') {
-        return NextResponse.json({ error: 'Already a member' }, { status: 400 })
+        throw new ApiError(400, 'Already a member', 'ALREADY_MEMBER')
       }
       throw memberError
     }
 
     // Delete invite
-    await supabase
+    await auth.supabase
       .from('organization_invites')
       .delete()
       .eq('token', token)
 
+    log.info('Invite accepted', { orgId: invite.organization_id, userId: auth.user.id })
+
     return NextResponse.json({ success: true, organization_id: invite.organization_id })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-}
+  },
+  { requireAuth: true, method: 'POST' }
+)

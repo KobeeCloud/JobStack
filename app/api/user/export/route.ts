@@ -1,19 +1,15 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createApiHandler } from '@/lib/api-helpers'
 
-export async function GET() {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+export const GET = createApiHandler(
+  async (request: NextRequest, { auth }) => {
+    const user = auth.user
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Collect all user data
+    // Fetch full Supabase user for metadata fields
+    const { data: { user: fullUser } } = await auth.supabase.auth.getUser()
 
     // 1. Profile data
-    const { data: profile } = await supabase
+    const { data: profile } = await auth.supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
@@ -22,22 +18,22 @@ export async function GET() {
     const profileExport = {
       id: user.id,
       email: user.email,
-      email_verified: user.email_confirmed_at != null,
-      created_at: user.created_at,
-      last_sign_in: user.last_sign_in_at,
-      user_metadata: user.user_metadata,
+      email_verified: fullUser?.email_confirmed_at != null,
+      created_at: fullUser?.created_at,
+      last_sign_in: fullUser?.last_sign_in_at,
+      user_metadata: fullUser?.user_metadata,
       profile: profile || null,
     }
 
-    // 2. Projects with diagrams — [C] single JOIN query zamiast N+1
-    const { data: projectsWithDiagrams } = await supabase
+    // 2. Projects with diagrams — single JOIN query
+    const { data: projectsWithDiagrams } = await auth.supabase
       .from('projects')
       .select('*, diagrams(*)')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
 
     // 3. Organization memberships
-    const { data: memberships } = await supabase
+    const { data: memberships } = await auth.supabase
       .from('organization_members')
       .select(`
         role,
@@ -52,10 +48,12 @@ export async function GET() {
       .eq('user_id', user.id)
 
     // 4. Invitations sent/received
-    const { data: invites } = await supabase
+    // MEDIUM-009: Sanitize email for PostgREST filter to prevent injection
+    const safeEmail = (user.email ?? '').replace(/[,()]/g, '')
+    const { data: invites } = await auth.supabase
       .from('organization_invites')
       .select('*')
-      .or(`invited_by.eq.${user.id},email.eq.${user.email}`)
+      .or(`invited_by.eq.${user.id},email.eq.${safeEmail}`)
 
     // Compose the full export
     const exportData = {
@@ -80,11 +78,6 @@ export async function GET() {
         'Content-Disposition': `attachment; filename="jobstack-export-${user.id.slice(0, 8)}-${new Date().toISOString().split('T')[0]}.json"`,
       },
     })
-  } catch (error) {
-    console.error('Data export error:', error)
-    return NextResponse.json(
-      { error: 'Failed to export data' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { requireAuth: true, method: 'GET' }
+)

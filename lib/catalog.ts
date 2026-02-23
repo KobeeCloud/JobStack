@@ -1143,6 +1143,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'nextjs-app',
+    serviceType: 'hosting',
     name: 'Next.js Application',
     category: 'frontend',
     icon: Code,
@@ -1159,6 +1160,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'vue-app',
+    serviceType: 'hosting',
     name: 'Vue.js Application',
     category: 'frontend',
     icon: Code,
@@ -1168,6 +1170,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'angular-app',
+    serviceType: 'hosting',
     name: 'Angular Application',
     category: 'frontend',
     icon: Code,
@@ -1177,6 +1180,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'static-site',
+    serviceType: 'hosting',
     name: 'Static Website',
     category: 'frontend',
     icon: Globe,
@@ -1197,6 +1201,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Backend Components
   {
     id: 'nodejs-api',
+    serviceType: 'paas',
     name: 'Node.js API',
     category: 'backend',
     icon: Server,
@@ -1213,6 +1218,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'python-api',
+    serviceType: 'paas',
     name: 'Python API',
     category: 'backend',
     icon: Server,
@@ -1222,6 +1228,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'go-api',
+    serviceType: 'paas',
     name: 'Go API',
     category: 'backend',
     icon: Server,
@@ -1231,6 +1238,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'java-api',
+    serviceType: 'paas',
     name: 'Java API',
     category: 'backend',
     icon: Server,
@@ -1240,6 +1248,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'dotnet-api',
+    serviceType: 'paas',
     name: '.NET API',
     category: 'backend',
     icon: Server,
@@ -1249,6 +1258,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'ruby-api',
+    serviceType: 'paas',
     name: 'Ruby API',
     category: 'backend',
     icon: Server,
@@ -1260,6 +1270,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Database Components
   {
     id: 'postgresql',
+    serviceType: 'paas',
     name: 'PostgreSQL',
     category: 'database',
     icon: Database,
@@ -1278,6 +1289,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'mysql',
+    serviceType: 'paas',
     name: 'MySQL',
     category: 'database',
     icon: Database,
@@ -1296,6 +1308,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'mongodb',
+    serviceType: 'paas',
     name: 'MongoDB',
     category: 'database',
     icon: Database,
@@ -1305,6 +1318,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'redis',
+    serviceType: 'paas',
     name: 'Redis',
     category: 'database',
     icon: Database,
@@ -1322,6 +1336,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'supabase',
+    serviceType: 'paas',
     name: 'Supabase',
     category: 'database',
     icon: Database,
@@ -1331,6 +1346,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'dynamodb',
+    serviceType: 'paas',
     name: 'DynamoDB',
     category: 'database',
     icon: Database,
@@ -1349,6 +1365,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Cloud Services - AWS
   {
     id: 'aws-lambda',
+    serviceType: 'paas',
     name: 'AWS Lambda',
     category: 'cloud',
     icon: Zap,
@@ -1367,6 +1384,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-ecs',
+    serviceType: 'paas',
     name: 'AWS ECS',
     category: 'cloud',
     icon: Container,
@@ -1381,6 +1399,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-api-gateway',
+    serviceType: 'paas',
     name: 'AWS API Gateway',
     category: 'cloud',
     icon: Network,
@@ -1395,6 +1414,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-sqs',
+    serviceType: 'paas',
     name: 'AWS SQS',
     category: 'service',
     icon: MessageSquare,
@@ -1413,6 +1433,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Cloud Services - GCP
   {
     id: 'gcp-cloud-run',
+    serviceType: 'paas',
     name: 'GCP Cloud Run',
     category: 'cloud',
     icon: Container,
@@ -1427,6 +1448,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'gcp-cloud-functions',
+    serviceType: 'paas',
     name: 'GCP Cloud Functions',
     category: 'cloud',
     icon: Zap,
@@ -1445,26 +1467,53 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Cloud Services - Azure
   {
     id: 'azure-functions',
+    serviceType: 'paas',
     name: 'Azure Functions',
     category: 'cloud',
+    provider: 'azure',
     icon: Zap,
     color: '#0078D4',
     description: 'Serverless compute',
     estimatedCost: { min: 0, max: 100 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_linux_function_app',
+      defaultConfig: {
+        os_type: 'Linux',
+        sku_name: 'Y1',
+        runtime_stack: 'node',
+        runtime_version: '20',
+        https_only: true,
+      }
+    }
   },
   {
     id: 'azure-app-service',
+    serviceType: 'paas',
     name: 'Azure App Service',
     category: 'cloud',
+    provider: 'azure',
     icon: Server,
     color: '#0078D4',
     description: 'Web app hosting',
     estimatedCost: { min: 10, max: 300 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_linux_web_app',
+      defaultConfig: {
+        sku_name: 'B1',
+        https_only: true,
+        always_on: true,
+        runtime_stack: 'NODE',
+        runtime_version: '20-lts',
+      }
+    }
   },
 
   // Additional Services
   {
     id: 'kubernetes',
+    serviceType: 'iaas',
     name: 'Kubernetes Cluster',
     category: 'cloud',
     icon: Container,
@@ -1474,6 +1523,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'cloudflare-workers',
+    serviceType: 'hosting',
     name: 'Cloudflare Workers',
     category: 'cloud',
     icon: Zap,
@@ -1483,6 +1533,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'vercel',
+    serviceType: 'hosting',
     name: 'Vercel Hosting',
     category: 'cloud',
     icon: Globe,
@@ -1492,6 +1543,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'auth-service',
+    serviceType: 'paas',
     name: 'Auth Service',
     category: 'service',
     icon: Lock,
@@ -1501,6 +1553,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'email-service',
+    serviceType: 'saas',
     name: 'Email Service',
     category: 'service',
     icon: Mail,
@@ -1510,6 +1563,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'cdn',
+    serviceType: 'iaas',
     name: 'CDN',
     category: 'service',
     icon: Network,
@@ -1519,6 +1573,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'monitoring',
+    serviceType: 'saas',
     name: 'Monitoring Service',
     category: 'service',
     icon: Activity,
@@ -1530,6 +1585,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Additional AWS Services
   {
     id: 'aws-rds',
+    serviceType: 'paas',
     name: 'AWS RDS',
     category: 'database',
     provider: 'aws',
@@ -1545,6 +1601,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-aurora',
+    serviceType: 'paas',
     name: 'AWS Aurora',
     category: 'database',
     provider: 'aws',
@@ -1560,6 +1617,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-aurora-serverless',
+    serviceType: 'paas',
     name: 'AWS Aurora Serverless',
     category: 'database',
     provider: 'aws',
@@ -1575,6 +1633,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-eks',
+    serviceType: 'iaas',
     name: 'AWS EKS',
     category: 'cloud',
     provider: 'aws',
@@ -1598,6 +1657,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-sns',
+    serviceType: 'paas',
     name: 'AWS SNS',
     category: 'service',
     provider: 'aws',
@@ -1613,6 +1673,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-cognito',
+    serviceType: 'paas',
     name: 'AWS Cognito',
     category: 'security',
     provider: 'aws',
@@ -1628,6 +1689,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-secrets-manager',
+    serviceType: 'paas',
     name: 'AWS Secrets Manager',
     category: 'security',
     provider: 'aws',
@@ -1643,6 +1705,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-step-functions',
+    serviceType: 'paas',
     name: 'AWS Step Functions',
     category: 'service',
     provider: 'aws',
@@ -1658,6 +1721,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-eventbridge',
+    serviceType: 'paas',
     name: 'AWS EventBridge',
     category: 'service',
     provider: 'aws',
@@ -1673,6 +1737,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-elb',
+    serviceType: 'iaas',
     name: 'AWS Load Balancer',
     category: 'cloud',
     provider: 'aws',
@@ -1688,6 +1753,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-elasticache',
+    serviceType: 'paas',
     name: 'AWS ElastiCache',
     category: 'database',
     provider: 'aws',
@@ -1703,6 +1769,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'aws-kinesis',
+    serviceType: 'paas',
     name: 'AWS Kinesis',
     category: 'analytics',
     provider: 'aws',
@@ -1720,6 +1787,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Additional GCP Services
   {
     id: 'gcp-compute-engine',
+    serviceType: 'iaas',
     name: 'GCP Compute Engine',
     category: 'cloud',
     provider: 'gcp',
@@ -1735,6 +1803,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'gcp-gke',
+    serviceType: 'iaas',
     name: 'GCP GKE',
     category: 'cloud',
     provider: 'gcp',
@@ -1763,6 +1832,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'gcp-cloud-sql',
+    serviceType: 'paas',
     name: 'GCP Cloud SQL',
     category: 'database',
     provider: 'gcp',
@@ -1778,6 +1848,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'gcp-pubsub',
+    serviceType: 'paas',
     name: 'GCP Pub/Sub',
     category: 'service',
     provider: 'gcp',
@@ -1793,6 +1864,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'gcp-bigquery',
+    serviceType: 'paas',
     name: 'GCP BigQuery',
     category: 'analytics',
     provider: 'gcp',
@@ -1808,6 +1880,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'gcp-firebase',
+    serviceType: 'paas',
     name: 'GCP Firebase',
     category: 'service',
     provider: 'gcp',
@@ -1820,6 +1893,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Additional Azure Services
   {
     id: 'azure-aks',
+    serviceType: 'iaas',
     name: 'Azure AKS',
     category: 'cloud',
     provider: 'azure',
@@ -1846,6 +1920,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'azure-container-apps',
+    serviceType: 'paas',
     name: 'Azure Container Apps',
     category: 'cloud',
     provider: 'azure',
@@ -1867,6 +1942,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'azure-sql',
+    serviceType: 'paas',
     name: 'Azure SQL Database',
     category: 'database',
     provider: 'azure',
@@ -1874,9 +1950,21 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Managed SQL database',
     estimatedCost: { min: 15, max: 1000 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_mssql_database',
+      defaultConfig: {
+        sku_name: 'S0',
+        max_size_gb: 50,
+        collation: 'SQL_Latin1_General_CP1_CI_AS',
+        zone_redundant: false,
+        read_scale: false,
+      }
+    }
   },
   {
     id: 'azure-blob',
+    serviceType: 'paas',
     name: 'Azure Blob Storage',
     category: 'cloud',
     provider: 'azure',
@@ -1884,9 +1972,22 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Object storage service',
     estimatedCost: { min: 0, max: 100 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_storage_account',
+      defaultConfig: {
+        account_tier: 'Standard',
+        account_replication_type: 'LRS',
+        account_kind: 'StorageV2',
+        access_tier: 'Hot',
+        min_tls_version: 'TLS1_2',
+        allow_nested_items_to_be_public: false,
+      }
+    }
   },
   {
     id: 'azure-cosmos',
+    serviceType: 'paas',
     name: 'Azure Cosmos DB',
     category: 'database',
     provider: 'azure',
@@ -1894,9 +1995,21 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Globally distributed NoSQL',
     estimatedCost: { min: 25, max: 2000 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_cosmosdb_account',
+      defaultConfig: {
+        offer_type: 'Standard',
+        kind: 'GlobalDocumentDB',
+        consistency_level: 'Session',
+        geo_location_failover_priority: 0,
+        enable_automatic_failover: false,
+      }
+    }
   },
   {
     id: 'azure-event-hub',
+    serviceType: 'paas',
     name: 'Azure Event Hubs',
     category: 'service',
     provider: 'azure',
@@ -1904,9 +2017,20 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Big data streaming',
     estimatedCost: { min: 10, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_eventhub',
+      defaultConfig: {
+        partition_count: 2,
+        message_retention: 1,
+        namespace_sku: 'Standard',
+        capacity: 1,
+      }
+    }
   },
   {
     id: 'azure-service-bus',
+    serviceType: 'paas',
     name: 'Azure Service Bus',
     category: 'service',
     provider: 'azure',
@@ -1914,9 +2038,19 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Enterprise messaging',
     estimatedCost: { min: 0, max: 200 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_servicebus_namespace',
+      defaultConfig: {
+        sku: 'Standard',
+        capacity: 0,
+        zone_redundant: false,
+      }
+    }
   },
   {
     id: 'azure-ad',
+    serviceType: 'paas',
     name: 'Azure Active Directory',
     category: 'security',
     provider: 'azure',
@@ -1924,9 +2058,17 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Identity management',
     estimatedCost: { min: 0, max: 500 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_user_assigned_identity',
+      defaultConfig: {
+        name: 'app-identity',
+      }
+    }
   },
   {
     id: 'azure-key-vault',
+    serviceType: 'paas',
     name: 'Azure Key Vault',
     category: 'security',
     provider: 'azure',
@@ -1934,11 +2076,22 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#0078D4',
     description: 'Secret management',
     estimatedCost: { min: 0, max: 50 },
+    terraform: {
+      provider: 'azure',
+      resource: 'azurerm_key_vault',
+      defaultConfig: {
+        sku_name: 'standard',
+        soft_delete_retention_days: 90,
+        purge_protection_enabled: true,
+        enable_rbac_authorization: true,
+      }
+    }
   },
 
   // DevOps & CI/CD Tools
   {
     id: 'docker',
+    serviceType: 'iaas',
     name: 'Docker Container',
     category: 'devops',
     provider: 'generic',
@@ -1950,6 +2103,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'terraform',
+    serviceType: 'generic',
     name: 'Terraform',
     category: 'devops',
     provider: 'generic',
@@ -1961,6 +2115,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'ansible',
+    serviceType: 'generic',
     name: 'Ansible',
     category: 'devops',
     provider: 'generic',
@@ -1972,6 +2127,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'jenkins',
+    serviceType: 'generic',
     name: 'Jenkins',
     category: 'devops',
     provider: 'generic',
@@ -1993,6 +2149,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'github-actions',
+    serviceType: 'generic',
     name: 'GitHub Actions',
     category: 'devops',
     provider: 'generic',
@@ -2015,6 +2172,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'gitlab-ci',
+    serviceType: 'generic',
     name: 'GitLab CI/CD',
     category: 'devops',
     provider: 'generic',
@@ -2036,6 +2194,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'argocd',
+    serviceType: 'generic',
     name: 'ArgoCD',
     category: 'devops',
     provider: 'generic',
@@ -2084,6 +2243,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Monitoring & Observability
   {
     id: 'prometheus',
+    serviceType: 'saas',
     name: 'Prometheus',
     category: 'analytics',
     provider: 'generic',
@@ -2104,6 +2264,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'grafana',
+    serviceType: 'saas',
     name: 'Grafana',
     category: 'analytics',
     provider: 'generic',
@@ -2124,6 +2285,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'datadog',
+    serviceType: 'saas',
     name: 'Datadog',
     category: 'analytics',
     provider: 'generic',
@@ -2147,6 +2309,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'elastic-stack',
+    serviceType: 'saas',
     name: 'ELK Stack',
     category: 'analytics',
     provider: 'generic',
@@ -2168,6 +2331,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'newrelic',
+    serviceType: 'saas',
     name: 'New Relic',
     category: 'analytics',
     provider: 'generic',
@@ -2188,6 +2352,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'jaeger',
+    serviceType: 'saas',
     name: 'Jaeger',
     category: 'analytics',
     provider: 'generic',
@@ -2211,6 +2376,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Messaging & Queues
   {
     id: 'rabbitmq',
+    serviceType: 'paas',
     name: 'RabbitMQ',
     category: 'service',
     provider: 'generic',
@@ -2233,6 +2399,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'kafka',
+    serviceType: 'paas',
     name: 'Apache Kafka',
     category: 'service',
     provider: 'generic',
@@ -2255,6 +2422,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'nats',
+    serviceType: 'paas',
     name: 'NATS',
     category: 'service',
     provider: 'generic',
@@ -2277,6 +2445,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Security Services
   {
     id: 'vault',
+    serviceType: 'paas',
     name: 'HashiCorp Vault',
     category: 'security',
     provider: 'generic',
@@ -2288,6 +2457,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'oauth-provider',
+    serviceType: 'paas',
     name: 'OAuth Provider',
     category: 'security',
     provider: 'generic',
@@ -2298,6 +2468,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'waf',
+    serviceType: 'paas',
     name: 'Web Application Firewall',
     category: 'security',
     provider: 'generic',
@@ -2310,6 +2481,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   // Cloudflare Services
   {
     id: 'cloudflare-cdn',
+    serviceType: 'iaas',
     name: 'Cloudflare CDN',
     category: 'service',
     provider: 'cloudflare',
@@ -2320,6 +2492,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'cloudflare-pages',
+    serviceType: 'hosting',
     name: 'Cloudflare Pages',
     category: 'frontend',
     provider: 'cloudflare',
@@ -2330,6 +2503,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
   },
   {
     id: 'cloudflare-r2',
+    serviceType: 'paas',
     name: 'Cloudflare R2',
     category: 'cloud',
     provider: 'cloudflare',
