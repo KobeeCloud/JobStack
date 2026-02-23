@@ -842,6 +842,38 @@ CREATE TRIGGER on_auth_user_created
 -- MEDIUM-001: Optimistic locking for concurrent diagram edits
 ALTER TABLE public.diagrams ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1;
 
+-- ============================================================================
+-- GDPR Art. 17 — Right to Erasure (Prawo do Bycia Zapomnianym)
+-- ============================================================================
+-- Hard-deletes a user's profile row. Because every FK in the schema uses
+-- ON DELETE CASCADE, this single DELETE propagates through all child tables:
+--   profiles → projects → diagrams → diagram_versions → exports → project_tags
+--            → organization_members → webhooks → subscriptions → activity_log
+--            → notifications → project_shares
+-- After the cascade completes, auth.users is cleaned up via auth.admin API
+-- (must be called from application code with the service-role key).
+
+CREATE OR REPLACE FUNCTION public.gdpr_hard_delete_user(p_user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    -- Guard: only the user themselves (or a service-role caller) may invoke
+    IF auth.uid() IS NOT NULL AND auth.uid() != p_user_id THEN
+        RAISE EXCEPTION 'Forbidden: cannot delete another user';
+    END IF;
+
+    -- 1. Remove owned organizations (cascade wipes members, invites, org projects)
+    DELETE FROM public.organizations WHERE owner_id = p_user_id;
+
+    -- 2. Remove the profile row — ON DELETE CASCADE cleans all remaining FKs
+    DELETE FROM public.profiles WHERE id = p_user_id;
+
+    -- Note: auth.users row must be deleted via supabase.auth.admin.deleteUser()
+    -- from application code, as pg cannot call the GoTrue admin API directly.
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.gdpr_hard_delete_user(UUID) TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.handle_diagram_version()
 RETURNS TRIGGER AS $$
 BEGIN

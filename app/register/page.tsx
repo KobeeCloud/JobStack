@@ -30,12 +30,20 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
   })
 
+  // GDPR: OAuth sign-in requires consent checkbox to be checked first
+  const consentAccepted = watch('consent')
+
   const handleOAuthSignIn = async (provider: 'github' | 'google') => {
+    if (!consentAccepted) {
+      setError('You must accept the Terms of Service and Privacy Policy before signing in.')
+      return
+    }
     setOauthLoading(provider)
     setError(null)
 
@@ -266,7 +274,8 @@ export default function RegisterPage() {
                 type="button"
                 variant="outline"
                 onClick={() => handleOAuthSignIn('github')}
-                disabled={!!oauthLoading || loading || success}
+                disabled={!!oauthLoading || loading || success || !consentAccepted}
+                title={!consentAccepted ? 'Accept Terms & Privacy Policy first' : undefined}
               >
                 {oauthLoading === 'github' ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -279,7 +288,8 @@ export default function RegisterPage() {
                 type="button"
                 variant="outline"
                 onClick={() => handleOAuthSignIn('google')}
-                disabled={!!oauthLoading || loading || success}
+                disabled={!!oauthLoading || loading || success || !consentAccepted}
+                title={!consentAccepted ? 'Accept Terms & Privacy Policy first' : undefined}
               >
                 {oauthLoading === 'google' ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

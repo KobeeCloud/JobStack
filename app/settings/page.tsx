@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, User, Shield, Bell, Palette, Key, Database, CreditCard } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
-import { SettingsForm, DeleteAccountButton } from './settings-form'
+import { SettingsForm, DeleteAccountButton, HardDeleteAccountButton } from './settings-form'
 import { ChangePasswordForm } from './change-password-form'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
@@ -204,18 +204,27 @@ export default async function SettingsPage() {
               <CardHeader>
                 <CardTitle className="text-destructive">Danger Zone</CardTitle>
                 <CardDescription>
-                  Irreversible actions for your account. Deletion has a 7-day grace period.
+                  Irreversible actions for your account.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Delete Account</p>
+                    <p className="font-medium">Delete Account (7-day grace period)</p>
                     <p className="text-sm text-muted-foreground">
-                      Permanently delete your account and all data
+                      Schedule deletion — you can cancel within 7 days
                     </p>
                   </div>
                   <DeleteAccountButton user={user} />
+                </div>
+                <div className="border-t pt-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Immediate Erasure (GDPR Art.&nbsp;17)</p>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently erase all data right now — no grace period
+                    </p>
+                  </div>
+                  <HardDeleteAccountButton user={user} />
                 </div>
               </CardContent>
             </Card>

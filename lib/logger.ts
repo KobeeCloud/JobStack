@@ -2,8 +2,27 @@ import pino from 'pino'
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 
+/** Fields that MUST be redacted from structured logs (GDPR / RODO Art. 5(1)(c)). */
+const PII_REDACT_PATHS = [
+  'email',
+  'password',
+  'token',
+  'access_token',
+  'refresh_token',
+  'authorization',
+  'cookie',
+  'apiKey',
+  'secret',
+  'req.headers.authorization',
+  'req.headers.cookie',
+]
+
 export const logger = pino({
   level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+  redact: {
+    paths: PII_REDACT_PATHS,
+    censor: '[REDACTED]',
+  },
   transport: isDevelopment
     ? {
         target: 'pino-pretty',

@@ -151,7 +151,7 @@ export const POST = createApiHandler(
       html: emailContent.html,
     })
 
-    log.info('Organization invite sent', { orgId: id, invitedEmail: normalizedEmail, invitedBy: auth.user.id })
+    log.info('Organization invite sent', { orgId: id, invitedEmailHash: normalizedEmail.replace(/(.{2}).*@/, '$1***@'), invitedBy: auth.user.id })
 
     return NextResponse.json({ invite })
   },

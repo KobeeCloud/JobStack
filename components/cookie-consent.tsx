@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Cookie, X } from 'lucide-react'
@@ -8,6 +8,36 @@ import { Cookie, X } from 'lucide-react'
 const COOKIE_CONSENT_KEY = 'jobstack-cookie-consent'
 
 type ConsentChoice = 'all' | 'necessary' | null
+
+interface ConsentRecord {
+  choice: ConsentChoice
+  timestamp: string
+}
+
+/**
+ * Read the user's cookie consent choice.
+ * Returns 'all' | 'necessary' | null (no decision yet).
+ * Safe to call server-side — returns null when localStorage is unavailable.
+ */
+export function getConsentChoice(): ConsentChoice {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(COOKIE_CONSENT_KEY)
+    if (!raw) return null
+    const record: ConsentRecord = JSON.parse(raw)
+    return record.choice ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Returns true only when the user has explicitly accepted ALL cookies.
+ * Use this guard before initializing any analytics / marketing scripts.
+ */
+export function hasAnalyticsConsent(): boolean {
+  return getConsentChoice() === 'all'
+}
 
 export function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false)
@@ -21,13 +51,16 @@ export function CookieConsent() {
     }
   }, [])
 
-  const handleConsent = (choice: ConsentChoice) => {
+  const handleConsent = useCallback((choice: ConsentChoice) => {
     localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify({
       choice,
       timestamp: new Date().toISOString(),
-    }))
+    } satisfies ConsentRecord))
     setShowBanner(false)
-  }
+
+    // Dispatch a custom event so other components can react to the choice
+    window.dispatchEvent(new CustomEvent('cookie-consent-changed', { detail: { choice } }))
+  }, [])
 
   if (!showBanner) return null
 

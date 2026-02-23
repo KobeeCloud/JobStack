@@ -73,7 +73,7 @@ export const POST = createApiHandler(
       .single()
 
     if (error) {
-      log.error('Failed to create project', error, { userId: auth.user.id, body })
+      log.error('Failed to create project', error, { userId: auth.user.id, projectName: body?.name })
       return NextResponse.json({ error: error.message || 'Failed to create project', details: error.details || error }, { status: 500 })
     }
 

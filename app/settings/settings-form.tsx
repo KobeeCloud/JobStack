@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Save, Trash2 } from 'lucide-react'
+import { Loader2, Save, Trash2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -279,6 +279,89 @@ export function DeleteAccountButton({ user }: { user: User }) {
               </>
             ) : (
               'Schedule Deletion'
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+export function HardDeleteAccountButton({ user }: { user: User }) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const router = useRouter()
+
+  const handleHardDelete = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      toast.error('Please type DELETE to confirm immediate account erasure')
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const res = await fetch('/api/user/delete', { method: 'PUT' })
+      const body = await res.json()
+
+      if (!res.ok) throw new Error(body.error)
+
+      toast.success('Account permanently deleted (GDPR Art. 17)')
+      router.push('/')
+    } catch (error: unknown) {
+      toast.error('Failed to delete account', { description: (error as Error).message })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm">
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          Delete Immediately
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Immediate &amp; Permanent Deletion
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            This action is <strong>immediate and irreversible</strong>. All your data — profile,
+            projects, diagrams, organization memberships and settings — will be erased
+            right now. There is no grace period and no recovery option.
+            <br /><br />
+            This fulfils your <strong>GDPR Art.&nbsp;17 Right to Erasure</strong>.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="py-4">
+          <Label htmlFor="confirm-hard-delete">
+            Type <span className="font-semibold text-destructive">DELETE</span> to confirm
+          </Label>
+          <Input
+            id="confirm-hard-delete"
+            value={deleteConfirmation}
+            onChange={(e) => setDeleteConfirmation(e.target.value)}
+            placeholder="DELETE"
+            className="mt-2"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setDeleteConfirmation('')}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleHardDelete}
+            disabled={isDeleting || deleteConfirmation !== 'DELETE'}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              'Erase All Data Now'
             )}
           </AlertDialogAction>
         </AlertDialogFooter>
