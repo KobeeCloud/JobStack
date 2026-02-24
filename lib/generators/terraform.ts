@@ -228,6 +228,56 @@ const VM_HANDLED_KEYS = new Set([
 ])
 const AZURE_EXPLICIT_KEYS = new Set(['resource_group_name', 'virtual_network_name', 'location', 'name'])
 
+// ─── Validation ──────────────────────────────────────────────────────────────
+
+function validateComponentPlacement(validNodes: Node<NodeData>[], nodeMap: NodeMap): TerraformError[] {
+  const errors: TerraformError[] = []
+
+  validNodes.forEach(node => {
+    const compId = getNodeComponentId(node)
+
+    if (compId === 'azure-vm') {
+      const subnetAncestor = findAncestorByTfResource(node.id, nodeMap, 'azurerm_subnet')
+      const hasExplicitNic = Array.from(nodeMap.values()).some(n => {
+        const cId = getNodeComponentId(n)
+        const comp = cId ? getComponentById(cId) : null
+        return comp?.terraform?.resource === 'azurerm_network_interface' && n.parentId === node.id
+      })
+
+      if (!subnetAncestor && !hasExplicitNic) {
+        errors.push({
+          nodeId: node.id,
+          nodeLabel: String(node.data?.label),
+          error: 'Placement Error: VM is not placed inside a Subnet, and no explicit NIC is attached.'
+        })
+      }
+    }
+
+    if (compId === 'aws-ec2') {
+      const subnetAncestor = findAncestorByTfResource(node.id, nodeMap, 'aws_subnet')
+      if (!subnetAncestor) {
+        errors.push({
+          nodeId: node.id,
+          nodeLabel: String(node.data?.label),
+          error: 'Placement Error: EC2 Instance is not placed inside an AWS Subnet.'
+        })
+      }
+    }
+
+    if (compId === 'gcp-compute-instance') {
+      const subnetAncestor = findAncestorByTfResource(node.id, nodeMap, 'google_compute_subnetwork')
+      if (!subnetAncestor) {
+        errors.push({
+          nodeId: node.id,
+          nodeLabel: String(node.data?.label),
+          error: 'Placement Error: Compute Instance is not placed inside a GCP Subnet.'
+        })
+      }
+    }
+  })
+  return errors
+}
+
 // ─── Main generator ──────────────────────────────────────────────────────────
 
 export function generateTerraformWithValidation(
@@ -296,18 +346,82 @@ export function generateTerraformWithValidation(
     }
   }
 
-  // Sort by hierarchy depth — parents always before children in output
-  // Secondary sort by componentId + label ensures deterministic output
-  validNodes.sort((a, b) => {
-    const depthDiff = getNodeDepth(a, nodeMap) - getNodeDepth(b, nodeMap)
-    if (depthDiff !== 0) return depthDiff
-    const aCompId = getNodeComponentId(a) || ''
-    const bCompId = getNodeComponentId(b) || ''
-    if (aCompId !== bCompId) return aCompId.localeCompare(bCompId)
-    const aLabel = String(a.data?.label || '')
-    const bLabel = String(b.data?.label || '')
-    return aLabel.localeCompare(bLabel)
+  // Topological sort based on hierarchy (parents before children)
+  // and edges (targets before sources, assuming sources depend on targets).
+  const inDegree = new Map<string, number>()
+  const graph = new Map<string, string[]>()
+
+  validNodes.forEach(n => {
+    inDegree.set(n.id, 0)
+    graph.set(n.id, [])
   })
+
+  // Add dependency edges
+  // 1. Parent MUST exist before child. So child depends on parent (parent -> child edge in sort graph)
+  validNodes.forEach(n => {
+    if (n.parentId && inDegree.has(n.parentId)) {
+      graph.get(n.parentId)?.push(n.id)
+      inDegree.set(n.id, (inDegree.get(n.id) || 0) + 1)
+    }
+  })
+
+  // 2. Data flow: Source connects to Target. Usually this means Source depends on Target (Target MUST exist first)
+  // So we add an edge from Target to Source in the sort graph.
+  edges.forEach(edge => {
+    if (inDegree.has(edge.source) && inDegree.has(edge.target)) {
+      graph.get(edge.target)?.push(edge.source)
+      inDegree.set(edge.source, (inDegree.get(edge.source) || 0) + 1)
+    }
+  })
+
+  const queue: string[] = []
+  // We want deterministic output for nodes with 0 in-degree.
+  // We collect them, sort them alphabetically, and push to queue.
+  const zeroInDegree = Array.from(inDegree.entries())
+    .filter(([_, deg]) => deg === 0)
+    .map(([id]) => id)
+
+  zeroInDegree.sort((a, b) => {
+    const nodeA = nodeMap.get(a)
+    const nodeB = nodeMap.get(b)
+    return String(nodeA?.data?.label || '').localeCompare(String(nodeB?.data?.label || ''))
+  })
+  queue.push(...zeroInDegree)
+
+  const sortedNodes: Node<NodeData>[] = []
+  while (queue.length > 0) {
+    // Sort the queue to ensure determinism at each level
+    queue.sort((a, b) => {
+      const nodeA = nodeMap.get(a)
+      const nodeB = nodeMap.get(b)
+      return String(nodeA?.data?.label || '').localeCompare(String(nodeB?.data?.label || ''))
+    })
+
+    const currId = queue.shift()!
+    const currNode = nodeMap.get(currId)
+    if (currNode) sortedNodes.push(currNode)
+
+    const neighbors = graph.get(currId) || []
+    for (const neighbor of neighbors) {
+      const degree = (inDegree.get(neighbor) || 0) - 1
+      inDegree.set(neighbor, degree)
+      if (degree === 0) {
+        queue.push(neighbor)
+      }
+    }
+  }
+
+  // If there's a cycle, sortedNodes won't contain all valid nodes.
+  // Add any remaining nodes that were skipped due to cycles.
+  const sortedIds = new Set(sortedNodes.map(n => n.id))
+  const remainingNodes = validNodes.filter(n => !sortedIds.has(n.id))
+  // Sort remaining deterministically
+  remainingNodes.sort((a, b) => String(a.data?.label || '').localeCompare(String(b.data?.label || '')))
+  sortedNodes.push(...remainingNodes)
+
+  // Replace validNodes with topologically sorted nodes
+  validNodes.length = 0
+  validNodes.push(...sortedNodes)
 
   // Track issued resource names to prevent collisions (BUG-1 fix)
   const issuedNames = new Set<string>()
@@ -334,6 +448,12 @@ export function generateTerraformWithValidation(
       const srcLabel = nodeMap.get(edge.source)?.data?.label || edge.source
       warnings.push(`Edge from "${srcLabel}" has a target node (${edge.target}) that was skipped or is unknown.`)
     }
+  }
+
+  // Pre-validate placement
+  const placementErrors = validateComponentPlacement(validNodes, nodeMap)
+  if (placementErrors.length > 0) {
+    errors.push(...placementErrors)
   }
 
   // ── main.tf ────────────────────────────────────────────────────────────

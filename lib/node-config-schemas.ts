@@ -11,6 +11,10 @@ export const vmConfigSchema = z.object({
   diskSize: z.number().min(30).max(4096).optional(), // GB
   diskType: z.enum(['standard_hdd', 'standard_ssd', 'premium_ssd']).optional(),
   publicIp: z.boolean().optional().default(false),
+  ssh_public_key: z.string().optional(),
+  user_data: z.string().optional(),
+  iam_instance_profile: z.array(z.string()).optional(),
+  managed_identity: z.array(z.string()).optional(),
   tags: z.record(z.string()).optional(),
   labels: z.record(z.string()).optional(),
 })
@@ -20,6 +24,9 @@ export const vmConfigSchema = z.object({
 // ==========================================
 export const vnetConfigSchema = z.object({
   addressSpace: z.string().optional(), // CIDR (e.g., 10.0.0.0/16)
+  enable_dns_hostnames: z.boolean().optional().default(true),
+  enable_dns_support: z.boolean().optional().default(true),
+  route_table_id: z.string().optional(),
   dnsServers: z.array(z.string()).optional(),
   tags: z.record(z.string()).optional(),
 })
@@ -113,6 +120,10 @@ export const diskConfigSchema = z.object({
 // ==========================================
 export const sqlServerConfigSchema = z.object({
   version: z.string().optional(), // e.g., "12.0"
+  engine: z.enum(['mysql', 'postgres', 'sqlserver', 'mariadb', 'oracle']).optional(),
+  multi_az: z.boolean().optional().default(false),
+  storage_type: z.enum(['standard', 'gp2', 'gp3', 'io1']).optional(),
+  allocated_storage: z.number().optional(),
   adminUsername: z.string().optional(),
   enablePublicNetworkAccess: z.boolean().optional().default(false),
   minTlsVersion: z.enum(['1.0', '1.1', '1.2']).optional().default('1.2'),
@@ -149,6 +160,7 @@ export const cosmosDbConfigSchema = z.object({
 export const aksConfigSchema = z.object({
   kubernetesVersion: z.string().optional(),
   dnsPrefix: z.string().optional(),
+  oidc_issuer_enabled: z.boolean().optional().default(true),
   defaultNodePool: z.object({
     name: z.string(),
     vmSize: z.string(),
@@ -158,10 +170,12 @@ export const aksConfigSchema = z.object({
     enableAutoScaling: z.boolean().optional().default(false),
     maxPods: z.number().optional(),
     osDiskSizeGb: z.number().optional(),
+    taints: z.array(z.string()).optional(),
   }).optional(),
   networkProfile: z.object({
     networkPlugin: z.enum(['azure', 'kubenet']).optional().default('azure'),
-    networkPolicy: z.enum(['azure', 'calico']).optional(),
+    networkPluginMode: z.enum(['overlay']).optional(),
+    networkPolicy: z.enum(['azure', 'calico', 'cilium']).optional(),
     serviceCidr: z.string().optional(),
     dnsServiceIp: z.string().optional(),
     dockerBridgeCidr: z.string().optional(),
@@ -792,22 +806,22 @@ export const CONFIG_SCHEMAS: Record<string, z.ZodSchema> = {
   // CI/CD & DevOps
   // ──────────────────────────────────────────
   'github-actions': githubActionsConfigSchema,
-  'gitlab-ci':      gitlabCIConfigSchema,
-  'jenkins':        jenkinsConfigSchema,
-  'argocd':         argoCDConfigSchema,
-  'helm':           helmConfigSchema,
+  'gitlab-ci': gitlabCIConfigSchema,
+  'jenkins': jenkinsConfigSchema,
+  'argocd': argoCDConfigSchema,
+  'helm': helmConfigSchema,
 
   // ──────────────────────────────────────────
   // Monitoring
   // ──────────────────────────────────────────
-  'prometheus':     prometheusConfigSchema,
-  'datadog':        datadogConfigSchema,
+  'prometheus': prometheusConfigSchema,
+  'datadog': datadogConfigSchema,
 
   // ──────────────────────────────────────────
   // Messaging (Self-hosted)
   // ──────────────────────────────────────────
-  'rabbitmq':       rabbitmqConfigSchema,
-  'kafka':          kafkaConfigSchema,
+  'rabbitmq': rabbitmqConfigSchema,
+  'kafka': kafkaConfigSchema,
 
   // ──────────────────────────────────────────
   // Firebase

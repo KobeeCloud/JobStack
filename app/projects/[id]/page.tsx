@@ -56,6 +56,9 @@ import type { CodeFile } from '@/components/diagram/code-preview-dialog'
 import { K8sWizard } from '@/components/diagram/k8s-wizard'
 import { GovernanceWizard } from '@/components/diagram/governance-wizard'
 import { QuickBuildModal } from '@/components/diagram/quick-build-modal'
+import { getLayoutedElements } from '@/lib/auto-layout'
+import { Terminal } from '@/components/diagram/terminal'
+import { MultiRegionSelector } from '@/components/regions/multi-region-selector'
 
 const nodeTypes = { custom: CustomNode, container: ContainerNode, attachment: AttachmentNode }
 const edgeTypes = { default: LabeledEdge }
@@ -136,6 +139,10 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
   const presenceChannelRef = useRef<any>(null)
   const lastCursorBroadcast = useRef<number>(0)
   const [peerCursors, setPeerCursors] = useState<Record<string, { user_name: string; x: number; y: number }>>({})
+  const [showTerminal, setShowTerminal] = useState(false)
+  const [showMultiRegion, setShowMultiRegion] = useState(false)
+  const [selectedRegions, setSelectedRegions] = useState<string[]>(['aws-us-east-1'])
+  const [primaryRegion, setPrimaryRegion] = useState<string>('aws-us-east-1')
 
   // History for undo/redo
   const { canUndo, canRedo, undo, redo, pushState } = useHistory()
@@ -1333,8 +1340,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     toast.success('Component Added', { description: `Added ${provider.toUpperCase()} component` })
   }, [screenToFlowPosition, setNodes, toast])
 
-  const costData = calculateInfrastructureCost(nodes)
-
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -1526,6 +1531,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onZoomIn={() => zoomIn()}
             onZoomOut={() => zoomOut()}
             onFitView={() => fitView()}
+            onLayout={() => {
+              const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges)
+              setNodes([...layoutedNodes])
+              setEdges([...layoutedEdges])
+              setTimeout(() => fitView({ padding: 0.2 }), 50)
+            }}
             onSave={handleSave}
             onExport={handleExport}
             onGenerateCode={handleGenerateCode}
@@ -1541,6 +1552,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onK8sWizard={() => setShowK8sWizard(true)}
             onGovernanceWizard={() => setShowGovernanceWizard(true)}
             onQuickBuild={() => setShowQuickBuild(true)}
+            onDryRun={() => setShowTerminal(true)}
+            onRegionConfig={() => setShowMultiRegion(true)}
             onUndo={handleUndo}
             onRedo={handleRedo}
             canUndo={canUndo}
@@ -1572,7 +1585,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             }}
           />
         </div>
-        <CostSidebar costData={costData} />
+        <CostSidebar nodes={nodes} />
 
         {/* Code Preview Dialog */}
         <CodePreviewDialog
@@ -1732,6 +1745,26 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
               </div>
               <MultiCloudComparePanel onSelectComponent={handleSelectMultiCloudComponent} />
             </div>
+          </div>
+        )}
+
+        {showTerminal && (
+          <Terminal
+            nodes={nodes}
+            edges={edges}
+            onClose={() => setShowTerminal(false)}
+          />
+        )}
+
+        {showMultiRegion && (
+          <div className="absolute right-4 top-20 z-50">
+            <MultiRegionSelector
+              selectedRegions={selectedRegions}
+              onRegionsChange={setSelectedRegions}
+              primaryRegion={primaryRegion}
+              onPrimaryChange={setPrimaryRegion}
+              onClose={() => setShowMultiRegion(false)}
+            />
           </div>
         )}
 

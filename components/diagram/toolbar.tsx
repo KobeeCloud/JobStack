@@ -40,6 +40,9 @@ import {
   Boxes,
   Building2,
   Zap,
+  Network,
+  TerminalSquare,
+  Globe,
 } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -68,6 +71,7 @@ interface DiagramToolbarProps {
   onRedo?: () => void
   onClear?: () => void
   onDuplicate?: () => void
+  onLayout?: () => void
   onImport?: (data: any) => void
   onImportTerraform?: (files: FileList) => void
   canUndo?: boolean
@@ -84,6 +88,8 @@ interface DiagramToolbarProps {
   onK8sWizard?: () => void
   onGovernanceWizard?: () => void
   onQuickBuild?: () => void
+  onDryRun?: () => void
+  onRegionConfig?: () => void
   // Version history
   diagramId?: string
   onRestoreVersion?: () => void
@@ -130,8 +136,11 @@ export function DiagramToolbar({
   onK8sWizard,
   onGovernanceWizard,
   onQuickBuild,
+  onDryRun,
+  onRegionConfig,
   diagramId,
   onRestoreVersion,
+  onLayout,
 }: DiagramToolbarProps) {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const { aiAnalyzing, complianceScanning, testing, terraformDirty, nodes } = useDiagramStore()
@@ -235,6 +244,26 @@ export function DiagramToolbar({
           </TooltipTrigger>
           <TooltipContent>Fit to View</TooltipContent>
         </Tooltip>
+        {onLayout && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLayout} aria-label="Auto layout">
+                <Network className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Auto Layout</TooltipContent>
+          </Tooltip>
+        )}
+        {onLayout && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLayout} aria-label="Auto layout">
+                <Network className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Auto Layout</TooltipContent>
+          </Tooltip>
+        )}
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
@@ -331,6 +360,24 @@ export function DiagramToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent>Multi-Cloud Components</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onRegionConfig && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={onRegionConfig}
+                aria-label="Multi-Region"
+              >
+                <Globe className="h-4 w-4 mr-1.5" />
+                Regions
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Multi-Region Configuration</TooltipContent>
           </Tooltip>
         )}
 
@@ -556,10 +603,22 @@ export function DiagramToolbar({
               </DropdownMenuItem>
             )}
             {onGenerateCICD && (
-              <DropdownMenuItem onClick={onGenerateCICD}>
-                <GitBranch className="h-4 w-4 mr-2" />
-                CI/CD & Config Files
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onGenerateCICD}>
+                  <GitBranch className="h-4 w-4 mr-2" />
+                  CI/CD & Config Files
+                </DropdownMenuItem>
+              </>
+            )}
+            {onDryRun && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onDryRun}>
+                  <TerminalSquare className="h-4 w-4 mr-2" />
+                  Dry Run (terraform plan)
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
