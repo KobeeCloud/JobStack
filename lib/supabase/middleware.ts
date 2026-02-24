@@ -66,7 +66,7 @@ export async function updateSession(request: NextRequest) {
     if (cached) {
       try {
         const parsed = JSON.parse(cached)
-        if (parsed.checkedAt && Date.now() - parsed.checkedAt < CACHE_TTL_MS) {
+        if (parsed.userId === user.id && parsed.checkedAt && Date.now() - parsed.checkedAt < CACHE_TTL_MS) {
           profileDeletedAt = parsed.deletedAt ?? null
           profileTosAccepted = !!parsed.tosAccepted
           cacheHit = true
@@ -88,6 +88,7 @@ export async function updateSession(request: NextRequest) {
 
       // Store result in cookie so subsequent requests skip the DB query
       const cacheValue = JSON.stringify({
+        userId: user.id,
         deletedAt: profileDeletedAt,
         tosAccepted: profileTosAccepted,
         checkedAt: Date.now(),

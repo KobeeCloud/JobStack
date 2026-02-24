@@ -96,6 +96,8 @@ export async function GET(request: NextRequest) {
       cookiesToSet.forEach(({ name, value, options }) => {
         response.cookies.set(name, value, options)
       })
+      // Clear profile cache on fresh login
+      response.cookies.delete('__js_profile_cache')
       return response
     }
 

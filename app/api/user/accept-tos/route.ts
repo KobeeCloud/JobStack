@@ -26,7 +26,11 @@ export const POST = createApiHandler(
 
     log.info('User accepted ToS and Privacy Policy', { userId: auth.user.id })
 
-    return NextResponse.json({ accepted: true, accepted_at: now })
+    const response = NextResponse.json({ accepted: true, accepted_at: now })
+    // Clear profile cache so middleware fetches fresh ToS status and lets user into dashboard
+    response.cookies.delete('__js_profile_cache')
+
+    return response
   },
   { requireAuth: true, method: 'POST' }
 )
