@@ -80,11 +80,11 @@ Return a JSON object with this structure:
 }
 
 Use these component IDs:
-- Virtual Machines: "azure-vm", "ec2-instance", "gcp-compute"
-- Databases: "azure-sql", "rds", "cloud-sql"
-- Load Balancers: "azure-lb", "alb", "gcp-lb"
-- Storage: "azure-storage", "s3", "gcs"
-- Networking: "azure-vnet", "vpc", "gcp-vpc"
+- Virtual Machines: "azure-vm", "aws-ec2", "gcp-compute-instance"
+- Databases: "azure-sql", "aws-rds", "gcp-cloud-sql"
+- Load Balancers: "azure-lb", "aws-alb", "gcp-cloud-lb"
+- Storage: "azure-blob", "aws-s3", "gcp-cloud-storage"
+- Networking: "azure-vnet", "aws-vpc", "gcp-vpc"
 
 Generate a realistic cloud architecture based on the description.`
 

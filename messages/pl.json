@@ -204,5 +204,13 @@
     "privacy": "Polityka Prywatności",
     "terms": "Regulamin",
     "contact": "Kontakt"
+  },
+  "cookieConsent": {
+    "title": "Pliki cookies 🍪",
+    "description": "Używamy plików cookies niezbędnych do prawidłowego działania serwisu. Mogą być również używane cookies analityczne w celu poprawy jakości usług. Więcej informacji w naszej ",
+    "privacyPolicy": "Polityce Prywatności",
+    "necessaryOnly": "Tylko niezbędne",
+    "acceptAll": "Akceptuję wszystkie",
+    "close": "Zamknij"
   }
 }

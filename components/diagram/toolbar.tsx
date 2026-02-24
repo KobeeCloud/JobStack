@@ -50,6 +50,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { VersionHistory } from '@/components/version-history'
+import { useDiagramStore } from '@/lib/store/diagram-store'
 
 interface DiagramToolbarProps {
   onZoomIn: () => void
@@ -69,7 +70,6 @@ interface DiagramToolbarProps {
   onDuplicate?: () => void
   onImport?: (data: any) => void
   onImportTerraform?: (files: FileList) => void
-  codeOutOfSync?: boolean
   canUndo?: boolean
   canRedo?: boolean
   saving?: boolean
@@ -78,9 +78,6 @@ interface DiagramToolbarProps {
   onComplianceScan?: () => void
   onRunTests?: () => void
   onMultiCloud?: () => void
-  aiAnalyzing?: boolean
-  complianceScanning?: boolean
-  testing?: boolean
   // Templates
   onShowTemplates?: () => void
   // Wizards
@@ -122,7 +119,6 @@ export function DiagramToolbar({
   onDuplicate,
   onImport,
   onImportTerraform,
-  codeOutOfSync = false,
   canUndo = false,
   canRedo = false,
   saving = false,
@@ -130,9 +126,6 @@ export function DiagramToolbar({
   onComplianceScan,
   onRunTests,
   onMultiCloud,
-  aiAnalyzing = false,
-  complianceScanning = false,
-  testing = false,
   onShowTemplates,
   onK8sWizard,
   onGovernanceWizard,
@@ -141,6 +134,8 @@ export function DiagramToolbar({
   onRestoreVersion,
 }: DiagramToolbarProps) {
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const { aiAnalyzing, complianceScanning, testing, terraformDirty, nodes } = useDiagramStore()
+  const codeOutOfSync = terraformDirty && nodes.length > 0
 
   const handleImportClick = () => {
     const input = document.createElement('input')

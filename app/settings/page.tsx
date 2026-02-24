@@ -45,43 +45,55 @@ export default async function SettingsPage() {
 
           <div className="grid gap-6">
             {/* Profile Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
-                  <CardTitle>Profile</CardTitle>
+            <Card className="border-none shadow-md bg-background/60 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-border/50 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary shadow-sm group-hover:scale-110 transition-transform">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Profile</CardTitle>
+                    <CardDescription className="mt-1">
+                      Manage your personal information
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  Manage your personal information
-                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <SettingsForm user={user} />
               </CardContent>
             </Card>
 
             {/* Security Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <CardTitle>Security</CardTitle>
-                </div>
-                <CardDescription>
-                  Manage your account security settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
+            <Card className="border-none shadow-md bg-background/60 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-border/50 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary shadow-sm group-hover:scale-110 transition-transform">
+                    <Shield className="h-5 w-5" />
+                  </div>
                   <div>
-                    <p className="font-medium">Email Address</p>
+                    <CardTitle className="text-xl">Security</CardTitle>
+                    <CardDescription className="mt-1">
+                      Manage your account security settings
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10 space-y-6">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <div>
+                    <p className="font-semibold mb-1">Email Address</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
-                <div className="border-t pt-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Key className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">Change Password</p>
+                <div className="pt-2">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="p-1.5 rounded-md bg-muted text-muted-foreground">
+                      <Key className="h-4 w-4" />
+                    </div>
+                    <p className="font-semibold">Change Password</p>
                   </div>
                   <ChangePasswordForm />
                 </div>
@@ -89,27 +101,32 @@ export default async function SettingsPage() {
             </Card>
 
             {/* Preferences Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Palette className="h-5 w-5 text-primary" />
-                  <CardTitle>Preferences</CardTitle>
-                </div>
-                <CardDescription>
-                  Customize your experience
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+            <Card className="border-none shadow-md bg-background/60 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-border/50 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary shadow-sm group-hover:scale-110 transition-transform">
+                    <Palette className="h-5 w-5" />
+                  </div>
                   <div>
-                    <p className="font-medium">Theme</p>
+                    <CardTitle className="text-xl">Preferences</CardTitle>
+                    <CardDescription className="mt-1">
+                      Customize your experience
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10 space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
+                  <div>
+                    <p className="font-semibold mb-1">Theme</p>
                     <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
                   </div>
                   <ThemeToggle />
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
                   <div>
-                    <p className="font-medium">Language</p>
+                    <p className="font-semibold mb-1">Language</p>
                     <p className="text-sm text-muted-foreground">English</p>
                   </div>
                   <LanguageSwitcher />
@@ -118,36 +135,46 @@ export default async function SettingsPage() {
             </Card>
 
             {/* Notifications Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-primary" />
-                  <CardTitle>Notifications</CardTitle>
+            <Card className="border-none shadow-md bg-background/60 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-border/50 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary shadow-sm group-hover:scale-110 transition-transform">
+                    <Bell className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Notifications</CardTitle>
+                    <CardDescription className="mt-1">
+                      Configure how you receive notifications
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  Configure how you receive notifications
-                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <NotificationPreferences />
               </CardContent>
             </Card>
 
             {/* Data & Privacy (GDPR / RODO) */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Database className="h-5 w-5 text-primary" />
-                  <CardTitle>Data &amp; Privacy</CardTitle>
-                </div>
-                <CardDescription>
-                  Manage your data in compliance with GDPR (Art.&nbsp;20)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+            <Card className="border-none shadow-md bg-background/60 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-border/50 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary shadow-sm group-hover:scale-110 transition-transform">
+                    <Database className="h-5 w-5" />
+                  </div>
                   <div>
-                    <p className="font-medium">Export Your Data</p>
+                    <CardTitle className="text-xl">Data &amp; Privacy</CardTitle>
+                    <CardDescription className="mt-1">
+                      Manage your data in compliance with GDPR (Art.&nbsp;20)
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10 space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
+                  <div>
+                    <p className="font-semibold mb-1">Export Your Data</p>
                     <p className="text-sm text-muted-foreground">
                       Download a copy of all your data including profile, projects, diagrams and organizations
                     </p>
@@ -158,69 +185,87 @@ export default async function SettingsPage() {
             </Card>
 
             {/* Billing Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  <CardTitle>Billing &amp; Plan</CardTitle>
-                </div>
-                <CardDescription>
-                  Manage your subscription and payment details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
+            <Card className="border-none shadow-md bg-background/60 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-border/50 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary shadow-sm group-hover:scale-110 transition-transform">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
                   <div>
-                    <p className="font-medium">Current plan</p>
+                    <CardTitle className="text-xl">Billing &amp; Plan</CardTitle>
+                    <CardDescription className="mt-1">
+                      Manage your subscription and payment details
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10 space-y-3">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50">
+                  <div>
+                    <p className="font-semibold mb-1">Current plan</p>
                     <p className="text-sm text-muted-foreground">
                       Free — all features available during launch period
                     </p>
                   </div>
                   <Link href="/settings/billing">
-                    <Button variant="outline" size="sm">View plans</Button>
+                    <Button variant="outline" size="sm" className="shadow-sm">View plans</Button>
                   </Link>
                 </div>
               </CardContent>
             </Card>
 
             {/* Webhooks Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Key className="h-5 w-5 text-primary" />
-                  <CardTitle>Integrations</CardTitle>
+            <Card className="border-none shadow-md bg-background/60 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-border/50 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary shadow-sm group-hover:scale-110 transition-transform">
+                    <Key className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Integrations</CardTitle>
+                    <CardDescription className="mt-1">
+                      Configure webhooks and external integrations
+                    </CardDescription>
+                  </div>
                 </div>
-                <CardDescription>
-                  Configure webhooks and external integrations
-                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <WebhookSettings />
               </CardContent>
             </Card>
 
             {/* Danger Zone */}
-            <Card className="border-destructive/50">
-              <CardHeader>
-                <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                <CardDescription>
-                  Irreversible actions for your account.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
+            <Card className="border-destructive/30 shadow-md bg-destructive/5 backdrop-blur-md relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+              <CardHeader className="relative z-10 border-b border-destructive/20 pb-6 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-destructive/20 text-destructive shadow-sm group-hover:scale-110 transition-transform">
+                    <Shield className="h-5 w-5" />
+                  </div>
                   <div>
-                    <p className="font-medium">Delete Account (7-day grace period)</p>
-                    <p className="text-sm text-muted-foreground">
+                    <CardTitle className="text-xl text-destructive">Danger Zone</CardTitle>
+                    <CardDescription className="mt-1 text-destructive/80">
+                      Irreversible actions for your account.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10 space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-colors">
+                  <div>
+                    <p className="font-semibold text-destructive mb-1">Delete Account <span className="text-xs font-normal opacity-80">(7-day grace period)</span></p>
+                    <p className="text-sm text-destructive/80">
                       Schedule deletion — you can cancel within 7 days
                     </p>
                   </div>
                   <DeleteAccountButton user={user} />
                 </div>
-                <div className="border-t pt-4 flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-colors">
                   <div>
-                    <p className="font-medium">Immediate Erasure (GDPR Art.&nbsp;17)</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-semibold text-destructive mb-1">Immediate Erasure <span className="text-xs font-normal opacity-80">(GDPR Art.&nbsp;17)</span></p>
+                    <p className="text-sm text-destructive/80">
                       Permanently erase all data right now — no grace period
                     </p>
                   </div>

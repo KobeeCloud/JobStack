@@ -44,52 +44,63 @@ export interface ComplianceTemplate {
 }
 
 // Helper functions for validation
+const getCompId = (n: Node) => String(n.data?.componentId || n.data?.component || n.type || '')
+
 const hasComponent = (nodes: Node[], types: string[]) =>
-  nodes.some(n => types.includes(n.type || ''))
+  nodes.some(n => types.some(t => getCompId(n).includes(t)))
 
 const hasEncryption = (nodes: Node[]) =>
-  nodes.some(n => 
-    n.type?.includes('kms') || 
-    n.type?.includes('keyvault') ||
-    n.data?.encryption === true
-  )
+  nodes.some(n => {
+    const id = getCompId(n)
+    return id.includes('kms') ||
+      id.includes('keyvault') ||
+      n.data?.encryption === true
+  })
 
 const hasNetworkSegmentation = (nodes: Node[]) =>
-  nodes.some(n => 
-    n.type?.includes('subnet') || 
-    n.type?.includes('vnet') ||
-    n.type?.includes('vpc')
-  )
+  nodes.some(n => {
+    const id = getCompId(n)
+    return id.includes('subnet') ||
+      id.includes('vnet') ||
+      id.includes('vpc') ||
+      id.includes('network')
+  })
 
 const hasFirewall = (nodes: Node[]) =>
-  nodes.some(n => 
-    n.type?.includes('nsg') || 
-    n.type?.includes('security-group') ||
-    n.type?.includes('firewall') ||
-    n.type?.includes('waf')
-  )
+  nodes.some(n => {
+    const id = getCompId(n)
+    return id.includes('nsg') ||
+      id.includes('security-group') ||
+      id.includes('firewall') ||
+      id.includes('waf')
+  })
 
 const hasLoadBalancer = (nodes: Node[]) =>
-  nodes.some(n => 
-    n.type?.includes('alb') || 
-    n.type?.includes('lb') ||
-    n.type?.includes('app-gw') ||
-    n.type?.includes('load-balancer')
-  )
+  nodes.some(n => {
+    const id = getCompId(n)
+    return id.includes('alb') ||
+      id.includes('lb') ||
+      id.includes('app-gw') ||
+      id.includes('load-balancer') ||
+      id.includes('application-gateway')
+  })
 
 const hasMonitoring = (nodes: Node[]) =>
-  nodes.some(n => 
-    n.type?.includes('cloudwatch') || 
-    n.type?.includes('monitor') ||
-    n.type?.includes('logging')
-  )
+  nodes.some(n => {
+    const id = getCompId(n)
+    return id.includes('cloudwatch') ||
+      id.includes('monitor') ||
+      id.includes('logging') ||
+      id.includes('log')
+  })
 
 const hasBackup = (nodes: Node[]) =>
-  nodes.some(n => 
-    n.type?.includes('backup') || 
-    n.type?.includes('recovery') ||
-    n.data?.backup === true
-  )
+  nodes.some(n => {
+    const id = getCompId(n)
+    return id.includes('backup') ||
+      id.includes('recovery') ||
+      n.data?.backup === true
+  })
 
 // HIPAA Compliance Rules
 const HIPAA_RULES: ComplianceRule[] = [
@@ -119,11 +130,13 @@ const HIPAA_RULES: ComplianceRule[] = [
     severity: 'error',
     category: 'Security',
     validate: (nodes) => {
-      const hasIdentity = nodes.some(n => 
-        n.type?.includes('cognito') || 
-        n.type?.includes('ad') ||
-        n.type?.includes('iam')
-      )
+      const hasIdentity = nodes.some(n => {
+        const id = getCompId(n)
+        return id.includes('cognito') ||
+          id.includes('ad') ||
+          id.includes('iam') ||
+          id.includes('active-directory')
+      })
       if (!hasIdentity) {
         return [{
           ruleId: 'hipaa-access-control',
@@ -252,16 +265,20 @@ const PCI_DSS_RULES: ComplianceRule[] = [
     severity: 'error',
     category: 'Security',
     validate: (nodes) => {
-      const hasWAF = nodes.some(n => 
-        n.type?.includes('waf') || 
-        n.type?.includes('front-door') ||
-        n.type?.includes('cloudfront')
-      )
-      const hasWebApp = nodes.some(n => 
-        n.type?.includes('app-service') || 
-        n.type?.includes('lambda') ||
-        n.type?.includes('functions')
-      )
+      const hasWAF = nodes.some(n => {
+        const id = getCompId(n)
+        return id.includes('waf') ||
+          id.includes('front-door') ||
+          id.includes('cloudfront')
+      })
+      const hasWebApp = nodes.some(n => {
+        const id = getCompId(n)
+        return id.includes('app-service') ||
+          id.includes('lambda') ||
+          id.includes('functions') ||
+          id.includes('webapp') ||
+          id.includes('vercel')
+      })
       if (hasWebApp && !hasWAF) {
         return [{
           ruleId: 'pci-waf',
@@ -473,36 +490,36 @@ export const COMPLIANCE_FRAMEWORKS: ComplianceFramework[] = [
 
 // Validate against framework
 export function validateCompliance(
-  nodes: Node[], 
-  edges: Edge[], 
+  nodes: Node[],
+  edges: Edge[],
   frameworkId: string
 ): ComplianceViolation[] {
   const framework = COMPLIANCE_FRAMEWORKS.find(f => f.id === frameworkId)
   if (!framework) return []
-  
+
   const violations: ComplianceViolation[] = []
-  
+
   framework.rules.forEach(rule => {
     violations.push(...rule.validate(nodes, edges))
   })
-  
+
   return violations
 }
 
 // Get compliance score
 export function getComplianceScore(
-  nodes: Node[], 
-  edges: Edge[], 
+  nodes: Node[],
+  edges: Edge[],
   frameworkId: string
 ): { score: number; total: number; passed: number; failed: number } {
   const framework = COMPLIANCE_FRAMEWORKS.find(f => f.id === frameworkId)
   if (!framework) return { score: 0, total: 0, passed: 0, failed: 0 }
-  
+
   const violations = validateCompliance(nodes, edges, frameworkId)
   const errorCount = violations.filter(v => v.severity === 'error').length
   const total = framework.rules.length
   const passed = total - errorCount
-  
+
   return {
     score: Math.round((passed / total) * 100),
     total,

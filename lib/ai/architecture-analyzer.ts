@@ -22,7 +22,7 @@ export async function analyzeArchitecture(
 
   // Rule-based checks (fast, deterministic)
   issues.push(...checkSecurityBestPractices(nodes, edges))
-  issues.push(...checkCostOptimization(nodes))
+  issues.push(...checkCostOptimization(nodes, edges))
   issues.push(...checkReliability(nodes, edges))
   issues.push(...checkPerformance(nodes, edges))
 
@@ -171,7 +171,7 @@ function checkSecurityBestPractices(nodes: Node[], edges: Edge[]): ArchitectureI
   return issues
 }
 
-function checkCostOptimization(nodes: Node[]): ArchitectureIssue[] {
+function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[] {
   const issues: ArchitectureIssue[] = []
 
   // Check 1: Oversized VMs
@@ -237,7 +237,7 @@ function checkCostOptimization(nodes: Node[]): ArchitectureIssue[] {
 
   // Check for resources with no incoming connections (potentially idle)
   const idleResources = allCompute.filter((resource) => {
-    const hasIncomingEdge = nodes.some(
+    const hasIncomingEdge = edges.some(
       (edge) => (edge as any).target === resource.id || (edge as any).source === resource.id
     )
     return !hasIncomingEdge

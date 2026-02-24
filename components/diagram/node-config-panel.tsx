@@ -9,18 +9,17 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { getConfigSchema, type NodeConfig } from '@/lib/node-config-schemas'
 import { COMPONENT_CATALOG, getEffectiveGeneratorType, GENERATOR_TYPE_META } from '@/lib/catalog'
 import { AZURE_VM_SIZES, AWS_VM_SIZES, GCP_VM_SIZES, type VMSize } from '@/lib/cloud-pricing'
 import { generateCICDConfigs } from '@/lib/generators/cicd'
 
-interface NodeConfigPanelProps {
-  node: Node | null
-  onClose: () => void
-  onUpdate: (nodeId: string, config: NodeConfig) => void
-}
+import { useDiagramStore } from '@/lib/store/diagram-store'
 
-export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProps) {
+export function NodeConfigPanel() {
+  const { selectedNode: node, configPanelOpen, setConfigPanelOpen, setNodes } = useDiagramStore()
+
   // Support both 'componentId' (new) and 'component' (old) for backward compatibility
   const componentId = node?.data?.componentId || node?.data?.component
   const componentInfo = componentId ? COMPONENT_CATALOG.find(c => c.id === componentId) : null
@@ -32,11 +31,16 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
   const [labels, setLabels] = useState<Record<string, string>>((initialConfig as any).labels || {})
   const [outputCopied, setOutputCopied] = useState(false)
 
+  const [tagDialogOpen, setTagDialogOpen] = useState(false)
+  const [newTagKey, setNewTagKey] = useState('')
+  const [labelDialogOpen, setLabelDialogOpen] = useState(false)
+  const [newLabelKey, setNewLabelKey] = useState('')
+
   // Derived generator type — drives what the Output tab shows
   const generatorType = componentInfo ? getEffectiveGeneratorType(componentInfo) : 'documentation'
   const generatorMeta = GENERATOR_TYPE_META[generatorType]
 
-  if (!node) return null
+  if (!node || !configPanelOpen) return null
 
   // Fallback for components not found in the catalog (e.g. from outdated templates)
   if (!componentInfo) {
@@ -47,7 +51,7 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
             <Settings className="w-4 h-4" />
             <span className="font-semibold text-sm">{String(node.data?.label || componentId || '')}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}><X className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={() => setConfigPanelOpen(false)}><X className="w-4 h-4" /></Button>
         </div>
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md p-2">
@@ -75,11 +79,14 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <Button
             size="sm"
             className="flex-1"
-            onClick={() => { onUpdate(node.id, config); onClose() }}
+            onClick={() => {
+              setNodes(nds => nds.map(n => n.id === node.id ? { ...n, data: { ...n.data, config } } : n))
+              setConfigPanelOpen(false)
+            }}
           >
             Save
           </Button>
-          <Button size="sm" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button size="sm" variant="outline" onClick={() => setConfigPanelOpen(false)}>Cancel</Button>
         </div>
       </div>
     )
@@ -95,8 +102,8 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
     try {
       const schema = getConfigSchema(componentInfo.id)
       const validated = schema.parse(finalConfig)
-      onUpdate(node.id, validated)
-      onClose()
+      setNodes(nds => nds.map(n => n.id === node.id ? { ...n, data: { ...n.data, config: validated } } : n))
+      setConfigPanelOpen(false)
     } catch (error) {
       console.error('Validation error:', error)
     }
@@ -107,8 +114,13 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
   }
 
   const addTag = () => {
-    const key = prompt('Tag key:')
-    if (key) setTags(prev => ({ ...prev, [key]: '' }))
+    setNewTagKey('')
+    setTagDialogOpen(true)
+  }
+
+  const handleAddTagConfirm = () => {
+    if (newTagKey.trim()) setTags(prev => ({ ...prev, [newTagKey.trim()]: '' }))
+    setTagDialogOpen(false)
   }
 
   const updateTag = (key: string, value: string) => {
@@ -124,8 +136,13 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
   }
 
   const addLabel = () => {
-    const key = prompt('Label key:')
-    if (key) setLabels(prev => ({ ...prev, [key]: '' }))
+    setNewLabelKey('')
+    setLabelDialogOpen(true)
+  }
+
+  const handleAddLabelConfirm = () => {
+    if (newLabelKey.trim()) setLabels(prev => ({ ...prev, [newLabelKey.trim()]: '' }))
+    setLabelDialogOpen(false)
   }
 
   const updateLabel = (key: string, value: string) => {
@@ -900,7 +917,7 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <div className="space-y-2">
             <Label>Availability Zones</Label>
             <Select value={config.zones || 'zone-redundant'} onValueChange={(v) => {
-              const map: Record<string, string[]> = { 'zone-redundant': ['1','2','3'], '1': ['1'], '2': ['2'], '3': ['3'], 'none': [] }
+              const map: Record<string, string[]> = { 'zone-redundant': ['1', '2', '3'], '1': ['1'], '2': ['2'], '3': ['3'], 'none': [] }
               updateConfig('zones', map[v] ?? [])
               updateConfig('_zones_ui', v)
             }}>
@@ -1147,7 +1164,7 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <div className="space-y-2">
             <Label>Zones</Label>
             <Select value={config._zones_ui || 'zone-redundant'} onValueChange={(v) => {
-              const map: Record<string, string[]> = { 'zone-redundant': ['1','2','3'], '1': ['1'], '2': ['2'], '3': ['3'], 'none': [] }
+              const map: Record<string, string[]> = { 'zone-redundant': ['1', '2', '3'], '1': ['1'], '2': ['2'], '3': ['3'], 'none': [] }
               updateConfig('zones', map[v] ?? [])
               updateConfig('_zones_ui', v)
             }}>
@@ -1208,7 +1225,7 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
           <div className="space-y-2">
             <Label>Node Pool Zones</Label>
             <Select value={config._node_zones_ui || 'zone-redundant'} onValueChange={(v) => {
-              const map: Record<string, string[]> = { 'zone-redundant': ['1','2','3'], '1': ['1'], '2': ['2'], '3': ['3'], 'none': [] }
+              const map: Record<string, string[]> = { 'zone-redundant': ['1', '2', '3'], '1': ['1'], '2': ['2'], '3': ['3'], 'none': [] }
               updateConfig('node_pool_zones', map[v] ?? [])
               updateConfig('_node_zones_ui', v)
             }}>
@@ -1278,9 +1295,9 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
 
     // ── AWS Security Group ──────────────────────────────────────────────────
     if (id.includes('security-group') || id.includes('aws-sg')) {
-      const ingressRules: Array<{protocol: string; from_port: number; to_port: number; cidr_blocks: string; description: string}> =
+      const ingressRules: Array<{ protocol: string; from_port: number; to_port: number; cidr_blocks: string; description: string }> =
         Array.isArray(config.ingress) ? config.ingress : []
-      const egressRules: Array<{protocol: string; from_port: number; to_port: number; cidr_blocks: string; description: string}> =
+      const egressRules: Array<{ protocol: string; from_port: number; to_port: number; cidr_blocks: string; description: string }> =
         Array.isArray(config.egress) ? config.egress : []
       const addRule = (direction: 'ingress' | 'egress') => {
         const newRule = { protocol: 'tcp', from_port: 443, to_port: 443, cidr_blocks: '0.0.0.0/0', description: '' }
@@ -2249,7 +2266,7 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
             <Select value={config.memory || '512Mi'} onValueChange={(v) => updateConfig('memory', v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {['256Mi','512Mi','1Gi','2Gi','4Gi','8Gi','16Gi','32Gi'].map(m => (
+                {['256Mi', '512Mi', '1Gi', '2Gi', '4Gi', '8Gi', '16Gi', '32Gi'].map(m => (
                   <SelectItem key={m} value={m}>{m}</SelectItem>
                 ))}
               </SelectContent>
@@ -2321,7 +2338,7 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
             <Select value={config.available_memory || '256M'} onValueChange={(v) => updateConfig('available_memory', v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {['128M','256M','512M','1Gi','2Gi','4Gi','8Gi','16Gi','32Gi'].map(m => (
+                {['128M', '256M', '512M', '1Gi', '2Gi', '4Gi', '8Gi', '16Gi', '32Gi'].map(m => (
                   <SelectItem key={m} value={m}>{m}</SelectItem>
                 ))}
               </SelectContent>
@@ -2914,14 +2931,14 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
 
     // CI/CD & Third-Party Tools
     if (componentInfo.id === 'github-actions') return renderGitHubActionsConfig()
-    if (componentInfo.id === 'gitlab-ci')      return renderGitLabCIConfig()
-    if (componentInfo.id === 'jenkins')        return renderGitLabCIConfig() // same fields as GitLab
-    if (componentInfo.id === 'argocd')         return renderArgoCDConfig()
-    if (componentInfo.id === 'helm')           return renderHelmConfig()
-    if (componentInfo.id === 'datadog')        return renderDatadogConfig()
-    if (componentInfo.id === 'prometheus')     return renderPrometheusConfig()
-    if (componentInfo.id === 'rabbitmq')       return renderRabbitMQConfig()
-    if (componentInfo.id === 'kafka')          return renderKafkaConfig()
+    if (componentInfo.id === 'gitlab-ci') return renderGitLabCIConfig()
+    if (componentInfo.id === 'jenkins') return renderGitLabCIConfig() // same fields as GitLab
+    if (componentInfo.id === 'argocd') return renderArgoCDConfig()
+    if (componentInfo.id === 'helm') return renderHelmConfig()
+    if (componentInfo.id === 'datadog') return renderDatadogConfig()
+    if (componentInfo.id === 'prometheus') return renderPrometheusConfig()
+    if (componentInfo.id === 'rabbitmq') return renderRabbitMQConfig()
+    if (componentInfo.id === 'kafka') return renderKafkaConfig()
 
     return renderGenericConfig()
   }
@@ -2941,7 +2958,7 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="icon" onClick={() => setConfigPanelOpen(false)}>
           <X className="w-4 h-4" />
         </Button>
       </div>
@@ -3131,9 +3148,63 @@ export function NodeConfigPanel({ node, onClose, onUpdate }: NodeConfigPanelProp
       </div>
 
       <div className="p-4 border-t flex gap-2">
-        <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
-        <Button className="flex-1" onClick={handleSave}>Save Changes</Button>
+        <Button size="sm" className="flex-1" onClick={handleSave}>Save</Button>
+        <Button size="sm" variant="outline" onClick={() => setConfigPanelOpen(false)}>Cancel</Button>
       </div>
+
+      <Dialog open={tagDialogOpen} onOpenChange={setTagDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Tag</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <Label>Tag Key</Label>
+            <Input
+              value={newTagKey}
+              onChange={e => setNewTagKey(e.target.value)}
+              placeholder="e.g. Environment"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddTagConfirm();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTagDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddTagConfirm}>Add</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={labelDialogOpen} onOpenChange={setLabelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Label</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <Label>Label Key</Label>
+            <Input
+              value={newLabelKey}
+              onChange={e => setNewLabelKey(e.target.value)}
+              placeholder="e.g. app.kubernetes.io/name"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddLabelConfirm();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLabelDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddLabelConfirm}>Add</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

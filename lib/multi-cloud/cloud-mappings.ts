@@ -155,7 +155,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 18, max: 25 },
       },
       gcp: {
-        componentId: 'gcp-cloud-lb',
+        componentId: 'gcp-lb',
         defaultConfig: { loadBalancingScheme: 'EXTERNAL' },
         estimatedCost: { min: 18, max: 25 },
       },
@@ -273,7 +273,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 0, max: 50 },
       },
       gcp: {
-        componentId: 'gcp-cloud-functions',
+        componentId: 'gcp-cloud-function',
         defaultConfig: { runtime: 'nodejs20', memoryMb: 256 },
         estimatedCost: { min: 0, max: 50 },
       },
@@ -319,7 +319,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 18, max: 200 },
       },
       gcp: {
-        componentId: 'gcp-cloud-lb',
+        componentId: 'gcp-lb',
         defaultConfig: { loadBalancingScheme: 'EXTERNAL' },
         estimatedCost: { min: 18, max: 100 },
       },
@@ -332,7 +332,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Managed NoSQL/document database with global distribution',
     providers: {
       aws: {
-        componentId: 'dynamodb',
+        componentId: 'aws-dynamodb',
         defaultConfig: { billingMode: 'PAY_PER_REQUEST' },
         estimatedCost: { min: 0, max: 500 },
       },
@@ -434,7 +434,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 0, max: 0 },
       },
       gcp: {
-        componentId: 'gcp-firewall',
+        componentId: 'gcp-firewall-rule',
         defaultConfig: {},
         estimatedCost: { min: 0, max: 0 },
       },
@@ -562,7 +562,7 @@ function tryConvertComponent(
     'gcp-cloud-sql': { aws: 'aws-rds', azure: 'azure-sql', gcp: 'gcp-cloud-sql' },
 
     // NoSQL / Document DB
-    'azure-cosmos': { aws: 'dynamodb', azure: 'azure-cosmos', gcp: 'gcp-firestore' },
+    'azure-cosmos': { aws: 'aws-dynamodb', azure: 'azure-cosmos', gcp: 'gcp-firestore' },
 
     // Object Storage
     'aws-s3': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
@@ -570,10 +570,10 @@ function tryConvertComponent(
     'gcp-cloud-storage': { aws: 'aws-s3', azure: 'azure-blob', gcp: 'gcp-cloud-storage' },
 
     // Load Balancers
-    'aws-alb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
-    'aws-nlb': { aws: 'aws-nlb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
-    'azure-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
-    'gcp-cloud-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-cloud-lb' },
+    'aws-alb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
+    'aws-nlb': { aws: 'aws-nlb', azure: 'azure-lb', gcp: 'gcp-lb' },
+    'azure-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
+    'gcp-lb': { aws: 'aws-alb', azure: 'azure-lb', gcp: 'gcp-lb' },
 
     // VPC/VNet
     'aws-vpc': { aws: 'aws-vpc', azure: 'azure-vnet', gcp: 'gcp-vpc' },
@@ -595,9 +595,9 @@ function tryConvertComponent(
     'gcp-cloud-run': { aws: 'aws-ecs', azure: 'azure-app-service', gcp: 'gcp-cloud-run' },
 
     // Serverless Functions
-    'aws-lambda': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-functions' },
-    'azure-functions': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-functions' },
-    'gcp-cloud-functions': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-functions' },
+    'aws-lambda': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-function' },
+    'azure-functions': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-function' },
+    'gcp-cloud-function': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-function' },
 
     // Message Queues
     'aws-sqs': { aws: 'aws-sqs', azure: 'azure-service-bus', gcp: 'gcp-pubsub' },
@@ -609,8 +609,8 @@ function tryConvertComponent(
     'azure-event-hub': { aws: 'aws-sns', azure: 'azure-event-hub', gcp: 'gcp-pubsub' },
 
     // API Gateway
-    'aws-api-gateway': { aws: 'aws-api-gateway', azure: 'azure-app-gw', gcp: 'gcp-cloud-lb' },
-    'azure-app-gw': { aws: 'aws-api-gateway', azure: 'azure-app-gw', gcp: 'gcp-cloud-lb' },
+    'aws-api-gateway': { aws: 'aws-api-gateway', azure: 'azure-app-gw', gcp: 'gcp-lb' },
+    'azure-app-gw': { aws: 'aws-api-gateway', azure: 'azure-app-gw', gcp: 'gcp-lb' },
 
     // CDN
     'aws-cloudfront': { aws: 'aws-cloudfront', azure: 'azure-front-door', gcp: 'gcp-cloud-cdn' },
@@ -629,9 +629,9 @@ function tryConvertComponent(
     'aws-elasticache': { aws: 'aws-elasticache', azure: 'azure-redis', gcp: 'gcp-memorystore' },
 
     // Firewall / NSG
-    'aws-security-group': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall' },
-    'azure-nsg': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall' },
-    'gcp-firewall': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall' },
+    'aws-security-group': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall-rule' },
+    'azure-nsg': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall-rule' },
+    'gcp-firewall-rule': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall-rule' },
 
     // NAT Gateway
     'aws-nat-gateway': { aws: 'aws-nat-gateway', azure: 'azure-nat-gateway', gcp: 'gcp-cloud-nat' },

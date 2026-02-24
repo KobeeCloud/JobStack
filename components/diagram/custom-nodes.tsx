@@ -543,7 +543,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
           </CardContent>
 
           <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-            <button onClick={handleConfigure} className="p-1 rounded bg-background/80 hover:bg-background shadow-sm"><Settings className="w-3 h-3" /></button>
+            <button aria-label="Configure node" onClick={handleConfigure} className="p-1 rounded bg-background/80 hover:bg-background shadow-sm"><Settings className="w-3 h-3" /></button>
           </div>
         </Card>
       </ContextMenuTrigger>
@@ -587,37 +587,37 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
   const category = getComponentCategory(componentId)
 
   const getProviderBg = () => {
-    if (componentId.includes('landing-zone'))    return 'bg-indigo-900/10 border-indigo-600'
+    if (componentId.includes('landing-zone')) return 'bg-indigo-900/10 border-indigo-600'
     if (componentId.includes('management-group')) return 'bg-violet-500/5 border-violet-500'
-    if (componentId.includes('subscription'))    return 'bg-sky-500/10 border-sky-500'
-    if (componentId.includes('resource-group'))  return 'bg-blue-400/5 border-blue-400'
+    if (componentId.includes('subscription')) return 'bg-sky-500/10 border-sky-500'
+    if (componentId.includes('resource-group')) return 'bg-blue-400/5 border-blue-400'
     switch (data.provider) {
-      case 'aws':   return 'bg-orange-500/5 border-orange-400'
+      case 'aws': return 'bg-orange-500/5 border-orange-400'
       case 'azure': return 'bg-blue-500/5 border-blue-400'
-      case 'gcp':   return 'bg-red-500/5 border-red-400'
-      default:      return 'bg-muted/30 border-border'
+      case 'gcp': return 'bg-red-500/5 border-red-400'
+      default: return 'bg-muted/30 border-border'
     }
   }
 
   // Header background for depth indication
   const getHeaderBg = () => {
-    if (componentId.includes('landing-zone'))    return 'bg-indigo-700/25 border-indigo-600/40'
+    if (componentId.includes('landing-zone')) return 'bg-indigo-700/25 border-indigo-600/40'
     if (componentId.includes('management-group')) return 'bg-violet-600/20 border-violet-500/40'
-    if (componentId.includes('subscription'))    return 'bg-sky-600/20 border-sky-500/40'
-    if (componentId.includes('resource-group'))  return 'bg-blue-500/15 border-blue-400/40'
+    if (componentId.includes('subscription')) return 'bg-sky-600/20 border-sky-500/40'
+    if (componentId.includes('resource-group')) return 'bg-blue-500/15 border-blue-400/40'
     if (componentId.includes('vnet') || componentId.includes('vpc')) return 'bg-blue-400/10 border-blue-400/30'
-    if (componentId.includes('subnet'))          return 'bg-muted/40 border-border/60'
+    if (componentId.includes('subnet')) return 'bg-muted/40 border-border/60'
     return 'bg-background/60 border-dashed'
   }
 
   // Visual differentiation for container depth
   const getContainerStyle = () => {
-    if (componentId.includes('landing-zone'))    return 'border-solid border-[4px]'
+    if (componentId.includes('landing-zone')) return 'border-solid border-[4px]'
     if (componentId.includes('management-group')) return 'border-dashed border-[3px]'
-    if (componentId.includes('subscription'))    return 'border-solid border-[3px]'
-    if (componentId.includes('resource-group'))  return 'border-dashed border-2'
+    if (componentId.includes('subscription')) return 'border-solid border-[3px]'
+    if (componentId.includes('resource-group')) return 'border-dashed border-2'
     if (componentId.includes('vnet') || componentId.includes('vpc')) return 'border-solid border-2'
-    if (componentId.includes('subnet'))          return 'border-dotted border-2'
+    if (componentId.includes('subnet')) return 'border-dotted border-2'
     if (componentId.includes('availability-set')) return 'border-dashed border-2'
     return 'border-dashed border-2'
   }
@@ -649,10 +649,10 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
       nds.map((node) =>
         node.id === id
           ? {
-              ...node,
-              style: { ...node.style, width: params.width, height: params.height },
-              data: { ...node.data, width: params.width, height: params.height },
-            }
+            ...node,
+            style: { ...node.style, width: params.width, height: params.height },
+            data: { ...node.data, width: params.width, height: params.height },
+          }
           : node
       )
     )
@@ -754,7 +754,7 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
 
           {/* Action buttons */}
           <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
-            <button onClick={handleConfigure} className="p-1 rounded bg-background/80 hover:bg-background shadow-sm"><Settings className="w-3 h-3" /></button>
+            <button aria-label="Configure node" onClick={handleConfigure} className="p-1 rounded bg-background/80 hover:bg-background shadow-sm"><Settings className="w-3 h-3" /></button>
           </div>
         </div>
       </ContextMenuTrigger>

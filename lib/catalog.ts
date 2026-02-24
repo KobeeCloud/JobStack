@@ -2765,12 +2765,12 @@ export function getEffectiveGeneratorType(component: ComponentConfig): Generator
 
 /** Human-readable label + color for each generator type — used in UI badges */
 export const GENERATOR_TYPE_META: Record<GeneratorType, { label: string; color: string; bgColor: string }> = {
-  terraform:     { label: 'Terraform',    color: '#7B42BC', bgColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-  cicd:          { label: 'CI/CD',        color: '#2088FF', bgColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
-  kubernetes:    { label: 'Kubernetes',   color: '#326CE5', bgColor: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
-  docker:        { label: 'Docker',       color: '#2496ED', bgColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' },
-  monitoring:    { label: 'Monitoring',   color: '#E6522C', bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
-  documentation: { label: 'Annotation',  color: '#6B7280', bgColor: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400' },
+  terraform: { label: 'Terraform', color: '#7B42BC', bgColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
+  cicd: { label: 'CI/CD', color: '#2088FF', bgColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+  kubernetes: { label: 'Kubernetes', color: '#326CE5', bgColor: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
+  docker: { label: 'Docker', color: '#2496ED', bgColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' },
+  monitoring: { label: 'Monitoring', color: '#E6522C', bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+  documentation: { label: 'Annotation', color: '#6B7280', bgColor: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400' },
 }
 
 export function getComponentsByCategory(category: ComponentConfig['category']): ComponentConfig[] {
@@ -2810,3 +2810,5 @@ export const PROVIDERS = [
   { id: 'vercel', name: 'Vercel', color: '#000000' },
   { id: 'generic', name: 'Multi-Cloud / Generic', color: '#6B7280' },
 ] as const
+
+export type ValidComponentId = typeof COMPONENT_CATALOG[number]['id']

@@ -93,15 +93,16 @@ async function DashboardStats({ userId }: { userId: string }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       {stats.map((stat) => (
-        <Card key={stat.label} className="border-none shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+        <Card key={stat.label} className="border-none shadow-md bg-background/60 backdrop-blur-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+          <div className={`absolute top-0 right-0 w-24 h-24 rounded-full ${stat.bgColor} blur-2xl opacity-50 -mr-8 -mt-8 group-hover:scale-110 transition-transform`} />
+          <CardContent className="p-5 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl ${stat.bgColor} shadow-sm group-hover:scale-110 transition-transform`}>
+                <stat.icon className={`h-6 w-6 ${stat.color}`} />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="text-3xl font-extrabold tracking-tight">{stat.value}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
               </div>
             </div>
           </CardContent>
@@ -138,21 +139,28 @@ function QuickActions() {
   ]
 
   return (
-    <div className="grid md:grid-cols-3 gap-4 mb-8">
+    <div className="grid md:grid-cols-3 gap-6 mb-8">
       {actions.map((action) => (
-        <Link key={action.label} href={action.href}>
-          <Card className="group hover:shadow-md transition-all cursor-pointer border-dashed hover:border-solid hover:border-primary/50">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={`p-3 rounded-xl text-white ${action.color} group-hover:scale-110 transition-transform`}>
-                <action.icon className="h-5 w-5" />
+        <Link key={action.label} href={action.href} className="block">
+          <Card className="group h-full hover:shadow-lg transition-all duration-300 cursor-pointer border border-border/50 bg-background/50 backdrop-blur-sm relative overflow-hidden">
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${action.color}`} />
+
+            <CardContent className="p-6 relative z-10 flex flex-col h-full">
+              <div className="flex items-start justify-between mb-4">
+                <div className={`p-4 rounded-xl text-white ${action.color} shadow-md group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
+                  <action.icon className="h-6 w-6" />
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-primary transition-all duration-300" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold group-hover:text-primary transition-colors">
+
+              <div className="mt-auto">
+                <h3 className="text-xl font-bold tracking-tight mb-2 group-hover:text-primary transition-colors">
                   {action.label}
                 </h3>
-                <p className="text-xs text-muted-foreground">{action.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {action.description}
+                </p>
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </CardContent>
           </Card>
         </Link>
@@ -192,43 +200,49 @@ async function RecentActivity({ userId }: { userId: string }) {
   }
 
   return (
-    <Card className="mb-8">
-      <CardHeader className="pb-3">
+    <Card className="mb-8 border-none shadow-lg bg-background/50 backdrop-blur-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      <CardHeader className="pb-4 border-b border-border/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Clock className="h-4 w-4 text-primary" />
+            </div>
+            <CardTitle className="text-lg font-semibold tracking-tight">Recent Activity</CardTitle>
           </div>
-          <Link href="/projects" className="text-sm text-primary hover:underline">
-            View all
+          <Link href="/projects" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
+            View all <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="space-y-3">
+      <CardContent className="p-0">
+        <div className="divide-y divide-border/50">
           {(recentProjects as RecentProject[]).map((project) => (
             <Link
               key={project.id}
               href={`/projects/${project.id}`}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+              className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors group relative overflow-hidden"
             >
-              <div className="p-2 rounded-lg bg-muted">
-                <FileCode className="h-4 w-4 text-muted-foreground" />
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary scale-y-0 group-hover:scale-y-100 transition-transform origin-center" />
+              <div className="p-3 rounded-xl bg-background border shadow-sm group-hover:shadow-md group-hover:border-primary/20 transition-all">
+                <FileCode className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate group-hover:text-primary transition-colors">
+                <p className="font-semibold text-base truncate group-hover:text-primary transition-colors mb-1">
                   {project.name}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-medium ${getProviderColor(project.cloud_provider)}`}>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide border ${getProviderColor(project.cloud_provider)}`}>
                     {project.cloud_provider}
                   </span>
-                  <span>•</span>
-                  <RelativeTime date={project.updated_at} />
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <RelativeTime date={project.updated_at} />
+                  </span>
                 </div>
               </div>
-              <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                {project.status}
+              <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="px-3 py-1 text-xs font-semibold shadow-sm">
+                {project.status.toUpperCase()}
               </Badge>
             </Link>
           ))}
@@ -380,10 +394,10 @@ async function AnalyticsDashboard({ userId }: { userId: string }) {
   const projectIds = projects.map((p: { id: string }) => p.id)
   const { data: diagrams } = projectIds.length > 0
     ? await supabase
-        .from('diagrams')
-        .select('nodes')
-        .in('project_id', projectIds)
-        .limit(100)
+      .from('diagrams')
+      .select('nodes')
+      .in('project_id', projectIds)
+      .limit(100)
     : { data: null }
 
   const categoryCounts: Record<string, number> = {}

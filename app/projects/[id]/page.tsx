@@ -8,20 +8,22 @@ import {
   Controls,
   MiniMap,
   addEdge,
-  useNodesState,
-  useEdgesState,
   Connection,
   Node,
   Edge,
   ReactFlowProvider,
   useReactFlow,
+  applyNodeChanges,
+  applyEdgeChanges
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
+import { useDiagramStore } from '@/lib/store/diagram-store'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
+import { MobileWarningOverlay } from '@/components/diagram/mobile-warning'
 import { CustomNode, ContainerNode, AttachmentNode, isValidConnection, getComponentCategory, shouldUseParentChild, getConnectionError, getEdgeType, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { DiagramSearch } from '@/components/diagram/diagram-search'
@@ -86,42 +88,37 @@ interface Diagram {
 }
 
 function DiagramCanvas({ projectId }: { projectId: string }) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  // Local state for things that only belong to this component
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [diagramId, setDiagramId] = useState<string | null>(null)
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null)
-  const [configPanelOpen, setConfigPanelOpen] = useState(false)
 
-  // Feature panels state
-  const [aiPanelOpen, setAiPanelOpen] = useState(false)
-  const [aiIssues, setAiIssues] = useState<ArchitectureIssue[]>([])
-  const [aiAnalyzing, setAiAnalyzing] = useState(false)
-
-  const [compliancePanelOpen, setCompliancePanelOpen] = useState(false)
-  const [complianceReport, setComplianceReport] = useState<ComplianceReport | null>(null)
-  const [complianceScanning, setComplianceScanning] = useState(false)
-
-  const [testingPanelOpen, setTestingPanelOpen] = useState(false)
-  const [testResults, setTestResults] = useState<InfrastructureTest[] | null>(null)
-  const [testing, setTesting] = useState(false)
-
-  const [multiCloudPanelOpen, setMultiCloudPanelOpen] = useState(false)
-  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null)
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
-  const [showK8sWizard, setShowK8sWizard] = useState(false)
-  const [showGovernanceWizard, setShowGovernanceWizard] = useState(false)
-  const [showQuickBuild, setShowQuickBuild] = useState(false)
-
-  // Code generation state
-  const [terraformDirty, setTerraformDirty] = useState(false)
-  const [codePreviewOpen, setCodePreviewOpen] = useState(false)
-  const [codePreviewFiles, setCodePreviewFiles] = useState<CodeFile[]>([])
-  const [codePreviewTitle, setCodePreviewTitle] = useState('')
-  const [codePreviewZipName, setCodePreviewZipName] = useState('output.zip')
+  // Connect to Zustand store
+  const {
+    nodes, setNodes,
+    edges, setEdges,
+    diagramId, setDiagramId,
+    selectedNode, setSelectedNode,
+    configPanelOpen, setConfigPanelOpen,
+    activePanel, setActivePanel,
+    aiIssues, setAiIssues,
+    aiAnalyzing, setAiAnalyzing,
+    complianceReport, setComplianceReport,
+    complianceScanning, setComplianceScanning,
+    testing, setTesting,
+    testResults, setTestResults,
+    highlightedNodeId, setHighlightedNodeId,
+    templateDialogOpen, setTemplateDialogOpen,
+    showK8sWizard, setShowK8sWizard,
+    showGovernanceWizard, setShowGovernanceWizard,
+    showQuickBuild, setShowQuickBuild,
+    terraformDirty, setTerraformDirty,
+    codePreviewOpen, setCodePreviewOpen,
+    codePreviewFiles, setCodePreviewFiles,
+    codePreviewTitle, setCodePreviewTitle,
+    codePreviewZipName, setCodePreviewZipName
+  } = useDiagramStore()
 
   const { zoomIn, zoomOut, fitView, screenToFlowPosition, getNodes, setCenter } = useReactFlow()
   const router = useRouter()
@@ -155,11 +152,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }, [nodes, edges, pushState])
 
-  // Mark terraform as out-of-sync whenever the diagram changes
-  useEffect(() => {
-    if (nodes.length > 0) setTerraformDirty(true)
-  }, [nodes, edges]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // Undo handler
   const handleUndo = useCallback(() => {
     const state = undo()
@@ -181,6 +173,63 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       toast.success('Redo', { description: 'Restored next state' })
     }
   }, [redo, setNodes, setEdges, toast])
+
+  // AI Analysis
+  const analyzeDiagram = useCallback(async (currentNodes: Node[], currentEdges: Edge[]) => {
+    if (currentNodes.length === 0) {
+      toast.warning('No components', { description: 'Add components to analyze' })
+      return
+    }
+
+    try {
+      setAiAnalyzing(true)
+      const issues = await analyzeArchitecture(currentNodes, currentEdges)
+      setAiIssues(issues)
+      toast.success('Analysis Complete', { description: `Found ${issues.length} recommendations` })
+    } catch (error) {
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to analyze architecture' })
+    } finally {
+      setAiAnalyzing(false)
+    }
+  }, [setAiAnalyzing, setAiIssues])
+
+  const toggleAI = useCallback(() => {
+    if (activePanel !== 'ai') {
+      setActivePanel('ai')
+      analyzeDiagram(nodes, edges)
+    } else {
+      setActivePanel('none')
+    }
+  }, [nodes, edges, activePanel, setActivePanel, analyzeDiagram])
+
+  // Infrastructure Testing
+  const runTesting = useCallback(async (currentNodes: Node[], currentEdges: Edge[]) => {
+    if (currentNodes.length === 0) {
+      toast.warning('No components', { description: 'Add components to test' })
+      return
+    }
+
+    try {
+      setTesting(true)
+      const results = await testDiagram(currentNodes, currentEdges)
+      setTestResults(results)
+      const passed = results.filter(r => r.status === 'pass').length
+      toast.success('Tests Complete', { description: `${passed}/${results.length} tests passed` })
+    } catch (error) {
+      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to run tests' })
+    } finally {
+      setTesting(false)
+    }
+  }, [setTesting, setTestResults])
+
+  const toggleTesting = useCallback(() => {
+    if (activePanel !== 'testing') {
+      setActivePanel('testing')
+      runTesting(nodes, edges)
+    } else {
+      setActivePanel('none')
+    }
+  }, [nodes, edges, activePanel, setActivePanel, runTesting])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -235,6 +284,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
       // Ctrl/Cmd + A - Select all
       if (modKey && e.key === 'a') {
+        // Prevent default only if a flow action is intended (e.g. not in input)
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
         e.preventDefault()
         setNodes(nds => nds.map(n => ({ ...n, selected: true })))
         return
@@ -684,6 +735,16 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                   x: Math.max(padding, childRelX),
                   y: clampedY,
                 },
+                onAction: (action: string) => {
+                  switch (action) {
+                    case 'ai': toggleAI(); break;
+                    case 'compliance': setActivePanel(activePanel === 'compliance' ? 'none' : 'compliance'); break;
+                    case 'cost': setActivePanel('none'); break;
+                    case 'multicloud': setActivePanel(activePanel === 'multiCloud' ? 'none' : 'multiCloud'); break;
+                    case 'testing': toggleTesting(); break;
+                    case 'governance': setShowGovernanceWizard(true); break;
+                  }
+                }
               }
             }
             // Grow container if needed
@@ -760,7 +821,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         }
       }
     },
-    [getNodes, setNodes, toast, getAbsolutePosition, getNodeBounds]
+    [getNodes, setNodes, toast, getAbsolutePosition, getNodeBounds, activePanel, setActivePanel, toggleAI, toggleTesting, setShowGovernanceWizard]
   )
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -916,10 +977,10 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         setNodes((nds) => {
           const updated = parentGrow
             ? nds.map((n) =>
-                n.id === parentGrow!.id
-                  ? { ...n, style: { ...n.style, width: parentGrow!.width, height: parentGrow!.height } }
-                  : n
-              )
+              n.id === parentGrow!.id
+                ? { ...n, style: { ...n.style, width: parentGrow!.width, height: parentGrow!.height } }
+                : n
+            )
             : nds
           return [...updated, newNode]
         })
@@ -1218,27 +1279,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     }
   }
 
-
-  // AI Analysis
-  const handleAIAnalysis = async () => {
-    if (nodes.length === 0) {
-      toast.warning('No components', { description: 'Add components to analyze' })
-      return
-    }
-
-    try {
-      setAiAnalyzing(true)
-      setAiPanelOpen(true)
-      const issues = await analyzeArchitecture(nodes, edges)
-      setAiIssues(issues)
-      toast.success('Analysis Complete', { description: `Found ${issues.length} recommendations` })
-    } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to analyze architecture' })
-    } finally {
-      setAiAnalyzing(false)
-    }
-  }
-
   // Compliance Scanning
   const handleComplianceScan = async (framework: 'cis' | 'gdpr' | 'soc2' | 'pci-dss' | 'hipaa') => {
     if (nodes.length === 0) {
@@ -1263,27 +1303,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to run compliance scan' })
     } finally {
       setComplianceScanning(false)
-    }
-  }
-
-  // Infrastructure Testing
-  const handleRunTests = async () => {
-    if (nodes.length === 0) {
-      toast.warning('No components', { description: 'Add components to test' })
-      return
-    }
-
-    try {
-      setTesting(true)
-      setTestingPanelOpen(true)
-      const results = await testDiagram(nodes, edges)
-      setTestResults(results)
-      const passed = results.filter(r => r.status === 'pass').length
-      toast.success('Tests Complete', { description: `${passed}/${results.length} tests passed` })
-    } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to run tests' })
-    } finally {
-      setTesting(false)
     }
   }
 
@@ -1329,6 +1348,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      <MobileWarningOverlay />
       <nav className="border-b flex-shrink-0">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -1372,7 +1392,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             <div className="border-t max-h-[40%] overflow-hidden flex-shrink-0">
               <CustomComponentPanel
                 organizationId={project.organization_id}
-                onDragStart={() => {}}
+                onDragStart={() => { }}
                 className="h-full"
               />
             </div>
@@ -1382,8 +1402,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
+            onNodesChange={(changes) => {
+              setNodes((nds) => applyNodeChanges(changes, nds))
+            }}
+            onEdgesChange={(changes) => {
+              setEdges((eds) => applyEdgeChanges(changes, eds))
+            }}
             onConnect={onConnect}
             onNodeDoubleClick={onNodeDoubleClick}
             onNodeDragStop={onNodeDragStop}
@@ -1429,7 +1453,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
               style={{ left: `${cursor.x}%`, top: `${cursor.y}%`, transform: 'translate(-2px,-2px)' }}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" className="drop-shadow">
-                <path d="M0 0 L0 11 L3 8.5 L5.5 13.5 L7.5 12.5 L5 7.5 L9 7.5 Z" fill="#6366f1" stroke="white" strokeWidth="1"/>
+                <path d="M0 0 L0 11 L3 8.5 L5.5 13.5 L7.5 12.5 L5 7.5 L9 7.5 Z" fill="#6366f1" stroke="white" strokeWidth="1" />
               </svg>
               <span className="absolute left-4 top-0 text-[10px] bg-indigo-500 text-white px-1.5 py-0.5 rounded-full whitespace-nowrap leading-none">
                 {cursor.user_name}
@@ -1509,10 +1533,10 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onGenerateARM={handleGenerateARM}
             onGeneratePulumi={handleGeneratePulumi}
             onGenerateCICD={handleGenerateCICD}
-            onAIAnalysis={handleAIAnalysis}
-            onComplianceScan={() => setCompliancePanelOpen(true)}
-            onRunTests={handleRunTests}
-            onMultiCloud={() => setMultiCloudPanelOpen(true)}
+            onAIAnalysis={toggleAI}
+            onComplianceScan={() => setActivePanel(activePanel === 'compliance' ? 'none' : 'compliance')}
+            onRunTests={toggleTesting}
+            onMultiCloud={() => setActivePanel(activePanel === 'multiCloud' ? 'none' : 'multiCloud')}
             onShowTemplates={() => setTemplateDialogOpen(true)}
             onK8sWizard={() => setShowK8sWizard(true)}
             onGovernanceWizard={() => setShowGovernanceWizard(true)}
@@ -1521,11 +1545,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onRedo={handleRedo}
             canUndo={canUndo}
             canRedo={canRedo}
-            aiAnalyzing={aiAnalyzing}
-            complianceScanning={complianceScanning}
-            testing={testing}
             saving={saving}
-            codeOutOfSync={terraformDirty && nodes.length > 0}
             onImportTerraform={handleImportTerraform}
             diagramId={diagramId ?? undefined}
             onRestoreVersion={() => {
@@ -1628,8 +1648,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           }}
         />
 
-        {/* AI Assistant Panel */}
-        {aiPanelOpen && (
+        {/* AI Assistant Sidebar */}
+        {activePanel === 'ai' && (
           <div className="absolute right-4 top-20 w-96 h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
             <div className="h-full flex flex-col">
               <div className="p-3 border-b flex items-center justify-between">
@@ -1637,7 +1657,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setAiPanelOpen(false)}
+                  onClick={() => setActivePanel('none')}
                 >
                   ✕
                 </Button>
@@ -1650,8 +1670,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           </div>
         )}
 
-        {/* Compliance Panel */}
-        {compliancePanelOpen && (
+        {/* Compliance Sidebar */}
+        {activePanel === 'compliance' && (
           <div className="absolute right-4 top-20 w-96 h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
             <div className="h-full flex flex-col">
               <div className="p-3 border-b flex items-center justify-between">
@@ -1659,7 +1679,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setCompliancePanelOpen(false)}
+                  onClick={() => setActivePanel('none')}
                 >
                   ✕
                 </Button>
@@ -1673,8 +1693,8 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           </div>
         )}
 
-        {/* Testing Panel */}
-        {testingPanelOpen && (
+        {/* Testing Sidebar */}
+        {activePanel === 'testing' && (
           <div className="absolute right-4 top-20 w-96 h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
             <div className="h-full flex flex-col">
               <div className="p-3 border-b flex items-center justify-between">
@@ -1682,22 +1702,22 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setTestingPanelOpen(false)}
+                  onClick={() => setActivePanel('none')}
                 >
                   ✕
                 </Button>
               </div>
               <TestResultsPanel
                 results={testResults}
-                onRunTests={handleRunTests}
+                onRunTests={toggleTesting}
                 isTesting={testing}
               />
             </div>
           </div>
         )}
 
-        {/* Multi-Cloud Panel */}
-        {multiCloudPanelOpen && (
+        {/* Multi-Cloud Compare Sidebar */}
+        {activePanel === 'multiCloud' && (
           <div className="absolute left-80 top-20 w-[500px] h-[calc(100vh-160px)] z-20 bg-background border rounded-lg shadow-xl">
             <div className="h-full flex flex-col">
               <div className="p-3 border-b flex items-center justify-between">
@@ -1705,7 +1725,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setMultiCloudPanelOpen(false)}
+                  onClick={() => setActivePanel('none')}
                 >
                   ✕
                 </Button>
@@ -1715,17 +1735,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           </div>
         )}
 
-        {configPanelOpen && selectedNode && (
-          <NodeConfigPanel
-            key={selectedNode.id} // Force reset when node changes
-            node={selectedNode}
-            onClose={() => {
-              setConfigPanelOpen(false)
-              setSelectedNode(null)
-            }}
-            onUpdate={handleConfigUpdate}
-          />
-        )}
+        <NodeConfigPanel key={selectedNode?.id || 'none'} />
       </div>
     </div>
   )

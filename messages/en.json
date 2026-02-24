@@ -204,5 +204,13 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "contact": "Contact"
+  },
+  "cookieConsent": {
+    "title": "Cookies 🍪",
+    "description": "We use cookies necessary for the proper functioning of the service. Analytics cookies may also be used to improve service quality. More information in our ",
+    "privacyPolicy": "Privacy Policy",
+    "necessaryOnly": "Necessary only",
+    "acceptAll": "Accept all",
+    "close": "Close"
   }
 }

@@ -109,27 +109,29 @@ function emitBlock(key: string, obj: Record<string, unknown>): string {
  * For every Azure resource, derive resource_group_name from its ancestor RG.
  * Falls back to var.azure_resource_group if the node is not inside any RG.
  */
-function getAzureRgRef(node: Node<NodeData>, nodeMap: NodeMap): string {
+function getAzureRgRef(node: Node<NodeData>, nodeMap: NodeMap, nodeIdToTfName: Map<string, string>): string {
   const rgNode = findAncestorByTfResource(node.id, nodeMap, 'azurerm_resource_group')
   if (rgNode) {
-    const rgName = toTfName(String(rgNode.data?.label || 'resource_group'))
+    const rgName = nodeIdToTfName.get(rgNode.id) || toTfName(String(rgNode.data?.label || 'resource_group'))
     return `azurerm_resource_group.${rgName}.name`
   }
   return 'var.azure_resource_group'
 }
 
-function getAzureVnetRef(node: Node<NodeData>, nodeMap: NodeMap): string | null {
+function getAzureVnetRef(node: Node<NodeData>, nodeMap: NodeMap, nodeIdToTfName: Map<string, string>): string | null {
   const vnetNode = findAncestorByTfResource(node.id, nodeMap, 'azurerm_virtual_network')
   if (vnetNode) {
-    return `azurerm_virtual_network.${toTfName(String(vnetNode.data?.label || 'vnet'))}.name`
+    const vnetName = nodeIdToTfName.get(vnetNode.id) || toTfName(String(vnetNode.data?.label || 'vnet'))
+    return `azurerm_virtual_network.${vnetName}.name`
   }
   return null
 }
 
-function getAzureSubnetRef(node: Node<NodeData>, nodeMap: NodeMap): string | null {
+function getAzureSubnetRef(node: Node<NodeData>, nodeMap: NodeMap, nodeIdToTfName: Map<string, string>): string | null {
   const subnetNode = findAncestorByTfResource(node.id, nodeMap, 'azurerm_subnet')
   if (subnetNode) {
-    return `azurerm_subnet.${toTfName(String(subnetNode.data?.label || 'subnet'))}.id`
+    const subnetName = nodeIdToTfName.get(subnetNode.id) || toTfName(String(subnetNode.data?.label || 'subnet'))
+    return `azurerm_subnet.${subnetName}.id`
   }
   return null
 }
@@ -141,7 +143,8 @@ function getAzureSubnetRef(node: Node<NodeData>, nodeMap: NodeMap): string | nul
 function generateImplicitNic(
   vmNode: Node<NodeData>,
   vmName: string,
-  nodeMap: NodeMap
+  nodeMap: NodeMap,
+  nodeIdToTfName: Map<string, string>
 ): { nicTf: string; nicRefName: string } | null {
   // If there's already an explicit NIC child node, skip implicit generation
   const hasExplicitNic = Array.from(nodeMap.values()).some(n => {
@@ -153,10 +156,10 @@ function generateImplicitNic(
   })
   if (hasExplicitNic) return null
 
-  const subnetRef = getAzureSubnetRef(vmNode, nodeMap)
+  const subnetRef = getAzureSubnetRef(vmNode, nodeMap, nodeIdToTfName)
   if (!subnetRef) return null
 
-  const rgRef = getAzureRgRef(vmNode, nodeMap)
+  const rgRef = getAzureRgRef(vmNode, nodeMap, nodeIdToTfName)
   const nicRefName = `nic_${vmName}`
 
   let nicTf = `resource "azurerm_network_interface" "${nicRefName}" {\n`
@@ -177,9 +180,10 @@ function generateImplicitNic(
 function buildNicIpConfigBlock(
   node: Node<NodeData>,
   nodeMap: NodeMap,
-  userConfig: Record<string, any>
+  userConfig: Record<string, any>,
+  nodeIdToTfName: Map<string, string>
 ): string {
-  const subnetRef = getAzureSubnetRef(node, nodeMap) || 'var.subnet_id'
+  const subnetRef = getAzureSubnetRef(node, nodeMap, nodeIdToTfName) || 'var.subnet_id'
   const allocation = userConfig.private_ip_address_allocation || 'Dynamic'
 
   let block = `  ip_configuration {\n`
@@ -200,11 +204,11 @@ const OS_IMAGE_MAP: Record<string, { publisher: string; offer: string; sku: stri
   'ubuntu-20.04': { publisher: 'Canonical', offer: '0001-com-ubuntu-server-focal', sku: '20_04-lts-gen2', version: 'latest' },
   'windows-2022': { publisher: 'MicrosoftWindowsServer', offer: 'WindowsServer', sku: '2022-Datacenter', version: 'latest' },
   'windows-2019': { publisher: 'MicrosoftWindowsServer', offer: 'WindowsServer', sku: '2019-Datacenter', version: 'latest' },
-  'rhel-9':       { publisher: 'RedHat', offer: 'RHEL', sku: '9-lvm-gen2', version: 'latest' },
-  'rhel-8':       { publisher: 'RedHat', offer: 'RHEL', sku: '8-lvm-gen2', version: 'latest' },
-  'debian-12':    { publisher: 'Debian', offer: 'debian-12', sku: '12', version: 'latest' },
-  'debian-11':    { publisher: 'Debian', offer: 'debian-11', sku: '11', version: 'latest' },
-  'centos-8':     { publisher: 'OpenLogic', offer: 'CentOS', sku: '8_5-gen2', version: 'latest' },
+  'rhel-9': { publisher: 'RedHat', offer: 'RHEL', sku: '9-lvm-gen2', version: 'latest' },
+  'rhel-8': { publisher: 'RedHat', offer: 'RHEL', sku: '8-lvm-gen2', version: 'latest' },
+  'debian-12': { publisher: 'Debian', offer: 'debian-12', sku: '12', version: 'latest' },
+  'debian-11': { publisher: 'Debian', offer: 'debian-11', sku: '11', version: 'latest' },
+  'centos-8': { publisher: 'OpenLogic', offer: 'CentOS', sku: '8_5-gen2', version: 'latest' },
 }
 
 /**
@@ -335,17 +339,17 @@ export function generateTerraformWithValidation(
   // ── main.tf ────────────────────────────────────────────────────────────
   let mainTf = `# Generated by JobStack\n# Components: ${validNodes.length} | Skipped: ${skippedCount}\n# Environment: ${environment}\n\n`
   mainTf += 'terraform {\n  required_version = ">= 1.6"\n  required_providers {\n'
-  if (providers.has('aws'))        mainTf += '    aws        = { source = "hashicorp/aws",             version = "~> 5.0" }\n'
-  if (providers.has('gcp'))        mainTf += '    google     = { source = "hashicorp/google",          version = "~> 5.0" }\n'
-  if (providers.has('azure'))      mainTf += '    azurerm    = { source = "hashicorp/azurerm",         version = "~> 3.0" }\n'
-  if (providers.has('vercel'))     mainTf += '    vercel     = { source = "vercel/vercel",             version = "~> 1.0" }\n'
+  if (providers.has('aws')) mainTf += '    aws        = { source = "hashicorp/aws",             version = "~> 5.0" }\n'
+  if (providers.has('gcp')) mainTf += '    google     = { source = "hashicorp/google",          version = "~> 5.0" }\n'
+  if (providers.has('azure')) mainTf += '    azurerm    = { source = "hashicorp/azurerm",         version = "~> 3.0" }\n'
+  if (providers.has('vercel')) mainTf += '    vercel     = { source = "vercel/vercel",             version = "~> 1.0" }\n'
   if (providers.has('cloudflare')) mainTf += '    cloudflare = { source = "cloudflare/cloudflare",    version = "~> 4.0" }\n'
   mainTf += '  }\n}\n\n'
 
-  if (providers.has('aws'))        mainTf += `provider "aws" {\n  region = var.aws_region\n}\n\n`
-  if (providers.has('gcp'))        mainTf += `provider "google" {\n  project = var.gcp_project\n  region  = var.gcp_region\n}\n\n`
-  if (providers.has('azure'))      mainTf += `provider "azurerm" {\n  features {}\n}\n\n`
-  if (providers.has('vercel'))     mainTf += `provider "vercel" {\n  api_token = var.vercel_api_token\n}\n\n`
+  if (providers.has('aws')) mainTf += `provider "aws" {\n  region = var.aws_region\n}\n\n`
+  if (providers.has('gcp')) mainTf += `provider "google" {\n  project = var.gcp_project\n  region  = var.gcp_region\n}\n\n`
+  if (providers.has('azure')) mainTf += `provider "azurerm" {\n  features {}\n}\n\n`
+  if (providers.has('vercel')) mainTf += `provider "vercel" {\n  api_token = var.vercel_api_token\n}\n\n`
   if (providers.has('cloudflare')) mainTf += `provider "cloudflare" {\n  api_token = var.cloudflare_api_token\n}\n\n`
 
   outputs.push({ code: mainTf, filename: 'main.tf', provider: 'terraform' })
@@ -353,8 +357,8 @@ export function generateTerraformWithValidation(
   // ── backend.tf ─────────────────────────────────────────────────────────
   const primaryProvider = providers.has('aws') ? 'aws'
     : providers.has('azure') ? 'azure'
-    : providers.has('gcp') ? 'gcp'
-    : 'local'
+      : providers.has('gcp') ? 'gcp'
+        : 'local'
 
   let backendTf = `# backend.tf — Remote state configuration\n# Generated by JobStack for environment: ${environment}\n#\n# Uncomment ONE backend block, then run: terraform init\n\nterraform {\n`
   if (primaryProvider === 'aws') {
@@ -389,9 +393,9 @@ export function generateTerraformWithValidation(
 
   // ── terraform.tfvars ───────────────────────────────────────────────────
   let tfvars = `# terraform.tfvars — ${environment} environment\n# Generated by JobStack\n# Usage: terraform plan  (this file is loaded automatically)\n\nenvironment  = "${environment}"\nproject_name = "${projectName}"\n`
-  if (providers.has('aws'))        tfvars += `aws_region   = "eu-west-1"\n`
-  if (providers.has('gcp'))        tfvars += `gcp_project  = "<your-gcp-project-id>"\ngcp_region   = "europe-west1"\n`
-  if (providers.has('azure'))      tfvars += `azure_location       = "West Europe"\nazure_resource_group = "rg-${projectName}-${environment}"\n`
+  if (providers.has('aws')) tfvars += `aws_region   = "eu-west-1"\n`
+  if (providers.has('gcp')) tfvars += `gcp_project  = "<your-gcp-project-id>"\ngcp_region   = "europe-west1"\n`
+  if (providers.has('azure')) tfvars += `azure_location       = "West Europe"\nazure_resource_group = "rg-${projectName}-${environment}"\n`
   outputs.push({ code: tfvars, filename: 'terraform.tfvars', provider: 'terraform' })
 
   // ── resources.tf ───────────────────────────────────────────────────────
@@ -425,7 +429,7 @@ export function generateTerraformWithValidation(
       resourceType === 'azurerm_windows_virtual_machine'
     ) {
       const vmName = nodeIdToTfName.get(node.id)!
-      const result = generateImplicitNic(node, vmName, nodeMap)
+      const result = generateImplicitNic(node, vmName, nodeMap, nodeIdToTfName)
       if (result) {
         implicitNicsTf += result.nicTf
         implicitNics.set(node.id, result.nicRefName)
@@ -455,7 +459,7 @@ export function generateTerraformWithValidation(
     if (resourceType.startsWith('azurerm_') && resourceType !== 'azurerm_subscription') {
       resourcesTf += `  location            = var.azure_location\n`
       // resource_group_name from hierarchy
-      const rgRef = getAzureRgRef(node, nodeMap)
+      const rgRef = getAzureRgRef(node, nodeMap, nodeIdToTfName)
       resourcesTf += `  resource_group_name = ${rgRef}\n`
     }
     if (resourceType.startsWith('google_')) {
@@ -464,7 +468,7 @@ export function generateTerraformWithValidation(
 
     // ── Subnet → vnet reference ────────────────────────────────────────
     if (resourceType === 'azurerm_subnet') {
-      const vnetRef = getAzureVnetRef(node, nodeMap)
+      const vnetRef = getAzureVnetRef(node, nodeMap, nodeIdToTfName)
       if (vnetRef) {
         resourcesTf += `  virtual_network_name = ${vnetRef}\n`
       }
@@ -527,7 +531,7 @@ export function generateTerraformWithValidation(
 
     // ── NIC: ip_configuration ─────────────────────────────────────────
     if (resourceType === 'azurerm_network_interface') {
-      resourcesTf += buildNicIpConfigBlock(node, nodeMap, userConfig)
+      resourcesTf += buildNicIpConfigBlock(node, nodeMap, userConfig, nodeIdToTfName)
     }
 
     // ── Azure NSG: security_rule blocks ───────────────────────────────
@@ -701,8 +705,8 @@ export function generateTerraformWithValidation(
       const parentTfResource = parentComp?.terraform?.resource
       if (!parentTfResource) return
 
-      const attachName = toTfName(String(attachNode.data?.label || attachCompId))
-      const parentName  = toTfName(String(parentNode.data?.label  || parentCompId))
+      const attachName = nodeIdToTfName.get(attachNode.id) || toTfName(String(attachNode.data?.label || attachCompId))
+      const parentName = nodeIdToTfName.get(parentNode.id) || toTfName(String(parentNode.data?.label || parentCompId))
 
       if (associationsTf === '')
         associationsTf += `# ─── Attachment Associations (auto-generated from diagram) ───────────\n\n`
@@ -737,94 +741,94 @@ export function generateTerraformWithValidation(
   const lbListeners = new Set<string>()
   let flowTf = ''
 
-  ;(edges || []).forEach(edge => {
-    const srcNode = nodeMap.get(edge.source)
-    const tgtNode = nodeMap.get(edge.target)
-    if (!srcNode || !tgtNode) return
+    ; (edges || []).forEach(edge => {
+      const srcNode = nodeMap.get(edge.source)
+      const tgtNode = nodeMap.get(edge.target)
+      if (!srcNode || !tgtNode) return
 
-    const srcCompId = getNodeComponentId(srcNode)
-    const tgtCompId = getNodeComponentId(tgtNode)
-    if (!srcCompId || !tgtCompId) return
+      const srcCompId = getNodeComponentId(srcNode)
+      const tgtCompId = getNodeComponentId(tgtNode)
+      if (!srcCompId || !tgtCompId) return
 
-    const srcComp = getComponentById(srcCompId)
-    const tgtComp = getComponentById(tgtCompId)
-    if (!srcComp?.terraform || !tgtComp?.terraform) return
+      const srcComp = getComponentById(srcCompId)
+      const tgtComp = getComponentById(tgtCompId)
+      if (!srcComp?.terraform || !tgtComp?.terraform) return
 
-    const srcResource = srcComp.terraform.resource
-    const tgtResource = tgtComp.terraform.resource
+      const srcResource = srcComp.terraform.resource
+      const tgtResource = tgtComp.terraform.resource
 
-    const srcName = toTfName(String(srcNode.data?.label || srcCompId))
-    const tgtName = toTfName(String(tgtNode.data?.label || tgtCompId))
+      const srcName = nodeIdToTfName.get(srcNode.id) || toTfName(String(srcNode.data?.label || srcCompId))
+      const tgtName = nodeIdToTfName.get(tgtNode.id) || toTfName(String(tgtNode.data?.label || tgtCompId))
 
-    if (flowTf === '')
-      flowTf += `# ─── Traffic Flow Resources (auto-generated from edge connections) ──\n\n`
+      if (flowTf === '')
+        flowTf += `# ─── Traffic Flow Resources (auto-generated from edge connections) ──\n\n`
 
-    // Azure Load Balancer → VM
-    if (
-      srcResource === 'azurerm_lb' &&
-      (tgtResource === 'azurerm_linux_virtual_machine' || tgtResource === 'azurerm_windows_virtual_machine')
-    ) {
-      const poolName = `pool_${srcName}`
-      const nicRef   = implicitNics.get(tgtNode.id) || `nic_${tgtName}`
+      // Azure Load Balancer → VM
+      if (
+        srcResource === 'azurerm_lb' &&
+        (tgtResource === 'azurerm_linux_virtual_machine' || tgtResource === 'azurerm_windows_virtual_machine')
+      ) {
+        const poolName = `pool_${srcName}`
+        const nicRef = implicitNics.get(tgtNode.id) || `nic_${tgtName}`
 
-      if (!lbListeners.has(`${srcName}_pool`)) {
-        lbListeners.add(`${srcName}_pool`)
-        flowTf += `resource "azurerm_lb_backend_address_pool" "${poolName}" {\n`
-        flowTf += `  loadbalancer_id = azurerm_lb.${srcName}.id\n`
-        flowTf += `  name            = "BackendPool"\n`
+        if (!lbListeners.has(`${srcName}_pool`)) {
+          lbListeners.add(`${srcName}_pool`)
+          flowTf += `resource "azurerm_lb_backend_address_pool" "${poolName}" {\n`
+          flowTf += `  loadbalancer_id = azurerm_lb.${srcName}.id\n`
+          flowTf += `  name            = "BackendPool"\n`
+          flowTf += `}\n\n`
+        }
+        flowTf += `resource "azurerm_network_interface_backend_address_pool_association" "bap_${nicRef}" {\n`
+        flowTf += `  network_interface_id    = azurerm_network_interface.${nicRef}.id\n`
+        flowTf += `  ip_configuration_name   = "internal"\n`
+        flowTf += `  backend_address_pool_id = azurerm_lb_backend_address_pool.${poolName}.id\n`
         flowTf += `}\n\n`
       }
-      flowTf += `resource "azurerm_network_interface_backend_address_pool_association" "bap_${nicRef}" {\n`
-      flowTf += `  network_interface_id    = azurerm_network_interface.${nicRef}.id\n`
-      flowTf += `  ip_configuration_name   = "internal"\n`
-      flowTf += `  backend_address_pool_id = azurerm_lb_backend_address_pool.${poolName}.id\n`
-      flowTf += `}\n\n`
-    }
 
-    // AWS ALB → EC2: target group + attachment + listener (once per LB)
-    if (srcResource === 'aws_lb' && tgtResource === 'aws_instance') {
-      const vpcNode = findAncestorByTfResource(tgtNode.id, nodeMap, 'aws_vpc')
-      const vpcRef  = vpcNode
-        ? `aws_vpc.${toTfName(String(vpcNode.data?.label || 'vpc'))}.id`
-        : 'var.vpc_id'
-      const tgName = `tg_${srcName}_${tgtName}`
+      // AWS ALB → EC2: target group + attachment + listener (once per LB)
+      if (srcResource === 'aws_lb' && tgtResource === 'aws_instance') {
+        const vpcNode = findAncestorByTfResource(tgtNode.id, nodeMap, 'aws_vpc')
+        const vpcRef = vpcNode
+          ? `aws_vpc.${nodeIdToTfName.get(vpcNode.id) || toTfName(String(vpcNode.data?.label || 'vpc'))}.id`
+          : 'var.vpc_id'
+        const tgName = `tg_${srcName}_${tgtName}`
 
-      flowTf += `resource "aws_lb_target_group" "${tgName}" {\n`
-      flowTf += `  name     = "\${var.project_name}-${tgName}"\n`
-      flowTf += `  port     = 80\n`
-      flowTf += `  protocol = "HTTP"\n`
-      flowTf += `  vpc_id   = ${vpcRef}\n`
-      flowTf += `  health_check {\n    path                = "/"\n    healthy_threshold   = 2\n    unhealthy_threshold = 3\n  }\n`
-      flowTf += `}\n\n`
+        flowTf += `resource "aws_lb_target_group" "${tgName}" {\n`
+        flowTf += `  name     = "\${var.project_name}-${tgName}"\n`
+        flowTf += `  port     = 80\n`
+        flowTf += `  protocol = "HTTP"\n`
+        flowTf += `  vpc_id   = ${vpcRef}\n`
+        flowTf += `  health_check {\n    path                = "/"\n    healthy_threshold   = 2\n    unhealthy_threshold = 3\n  }\n`
+        flowTf += `}\n\n`
 
-      flowTf += `resource "aws_lb_target_group_attachment" "attach_${srcName}_${tgtName}" {\n`
-      flowTf += `  target_group_arn = aws_lb_target_group.${tgName}.arn\n`
-      flowTf += `  target_id        = aws_instance.${tgtName}.id\n`
-      flowTf += `  port             = 80\n`
-      flowTf += `}\n\n`
+        flowTf += `resource "aws_lb_target_group_attachment" "attach_${srcName}_${tgtName}" {\n`
+        flowTf += `  target_group_arn = aws_lb_target_group.${tgName}.arn\n`
+        flowTf += `  target_id        = aws_instance.${tgtName}.id\n`
+        flowTf += `  port             = 80\n`
+        flowTf += `}\n\n`
 
-      if (!lbListeners.has(srcNode.id)) {
-        lbListeners.add(srcNode.id)
-        flowTf += `resource "aws_lb_listener" "listener_${srcName}" {\n`
-        flowTf += `  load_balancer_arn = aws_lb.${srcName}.arn\n`
-        flowTf += `  port              = "80"\n`
-        flowTf += `  protocol          = "HTTP"\n\n`
-        flowTf += `  default_action {\n    type = "forward"\n    target_group_arn = aws_lb_target_group.${tgName}.arn\n  }\n`
+        if (!lbListeners.has(srcNode.id)) {
+          lbListeners.add(srcNode.id)
+          flowTf += `resource "aws_lb_listener" "listener_${srcName}" {\n`
+          flowTf += `  load_balancer_arn = aws_lb.${srcName}.arn\n`
+          flowTf += `  port              = "80"\n`
+          flowTf += `  protocol          = "HTTP"\n\n`
+          flowTf += `  default_action {\n    type = "forward"\n    target_group_arn = aws_lb_target_group.${tgName}.arn\n  }\n`
+          flowTf += `}\n\n`
+        }
+      }
+
+      // AWS API Gateway → Lambda: invoke permission
+      if (srcResource === 'aws_api_gateway_rest_api' && tgtResource === 'aws_lambda_function') {
+        flowTf += `resource "aws_lambda_permission" "perm_apigw_${tgtName}" {\n`
+        flowTf += `  statement_id  = "AllowExecutionFromAPIGateway"\n`
+        flowTf += `  action        = "lambda:InvokeFunction"\n`
+        flowTf += `  function_name = aws_lambda_function.${tgtName}.function_name\n`
+        flowTf += `  principal     = "apigateway.amazonaws.com"\n`
+        flowTf += `  source_arn    = "\${aws_api_gateway_rest_api.${srcName}.execution_arn}/*/*"\n`
         flowTf += `}\n\n`
       }
-    }
-
-    // AWS API Gateway → Lambda: invoke permission
-    if (srcResource === 'aws_api_gateway_rest_api' && tgtResource === 'aws_lambda_function') {
-      flowTf += `resource "aws_lambda_permission" "perm_apigw_${tgtName}" {\n`
-      flowTf += `  statement_id  = "AllowExecutionFromAPIGateway"\n`
-      flowTf += `  action        = "lambda:InvokeFunction"\n`
-      flowTf += `  function_name = aws_lambda_function.${tgtName}.function_name\n`
-      flowTf += `  principal     = "apigateway.amazonaws.com"\n`
-      flowTf += `  source_arn    = "\${aws_api_gateway_rest_api.${srcName}.execution_arn}/*/*"\n`
-      flowTf += `}\n\n`
-    }
-  })
+    })
 
   if (flowTf) resourcesTf += flowTf
 
@@ -835,76 +839,76 @@ export function generateTerraformWithValidation(
   ])
   let peeringTf = ''
 
-  ;(edges || []).forEach(edge => {
-    const srcNode = nodeMap.get(edge.source)
-    const tgtNode = nodeMap.get(edge.target)
-    if (!srcNode || !tgtNode) return
+    ; (edges || []).forEach(edge => {
+      const srcNode = nodeMap.get(edge.source)
+      const tgtNode = nodeMap.get(edge.target)
+      if (!srcNode || !tgtNode) return
 
-    const srcCompId = getNodeComponentId(srcNode)
-    const tgtCompId = getNodeComponentId(tgtNode)
-    if (!srcCompId || !tgtCompId) return
+      const srcCompId = getNodeComponentId(srcNode)
+      const tgtCompId = getNodeComponentId(tgtNode)
+      if (!srcCompId || !tgtCompId) return
 
-    const srcComp = getComponentById(srcCompId)
-    const tgtComp = getComponentById(tgtCompId)
-    if (!srcComp?.terraform || !tgtComp?.terraform) return
+      const srcComp = getComponentById(srcCompId)
+      const tgtComp = getComponentById(tgtCompId)
+      if (!srcComp?.terraform || !tgtComp?.terraform) return
 
-    if (
-      !PEERING_TF_RESOURCES.has(srcComp.terraform.resource) ||
-      !PEERING_TF_RESOURCES.has(tgtComp.terraform.resource)
-    ) return
+      if (
+        !PEERING_TF_RESOURCES.has(srcComp.terraform.resource) ||
+        !PEERING_TF_RESOURCES.has(tgtComp.terraform.resource)
+      ) return
 
-    const srcName = toTfName(String(srcNode.data?.label || srcCompId))
-    const tgtName = toTfName(String(tgtNode.data?.label || tgtCompId))
+      const srcName = nodeIdToTfName.get(srcNode.id) || toTfName(String(srcNode.data?.label || srcCompId))
+      const tgtName = nodeIdToTfName.get(tgtNode.id) || toTfName(String(tgtNode.data?.label || tgtCompId))
 
-    if (peeringTf === '')
-      peeringTf += `# ─── Network Peering (auto-generated from diagram peering edges) ────\n\n`
+      if (peeringTf === '')
+        peeringTf += `# ─── Network Peering (auto-generated from diagram peering edges) ────\n\n`
 
-    if (srcComp.terraform.resource === 'azurerm_virtual_network') {
-      const srcRg = getAzureRgRef(srcNode, nodeMap)
-      const tgtRg = getAzureRgRef(tgtNode, nodeMap)
+      if (srcComp.terraform.resource === 'azurerm_virtual_network') {
+        const srcRg = getAzureRgRef(srcNode, nodeMap, nodeIdToTfName)
+        const tgtRg = getAzureRgRef(tgtNode, nodeMap, nodeIdToTfName)
 
-      peeringTf += `resource "azurerm_virtual_network_peering" "peer_${srcName}_to_${tgtName}" {\n`
-      peeringTf += `  name                         = "peer-${srcName}-to-${tgtName}"\n`
-      peeringTf += `  resource_group_name          = ${srcRg}\n`
-      peeringTf += `  virtual_network_name         = azurerm_virtual_network.${srcName}.name\n`
-      peeringTf += `  remote_virtual_network_id    = azurerm_virtual_network.${tgtName}.id\n`
-      peeringTf += `  allow_virtual_network_access = true\n`
-      peeringTf += `  allow_forwarded_traffic      = false\n`
-      peeringTf += `}\n\n`
+        peeringTf += `resource "azurerm_virtual_network_peering" "peer_${srcName}_to_${tgtName}" {\n`
+        peeringTf += `  name                         = "peer-${srcName}-to-${tgtName}"\n`
+        peeringTf += `  resource_group_name          = ${srcRg}\n`
+        peeringTf += `  virtual_network_name         = azurerm_virtual_network.${srcName}.name\n`
+        peeringTf += `  remote_virtual_network_id    = azurerm_virtual_network.${tgtName}.id\n`
+        peeringTf += `  allow_virtual_network_access = true\n`
+        peeringTf += `  allow_forwarded_traffic      = false\n`
+        peeringTf += `}\n\n`
 
-      peeringTf += `resource "azurerm_virtual_network_peering" "peer_${tgtName}_to_${srcName}" {\n`
-      peeringTf += `  name                         = "peer-${tgtName}-to-${srcName}"\n`
-      peeringTf += `  resource_group_name          = ${tgtRg}\n`
-      peeringTf += `  virtual_network_name         = azurerm_virtual_network.${tgtName}.name\n`
-      peeringTf += `  remote_virtual_network_id    = azurerm_virtual_network.${srcName}.id\n`
-      peeringTf += `  allow_virtual_network_access = true\n`
-      peeringTf += `  allow_forwarded_traffic      = false\n`
-      peeringTf += `}\n\n`
-    }
+        peeringTf += `resource "azurerm_virtual_network_peering" "peer_${tgtName}_to_${srcName}" {\n`
+        peeringTf += `  name                         = "peer-${tgtName}-to-${srcName}"\n`
+        peeringTf += `  resource_group_name          = ${tgtRg}\n`
+        peeringTf += `  virtual_network_name         = azurerm_virtual_network.${tgtName}.name\n`
+        peeringTf += `  remote_virtual_network_id    = azurerm_virtual_network.${srcName}.id\n`
+        peeringTf += `  allow_virtual_network_access = true\n`
+        peeringTf += `  allow_forwarded_traffic      = false\n`
+        peeringTf += `}\n\n`
+      }
 
-    if (srcComp.terraform.resource === 'aws_vpc') {
-      peeringTf += `resource "aws_vpc_peering_connection" "peer_${srcName}_${tgtName}" {\n`
-      peeringTf += `  peer_vpc_id = aws_vpc.${tgtName}.id\n`
-      peeringTf += `  vpc_id      = aws_vpc.${srcName}.id\n`
-      peeringTf += `  auto_accept = true\n`
-      peeringTf += `  tags = { Name = "peer-${srcName}-${tgtName}", Environment = var.environment }\n`
-      peeringTf += `}\n\n`
-    }
+      if (srcComp.terraform.resource === 'aws_vpc') {
+        peeringTf += `resource "aws_vpc_peering_connection" "peer_${srcName}_${tgtName}" {\n`
+        peeringTf += `  peer_vpc_id = aws_vpc.${tgtName}.id\n`
+        peeringTf += `  vpc_id      = aws_vpc.${srcName}.id\n`
+        peeringTf += `  auto_accept = true\n`
+        peeringTf += `  tags = { Name = "peer-${srcName}-${tgtName}", Environment = var.environment }\n`
+        peeringTf += `}\n\n`
+      }
 
-    if (srcComp.terraform.resource === 'google_compute_network') {
-      peeringTf += `resource "google_compute_network_peering" "peer_${srcName}_to_${tgtName}" {\n`
-      peeringTf += `  name         = "peer-${srcName}-to-${tgtName}"\n`
-      peeringTf += `  network      = google_compute_network.${srcName}.self_link\n`
-      peeringTf += `  peer_network = google_compute_network.${tgtName}.self_link\n`
-      peeringTf += `}\n\n`
+      if (srcComp.terraform.resource === 'google_compute_network') {
+        peeringTf += `resource "google_compute_network_peering" "peer_${srcName}_to_${tgtName}" {\n`
+        peeringTf += `  name         = "peer-${srcName}-to-${tgtName}"\n`
+        peeringTf += `  network      = google_compute_network.${srcName}.self_link\n`
+        peeringTf += `  peer_network = google_compute_network.${tgtName}.self_link\n`
+        peeringTf += `}\n\n`
 
-      peeringTf += `resource "google_compute_network_peering" "peer_${tgtName}_to_${srcName}" {\n`
-      peeringTf += `  name         = "peer-${tgtName}-to-${srcName}"\n`
-      peeringTf += `  network      = google_compute_network.${tgtName}.self_link\n`
-      peeringTf += `  peer_network = google_compute_network.${srcName}.self_link\n`
-      peeringTf += `}\n\n`
-    }
-  })
+        peeringTf += `resource "google_compute_network_peering" "peer_${tgtName}_to_${srcName}" {\n`
+        peeringTf += `  name         = "peer-${tgtName}-to-${srcName}"\n`
+        peeringTf += `  network      = google_compute_network.${tgtName}.self_link\n`
+        peeringTf += `  peer_network = google_compute_network.${srcName}.self_link\n`
+        peeringTf += `}\n\n`
+      }
+    })
 
   if (peeringTf) resourcesTf += peeringTf
 
@@ -924,68 +928,68 @@ export function generateTerraformWithValidation(
 
   let dependencyLocals = ''
 
-  ;(edges || []).forEach(edge => {
-    if ((edge.data as any)?.edgeType !== 'dependency') return
+    ; (edges || []).forEach(edge => {
+      if ((edge.data as any)?.edgeType !== 'dependency') return
 
-    const srcNode = nodeMap.get(edge.source)
-    const tgtNode = nodeMap.get(edge.target)
-    if (!srcNode || !tgtNode) return
+      const srcNode = nodeMap.get(edge.source)
+      const tgtNode = nodeMap.get(edge.target)
+      if (!srcNode || !tgtNode) return
 
-    const srcCompId = getNodeComponentId(srcNode)
-    const tgtCompId = getNodeComponentId(tgtNode)
-    if (!srcCompId || !tgtCompId) return
+      const srcCompId = getNodeComponentId(srcNode)
+      const tgtCompId = getNodeComponentId(tgtNode)
+      if (!srcCompId || !tgtCompId) return
 
-    const tgtComp = getComponentById(tgtCompId)
-    if (!tgtComp?.terraform || !DATA_TF_RESOURCES.has(tgtComp.terraform.resource)) return
+      const tgtComp = getComponentById(tgtCompId)
+      if (!tgtComp?.terraform || !DATA_TF_RESOURCES.has(tgtComp.terraform.resource)) return
 
-    const srcName = toTfName(String(srcNode.data?.label || srcCompId))
-    const tgtName = toTfName(String(tgtNode.data?.label || tgtCompId))
+      const srcName = nodeIdToTfName.get(srcNode.id) || toTfName(String(srcNode.data?.label || srcCompId))
+      const tgtName = nodeIdToTfName.get(tgtNode.id) || toTfName(String(tgtNode.data?.label || tgtCompId))
 
-    if (dependencyLocals === '') {
-      dependencyLocals += `# connections.tf\n# Service dependency connection strings — auto-generated from diagram edges.\n`
-      dependencyLocals += `# Reference these locals in your app_settings / environment_variables blocks.\n\n`
-      dependencyLocals += `locals {\n`
-    }
+      if (dependencyLocals === '') {
+        dependencyLocals += `# connections.tf\n# Service dependency connection strings — auto-generated from diagram edges.\n`
+        dependencyLocals += `# Reference these locals in your app_settings / environment_variables blocks.\n\n`
+        dependencyLocals += `locals {\n`
+      }
 
-    switch (tgtComp.terraform.resource) {
-      case 'azurerm_mssql_server':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = "Server=tcp:\${azurerm_mssql_server.${tgtName}.fully_qualified_domain_name},1433;User ID=\${var.db_admin_username};Password=\${var.db_admin_password};Encrypt=true;"\n`
-        break
-      case 'azurerm_cosmosdb_account':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_cosmosdb_account.${tgtName}.connection_strings[0]\n`
-        break
-      case 'azurerm_redis_cache':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_redis_cache.${tgtName}.primary_connection_string\n`
-        break
-      case 'azurerm_key_vault':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_key_vault.${tgtName}.vault_uri\n`
-        break
-      case 'azurerm_storage_account':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_storage_account.${tgtName}.primary_blob_endpoint\n`
-        break
-      case 'aws_dynamodb_table':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_dynamodb_table.${tgtName}.arn\n`
-        break
-      case 'aws_db_instance':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_db_instance.${tgtName}.endpoint\n`
-        break
-      case 'aws_s3_bucket':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_s3_bucket.${tgtName}.bucket_domain_name\n`
-        break
-      case 'aws_sqs_queue':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_sqs_queue.${tgtName}.url\n`
-        break
-      case 'aws_secretsmanager_secret':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_secretsmanager_secret.${tgtName}.arn\n`
-        break
-      case 'google_sql_database_instance':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = google_sql_database_instance.${tgtName}.connection_name\n`
-        break
-      case 'google_storage_bucket':
-        dependencyLocals += `  conn_${srcName}_to_${tgtName} = google_storage_bucket.${tgtName}.url\n`
-        break
-    }
-  })
+      switch (tgtComp.terraform.resource) {
+        case 'azurerm_mssql_server':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = "Server=tcp:\${azurerm_mssql_server.${tgtName}.fully_qualified_domain_name},1433;User ID=\${var.db_admin_username};Password=\${var.db_admin_password};Encrypt=true;"\n`
+          break
+        case 'azurerm_cosmosdb_account':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_cosmosdb_account.${tgtName}.connection_strings[0]\n`
+          break
+        case 'azurerm_redis_cache':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_redis_cache.${tgtName}.primary_connection_string\n`
+          break
+        case 'azurerm_key_vault':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_key_vault.${tgtName}.vault_uri\n`
+          break
+        case 'azurerm_storage_account':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = azurerm_storage_account.${tgtName}.primary_blob_endpoint\n`
+          break
+        case 'aws_dynamodb_table':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_dynamodb_table.${tgtName}.arn\n`
+          break
+        case 'aws_db_instance':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_db_instance.${tgtName}.endpoint\n`
+          break
+        case 'aws_s3_bucket':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_s3_bucket.${tgtName}.bucket_domain_name\n`
+          break
+        case 'aws_sqs_queue':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_sqs_queue.${tgtName}.url\n`
+          break
+        case 'aws_secretsmanager_secret':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = aws_secretsmanager_secret.${tgtName}.arn\n`
+          break
+        case 'google_sql_database_instance':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = google_sql_database_instance.${tgtName}.connection_name\n`
+          break
+        case 'google_storage_bucket':
+          dependencyLocals += `  conn_${srcName}_to_${tgtName} = google_storage_bucket.${tgtName}.url\n`
+          break
+      }
+    })
 
   if (dependencyLocals) {
     dependencyLocals += `}\n`

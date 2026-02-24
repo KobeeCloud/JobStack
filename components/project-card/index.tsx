@@ -172,15 +172,16 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
 
   return (
     <>
-      <Card className="hover:border-primary transition-colors cursor-pointer h-full group relative">
+      <Card className="hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 cursor-pointer h-full group relative bg-background/50 backdrop-blur-sm overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <Link href={`/projects/${project.id}`} className="absolute inset-0 z-0" aria-label={`Open project ${project.name}`} />
 
-        <CardHeader className="relative z-10 pointer-events-none">
+        <CardHeader className="relative z-10 pointer-events-none pb-4">
           <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0 pr-2">
-              <CardTitle className="truncate">{project.name}</CardTitle>
-              <CardDescription className="line-clamp-2 mt-1">
-                {project.description || 'No description'}
+            <div className="flex-1 min-w-0 pr-4">
+              <CardTitle className="truncate text-xl font-bold group-hover:text-primary transition-colors mb-2">{project.name}</CardTitle>
+              <CardDescription className="line-clamp-2 text-sm leading-relaxed min-h-[40px]">
+                {project.description || 'No description provided'}
               </CardDescription>
             </div>
             <div className="pointer-events-auto">
@@ -250,8 +251,9 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="relative z-10 pointer-events-none">
-          <div className="text-xs text-muted-foreground">
+        <CardContent className="relative z-10 pointer-events-none pt-0 mt-auto">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mt-4 pt-4 border-t border-border/50">
+            <div className="h-2 w-2 rounded-full bg-primary/50 group-hover:bg-primary transition-colors" />
             Updated {new Date(project.updated_at).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',

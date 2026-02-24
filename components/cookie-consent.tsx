@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Cookie, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 const COOKIE_CONSENT_KEY = 'jobstack-cookie-consent'
 
@@ -41,6 +42,7 @@ export function hasAnalyticsConsent(): boolean {
 
 export function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false)
+  const t = useTranslations('cookieConsent')
 
   useEffect(() => {
     const consent = localStorage.getItem(COOKIE_CONSENT_KEY)
@@ -79,13 +81,11 @@ export function CookieConsent() {
           <div className="flex items-start gap-3 flex-1">
             <Cookie className="h-5 w-5 text-primary mt-0.5 shrink-0" />
             <div className="text-sm">
-              <p className="font-medium mb-1">Pliki cookies 🍪</p>
+              <p className="font-medium mb-1">{t('title')}</p>
               <p className="text-muted-foreground">
-                Używamy plików cookies niezbędnych do prawidłowego działania serwisu.
-                Mogą być również używane cookies analityczne w celu poprawy jakości usług.
-                Więcej informacji w naszej{' '}
+                {t('description')}
                 <Link href="/privacy" className="text-primary hover:underline">
-                  Polityce Prywatności
+                  {t('privacyPolicy')}
                 </Link>.
               </p>
             </div>
@@ -96,20 +96,20 @@ export function CookieConsent() {
               size="sm"
               onClick={() => handleConsent('necessary')}
             >
-              Tylko niezbędne
+              {t('necessaryOnly')}
             </Button>
             <Button
               size="sm"
               onClick={() => handleConsent('all')}
             >
-              Akceptuję wszystkie
+              {t('acceptAll')}
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8"
               onClick={() => handleConsent('necessary')}
-              aria-label="Zamknij"
+              aria-label={t('close')}
             >
               <X className="h-4 w-4" />
             </Button>

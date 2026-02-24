@@ -40,7 +40,7 @@ const COST_ALTERNATIVES: Record<string, { alternative: string; reason: string; s
   ],
   'aws-rds': [
     { alternative: 'aws-aurora-serverless', reason: 'Aurora Serverless for variable DB loads', savingsPercent: 40 },
-    { alternative: 'dynamodb', reason: 'DynamoDB for NoSQL workloads', savingsPercent: 50 },
+    { alternative: 'aws-dynamodb', reason: 'DynamoDB for NoSQL workloads', savingsPercent: 50 },
   ],
   'aws-alb': [
     { alternative: 'aws-api-gateway', reason: 'API Gateway for API-only traffic', savingsPercent: 35 },
@@ -60,7 +60,7 @@ const COST_ALTERNATIVES: Record<string, { alternative: string; reason: string; s
   ],
 
   // GCP alternatives
-  'gcp-compute-engine': [
+  'gcp-compute-instance': [
     { alternative: 'gcp-cloud-run', reason: 'Cloud Run for containerized apps', savingsPercent: 50 },
     { alternative: 'gcp-cloud-functions', reason: 'Functions for event-driven code', savingsPercent: 60 },
   ],
@@ -74,14 +74,14 @@ const COST_ALTERNATIVES: Record<string, { alternative: string; reason: string; s
 const RESERVED_ELIGIBLE = [
   'aws-ec2', 'aws-rds', 'aws-elasticache', 'aws-redshift',
   'azure-vm', 'azure-sql', 'azure-cosmos',
-  'gcp-compute-engine', 'gcp-cloud-sql',
+  'gcp-compute-instance', 'gcp-cloud-sql',
 ]
 
 // Components that can use spot/preemptible instances
 const SPOT_ELIGIBLE = [
   'aws-ec2', 'aws-eks', 'aws-ecs',
   'azure-vm', 'azure-vmss', 'azure-aks',
-  'gcp-compute-engine', 'gcp-gke',
+  'gcp-compute-instance', 'gcp-gke',
 ]
 
 export function analyzeCosts(nodes: Node[]): CostReport {
