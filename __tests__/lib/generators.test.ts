@@ -15,10 +15,8 @@ import {
   findAncestor,
   findAncestorByComponentId,
   findConnectedNodes,
-  findConnectedNames,
   getNodeDepth,
   detectCycles,
-  SanitizeFormat,
 } from '@/lib/generators/core/graph-utils'
 import { getComponentById } from '@/lib/catalog'
 import { generateCloudFormation } from '@/lib/export/cloudformation-generator'
@@ -412,7 +410,7 @@ describe('cloud-mappings', () => {
 
 describe('snap-to-container', () => {
   // We import the function to verify the 'container' type is now detected
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+
   it('includes "container" in CONTAINER_NODE_TYPES (used by templates)', async () => {
     // We test indirectly via calculateSnapPosition
     const { calculateSnapPosition } = await import('@/lib/snap/snap-to-container')

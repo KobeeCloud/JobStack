@@ -306,7 +306,6 @@ async function testCostLimits(nodes: Node[], _edges: Edge[]): Promise<Infrastruc
   let totalEstimatedCost = 0
 
   for (const node of nodes) {
-    const component = (node.data.componentId || node.data.component) as string
     // Simplified cost estimation - in real implementation, use COMPONENT_CATALOG
     const baseCost = 100 // Default $100/month per resource
     const replicas = (node.data.config as any)?.replicas || 1

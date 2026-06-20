@@ -20,11 +20,9 @@ import {
   Copy,
   Edit3,
   Save,
-  Image,
   Box,
   Palette,
   Settings2,
-  Upload,
 } from 'lucide-react';
 
 // ============================================================================

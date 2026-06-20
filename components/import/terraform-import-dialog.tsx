@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { importTerraform, importTerraformFiles } from '@/lib/terraform-import'
 import {
   Upload, FileCode, AlertTriangle, CheckCircle, X,
-  FileText, Loader2, Download, Copy
+  Loader2, Download, Copy
 } from 'lucide-react'
 
 interface TerraformImportDialogProps {

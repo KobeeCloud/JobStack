@@ -303,6 +303,7 @@ export function DragPreviewOverlay({
   // Check which drop zone the cursor is over
   useEffect(() => {
     if (!isDragging || !config.showDropZones) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveZone(null);
       return;
     }

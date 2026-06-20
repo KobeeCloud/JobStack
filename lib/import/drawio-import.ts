@@ -1,4 +1,4 @@
-import { Node, Edge, XYPosition } from '@xyflow/react';
+import { Node, Edge } from '@xyflow/react';
 
 // ============================================================================
 // Types

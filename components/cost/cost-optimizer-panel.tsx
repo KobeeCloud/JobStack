@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { analyzeCosts, CostReport, CostOptimization, formatCurrency } from '@/lib/cost-optimizer'
 import {
   DollarSign, TrendingDown, Zap, Clock, ArrowRight,
-  Sparkles, AlertTriangle, CheckCircle, X, RefreshCw
+  Sparkles, CheckCircle, X, RefreshCw
 } from 'lucide-react'
 
 interface CostOptimizerPanelProps {

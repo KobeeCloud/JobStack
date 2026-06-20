@@ -21,9 +21,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import {
   History, Save, RotateCcw, GitBranch, Eye, Trash2,
-  X, Plus, Check, Calendar, User, Tag
+  X, Calendar, User, Tag
 } from 'lucide-react'
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 
 export interface DiagramVersion {
   id: string
@@ -54,7 +54,7 @@ export function DiagramVersions({
   currentNodes,
   currentEdges,
   versions,
-  currentUserId,
+  currentUserId: _currentUserId,
   onSaveVersion,
   onRestoreVersion,
   onDeleteVersion,
@@ -93,21 +93,6 @@ export function DiagramVersions({
       onDeleteVersion(deleteTarget.id)
       setDeleteTarget(null)
     }
-  }
-
-  const getChangesSummary = (version: DiagramVersion) => {
-    const nodesDiff = version.nodes.length - currentNodes.length
-    const edgesDiff = version.edges.length - currentEdges.length
-
-    const parts = []
-    if (nodesDiff !== 0) {
-      parts.push(`${nodesDiff > 0 ? '+' : ''}${nodesDiff} nodes`)
-    }
-    if (edgesDiff !== 0) {
-      parts.push(`${edgesDiff > 0 ? '+' : ''}${edgesDiff} connections`)
-    }
-
-    return parts.length > 0 ? parts.join(', ') : 'No changes'
   }
 
   return (

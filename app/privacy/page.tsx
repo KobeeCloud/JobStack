@@ -308,7 +308,7 @@ export default async function PrivacyPage() {
                   Personal data may be transferred to countries outside the European Economic Area (EEA),
                   particularly to the USA, in connection with the use of Supabase, Vercel, and OpenAI services.
                   The transfer is based on Standard Contractual Clauses (SCC) pursuant to Art. 46(2)(c) GDPR
-                  or based on the European Commission's adequacy decision (EU-U.S. Data Privacy Framework).
+                  or based on the European Commission&apos;s adequacy decision (EU-U.S. Data Privacy Framework).
                 </p>
               </section>
 

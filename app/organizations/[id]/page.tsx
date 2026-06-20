@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/table'
 import {
   ArrowLeft, Building2, Users, Crown, Shield, User,
-  Plus, Trash2, Mail, Loader2, Copy, Check, Settings, Pencil
+  Plus, Trash2, Mail, Loader2, Copy, Check, Pencil
 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import {

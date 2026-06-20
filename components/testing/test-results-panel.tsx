@@ -116,7 +116,7 @@ export function TestResultsPanel({ results, onRunTests, isTesting }: TestResults
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <FlaskConical className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Click "Run All Tests" to start validation</p>
+            <p>Click &quot;Run All Tests&quot; to start validation</p>
           </div>
         </div>
       )}

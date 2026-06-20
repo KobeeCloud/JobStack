@@ -24,18 +24,16 @@ import { useDiagramStore } from '@/lib/store/diagram-store'
 import { COMPONENT_CATALOG, getComponentById } from '@/lib/catalog'
 import { ComponentPalette } from '@/components/diagram/component-palette'
 import { MobileWarningOverlay } from '@/components/diagram/mobile-warning'
-import { CustomNode, ContainerNode, AttachmentNode, isValidConnection, getComponentCategory, shouldUseParentChild, getConnectionError, getEdgeType, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
+import { CustomNode, ContainerNode, AttachmentNode, getConnectionError, getEdgeType, CONTAINER_HIERARCHY } from '@/components/diagram/custom-nodes'
 import { DiagramToolbar } from '@/components/diagram/toolbar'
 import { DiagramSearch } from '@/components/diagram/diagram-search'
 import { CostSidebar } from '@/components/diagram/cost-sidebar'
 import { NodeConfigPanel } from '@/components/diagram/node-config-panel'
-import { calculateInfrastructureCost } from '@/lib/cost-calculator'
 import { toast } from 'sonner'
 import { useHistory } from '@/hooks/use-history'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { fetchWithTimeout } from '@/lib/fetch-with-timeout'
 import { CloudProvider, ServiceType } from '@/lib/catalog'
-import type { NodeConfig } from '@/lib/node-config-schemas'
 import { createClient } from '@/lib/supabase/client'
 import { AIAssistantPanel } from '@/components/ai/ai-assistant-panel'
 import { ComplianceReportPanel } from '@/components/compliance/compliance-report-panel'
@@ -47,12 +45,8 @@ import { TemplateDialog } from '@/components/diagram/template-dialog'
 import { analyzeArchitecture } from '@/lib/ai/architecture-analyzer'
 import { runComplianceScan } from '@/lib/compliance/compliance-scanner'
 import { testDiagram } from '@/lib/testing/infrastructure-tester'
-import type { ArchitectureIssue } from '@/lib/ai/architecture-analyzer'
-import type { ComplianceReport } from '@/lib/compliance/compliance-scanner'
-import type { InfrastructureTest } from '@/lib/testing/infrastructure-tester'
 import { LabeledEdge } from '@/components/diagram/labeled-edge'
 import { CodePreviewDialog } from '@/components/diagram/code-preview-dialog'
-import type { CodeFile } from '@/components/diagram/code-preview-dialog'
 import { K8sWizard } from '@/components/diagram/k8s-wizard'
 import { GovernanceWizard } from '@/components/diagram/governance-wizard'
 import { QuickBuildModal } from '@/components/diagram/quick-build-modal'
@@ -103,7 +97,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     edges, setEdges,
     diagramId, setDiagramId,
     selectedNode, setSelectedNode,
-    configPanelOpen, setConfigPanelOpen,
+    configPanelOpen: _configPanelOpen, setConfigPanelOpen,
     activePanel, setActivePanel,
     aiIssues, setAiIssues,
     aiAnalyzing, setAiAnalyzing,
@@ -111,12 +105,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     complianceScanning, setComplianceScanning,
     testing, setTesting,
     testResults, setTestResults,
-    highlightedNodeId, setHighlightedNodeId,
+    highlightedNodeId: _highlightedNodeId, setHighlightedNodeId,
     templateDialogOpen, setTemplateDialogOpen,
     showK8sWizard, setShowK8sWizard,
     showGovernanceWizard, setShowGovernanceWizard,
     showQuickBuild, setShowQuickBuild,
-    terraformDirty, setTerraformDirty,
+    terraformDirty: _terraformDirty, setTerraformDirty,
     codePreviewOpen, setCodePreviewOpen,
     codePreviewFiles, setCodePreviewFiles,
     codePreviewTitle, setCodePreviewTitle,
@@ -629,18 +623,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     setSelectedNode(node)
     setConfigPanelOpen(true)
   }, [])
-
-  const handleConfigUpdate = useCallback((nodeId: string, config: NodeConfig) => {
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? { ...node, data: { ...node.data, config } }
-          : node
-      )
-    )
-    setConfigPanelOpen(false)
-    setSelectedNode(null)
-  }, [setNodes])
 
   // Helper: compute absolute position of a node considering its parent chain
   const getAbsolutePosition = useCallback((node: Node, allNodes: Node[]): { x: number; y: number } => {

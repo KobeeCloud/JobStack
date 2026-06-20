@@ -142,7 +142,7 @@ export function generateARM(nodes: Node[], edges: Edge[] = []): string {
     // --- Parent-child context ---
     const vnetRef = findAncestor(node.id, 'azure-vnet', nodeMap, nodeIdToName)
     const subnetRef = findAncestor(node.id, 'azure-subnet', nodeMap, nodeIdToName)
-    const rgRef = findAncestor(node.id, 'azure-resource-group', nodeMap, nodeIdToName)
+    const _rgRef = findAncestor(node.id, 'azure-resource-group', nodeMap, nodeIdToName)
 
     // Subnet inside VNet -> subnet is a sub-resource of VNet
     if (componentId === 'azure-subnet' && vnetRef) {
@@ -217,7 +217,7 @@ export function generateARM(nodes: Node[], edges: Edge[] = []): string {
 
     // NSG connected to Subnet
     if (componentId === 'azure-nsg') {
-      const subnetConns = findConnected(node.id, ['azure-subnet'], edges, nodeMap, nodeIdToName)
+      const _subnetConns = findConnected(node.id, ['azure-subnet'], edges, nodeMap, nodeIdToName)
       // Just add dependencies
       if (vnetRef) deps.push(`[resourceId('Microsoft.Network/virtualNetworks', concat(variables('resourcePrefix'), '${vnetRef}'))]`)
     }

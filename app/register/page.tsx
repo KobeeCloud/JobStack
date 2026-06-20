@@ -235,10 +235,10 @@ export default function RegisterPage() {
               />
               <Label htmlFor="consent" className="text-sm text-muted-foreground leading-relaxed">
                 {t.rich('consent', {
-                  terms: (chunks) => (
+                  terms: (_chunks) => (
                     <a href="/terms" target="_blank" className="text-primary hover:underline">{t('termsLink')}</a>
                   ),
-                  privacy: (chunks) => (
+                  privacy: (_chunks) => (
                     <a href="/privacy" target="_blank" className="text-primary hover:underline">{t('privacyLink')}</a>
                   ),
                 })}

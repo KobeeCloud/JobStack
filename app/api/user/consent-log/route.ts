@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
             cookie_consent_at: timestamp,
           })
           .eq('id', userId)
-      } catch (err) {
+      } catch {
         // Non-blocking — the structured log is the primary audit trail
         log.warn('Failed to persist cookie consent to profile', { userId })
       }

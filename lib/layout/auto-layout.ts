@@ -57,43 +57,6 @@ function findRoots(nodes: Node[], edges: Edge[]): string[] {
     .map(n => n.id)
 }
 
-// Topological sort using Kahn's algorithm
-function topologicalSort(nodes: Node[], graph: Map<string, Set<string>>): string[] {
-  const inDegree = new Map<string, number>()
-  nodes.forEach(n => inDegree.set(n.id, 0))
-  
-  graph.forEach((targets) => {
-    targets.forEach(target => {
-      inDegree.set(target, (inDegree.get(target) || 0) + 1)
-    })
-  })
-  
-  const queue = nodes.filter(n => inDegree.get(n.id) === 0).map(n => n.id)
-  const result: string[] = []
-  
-  while (queue.length > 0) {
-    const current = queue.shift()!
-    result.push(current)
-    
-    graph.get(current)?.forEach(target => {
-      const newDegree = (inDegree.get(target) || 0) - 1
-      inDegree.set(target, newDegree)
-      if (newDegree === 0) {
-        queue.push(target)
-      }
-    })
-  }
-  
-  // Add any remaining nodes (in case of cycles)
-  nodes.forEach(n => {
-    if (!result.includes(n.id)) {
-      result.push(n.id)
-    }
-  })
-  
-  return result
-}
-
 // Assign layers using longest path
 function assignLayers(nodes: Node[], edges: Edge[]): Map<string, number> {
   const graph = buildGraph(nodes, edges)
@@ -212,7 +175,6 @@ function gridLayout(nodes: Node[], options: LayoutOptions): Node[] {
 // Radial layout (nodes arranged in circles around center)
 function radialLayout(nodes: Node[], edges: Edge[], options: LayoutOptions): Node[] {
   const layers = assignLayers(nodes, edges)
-  const maxLayer = Math.max(...Array.from(layers.values()))
   const centerX = 500
   const centerY = 400
   const layerRadius = options.layerSpacing || 200

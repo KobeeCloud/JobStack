@@ -99,7 +99,7 @@ export default function BillingPage() {
           <h1 className="text-4xl font-bold mb-3">Simple, transparent pricing</h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             JobStack is <strong>completely free</strong> for the first 6 months as we grow and
-            improve. Paid plans will unlock soon — you'll get plenty of notice.
+            improve. Paid plans will unlock soon — you&apos;ll get plenty of notice.
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function BillingPage() {
             <Check className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <p className="font-semibold text-sm">You're on the Free plan — enjoy all features!</p>
+            <p className="font-semibold text-sm">You&apos;re on the Free plan — enjoy all features!</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               During our launch period every user gets access to all features at no cost.
               Billing will activate on&nbsp;<strong>September 2026</strong>.
@@ -187,7 +187,7 @@ export default function BillingPage() {
             <div>
               <p className="font-medium">When will paid plans be available?</p>
               <p className="text-muted-foreground mt-1">
-                We plan to activate billing in September 2026. You'll receive an email
+                We plan to activate billing in September 2026. You&apos;ll receive an email
                 notification at least 30 days in advance.
               </p>
             </div>

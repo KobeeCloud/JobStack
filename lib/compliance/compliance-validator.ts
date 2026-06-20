@@ -46,7 +46,7 @@ export interface ComplianceTemplate {
 // Helper functions for validation
 const getCompId = (n: Node) => String(n.data?.componentId || n.data?.component || n.type || '')
 
-const hasComponent = (nodes: Node[], types: string[]) =>
+const _hasComponent = (nodes: Node[], types: string[]) =>
   nodes.some(n => types.some(t => getCompId(n).includes(t)))
 
 const hasEncryption = (nodes: Node[]) =>

@@ -315,7 +315,7 @@ export default async function TermsPage() {
                   <li>Use the Service in accordance with applicable Polish and EU law</li>
                   <li>Not post unlawful or offensive content, or content that infringes third-party rights</li>
                   <li>Not attempt to gain unauthorized access to the Service</li>
-                  <li>Not disproportionately overload the Service's infrastructure</li>
+                  <li>Not disproportionately overload the Service&apos;s infrastructure</li>
                   <li>Not use the Service for purposes contrary to its intended use</li>
                 </ul>
               </section>
@@ -326,7 +326,7 @@ export default async function TermsPage() {
                 <ol className="list-decimal list-inside space-y-2 ml-4">
                   <li>The User retains full copyrights to the content (projects, diagrams) created in the Service.</li>
                   <li>The JobStack Service, its source code, graphic design, and logo are the property of the Service Provider and are subject to legal protection.</li>
-                  <li>The generated Terraform code is provided 'as-is' and should be verified before production deployment.</li>
+                  <li>The generated Terraform code is provided &apos;as-is&apos; and should be verified before production deployment.</li>
                   <li>The Service Provider is not responsible for any cloud resource costs incurred as a result of deploying the generated code.</li>
                 </ol>
               </section>
@@ -338,7 +338,7 @@ export default async function TermsPage() {
                   <li>The Service Provider makes every effort to ensure the proper operation of the Service.</li>
                   <li>The Service Provider is not liable for:
                     <ul className="list-disc list-inside space-y-1 ml-8 mt-2">
-                      <li>Service interruptions caused by factors beyond the Service Provider's control</li>
+                      <li>Service interruptions caused by factors beyond the Service Provider&apos;s control</li>
                       <li>Damages resulting from incorrect use of the Service</li>
                       <li>The consequences of deploying the generated Terraform code without prior verification</li>
                       <li>Cloud resource costs created based on diagrams and code</li>
@@ -376,7 +376,7 @@ export default async function TermsPage() {
                 <ol className="list-decimal list-inside space-y-2 ml-4">
                   <li>The User may terminate the contract at any time by deleting their Account in the Service settings.</li>
                   <li>The Service Provider may terminate the contract in the event of a gross violation of the Terms of Service, after a prior request to cease such violations.</li>
-                  <li>Upon termination of the contract, the User's data will be deleted in accordance with the Privacy Policy.</li>
+                  <li>Upon termination of the contract, the User&apos;s data will be deleted in accordance with the Privacy Policy.</li>
                 </ol>
               </section>
 
@@ -395,7 +395,7 @@ export default async function TermsPage() {
                 <h2 className="text-2xl font-semibold text-foreground mb-4">§14. Applicable Law and Dispute Resolution</h2>
                 <ol className="list-decimal list-inside space-y-2 ml-4">
                   <li>These Terms of Service are governed by Polish law.</li>
-                  <li>Disputes will be resolved by the competent court for the Service Provider's registered office, subject to applicable provisions on court jurisdiction for consumers.</li>
+                  <li>Disputes will be resolved by the competent court for the Service Provider&apos;s registered office, subject to applicable provisions on court jurisdiction for consumers.</li>
                   <li>In the case of Users who are consumers from EU countries, the protective provisions of the law of their country of residence also apply (Article 6 of the Rome I Regulation).</li>
                 </ol>
               </section>

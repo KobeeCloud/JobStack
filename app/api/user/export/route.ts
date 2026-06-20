@@ -18,7 +18,7 @@ export const GET = createApiHandler(
     // SECURITY: Strip OAuth provider tokens / refresh tokens from user_metadata
     const safeMetadata = fullUser?.user_metadata
       ? (() => {
-          const { provider_token, provider_refresh_token, ...safe } = fullUser.user_metadata as Record<string, unknown>
+          const { provider_token: _provider_token, provider_refresh_token: _provider_refresh_token, ...safe } = fullUser.user_metadata as Record<string, unknown>
           return safe
         })()
       : null

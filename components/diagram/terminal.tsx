@@ -66,7 +66,7 @@ export function Terminal({ nodes, edges, onClose }: TerminalProps) {
           }
         }
       }
-    } catch (error) {
+    } catch {
       setLogs(prev => [...prev, '\x1b[31mConnection lost to Terraform Engine\x1b[0m'])
     } finally {
       setIsRunning(false)

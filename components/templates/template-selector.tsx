@@ -39,7 +39,7 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [providerFilter, setProviderFilter] = useState<string>('all')
-  const [selectedTemplate, setSelectedTemplate] = useState<ArchitectureTemplate | null>(null)
+  const [_selectedTemplate, setSelectedTemplate] = useState<ArchitectureTemplate | null>(null)
 
   const filteredTemplates = useMemo(() => {
     return ARCHITECTURE_TEMPLATES.filter(t => {

@@ -39,7 +39,7 @@ export async function analyzeArchitecture(
   return issues
 }
 
-function checkSecurityBestPractices(nodes: Node[], edges: Edge[]): ArchitectureIssue[] {
+function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
   const issues: ArchitectureIssue[] = []
 
   // Check 1: Databases without encryption
@@ -292,7 +292,7 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
   return issues
 }
 
-function checkReliability(nodes: Node[], edges: Edge[]): ArchitectureIssue[] {
+function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
   const issues: ArchitectureIssue[] = []
 
   // Check 1: Single points of failure
@@ -401,7 +401,7 @@ function checkReliability(nodes: Node[], edges: Edge[]): ArchitectureIssue[] {
   return issues
 }
 
-function checkPerformance(nodes: Node[], edges: Edge[]): ArchitectureIssue[] {
+function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
   const issues: ArchitectureIssue[] = []
 
   // Check 1: No CDN for static content

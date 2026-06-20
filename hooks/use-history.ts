@@ -24,7 +24,7 @@ const MAX_HISTORY = 50 // Maximum number of states to keep
 
 export function useHistory(initialNodes: Node[] = [], initialEdges: Edge[] = []): UseHistoryReturn {
   const [history, setHistory] = useState<HistoryState[]>([
-    { nodes: initialNodes, edges: initialEdges, timestamp: Date.now() }
+    { nodes: initialNodes, edges: initialEdges, timestamp: 0 }
   ])
   const [currentIndex, setCurrentIndex] = useState(0)
   const currentIndexRef = useRef(0)
@@ -32,7 +32,9 @@ export function useHistory(initialNodes: Node[] = [], initialEdges: Edge[] = [])
   const DEBOUNCE_MS = 300 // Debounce rapid changes
 
   // Keep ref in sync with state
-  currentIndexRef.current = currentIndex
+  useEffect(() => {
+    currentIndexRef.current = currentIndex
+  }, [currentIndex])
 
   const pushState = useCallback((nodes: Node[], edges: Edge[]) => {
     const now = Date.now()

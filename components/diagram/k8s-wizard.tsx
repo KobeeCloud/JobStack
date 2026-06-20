@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ChevronRight, ChevronLeft, Server, Network, Container, Check } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Server, Container, Check } from 'lucide-react'
 
 interface K8sWizardProps {
   open: boolean

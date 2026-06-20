@@ -491,7 +491,7 @@ export function useChangeDetection(
     for (const node of currentNodes) {
       if (!prevNodeMap.has(node.id)) {
         changes.push({
-          id: `change-${Date.now()}-${node.id}`,
+          id: `change-add-${node.id}`,
           type: 'add',
           entity: 'node',
           entityId: node.id,
@@ -506,7 +506,7 @@ export function useChangeDetection(
         const prevNode = prevNodeMap.get(node.id)!;
         if (JSON.stringify(prevNode) !== JSON.stringify(node)) {
           changes.push({
-            id: `change-${Date.now()}-${node.id}`,
+            id: `change-modify-${node.id}`,
             type: 'modify',
             entity: 'node',
             entityId: node.id,
@@ -524,7 +524,7 @@ export function useChangeDetection(
     for (const node of previousNodes) {
       if (!currNodeMap.has(node.id)) {
         changes.push({
-          id: `change-${Date.now()}-${node.id}`,
+          id: `change-delete-${node.id}`,
           type: 'delete',
           entity: 'node',
           entityId: node.id,
@@ -542,7 +542,7 @@ export function useChangeDetection(
     for (const edge of currentEdges) {
       if (!prevEdgeMap.has(edge.id)) {
         changes.push({
-          id: `change-${Date.now()}-${edge.id}`,
+          id: `change-connect-${edge.id}`,
           type: 'connect',
           entity: 'edge',
           entityId: edge.id,
@@ -559,7 +559,7 @@ export function useChangeDetection(
     for (const edge of previousEdges) {
       if (!currEdgeMap.has(edge.id)) {
         changes.push({
-          id: `change-${Date.now()}-${edge.id}`,
+          id: `change-disconnect-${edge.id}`,
           type: 'disconnect',
           entity: 'edge',
           entityId: edge.id,

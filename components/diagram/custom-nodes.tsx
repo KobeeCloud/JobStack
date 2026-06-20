@@ -425,15 +425,15 @@ function StatusIndicator({ status }: { status: 'running' | 'stopped' | 'warning'
   )
 }
 
-function getCategoryIcon(category: string) {
+function getCategoryIconElement(category: string, className: string) {
   switch (category) {
-    case 'compute': return Cpu
-    case 'database': return Database
-    case 'storage': return HardDrive
-    case 'networking': return Network
-    case 'security': return Shield
-    case 'containers': return Container
-    default: return Cloud
+    case 'compute': return <Cpu className={className} />
+    case 'database': return <Database className={className} />
+    case 'storage': return <HardDrive className={className} />
+    case 'networking': return <Network className={className} />
+    case 'security': return <Shield className={className} />
+    case 'containers': return <Container className={className} />
+    default: return <Cloud className={className} />
   }
 }
 
@@ -494,7 +494,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
     setNodes([...nodes, newNode])
   }, [getNodes, id, setNodes])
 
-  const CategoryIcon = getCategoryIcon(category)
+  const categoryIconNode = !data.icon ? getCategoryIconElement(category, 'w-6 h-6 text-muted-foreground') : null
 
   return (
     <ContextMenu>
@@ -526,7 +526,7 @@ export const CustomNode = memo(function CustomNode({ id, data, selected }: Custo
 
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
-              {data.icon ? <span className="text-2xl">{data.icon}</span> : <CategoryIcon className="w-6 h-6 text-muted-foreground" />}
+              {data.icon ? <span className="text-2xl">{data.icon}</span> : categoryIconNode}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <span className="font-medium text-sm truncate">{data.label}</span>
@@ -658,7 +658,7 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
     )
   }, [id, setNodes])
 
-  const CategoryIcon = getCategoryIcon(category)
+  const CategoryIcon = getCategoryIconElement(category, 'w-5 h-5 text-muted-foreground')
 
   // Default sizes based on container type
   const getDefaultSize = () => {
@@ -731,7 +731,7 @@ export const ContainerNode = memo(function ContainerNode({ id, data, selected, s
 
           {/* Header bar */}
           <div className={`absolute top-0 left-0 right-0 px-3 py-2 border-b flex items-center gap-2 backdrop-blur-sm rounded-t-lg z-10 ${getHeaderBg()}`}>
-            {data.icon ? <span className="text-xl">{data.icon}</span> : <CategoryIcon className="w-5 h-5 text-muted-foreground" />}
+            {data.icon ? <span className="text-xl">{data.icon}</span> : CategoryIcon}
             <span className="font-semibold text-sm">{data.label}</span>
             <div className="flex items-center gap-1 ml-auto">
               {componentId.includes('subscription') && (

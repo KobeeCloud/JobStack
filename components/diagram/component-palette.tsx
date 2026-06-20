@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { ComponentConfig, CloudProvider, ServiceType } from '@/lib/catalog'
 import { LucideIcon, Search, X, Filter } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -29,13 +29,15 @@ export function ComponentPalette({
 }: ComponentPaletteProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [activeProvider, setActiveProvider] = useState<string>(cloudProvider || 'all')
-  const dragImageRef = useRef<HTMLDivElement>(null)
+  const [activeProvider, setActiveProvider] = useState<string>(() => cloudProvider || 'all')
 
   // Keep local provider in sync if the project's cloud_provider changes
   useEffect(() => {
-    setActiveProvider(cloudProvider || 'all')
-  }, [cloudProvider])
+    if (cloudProvider && cloudProvider !== activeProvider) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveProvider(cloudProvider)
+    }
+  }, [cloudProvider, activeProvider])
 
   // Custom drag start handler with proper drag image
   const handleDragStart = useCallback((e: React.DragEvent, component: ComponentConfig) => {

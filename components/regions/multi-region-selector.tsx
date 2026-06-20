@@ -7,14 +7,13 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  CloudRegion, 
-  ALL_REGIONS, 
-  getRegionsByProvider, 
+import {
+  CloudRegion,
+  ALL_REGIONS,
+
   getPairedRegion,
-  estimateLatency 
+  estimateLatency
 } from '@/lib/regions'
 import { Globe, MapPin, Search, X, ArrowRight, Clock, Shield } from 'lucide-react'
 
@@ -54,14 +53,14 @@ export function MultiRegionSelector({
 
   const filteredRegions = useMemo(() => {
     return ALL_REGIONS.filter(region => {
-      const matchesSearch = search === '' || 
+      const matchesSearch = search === '' ||
         region.name.toLowerCase().includes(search.toLowerCase()) ||
         region.displayName.toLowerCase().includes(search.toLowerCase()) ||
         region.id.toLowerCase().includes(search.toLowerCase())
-      
+
       const matchesProvider = providerFilter === 'all' || region.provider === providerFilter
       const matchesContinent = continentFilter === 'all' || region.continent === continentFilter
-      
+
       return matchesSearch && matchesProvider && matchesContinent
     })
   }, [search, providerFilter, continentFilter])

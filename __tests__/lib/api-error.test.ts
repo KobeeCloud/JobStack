@@ -20,7 +20,6 @@ jest.mock('@/lib/logger', () => ({
 }))
 
 import { ApiError, handleApiError } from '@/lib/api-error'
-import { NextResponse } from 'next/server'
 import { z, ZodError } from 'zod'
 
 describe('ApiError', () => {

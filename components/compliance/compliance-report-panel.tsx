@@ -171,7 +171,7 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Select a framework and click "Run Scan" to start</p>
+            <p>Select a framework and click &quot;Run Scan&quot; to start</p>
           </div>
         </div>
       )}

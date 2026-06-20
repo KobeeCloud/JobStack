@@ -138,7 +138,7 @@ interface ProviderRowProps {
   onSelect: () => void
 }
 
-function ProviderRow({ provider, providerKey, details, isCheapest, onSelect }: ProviderRowProps) {
+function ProviderRow({ provider, providerKey: _providerKey, details, isCheapest, onSelect }: ProviderRowProps) {
   const avgCost = (details.estimatedCost.min + details.estimatedCost.max) / 2
 
   return (

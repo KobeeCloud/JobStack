@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   MessageSquare, Send, MoreVertical, Edit2, Trash2,
-  Reply, CheckCircle, AlertCircle, X, AtSign
+  Reply, CheckCircle, AlertCircle, X
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -351,7 +351,7 @@ export function useComments(
       parentId,
     }
     setComments(prev => [...prev, newComment])
-  }, [])
+  }, [currentUser])
 
   const updateComment = useCallback((commentId: string, content: string) => {
     setComments(prev => prev.map(c =>

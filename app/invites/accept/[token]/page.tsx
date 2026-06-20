@@ -28,7 +28,7 @@ export default function AcceptInvitePage({ params }: PageProps) {
   const [status, setStatus] = useState<InviteStatus>('loading')
   const [error, setError] = useState<string | null>(null)
   const [inviteInfo, setInviteInfo] = useState<InviteInfo>({})
-  const [orgId, setOrgId] = useState<string | null>(null)
+  const [_orgId, setOrgId] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 

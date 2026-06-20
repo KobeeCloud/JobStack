@@ -49,7 +49,6 @@ import {
   Search,
   Loader2,
   GripVertical,
-  Settings2,
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'

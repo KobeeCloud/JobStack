@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, memo } from 'react'
+import { useState, memo } from 'react'
 import Link from 'next/link'
 import {
   ReactFlow,
@@ -20,8 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LogoIcon } from '@/components/logo'
 import {
-  ArrowRight, ExternalLink, DollarSign, Code2, GitBranch,
-  Cloud, Database, Server, Shield, Key
+  ArrowRight, ExternalLink, DollarSign, Code2, GitBranch
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 

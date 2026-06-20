@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from './supabase/server'
-import { checkRateLimit, authRateLimit } from './rate-limit'
+import { checkRateLimit } from './rate-limit'
 import { handleApiError, ApiError } from './api-error'
 import { ZodSchema } from 'zod'
 

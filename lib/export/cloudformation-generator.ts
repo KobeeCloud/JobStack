@@ -2,7 +2,6 @@ import { Node, Edge } from '@xyflow/react'
 import {
   buildNodeMap,
   getNodeComponentId,
-  uniqueName,
   findAncestorName,
   findConnectedNames,
 } from '@/lib/generators/core/graph-utils'
@@ -81,16 +80,6 @@ function findAncestorOfType(nodeId: string, targetComponentId: string, nodeMap: 
 
 function findConnected(nodeId: string, targetTypes: string[], edges: Edge[], nodeMap: Map<string, Node>, nodeIdToName: Map<string, string>): string[] {
   return findConnectedNames(nodeId, targetTypes, edges, nodeMap, nodeIdToName)
-}
-
-// Find all siblings inside the same parent that match target types
-function findSiblings(nodeId: string, targetTypes: string[], nodes: Node[], nodeIdToName: Map<string, string>): string[] {
-  const node = nodes.find(n => n.id === nodeId)
-  if (!node?.parentId) return []
-  return nodes
-    .filter(n => n.id !== nodeId && n.parentId === node.parentId && targetTypes.includes(getNodeComponentId(n)))
-    .map(n => nodeIdToName.get(n.id)!)
-    .filter(Boolean)
 }
 
 export function generateCloudFormation(nodes: Node[], edges: Edge[] = [], format: 'yaml' | 'json' = 'yaml'): string {

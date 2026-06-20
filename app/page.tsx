@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   Boxes, Code, DollarSign, Users, ArrowRight, Check, Sparkles,
   LayoutDashboard, LogOut, Building2, Cloud, Server, Globe, Container, Lock, AlertTriangle,
-  Shield, BrainCircuit, TestTube2, FileCode2, Github, GitBranch
+  Shield, TestTube2, FileCode2, Github, GitBranch
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Logo } from '@/components/logo'

@@ -26,9 +26,6 @@ export async function GET(request: NextRequest) {
   if (code) {
     // We MUST set cookies on the response object, not via cookies() API,
     // because cookies() can't set cookies when the response is a redirect.
-    const forwardedHost = request.headers.get('x-forwarded-host')
-    const isLocalEnv = process.env.NODE_ENV === 'development'
-
     const redirectTo = new URL(next, origin)
 
     // Collect cookies to set on the final redirect response

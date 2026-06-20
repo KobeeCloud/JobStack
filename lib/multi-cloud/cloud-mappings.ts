@@ -155,7 +155,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 18, max: 25 },
       },
       gcp: {
-        componentId: 'gcp-lb',
+        componentId: 'gcp-cloud-lb',
         defaultConfig: { loadBalancingScheme: 'EXTERNAL' },
         estimatedCost: { min: 18, max: 25 },
       },
@@ -273,7 +273,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 0, max: 50 },
       },
       gcp: {
-        componentId: 'gcp-cloud-function',
+        componentId: 'gcp-cloud-functions',
         defaultConfig: { runtime: 'nodejs20', memoryMb: 256 },
         estimatedCost: { min: 0, max: 50 },
       },
@@ -319,7 +319,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 18, max: 200 },
       },
       gcp: {
-        componentId: 'gcp-lb',
+        componentId: 'gcp-cloud-lb',
         defaultConfig: { loadBalancingScheme: 'EXTERNAL' },
         estimatedCost: { min: 18, max: 100 },
       },
@@ -332,7 +332,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
     description: 'Managed NoSQL/document database with global distribution',
     providers: {
       aws: {
-        componentId: 'aws-dynamodb',
+        componentId: 'dynamodb',
         defaultConfig: { billingMode: 'PAY_PER_REQUEST' },
         estimatedCost: { min: 0, max: 500 },
       },
@@ -434,7 +434,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
         estimatedCost: { min: 0, max: 0 },
       },
       gcp: {
-        componentId: 'gcp-firewall-rule',
+        componentId: 'gcp-firewall',
         defaultConfig: {},
         estimatedCost: { min: 0, max: 0 },
       },

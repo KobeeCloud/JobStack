@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Search, X, ChevronUp, ChevronDown, Filter } from 'lucide-react'
+import { Search, X, Filter } from 'lucide-react'
 import { Node } from '@xyflow/react'
 import { COMPONENT_CATALOG } from '@/lib/catalog'
 
@@ -43,7 +43,8 @@ export function DiagramSearch({ nodes, onHighlightNode, onFitNode }: DiagramSear
   // Search logic
   useEffect(() => {
     if (!searchQuery && !filterCategory && !filterProvider) {
-      setResults([])
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResults(prev => prev.length === 0 ? prev : [])
       return
     }
 
@@ -52,7 +53,6 @@ export function DiagramSearch({ nodes, onHighlightNode, onFitNode }: DiagramSear
       const label = String(data.label || '').toLowerCase()
       const componentId = data.componentId || data.component || ''
       const component = COMPONENT_CATALOG.find(c => c.id === componentId)
-      const provider = String(data.provider || '').toLowerCase()
       const query = searchQuery.toLowerCase()
 
       // Text search

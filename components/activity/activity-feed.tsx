@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Activity, Plus, Trash2, Edit2, Link, Unlink,
-  Save, Share2, Download, Upload, Eye, Search,
-  Filter, X, Clock, User, GitCommit
+  Save, Share2, Download, Upload, Search,
+  X, Clock, User, GitCommit
 } from 'lucide-react'
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns'
 
@@ -340,7 +340,7 @@ export function useActivityTracker(
 
     setActivities(prev => [activity, ...prev])
     return activity
-  }, [])
+  }, [currentUser])
 
   const trackNodeAdded = useCallback((nodeId: string, nodeName: string, nodeType?: string) => {
     return trackActivity('node_added', { nodeId, nodeName, nodeType })

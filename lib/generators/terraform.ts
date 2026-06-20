@@ -1,10 +1,6 @@
 import { Node, Edge } from '@xyflow/react'
 import { getComponentById } from '@/lib/catalog'
 import {
-  buildNodeMap as buildNodeMapShared,
-  getNodeComponentId as getNodeComponentIdShared,
-  getNodeDepth as getNodeDepthShared,
-  findAncestorByTfResource as findAncestorByTfResourceShared,
   uniqueName,
   detectCycles,
 } from '@/lib/generators/core/graph-utils'
@@ -77,19 +73,6 @@ function findAncestorByTfResource(
     current = parent
   }
   return null
-}
-
-/** Return the depth of a node in the hierarchy (0 = root, higher = deeper) */
-function getNodeDepth(node: Node<NodeData>, nodeMap: NodeMap): number {
-  let depth = 0
-  let current = node
-  while (current.parentId) {
-    const parent = nodeMap.get(current.parentId)
-    if (!parent) break
-    depth++
-    current = parent
-  }
-  return depth
 }
 
 // ─── Emit helpers ────────────────────────────────────────────────────────────

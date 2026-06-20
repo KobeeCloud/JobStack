@@ -87,7 +87,6 @@ function generateGovernanceNodes(
   } as Node)
 
   // Subscriptions inside child MG
-  const envColors: Record<string, string> = { dev: '#16a34a', staging: '#d97706', production: '#dc2626' }
   subscriptions.forEach((sub, i) => {
     const subId = `sub-${now}-${i}`
     nodes.push({

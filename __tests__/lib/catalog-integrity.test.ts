@@ -3,7 +3,7 @@
  * Ensures all component IDs are unique, all required fields are present,
  * and all cross-references resolve correctly.
  */
-import { COMPONENT_CATALOG, type ComponentConfig } from '@/lib/catalog'
+import { COMPONENT_CATALOG } from '@/lib/catalog'
 
 describe('COMPONENT_CATALOG integrity', () => {
   it('has no duplicate component IDs', () => {

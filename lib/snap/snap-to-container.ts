@@ -372,7 +372,7 @@ export function reparentNode(
         }
       }
       // Remove from parent
-      const { parentId, extent, ...rest } = n;
+      const { parentId: _parentId, extent: _extent, ...rest } = n;
       return {
         ...rest,
         parentId: undefined,

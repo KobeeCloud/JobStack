@@ -115,8 +115,9 @@ function DiagramPhase() {
 function TerraformPhase() {
   const [lines, setLines] = useState(0)
   useEffect(() => {
-    setLines(0)
+    let active = true
     const t = setInterval(() => {
+      if (!active) return
       setLines(p => {
         if (p >= TF_LINES.length) {
           clearInterval(t)
@@ -125,7 +126,10 @@ function TerraformPhase() {
         return p + 1
       })
     }, 88)
-    return () => clearInterval(t)
+    return () => {
+      active = false
+      clearInterval(t)
+    }
   }, [])
 
   const cls: Record<string, string> = {

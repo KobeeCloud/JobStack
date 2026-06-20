@@ -18,7 +18,7 @@ module.exports = [
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       // eslint-config-next already brings react-hooks; keep the same intent as .eslintrc.json
       'react-hooks/exhaustive-deps': 'warn',

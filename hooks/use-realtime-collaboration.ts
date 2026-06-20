@@ -63,12 +63,12 @@ export function useRealtimeCollaboration({
         }
         setCollaborators(others)
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }: { key: string; newPresences: CollaboratorPresence[] }) => {
+      .on('presence', { event: 'join' }, ({ key, newPresences: _newPresences }: { key: string; newPresences: CollaboratorPresence[] }) => {
         if (key !== userId) {
           // Presence join handled by state sync
         }
       })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }: { key: string; leftPresences: CollaboratorPresence[] }) => {
+      .on('presence', { event: 'leave' }, ({ key, leftPresences: _leftPresences }: { key: string; leftPresences: CollaboratorPresence[] }) => {
         if (key !== userId) {
           // Presence leave handled by state sync
         }

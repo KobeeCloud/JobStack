@@ -1,5 +1,5 @@
 import { Node } from '@xyflow/react'
-import { getComponentById, ComponentConfig } from '@/lib/catalog'
+import { getComponentById } from '@/lib/catalog'
 
 export interface CostOptimization {
   nodeId: string

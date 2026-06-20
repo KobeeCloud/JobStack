@@ -24,7 +24,7 @@ export default function VerifyEmailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
-            <p className="font-medium mb-1">Didn't receive the email?</p>
+            <p className="font-medium mb-1">Didn&apos;t receive the email?</p>
             <ul className="list-disc list-inside space-y-1 text-xs">
               <li>Check your spam/junk folder</li>
               <li>Make sure the email address is correct</li>

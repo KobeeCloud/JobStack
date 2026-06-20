@@ -8,8 +8,10 @@ import { render, screen } from '@testing-library/react'
 
 // We test the exported component directly rather than via Next.js routing
 jest.mock('next/link', () => {
-  return ({ children, href, ...props }: { children: React.ReactNode; href: string }) =>
+  const LinkMock = ({ children, href, ...props }: { children: React.ReactNode; href: string }) =>
     React.createElement('a', { href, ...props }, children)
+  LinkMock.displayName = 'Link'
+  return LinkMock
 })
 
 // Mock lucide-react icons to simple spans
@@ -26,7 +28,7 @@ jest.mock('lucide-react', () =>
 )
 
 describe('NotFound page', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const NotFound = require('@/app/not-found').default
 
   it('renders 404 heading', () => {
@@ -55,7 +57,7 @@ describe('NotFound page', () => {
 // ─── app/loading.tsx ────────────────────────────────────────────────────────
 
 describe('Loading page', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const Loading = require('@/app/loading').default
 
   it('renders skeleton cards', () => {
@@ -74,7 +76,7 @@ describe('Loading page', () => {
 // ─── app/error.tsx ──────────────────────────────────────────────────────────
 
 describe('Error page', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const ErrorPage = require('@/app/error').default
 
   it('renders error message', () => {

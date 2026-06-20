@@ -287,7 +287,7 @@ export function DeleteAccountButton({ user }: { user: User }) {
   )
 }
 
-export function HardDeleteAccountButton({ user }: { user: User }) {
+export function HardDeleteAccountButton({ user: _user }: { user: User }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const router = useRouter()
