@@ -277,7 +277,7 @@ export default async function Home() {
                     <FileCode2 className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
                   </div>
                   <CardTitle className="text-xl">Multi-Format Export</CardTitle>
-                  <CardDescription className="text-sm mt-2 leading-relaxed">Export diagrams as PNG, SVG, JSON. Generate Terraform, with Pulumi and CloudFormation coming soon.</CardDescription>
+                  <CardDescription className="text-sm mt-2 leading-relaxed">Export diagrams as PNG, SVG, JSON. Generate Terraform, CloudFormation, ARM templates, and Pulumi TypeScript — all from your visual diagram.</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="group hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5 bg-background/50 backdrop-blur-sm">
@@ -415,7 +415,9 @@ export default async function Home() {
                     <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Audit logs</li>
                     <li className="flex items-center gap-2"><Check className="h-4 w-4 text-primary" /> Dedicated support</li>
                   </ul>
-                  <Button className="w-full" variant="outline" disabled>Contact Sales</Button>
+                  <Button className="w-full" variant="outline" asChild>
+                    <a href="mailto:kuba.pospieszny@gmail.com?subject=JobStack%20Enterprise%20Inquiry">Contact Sales</a>
+                  </Button>
                 </CardContent>
               </Card>
             </div>

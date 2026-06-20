@@ -53,6 +53,7 @@ import { QuickBuildModal } from '@/components/diagram/quick-build-modal'
 import { getLayoutedElements } from '@/lib/auto-layout'
 import { Terminal } from '@/components/diagram/terminal'
 import { MultiRegionSelector } from '@/components/regions/multi-region-selector'
+import { RelativeTime } from '@/components/relative-time'
 
 const nodeTypes = { custom: CustomNode, container: ContainerNode, attachment: AttachmentNode }
 const edgeTypes = { default: LabeledEdge }
@@ -296,6 +297,17 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [nodes, setNodes, handleUndo, handleRedo, toast])
+
+  // Warn user before closing/refreshing the tab when there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges.current) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
 
   // Fit view to a specific node
   const handleFitNode = useCallback((nodeId: string) => {
@@ -1163,14 +1175,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     try {
       const { generateCloudFormation } = await import('@/lib/export/cloudformation-generator')
       const yaml = generateCloudFormation(nodes, edges, 'yaml')
-      const blob = new Blob([yaml], { type: 'text/yaml' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'cloudformation-template.yaml'
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success('CloudFormation Generated', { description: 'Template exported as YAML' })
+      setCodePreviewFiles([{ filename: 'cloudformation-template.yaml', code: yaml }])
+      setCodePreviewTitle('CloudFormation Template')
+      setCodePreviewZipName('cloudformation-template.yaml')
+      setCodePreviewOpen(true)
+      toast.success('CloudFormation Generated', { description: 'Review and download your template' })
     } catch (error) {
       toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate CloudFormation' })
     }
@@ -1184,14 +1193,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     try {
       const { generateARM } = await import('@/lib/export/arm-generator')
       const json = generateARM(nodes, edges)
-      const blob = new Blob([json], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'arm-template.json'
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success('ARM Template Generated', { description: 'Template exported as JSON' })
+      setCodePreviewFiles([{ filename: 'arm-template.json', code: json }])
+      setCodePreviewTitle('ARM Template')
+      setCodePreviewZipName('arm-template.json')
+      setCodePreviewOpen(true)
+      toast.success('ARM Template Generated', { description: 'Review and download your template' })
     } catch (error) {
       toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate ARM template' })
     }
@@ -1205,14 +1211,11 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     try {
       const { generatePulumi } = await import('@/lib/export/pulumi-generator')
       const code = generatePulumi(nodes, edges)
-      const blob = new Blob([code], { type: 'text/typescript' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'index.ts'
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success('Pulumi Generated', { description: 'Infrastructure code exported as TypeScript' })
+      setCodePreviewFiles([{ filename: 'index.ts', code }])
+      setCodePreviewTitle('Pulumi Infrastructure Code')
+      setCodePreviewZipName('pulumi-index.ts')
+      setCodePreviewOpen(true)
+      toast.success('Pulumi Generated', { description: 'Review and download your TypeScript code' })
     } catch (error) {
       toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to generate Pulumi code' })
     }
@@ -1356,8 +1359,14 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
               </div>
             )}
             {lastSaved && !saving && (
-              <div className="text-xs text-muted-foreground">
-                Saved {lastSaved.toLocaleTimeString()}
+              <div className="text-xs text-muted-foreground" title={lastSaved.toLocaleString()}>
+                Saved <RelativeTime date={lastSaved.toISOString()} />
+              </div>
+            )}
+            {nodes.length > 0 && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+                <span>{nodes.length} {nodes.length === 1 ? 'component' : 'components'}</span>
+                {edges.length > 0 && <><span className="opacity-40">·</span><span>{edges.length} {edges.length === 1 ? 'connection' : 'connections'}</span></>}
               </div>
             )}
             <ProjectShareDialog projectId={projectId} projectName={project?.name || 'Project'} />
@@ -1527,7 +1536,17 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             onGeneratePulumi={handleGeneratePulumi}
             onGenerateCICD={handleGenerateCICD}
             onAIAnalysis={toggleAI}
-            onComplianceScan={() => setActivePanel(activePanel === 'compliance' ? 'none' : 'compliance')}
+            onComplianceScan={() => {
+                // Open the compliance panel; auto-trigger a CIS scan if no report yet
+                if (activePanel === 'compliance') {
+                  setActivePanel('none')
+                } else {
+                  setActivePanel('compliance')
+                  if (!complianceReport && !complianceScanning) {
+                    handleComplianceScan('cis')
+                  }
+                }
+              }}
             onRunTests={toggleTesting}
             onMultiCloud={() => setActivePanel(activePanel === 'multiCloud' ? 'none' : 'multiCloud')}
             onShowTemplates={() => setTemplateDialogOpen(true)}

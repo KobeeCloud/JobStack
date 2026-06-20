@@ -2,13 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Plus, ArrowLeft, FolderOpen } from 'lucide-react'
+import { Plus, ArrowLeft } from 'lucide-react'
 import { Logo } from '@/components/logo'
-import { ProjectCard } from '@/components/project-card'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
-import { Badge } from '@/components/ui/badge'
+import { ProjectsList } from '@/components/projects-list'
 
 interface Project {
   id: string
@@ -31,15 +29,6 @@ export default async function ProjectsPage() {
     .from('projects')
     .select('*, organizations!organization_id(name, slug)', { count: 'exact' })
     .order('updated_at', { ascending: false })
-
-  const providerColors: Record<string, string> = {
-    aws: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400',
-    azure: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400',
-    gcp: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
-    vercel: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    netlify: 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-400',
-    cloudflare: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400',
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -73,39 +62,7 @@ export default async function ProjectsPage() {
           </p>
         </div>
 
-        {!projects || projects.length === 0 ? (
-          <Card className="text-center py-16">
-            <CardContent>
-              <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-              <p className="text-muted-foreground mb-6">
-                Create your first cloud infrastructure project to get started.
-              </p>
-              <Link href="/projects/new">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Project
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(projects as Project[]).map((project) => (
-              <div key={project.id} className="relative">
-                <ProjectCard project={project} />
-                <div className="absolute top-3 right-12 z-10">
-                  <Badge
-                    variant="secondary"
-                    className={providerColors[project.cloud_provider] || ''}
-                  >
-                    {project.cloud_provider?.toUpperCase() || 'N/A'}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <ProjectsList projects={(projects ?? []) as Project[]} />
       </main>
 
       <footer className="border-t py-6 mt-auto">
