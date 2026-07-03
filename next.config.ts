@@ -4,9 +4,13 @@ import createNextIntlPlugin from 'next-intl/plugin'
 const withNextIntl = createNextIntlPlugin('./lib/i18n.ts')
 
 const nextConfig: NextConfig = {
-  // 'standalone' enables self-hosted deployment (Docker / PM2 on Azure VMs).
-  // Vercel ignores this setting, so it's safe to keep for both targets.
-  output: 'standalone',
+  // 'standalone' enables Docker/PM2 self-hosted deployment.
+  // Vercel does NOT support this mode — omit it when deploying to Vercel.
+  ...(process.env.VERCEL ? {} : { output: 'standalone' as const }),
+  turbopack: {
+    // Silence multi-lockfile workspace root warning on Vercel
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
       {
