@@ -17,6 +17,7 @@
 -- ─── Extensions ─────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ─── ENUMs ──────────────────────────────────────────────────
 DO $body$ BEGIN
@@ -177,6 +178,9 @@ SET search_path = public AS $func$
       AND role = ANY (p_roles)
   );
 $func$;
+
+REVOKE ALL ON FUNCTION is_organization_member(UUID, UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION has_organization_role(UUID, UUID, org_role[]) FROM PUBLIC;
 
 GRANT EXECUTE ON FUNCTION is_organization_member(UUID, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION has_organization_role(UUID, UUID, org_role[]) TO authenticated;

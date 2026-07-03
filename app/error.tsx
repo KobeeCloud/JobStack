@@ -13,8 +13,10 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log to Sentry if available
-    console.error('Unhandled error:', error)
+    // Keep logs in runtime, but avoid noisy output in unit tests.
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Unhandled error:', error)
+    }
   }, [error])
 
   return (

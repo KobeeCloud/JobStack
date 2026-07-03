@@ -204,7 +204,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       setEdges(state.edges)
       toast.success('Undo', { description: 'Restored previous state' })
     }
-  }, [undo, setNodes, setEdges, toast])
+  }, [undo, setNodes, setEdges])
 
   // Redo handler
   const handleRedo = useCallback(() => {
@@ -215,7 +215,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       setEdges(state.edges)
       toast.success('Redo', { description: 'Restored next state' })
     }
-  }, [redo, setNodes, setEdges, toast])
+  }, [redo, setNodes, setEdges])
 
   // AI Analysis
   const analyzeDiagram = useCallback(
@@ -349,7 +349,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [nodes, setNodes, handleUndo, handleRedo, toast])
+  }, [nodes, setNodes, handleUndo, handleRedo])
 
   // Warn user before closing/refreshing the tab when there are unsaved changes
   useEffect(() => {
@@ -495,7 +495,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     return () => {
       if (saveTimerRef.current) clearInterval(saveTimerRef.current)
     }
-  }, [nodes, edges, projectId, diagramId])
+  }, [nodes, edges, projectId, diagramId, setDiagramId])
 
   // Realtime collaboration
   useEffect(() => {
@@ -540,7 +540,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [diagramId, setNodes, setEdges, toast])
+  }, [diagramId, setNodes, setEdges])
 
   // Fetch current user info for presence/change attribution
   useEffect(() => {
@@ -615,7 +615,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
     window.addEventListener('configure-node', handleConfigureNode)
     return () => window.removeEventListener('configure-node', handleConfigureNode)
-  }, [getNodes])
+  }, [getNodes, setSelectedNode, setConfigPanelOpen])
 
   // Mark as changed when nodes/edges change
   useEffect(() => {
@@ -702,13 +702,13 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
 
       setEdges(eds => addEdge(params, eds))
     },
-    [setEdges, getNodes, toast]
+    [setEdges, getNodes]
   )
 
   const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node)
     setConfigPanelOpen(true)
-  }, [])
+  }, [setSelectedNode, setConfigPanelOpen])
 
   // Helper: compute absolute position of a node considering its parent chain
   const getAbsolutePosition = useCallback(
@@ -1018,7 +1018,6 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
     [
       getNodes,
       setNodes,
-      toast,
       getAbsolutePosition,
       getNodeBounds,
       activePanel,
@@ -1367,7 +1366,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         toast.error('Error', { description: 'Failed to add component' })
       }
     },
-    [setNodes, toast, screenToFlowPosition, nodes]
+    [setNodes, screenToFlowPosition, nodes]
   )
 
   const handleSave = async () => {
@@ -1751,7 +1750,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       setNodes(nds => [...nds, newNode])
       toast.success('Component Added', { description: `Added ${provider.toUpperCase()} component` })
     },
-    [screenToFlowPosition, setNodes, toast]
+    [screenToFlowPosition, setNodes]
   )
 
   if (loading) {
