@@ -21,7 +21,8 @@ export const GET = createApiHandler(
     // Avoids requiring SUPABASE_SERVICE_ROLE_KEY for this read-only query.
     const { data: memberships, error } = await auth.supabase
       .from('organization_members')
-      .select(`
+      .select(
+        `
         role,
         joined_at,
         organizations!organization_id (
@@ -31,7 +32,8 @@ export const GET = createApiHandler(
           subscription_tier,
           max_members
         )
-      `)
+      `
+      )
       .eq('user_id', auth.user.id)
       .order('joined_at', { ascending: true })
 
@@ -42,13 +44,20 @@ export const GET = createApiHandler(
         errorDetails: error.details,
       })
       // Return empty list rather than crashing — org selection is optional
-      return NextResponse.json({ organizations: [], _debug: process.env.NODE_ENV === 'development' ? error.message : undefined })
+      return NextResponse.json({
+        organizations: [],
+        _debug: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      })
     }
 
-    type MemberRow = { role: string; joined_at: string; organizations: Record<string, unknown> | null }
+    type MemberRow = {
+      role: string
+      joined_at: string
+      organizations: Record<string, unknown> | null
+    }
     const organizations = ((memberships ?? []) as unknown as MemberRow[])
-      .filter((m) => m.organizations != null)
-      .map((m) => ({
+      .filter(m => m.organizations != null)
+      .map(m => ({
         ...(m.organizations as Record<string, unknown>),
         role: m.role,
         joined_at: m.joined_at,
@@ -65,7 +74,11 @@ export const POST = createApiHandler(
 
     const parsed = createOrgSchema.safeParse(body)
     if (!parsed.success) {
-      throw new ApiError(400, parsed.error.errors[0]?.message ?? 'Invalid input', 'VALIDATION_ERROR')
+      throw new ApiError(
+        400,
+        parsed.error.errors[0]?.message ?? 'Invalid input',
+        'VALIDATION_ERROR'
+      )
     }
 
     const { name, slug, description } = parsed.data
@@ -110,7 +123,10 @@ export const POST = createApiHandler(
     })
 
     if (memberError) {
-      log.error('Failed to add org creator as member', memberError, { orgId: org.id, userId: auth.user.id })
+      log.error('Failed to add org creator as member', memberError, {
+        orgId: org.id,
+        userId: auth.user.id,
+      })
       // Roll back org creation so dashboard stays consistent
       await admin.from('organizations').delete().eq('id', org.id)
       throw new ApiError(500, 'Failed to set up organization membership', 'MEMBER_INSERT_FAILED')

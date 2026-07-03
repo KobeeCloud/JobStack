@@ -48,7 +48,7 @@ export function EditDialog({
             <Input
               id="edit-name"
               value={editName}
-              onChange={(e) => setEditName(e.target.value)}
+              onChange={e => setEditName(e.target.value)}
               placeholder="Project name"
               disabled={isUpdating}
             />
@@ -58,7 +58,7 @@ export function EditDialog({
             <Textarea
               id="edit-description"
               value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
+              onChange={e => setEditDescription(e.target.value)}
               placeholder="Optional description"
               rows={3}
               disabled={isUpdating}

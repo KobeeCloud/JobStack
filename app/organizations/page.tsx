@@ -27,13 +27,16 @@ interface OrgMember {
 
 export default async function OrganizationsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   // Get organizations the user is a member of
   const { data: memberships } = await supabase
     .from('organization_members')
-    .select(`
+    .select(
+      `
       organization_id,
       role,
       organizations (
@@ -46,19 +49,24 @@ export default async function OrganizationsPage() {
         max_members,
         created_at
       )
-    `)
+    `
+    )
     .eq('user_id', user.id)
 
-  const organizations = (memberships as unknown as OrgMember[])?.map(m => ({
-    ...m.organizations,
-    role: m.role
-  })) || []
+  const organizations =
+    (memberships as unknown as OrgMember[])?.map(m => ({
+      ...m.organizations,
+      role: m.role,
+    })) || []
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'owner': return <Crown className="h-4 w-4 text-yellow-500" />
-      case 'admin': return <Shield className="h-4 w-4 text-blue-500" />
-      default: return <User className="h-4 w-4 text-muted-foreground" />
+      case 'owner':
+        return <Crown className="h-4 w-4 text-yellow-500" />
+      case 'admin':
+        return <Shield className="h-4 w-4 text-blue-500" />
+      default:
+        return <User className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -115,7 +123,7 @@ export default async function OrganizationsPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {organizations.map((org) => (
+              {organizations.map(org => (
                 <Card key={org.id} className="hover:border-primary/50 transition-colors">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <div className="flex items-center gap-4">
@@ -137,9 +145,7 @@ export default async function OrganizationsPage() {
                           {org.name}
                           {getRoleIcon(org.role)}
                         </CardTitle>
-                        <CardDescription>
-                          {org.description || `@${org.slug}`}
-                        </CardDescription>
+                        <CardDescription>{org.description || `@${org.slug}`}</CardDescription>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -177,9 +183,7 @@ export default async function OrganizationsPage() {
                 <Crown className="h-5 w-5 text-primary" />
                 Enterprise Features
               </CardTitle>
-              <CardDescription>
-                Upgrade to Enterprise for advanced team features
-              </CardDescription>
+              <CardDescription>Upgrade to Enterprise for advanced team features</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="grid md:grid-cols-2 gap-2 text-sm">

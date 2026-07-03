@@ -44,14 +44,16 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
 
   // Check 1: Databases without encryption
   const databases = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('database') ||
       String(n.data.component || '').includes('sql') ||
       String(n.data.component || '').includes('postgres') ||
       String(n.data.component || '').includes('mysql')
   )
   const backupNodes = nodes.filter(
-    (n) => String(n.data.component || '').includes('backup') || String(n.data.component || '').includes('vault')
+    n =>
+      String(n.data.component || '').includes('backup') ||
+      String(n.data.component || '').includes('vault')
   )
 
   if (databases.length > 0 && backupNodes.length === 0) {
@@ -61,7 +63,7 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
       title: 'No Backup Solution Configured',
       description:
         'Your databases have no backup solution. This poses a critical risk for data loss in case of failure, corruption, or accidental deletion.',
-      affectedNodes: databases.map((d) => d.id),
+      affectedNodes: databases.map(d => d.id),
       suggestedFix:
         'Add Azure Backup, AWS Backup, or GCP Backup component and configure automated daily backups with at least 7-day retention.',
       autoFixable: false,
@@ -70,13 +72,13 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
 
   // Check 2: VMs without Network Security Groups
   const vms = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('vm') ||
       String(n.data.component || '').includes('ec2') ||
       String(n.data.component || '').includes('compute')
   )
   const nsgs = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('nsg') ||
       String(n.data.component || '').includes('security-group') ||
       String(n.data.component || '').includes('firewall')
@@ -89,7 +91,7 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
       title: 'VMs Without Network Security',
       description:
         'Your virtual machines are deployed without Network Security Groups (NSGs) or Security Groups. All ports are potentially exposed to the internet.',
-      affectedNodes: vms.map((v) => v.id),
+      affectedNodes: vms.map(v => v.id),
       suggestedFix:
         'Add NSG/Security Group components and configure inbound rules to allow only necessary traffic (e.g., HTTPS 443, SSH 22 from trusted IPs).',
       autoFixable: false,
@@ -97,7 +99,7 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
   }
 
   // Check 3: Public database access
-  const publicDatabases = databases.filter((db) => {
+  const publicDatabases = databases.filter(db => {
     const config = db.data.config as any
     return config?.publicAccess === true || config?.allowPublicAccess === true
   })
@@ -109,7 +111,7 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
       title: 'Database Publicly Accessible',
       description:
         'One or more databases are configured to be accessible from the internet. This is a major security risk and violates security best practices.',
-      affectedNodes: publicDatabases.map((d) => d.id),
+      affectedNodes: publicDatabases.map(d => d.id),
       suggestedFix:
         'Disable public access immediately. Use Private Link (Azure), VPC Peering (AWS), or Private Service Connect (GCP) for secure database connectivity.',
       autoFixable: true,
@@ -118,12 +120,12 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
 
   // Check 4: Unencrypted storage
   const storageAccounts = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('storage') ||
       String(n.data.component || '').includes('s3') ||
       String(n.data.component || '').includes('blob')
   )
-  const unencrypted = storageAccounts.filter((s) => {
+  const unencrypted = storageAccounts.filter(s => {
     const config = s.data.config as any
     return !config?.encryption || config?.encryption === false
   })
@@ -135,7 +137,7 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
       title: 'Unencrypted Storage',
       description:
         'Storage accounts without encryption at rest expose data to unauthorized access if physical media is compromised.',
-      affectedNodes: unencrypted.map((s) => s.id),
+      affectedNodes: unencrypted.map(s => s.id),
       suggestedFix:
         'Enable encryption at rest using platform-managed keys (or customer-managed keys for higher security).',
       autoFixable: true,
@@ -144,12 +146,12 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
 
   // Check 5: Missing HTTPS/TLS
   const loadBalancers = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('lb') ||
       String(n.data.component || '').includes('load-balancer') ||
       String(n.data.component || '').includes('application-gateway')
   )
-  const noTLS = loadBalancers.filter((lb) => {
+  const noTLS = loadBalancers.filter(lb => {
     const config = lb.data.config as any
     return !config?.tls && !config?.https && !config?.ssl
   })
@@ -161,7 +163,7 @@ function checkSecurityBestPractices(nodes: Node[], _edges: Edge[]): Architecture
       title: 'Load Balancers Without TLS/HTTPS',
       description:
         'Load balancers configured without HTTPS/TLS expose traffic to man-in-the-middle attacks and data interception.',
-      affectedNodes: noTLS.map((lb) => lb.id),
+      affectedNodes: noTLS.map(lb => lb.id),
       suggestedFix:
         'Configure TLS/SSL certificates and redirect HTTP traffic to HTTPS. Use managed certificates for automatic renewal.',
       autoFixable: false,
@@ -176,12 +178,12 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
 
   // Check 1: Oversized VMs
   const vms = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('vm') ||
       String(n.data.component || '').includes('ec2') ||
       String(n.data.component || '').includes('compute')
   )
-  const oversized = vms.filter((vm) => {
+  const oversized = vms.filter(vm => {
     const size = (String((vm.data.config as any)?.size || '') as string) || ''
     return (
       size.includes('Standard_D64') ||
@@ -199,7 +201,7 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
       title: 'Potentially Oversized Virtual Machines',
       description:
         'You have very large VM instances that may be overprovisioned. These can cost $1,000-$5,000/month per instance.',
-      affectedNodes: oversized.map((v) => v.id),
+      affectedNodes: oversized.map(v => v.id),
       suggestedFix:
         'Start with smaller instances (e.g., Standard_D4, m5.xlarge) and scale up based on actual CPU/memory usage metrics. Consider auto-scaling groups.',
       autoFixable: false,
@@ -207,7 +209,7 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
   }
 
   // Check 2: No reserved instances for production
-  const prodVMs = vms.filter((vm) => {
+  const prodVMs = vms.filter(vm => {
     const tags = ((vm.data.config as any)?.tags as Record<string, string>) || {}
     return tags.environment === 'production' || tags.env === 'prod'
   })
@@ -219,7 +221,7 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
       title: 'Consider Reserved Instances',
       description:
         'You have multiple production VMs running 24/7. Reserved Instances or Savings Plans can reduce costs by 30-60% compared to on-demand pricing.',
-      affectedNodes: prodVMs.map((v) => v.id),
+      affectedNodes: prodVMs.map(v => v.id),
       suggestedFix:
         'Purchase 1-year or 3-year reserved instances/savings plans for stable production workloads. Use spot instances for non-critical workloads.',
       autoFixable: false,
@@ -228,7 +230,7 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
 
   // Check 3: Idle resources
   const allCompute = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('vm') ||
       String(n.data.component || '').includes('ec2') ||
       String(n.data.component || '').includes('function') ||
@@ -236,9 +238,9 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
   )
 
   // Check for resources with no incoming connections (potentially idle)
-  const idleResources = allCompute.filter((resource) => {
+  const idleResources = allCompute.filter(resource => {
     const hasIncomingEdge = edges.some(
-      (edge) => (edge as any).target === resource.id || (edge as any).source === resource.id
+      edge => (edge as any).target === resource.id || (edge as any).source === resource.id
     )
     return !hasIncomingEdge
   })
@@ -250,7 +252,7 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
       title: 'Potentially Idle Resources',
       description:
         'Some compute resources have no connections in your diagram. Verify they are actually used in production.',
-      affectedNodes: idleResources.map((r) => r.id),
+      affectedNodes: idleResources.map(r => r.id),
       suggestedFix:
         'Review resource utilization metrics. Shut down or delete resources with <5% CPU utilization.',
       autoFixable: false,
@@ -259,12 +261,12 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
 
   // Check 4: Premium storage for non-critical workloads
   const storageAccounts = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('storage') ||
       String(n.data.component || '').includes('disk') ||
       String(n.data.component || '').includes('s3')
   )
-  const premiumStorage = storageAccounts.filter((s) => {
+  const premiumStorage = storageAccounts.filter(s => {
     const config = s.data.config as any
     const diskType = config?.diskType || config?.storageClass || ''
     return (
@@ -282,7 +284,7 @@ function checkCostOptimization(nodes: Node[], edges: Edge[]): ArchitectureIssue[
       title: 'Premium Storage Usage',
       description:
         'Premium storage is 3-10x more expensive than standard storage. Verify if high IOPS is truly needed.',
-      affectedNodes: premiumStorage.map((s) => s.id),
+      affectedNodes: premiumStorage.map(s => s.id),
       suggestedFix:
         'Use Standard SSD for most workloads. Reserve Premium SSD only for database servers and high-performance applications.',
       autoFixable: false,
@@ -297,12 +299,12 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
 
   // Check 1: Single points of failure
   const vms = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('vm') ||
       String(n.data.component || '').includes('ec2') ||
       String(n.data.component || '').includes('compute')
   )
-  const singleVMs = vms.filter((vm) => {
+  const singleVMs = vms.filter(vm => {
     const replicas = (Number((vm.data.config as any)?.replicas || 1) as number) || 1
     return replicas === 1
   })
@@ -314,7 +316,7 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
       title: 'Single Points of Failure',
       description:
         'Some VMs have no redundancy. If they fail, your application will be unavailable until recovery.',
-      affectedNodes: singleVMs.map((v) => v.id),
+      affectedNodes: singleVMs.map(v => v.id),
       suggestedFix:
         'Deploy at least 2 replicas across different availability zones. Add a load balancer to distribute traffic.',
       autoFixable: false,
@@ -322,13 +324,13 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
   }
 
   // Check 2: No load balancer for multi-VM setup
-  const multiVMs = vms.filter((vm) => {
+  const multiVMs = vms.filter(vm => {
     const replicas = (Number((vm.data.config as any)?.replicas || 1) as number) || 1
     return replicas > 1
   })
 
   const loadBalancers = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('lb') ||
       String(n.data.component || '').includes('load-balancer') ||
       String(n.data.component || '').includes('application-gateway')
@@ -340,8 +342,8 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
       severity: 'warning',
       title: 'Missing Load Balancer',
       description:
-        'You have multiple VM replicas but no load balancer. Traffic won\'t be distributed automatically.',
-      affectedNodes: multiVMs.map((v) => v.id),
+        "You have multiple VM replicas but no load balancer. Traffic won't be distributed automatically.",
+      affectedNodes: multiVMs.map(v => v.id),
       suggestedFix:
         'Add Azure Load Balancer, AWS ALB/NLB, or GCP Load Balancer to distribute traffic across replicas.',
       autoFixable: false,
@@ -350,7 +352,7 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
 
   // Check 3: No health checks configured
   if (loadBalancers.length > 0) {
-    const noHealthChecks = loadBalancers.filter((lb) => {
+    const noHealthChecks = loadBalancers.filter(lb => {
       const config = lb.data.config as any
       return !config?.healthCheck && !config?.healthProbe
     })
@@ -362,7 +364,7 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
         title: 'Load Balancers Without Health Checks',
         description:
           'Load balancers without health checks will continue routing traffic to failed instances.',
-        affectedNodes: noHealthChecks.map((lb) => lb.id),
+        affectedNodes: noHealthChecks.map(lb => lb.id),
         suggestedFix:
           'Configure HTTP/TCP health checks with appropriate interval (e.g., every 30s) and thresholds.',
         autoFixable: false,
@@ -372,14 +374,14 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
 
   // Check 4: Single database instance
   const databases = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('database') ||
       String(n.data.component || '').includes('sql') ||
       String(n.data.component || '').includes('postgres') ||
       String(n.data.component || '').includes('mysql')
   )
 
-  const singleDBs = databases.filter((db) => {
+  const singleDBs = databases.filter(db => {
     const config = db.data.config as any
     return !config?.replication && !config?.replicas && !config?.highAvailability
   })
@@ -391,7 +393,7 @@ function checkReliability(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
       title: 'Single Database Instance',
       description:
         'Databases without replication are single points of failure. Hardware failure will cause complete data unavailability.',
-      affectedNodes: singleDBs.map((db) => db.id),
+      affectedNodes: singleDBs.map(db => db.id),
       suggestedFix:
         'Enable High Availability mode, Multi-AZ deployment, or configure read replicas in different regions.',
       autoFixable: false,
@@ -406,13 +408,15 @@ function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
 
   // Check 1: No CDN for static content
   const storageAccounts = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('storage') ||
       String(n.data.component || '').includes('blob') ||
       String(n.data.component || '').includes('s3')
   )
   const cdns = nodes.filter(
-    (n) => String(n.data.component || '').includes('cdn') || String(n.data.component || '').includes('cloudfront')
+    n =>
+      String(n.data.component || '').includes('cdn') ||
+      String(n.data.component || '').includes('cloudfront')
   )
 
   if (storageAccounts.length > 0 && cdns.length === 0) {
@@ -422,7 +426,7 @@ function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
       title: 'Consider CDN for Static Content',
       description:
         'Serving static content directly from storage can be slow for global users. CDN caches content at edge locations.',
-      affectedNodes: storageAccounts.map((s) => s.id),
+      affectedNodes: storageAccounts.map(s => s.id),
       suggestedFix:
         'Add Azure CDN, Amazon CloudFront, or Cloudflare CDN to cache and serve static assets globally.',
       autoFixable: false,
@@ -431,13 +435,13 @@ function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
 
   // Check 2: No caching layer
   const databases = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('database') ||
       String(n.data.component || '').includes('sql') ||
       String(n.data.component || '').includes('postgres')
   )
   const caches = nodes.filter(
-    (n) =>
+    n =>
       String(n.data.component || '').includes('redis') ||
       String(n.data.component || '').includes('memcached') ||
       String(n.data.component || '').includes('cache')
@@ -450,7 +454,7 @@ function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
       title: 'No Caching Layer',
       description:
         'Database queries can be slow and expensive. Adding a caching layer (Redis/Memcached) can reduce latency by 10-100x.',
-      affectedNodes: databases.map((db) => db.id),
+      affectedNodes: databases.map(db => db.id),
       suggestedFix:
         'Add Redis or Memcached to cache frequently accessed data, session state, or query results.',
       autoFixable: false,
@@ -458,9 +462,9 @@ function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
   }
 
   // Check 3: Cross-region latency
-  const allResources = nodes.filter((n) => n.data.config)
+  const allResources = nodes.filter(n => n.data.config)
   const regions = new Set(
-    allResources.map((r) => (r.data.config as any)?.region || '').filter((r) => r)
+    allResources.map(r => (r.data.config as any)?.region || '').filter(r => r)
   )
 
   if (regions.size > 2) {
@@ -468,8 +472,7 @@ function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
       type: 'performance',
       severity: 'info',
       title: 'Multi-Region Architecture',
-      description:
-        `Resources are spread across ${regions.size} regions. Cross-region traffic adds 50-300ms latency and data transfer costs.`,
+      description: `Resources are spread across ${regions.size} regions. Cross-region traffic adds 50-300ms latency and data transfer costs.`,
       affectedNodes: [],
       suggestedFix:
         'Group frequently communicating resources in the same region. Use ExpressRoute/Direct Connect for high-bandwidth cross-region needs.',
@@ -480,27 +483,24 @@ function checkPerformance(nodes: Node[], _edges: Edge[]): ArchitectureIssue[] {
   return issues
 }
 
-async function getAIRecommendations(
-  nodes: Node[],
-  edges: Edge[]
-): Promise<ArchitectureIssue[]> {
+async function getAIRecommendations(nodes: Node[], edges: Edge[]): Promise<ArchitectureIssue[]> {
   // Prepare simplified diagram for AI
   const diagramDescription = {
-    nodes: nodes.map((n) => ({
+    nodes: nodes.map(n => ({
       id: n.id,
       type: n.data.component,
       label: n.data.label,
       config: n.data.config,
     })),
-    edges: edges.map((e) => ({
+    edges: edges.map(e => ({
       from: e.source,
       to: e.target,
     })),
     summary: {
       totalNodes: nodes.length,
-      vmCount: nodes.filter((n) => String(n.data.component || '').includes('vm')).length,
-      dbCount: nodes.filter((n) => String(n.data.component || '').includes('database')).length,
-      lbCount: nodes.filter((n) => String(n.data.component || '').includes('lb')).length,
+      vmCount: nodes.filter(n => String(n.data.component || '').includes('vm')).length,
+      dbCount: nodes.filter(n => String(n.data.component || '').includes('database')).length,
+      lbCount: nodes.filter(n => String(n.data.component || '').includes('lb')).length,
     },
   }
 
@@ -573,7 +573,7 @@ export async function getOptimizationSuggestions(
 Architecture: ${nodes.length} nodes, ${edges.length} connections
 
 Components:
-${nodes.map((n) => `- ${n.data.label || n.data.component}`).join('\n')}
+${nodes.map(n => `- ${n.data.label || n.data.component}`).join('\n')}
 
 Provide 5 actionable recommendations as a JSON array of strings.`
 

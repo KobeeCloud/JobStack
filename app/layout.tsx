@@ -15,8 +15,17 @@ export const metadata: Metadata = {
     default: 'JobStack - Visual Infrastructure Planning Tool',
     template: '%s | JobStack',
   },
-  description: 'Design your infrastructure visually and generate production-ready Terraform code instantly. Real-time cost estimation and collaboration tools.',
-  keywords: ['infrastructure', 'terraform', 'cloud architecture', 'IaC', 'infrastructure as code', 'diagram', 'planning'],
+  description:
+    'Design your infrastructure visually and generate production-ready Terraform code instantly. Real-time cost estimation and collaboration tools.',
+  keywords: [
+    'infrastructure',
+    'terraform',
+    'cloud architecture',
+    'IaC',
+    'infrastructure as code',
+    'diagram',
+    'planning',
+  ],
   authors: [{ name: 'KobeCloud Jakub Pospieszny' }],
   creator: 'KobeCloud Jakub Pospieszny',
   publisher: 'KobeCloud',
@@ -32,7 +41,8 @@ export const metadata: Metadata = {
     url: '/',
     siteName: 'JobStack',
     title: 'JobStack - Visual Infrastructure Planning Tool',
-    description: 'Design your infrastructure visually and generate production-ready Terraform code instantly.',
+    description:
+      'Design your infrastructure visually and generate production-ready Terraform code instantly.',
     images: [
       {
         url: '/og-image.png',
@@ -45,7 +55,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'JobStack - Visual Infrastructure Planning Tool',
-    description: 'Design your infrastructure visually and generate production-ready Terraform code instantly.',
+    description:
+      'Design your infrastructure visually and generate production-ready Terraform code instantly.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -79,9 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
+            <ErrorBoundary>{children}</ErrorBoundary>
             <CookieConsent />
             <Toaster position="top-right" richColors />
           </ThemeProvider>

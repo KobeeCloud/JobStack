@@ -36,9 +36,7 @@ describe('analyzeCosts', () => {
     const allAlternativeIds = new Set<string>()
 
     COMPONENT_CATALOG.forEach(comp => {
-      const report = analyzeCosts([
-        makeNode('test', comp.id),
-      ])
+      const report = analyzeCosts([makeNode('test', comp.id)])
       report.optimizations.forEach(opt => {
         if (opt.suggestion?.componentId) {
           allAlternativeIds.add(opt.suggestion.componentId)
@@ -54,22 +52,20 @@ describe('analyzeCosts', () => {
   it('identifies reserved pricing opportunities for eligible components', () => {
     // aws-elasticache is RESERVED_ELIGIBLE but has no COST_ALTERNATIVES,
     // so it should get a 'reserved' pricing suggestion
-    const report = analyzeCosts([
-      makeNode('1', 'aws-elasticache'),
-    ])
-    const reservedOpt = report.optimizations.find(o =>
-      o.category === 'reserved' || o.suggestion?.reason?.toLowerCase().includes('reserved')
+    const report = analyzeCosts([makeNode('1', 'aws-elasticache')])
+    const reservedOpt = report.optimizations.find(
+      o => o.category === 'reserved' || o.suggestion?.reason?.toLowerCase().includes('reserved')
     )
     expect(reservedOpt).toBeDefined()
   })
 
   it('identifies spot pricing for eligible components', () => {
-    const report = analyzeCosts([
-      makeNode('1', 'aws-ec2'),
-      makeNode('2', 'azure-vmss'),
-    ])
-    const spotOpts = report.optimizations.filter(o =>
-      o.category === 'spot' || o.suggestion?.reason?.toLowerCase().includes('spot') || o.suggestion?.reason?.toLowerCase().includes('preemptible')
+    const report = analyzeCosts([makeNode('1', 'aws-ec2'), makeNode('2', 'azure-vmss')])
+    const spotOpts = report.optimizations.filter(
+      o =>
+        o.category === 'spot' ||
+        o.suggestion?.reason?.toLowerCase().includes('spot') ||
+        o.suggestion?.reason?.toLowerCase().includes('preemptible')
     )
     expect(spotOpts.length).toBeGreaterThan(0)
   })

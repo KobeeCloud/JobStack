@@ -26,12 +26,7 @@ import { generatePulumi } from '@/lib/export/pulumi-generator'
 // ─── Test Helpers ────────────────────────────────────────────────────────────
 
 /** Minimal React-Flow node factory */
-function makeNode(
-  id: string,
-  componentId: string,
-  label?: string,
-  parentId?: string,
-): Node {
+function makeNode(id: string, componentId: string, label?: string, parentId?: string): Node {
   return {
     id,
     type: 'default',
@@ -156,7 +151,7 @@ describe('findAncestor / findAncestorByComponentId', () => {
     const map = buildNodeMap(nodes)
 
     // findAncestor by predicate
-    const ancestor = findAncestor('vm', map, (n) => getNodeComponentId(n) === 'aws-vpc')
+    const ancestor = findAncestor('vm', map, n => getNodeComponentId(n) === 'aws-vpc')
     expect(ancestor?.id).toBe('vpc')
   })
 
@@ -180,10 +175,7 @@ describe('findAncestor / findAncestorByComponentId', () => {
 
 describe('findConnectedNodes / findConnectedNames', () => {
   it('finds connected nodes by component ID', () => {
-    const nodes = [
-      makeNode('vm1', 'aws-ec2', 'web'),
-      makeNode('sg', 'aws-security-group', 'sg'),
-    ]
+    const nodes = [makeNode('vm1', 'aws-ec2', 'web'), makeNode('sg', 'aws-security-group', 'sg')]
     const edges = [makeEdge('vm1', 'sg')]
     const map = buildNodeMap(nodes)
 
@@ -226,18 +218,24 @@ describe('detectCycles', () => {
     const nodes = [makeNode('a', 'aws-ec2'), makeNode('b', 'aws-s3')]
     const edges = [makeEdge('a', 'b')]
     const map = buildNodeMap(nodes)
-    expect(detectCycles(nodes.map(n => n.id), edges, map)).toHaveLength(0)
+    expect(
+      detectCycles(
+        nodes.map(n => n.id),
+        edges,
+        map
+      )
+    ).toHaveLength(0)
   })
 
   it('detects a simple cycle', () => {
-    const nodes = [
-      makeNode('a', 'aws-ec2'),
-      makeNode('b', 'aws-s3'),
-      makeNode('c', 'aws-rds'),
-    ]
+    const nodes = [makeNode('a', 'aws-ec2'), makeNode('b', 'aws-s3'), makeNode('c', 'aws-rds')]
     const edges = [makeEdge('a', 'b'), makeEdge('b', 'c'), makeEdge('c', 'a')]
     const map = buildNodeMap(nodes)
-    const cycles = detectCycles(nodes.map(n => n.id), edges, map)
+    const cycles = detectCycles(
+      nodes.map(n => n.id),
+      edges,
+      map
+    )
     expect(cycles.length).toBeGreaterThan(0)
   })
 })
@@ -293,10 +291,7 @@ describe('generateCloudFormation', () => {
   })
 
   it('deduplicates colliding resource names (BUG-1 fix)', () => {
-    const nodes = [
-      makeNode('a', 'aws-ec2', 'WebServer'),
-      makeNode('b', 'aws-ec2', 'WebServer'),
-    ]
+    const nodes = [makeNode('a', 'aws-ec2', 'WebServer'), makeNode('b', 'aws-ec2', 'WebServer')]
     const output = generateCloudFormation(nodes, [], 'json')
     const parsed = JSON.parse(output)
     const resourceKeys = Object.keys(parsed.Resources)
@@ -332,10 +327,7 @@ describe('generateARM', () => {
   })
 
   it('deduplicates colliding resource names (BUG-1 fix)', () => {
-    const nodes = [
-      makeNode('a', 'azure-vm', 'AppVM'),
-      makeNode('b', 'azure-vm', 'AppVM'),
-    ]
+    const nodes = [makeNode('a', 'azure-vm', 'AppVM'), makeNode('b', 'azure-vm', 'AppVM')]
     const output = generateARM(nodes, [])
     const parsed = JSON.parse(output)
     const names = parsed.resources.map((r: { name: string }) => r.name)
@@ -371,10 +363,7 @@ describe('generatePulumi', () => {
   })
 
   it('deduplicates colliding resource names (BUG-1 fix)', () => {
-    const nodes = [
-      makeNode('a', 'aws-ec2', 'web'),
-      makeNode('b', 'aws-ec2', 'web'),
-    ]
+    const nodes = [makeNode('a', 'aws-ec2', 'web'), makeNode('b', 'aws-ec2', 'web')]
     const output = generatePulumi(nodes, [])
     // Both names should appear in the output, with the second one being suffixed
     expect(output).toContain('web')
@@ -401,7 +390,7 @@ describe('cloud-mappings', () => {
     'gcp-cloud-sql',
     'gcp-cloud-storage',
     'gcp-vpc',
-  ])('catalog contains component "%s"', (id) => {
+  ])('catalog contains component "%s"', id => {
     expect(getComponentById(id)).toBeDefined()
   })
 })

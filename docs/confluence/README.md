@@ -5,15 +5,15 @@ Każdy plik `.html` to osobna strona Confluence.
 
 ## Struktura stron
 
-| Plik | Strona Confluence | Opis |
-|------|-------------------|------|
-| `01-overview.html` | JobStack — Przegląd projektu | Architektura, stack technologiczny, metryki |
-| `02-setup.html` | JobStack — Instalacja i konfiguracja | Wymagania, env, uruchomienie |
-| `03-architecture.html` | JobStack — Architektura techniczna | Baza danych, API, komponenty, lib |
-| `04-api-reference.html` | JobStack — API Reference | Wszystkie 25 endpointów |
-| `05-deployment.html` | JobStack — Deployment | Vercel, self-hosted, monitoring |
-| `06-features.html` | JobStack — Funkcjonalności | Opis wszystkich features |
-| `07-roadmap.html` | JobStack — Roadmap | Przyszłe propozycje, Quick Wins |
+| Plik                    | Strona Confluence                    | Opis                                        |
+| ----------------------- | ------------------------------------ | ------------------------------------------- |
+| `01-overview.html`      | JobStack — Przegląd projektu         | Architektura, stack technologiczny, metryki |
+| `02-setup.html`         | JobStack — Instalacja i konfiguracja | Wymagania, env, uruchomienie                |
+| `03-architecture.html`  | JobStack — Architektura techniczna   | Baza danych, API, komponenty, lib           |
+| `04-api-reference.html` | JobStack — API Reference             | Wszystkie 25 endpointów                     |
+| `05-deployment.html`    | JobStack — Deployment                | Vercel, self-hosted, monitoring             |
+| `06-features.html`      | JobStack — Funkcjonalności           | Opis wszystkich features                    |
+| `07-roadmap.html`       | JobStack — Roadmap                   | Przyszłe propozycje, Quick Wins             |
 
 ## Import do Confluence
 

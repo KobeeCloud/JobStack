@@ -60,7 +60,9 @@ export interface GraphError {
 // ─── Node Map & Component ID ─────────────────────────────────────────────────
 
 /** Build a Map<nodeId, Node> for O(1) lookups */
-export function buildNodeMap<T extends Record<string, unknown> = Record<string, unknown>>(nodes: Node<T>[]): Map<string, Node<T>> {
+export function buildNodeMap<T extends Record<string, unknown> = Record<string, unknown>>(
+  nodes: Node<T>[]
+): Map<string, Node<T>> {
   const m = new Map<string, Node<T>>()
   for (const n of nodes) m.set(n.id, n)
   return m
@@ -68,10 +70,12 @@ export function buildNodeMap<T extends Record<string, unknown> = Record<string, 
 
 /** Extract the componentId from a node's data (supports both `componentId` and `component` fields) */
 export function getNodeComponentId(node: Node): string {
-  return (node.data as Record<string, unknown>)?.componentId as string
-    || (node.data as Record<string, unknown>)?.component as string
-    || node.type
-    || ''
+  return (
+    ((node.data as Record<string, unknown>)?.componentId as string) ||
+    ((node.data as Record<string, unknown>)?.component as string) ||
+    node.type ||
+    ''
+  )
 }
 
 // ─── Name Sanitization ──────────────────────────────────────────────────────
@@ -85,19 +89,36 @@ export type SanitizeFormat = 'terraform' | 'cfn' | 'arm' | 'pulumi'
 export function sanitizeName(label: string, format: SanitizeFormat): string {
   switch (format) {
     case 'terraform':
-      return label
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_|_$/g, '') || 'resource'
+      return (
+        label
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '_')
+          .replace(/_+/g, '_')
+          .replace(/^_|_$/g, '') || 'resource'
+      )
     case 'cfn':
       return label.replace(/[^a-zA-Z0-9]/g, '').replace(/^[0-9]/, 'R$&') || 'Resource'
     case 'arm':
-      return label.toLowerCase().replace(/[^a-z0-9-]/g, '').substring(0, 24) || 'resource'
+      return (
+        label
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '')
+          .substring(0, 24) || 'resource'
+      )
     case 'pulumi':
-      return label.replace(/[^a-zA-Z0-9]/g, '_').replace(/^[0-9]/, '_$&').toLowerCase() || 'resource'
+      return (
+        label
+          .replace(/[^a-zA-Z0-9]/g, '_')
+          .replace(/^[0-9]/, '_$&')
+          .toLowerCase() || 'resource'
+      )
     default:
-      return label.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_') || 'resource'
+      return (
+        label
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '_')
+          .replace(/_+/g, '_') || 'resource'
+      )
   }
 }
 
@@ -105,7 +126,11 @@ export function sanitizeName(label: string, format: SanitizeFormat): string {
  * Issue a unique name, tracking collisions with a `Set<string>`.
  * If the sanitized name was already issued, append a numeric suffix.
  */
-export function uniqueName(label: string, format: SanitizeFormat, issuedNames: Set<string>): string {
+export function uniqueName(
+  label: string,
+  format: SanitizeFormat,
+  issuedNames: Set<string>
+): string {
   const base = sanitizeName(label, format)
   let name = base
   let counter = 1
@@ -145,7 +170,7 @@ export function findAncestorByComponentId(
   targetComponentId: string,
   nodeMap: Map<string, Node>
 ): Node | null {
-  return findAncestor(nodeId, nodeMap, (node) => getNodeComponentId(node) === targetComponentId)
+  return findAncestor(nodeId, nodeMap, node => getNodeComponentId(node) === targetComponentId)
 }
 
 /**
@@ -156,7 +181,7 @@ export function findAncestorByTfResource(
   nodeMap: Map<string, Node>,
   tfResource: string
 ): Node | null {
-  return findAncestor(nodeId, nodeMap, (node) => {
+  return findAncestor(nodeId, nodeMap, node => {
     const compId = getNodeComponentId(node)
     if (!compId) return false
     const comp = getComponentById(compId)
@@ -179,7 +204,8 @@ export function findConnectedNodes(
 ): Node[] {
   const results: Node[] = []
   for (const edge of edges) {
-    const otherId = edge.source === nodeId ? edge.target : edge.target === nodeId ? edge.source : null
+    const otherId =
+      edge.source === nodeId ? edge.target : edge.target === nodeId ? edge.source : null
     if (!otherId) continue
     const other = nodeMap.get(otherId)
     if (other && targetTypes.includes(getNodeComponentId(other))) {
@@ -201,7 +227,8 @@ export function findConnectedNames(
 ): string[] {
   const results: string[] = []
   for (const edge of edges) {
-    const otherId = edge.source === nodeId ? edge.target : edge.target === nodeId ? edge.source : null
+    const otherId =
+      edge.source === nodeId ? edge.target : edge.target === nodeId ? edge.source : null
     if (!otherId) continue
     const other = nodeMap.get(otherId)
     if (other && targetTypes.includes(getNodeComponentId(other))) {
@@ -240,7 +267,12 @@ export function findSiblings(
   const node = nodes.find(n => n.id === nodeId)
   if (!node?.parentId) return []
   return nodes
-    .filter(n => n.id !== nodeId && n.parentId === node.parentId && targetTypes.includes(getNodeComponentId(n)))
+    .filter(
+      n =>
+        n.id !== nodeId &&
+        n.parentId === node.parentId &&
+        targetTypes.includes(getNodeComponentId(n))
+    )
     .map(n => nodeIdToName.get(n.id)!)
     .filter(Boolean)
 }
@@ -369,7 +401,7 @@ export function buildInfraGraph(rawNodes: Node[], rawEdges: Edge[]): InfraGraph 
       catalog,
       config: {
         ...(catalog.terraform?.defaultConfig || {}),
-        ...((raw.data as Record<string, unknown>)?.config as Record<string, unknown> || {}),
+        ...(((raw.data as Record<string, unknown>)?.config as Record<string, unknown>) || {}),
       },
       parentId: raw.parentId || null,
       parentNode: null,

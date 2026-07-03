@@ -5,9 +5,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ARCHITECTURE_TEMPLATES, ArchitectureTemplate } from '@/lib/templates/architecture-templates'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  ARCHITECTURE_TEMPLATES,
+  ArchitectureTemplate,
+} from '@/lib/templates/architecture-templates'
 import { Search, Cloud, Server, Database, Cpu, GitBranch, DollarSign, Layers } from 'lucide-react'
 
 interface TemplateSelectorProps {
@@ -43,11 +59,12 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
 
   const filteredTemplates = useMemo(() => {
     return ARCHITECTURE_TEMPLATES.filter(t => {
-      const matchesSearch = !search || 
+      const matchesSearch =
+        !search ||
         t.name.toLowerCase().includes(search.toLowerCase()) ||
         t.description.toLowerCase().includes(search.toLowerCase()) ||
         t.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
-      
+
       const matchesCategory = categoryFilter === 'all' || t.category === categoryFilter
       const matchesProvider = providerFilter === 'all' || t.provider === providerFilter
 
@@ -64,7 +81,7 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
           <Input
             placeholder="Search templates..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -101,7 +118,7 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
           return (
             <Dialog key={template.id}>
               <DialogTrigger asChild>
-                <Card 
+                <Card
                   className="cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => setSelectedTemplate(template)}
                 >
@@ -113,7 +130,9 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
                       </Badge>
                     </div>
                     <CardTitle className="text-lg mt-2">{template.name}</CardTitle>
-                    <CardDescription className="line-clamp-2">{template.description}</CardDescription>
+                    <CardDescription className="line-clamp-2">
+                      {template.description}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -127,8 +146,8 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
                       ))}
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      ${template.estimatedCost.min} - ${template.estimatedCost.max}/mo
+                      <DollarSign className="h-4 w-4 mr-1" />${template.estimatedCost.min} - $
+                      {template.estimatedCost.max}/mo
                     </div>
                   </CardContent>
                 </Card>
@@ -162,7 +181,9 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Estimated Cost</p>
-                      <p className="text-2xl font-bold">${template.estimatedCost.min} - ${template.estimatedCost.max}</p>
+                      <p className="text-2xl font-bold">
+                        ${template.estimatedCost.min} - ${template.estimatedCost.max}
+                      </p>
                     </div>
                   </div>
                   <div>
@@ -175,11 +196,7 @@ export function TemplateSelector({ onSelectTemplate }: TemplateSelectorProps) {
                       ))}
                     </div>
                   </div>
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    onClick={() => onSelectTemplate(template)}
-                  >
+                  <Button className="w-full" size="lg" onClick={() => onSelectTemplate(template)}>
                     Use This Template
                   </Button>
                 </div>

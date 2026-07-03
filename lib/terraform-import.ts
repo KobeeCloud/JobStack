@@ -48,71 +48,71 @@ interface ParsedTerraform {
 // Mapping Terraform resource types to our component types
 const RESOURCE_MAPPINGS: Record<string, { componentType: string; category: string }> = {
   // AWS Resources
-  'aws_instance': { componentType: 'aws-ec2', category: 'compute' },
-  'aws_lambda_function': { componentType: 'aws-lambda', category: 'compute' },
-  'aws_ecs_cluster': { componentType: 'aws-ecs', category: 'compute' },
-  'aws_ecs_service': { componentType: 'aws-ecs', category: 'compute' },
-  'aws_eks_cluster': { componentType: 'aws-eks', category: 'compute' },
-  'aws_s3_bucket': { componentType: 'aws-s3', category: 'storage' },
-  'aws_rds_instance': { componentType: 'aws-rds', category: 'database' },
-  'aws_rds_cluster': { componentType: 'aws-rds', category: 'database' },
-  'aws_dynamodb_table': { componentType: 'aws-dynamodb', category: 'database' },
-  'aws_elasticache_cluster': { componentType: 'aws-elasticache', category: 'database' },
-  'aws_vpc': { componentType: 'aws-vpc', category: 'networking' },
-  'aws_subnet': { componentType: 'aws-subnet', category: 'networking' },
-  'aws_security_group': { componentType: 'aws-security-group', category: 'networking' },
-  'aws_lb': { componentType: 'aws-alb', category: 'networking' },
-  'aws_alb': { componentType: 'aws-alb', category: 'networking' },
-  'aws_api_gateway_rest_api': { componentType: 'aws-api-gateway', category: 'networking' },
-  'aws_cloudfront_distribution': { componentType: 'aws-cloudfront', category: 'networking' },
-  'aws_route53_zone': { componentType: 'aws-route53', category: 'networking' },
-  'aws_sqs_queue': { componentType: 'aws-sqs', category: 'integration' },
-  'aws_sns_topic': { componentType: 'aws-sns', category: 'integration' },
-  'aws_cognito_user_pool': { componentType: 'aws-cognito', category: 'security' },
-  'aws_kms_key': { componentType: 'aws-kms', category: 'security' },
+  aws_instance: { componentType: 'aws-ec2', category: 'compute' },
+  aws_lambda_function: { componentType: 'aws-lambda', category: 'compute' },
+  aws_ecs_cluster: { componentType: 'aws-ecs', category: 'compute' },
+  aws_ecs_service: { componentType: 'aws-ecs', category: 'compute' },
+  aws_eks_cluster: { componentType: 'aws-eks', category: 'compute' },
+  aws_s3_bucket: { componentType: 'aws-s3', category: 'storage' },
+  aws_rds_instance: { componentType: 'aws-rds', category: 'database' },
+  aws_rds_cluster: { componentType: 'aws-rds', category: 'database' },
+  aws_dynamodb_table: { componentType: 'aws-dynamodb', category: 'database' },
+  aws_elasticache_cluster: { componentType: 'aws-elasticache', category: 'database' },
+  aws_vpc: { componentType: 'aws-vpc', category: 'networking' },
+  aws_subnet: { componentType: 'aws-subnet', category: 'networking' },
+  aws_security_group: { componentType: 'aws-security-group', category: 'networking' },
+  aws_lb: { componentType: 'aws-alb', category: 'networking' },
+  aws_alb: { componentType: 'aws-alb', category: 'networking' },
+  aws_api_gateway_rest_api: { componentType: 'aws-api-gateway', category: 'networking' },
+  aws_cloudfront_distribution: { componentType: 'aws-cloudfront', category: 'networking' },
+  aws_route53_zone: { componentType: 'aws-route53', category: 'networking' },
+  aws_sqs_queue: { componentType: 'aws-sqs', category: 'integration' },
+  aws_sns_topic: { componentType: 'aws-sns', category: 'integration' },
+  aws_cognito_user_pool: { componentType: 'aws-cognito', category: 'security' },
+  aws_kms_key: { componentType: 'aws-kms', category: 'security' },
 
   // Azure Resources
-  'azurerm_virtual_machine': { componentType: 'azure-vm', category: 'compute' },
-  'azurerm_linux_virtual_machine': { componentType: 'azure-vm', category: 'compute' },
-  'azurerm_windows_virtual_machine': { componentType: 'azure-vm', category: 'compute' },
-  'azurerm_function_app': { componentType: 'azure-functions', category: 'compute' },
-  'azurerm_app_service': { componentType: 'azure-app-service', category: 'compute' },
-  'azurerm_kubernetes_cluster': { componentType: 'azure-aks', category: 'compute' },
-  'azurerm_container_app': { componentType: 'azure-container-apps', category: 'compute' },
-  'azurerm_storage_account': { componentType: 'azure-blob', category: 'storage' },
-  'azurerm_mssql_server': { componentType: 'azure-sql', category: 'database' },
-  'azurerm_mssql_database': { componentType: 'azure-sql', category: 'database' },
-  'azurerm_cosmosdb_account': { componentType: 'azure-cosmosdb', category: 'database' },
-  'azurerm_redis_cache': { componentType: 'azure-redis', category: 'database' },
-  'azurerm_virtual_network': { componentType: 'azure-vnet', category: 'networking' },
-  'azurerm_subnet': { componentType: 'azure-subnet', category: 'networking' },
-  'azurerm_network_security_group': { componentType: 'azure-nsg', category: 'networking' },
-  'azurerm_application_gateway': { componentType: 'azure-app-gw', category: 'networking' },
-  'azurerm_lb': { componentType: 'azure-lb', category: 'networking' },
-  'azurerm_public_ip': { componentType: 'azure-public-ip', category: 'networking' },
-  'azurerm_frontdoor': { componentType: 'azure-front-door', category: 'networking' },
-  'azurerm_dns_zone': { componentType: 'azure-dns', category: 'networking' },
-  'azurerm_servicebus_namespace': { componentType: 'azure-service-bus', category: 'integration' },
-  'azurerm_eventgrid_topic': { componentType: 'azure-event-grid', category: 'integration' },
-  'azurerm_key_vault': { componentType: 'azure-keyvault', category: 'security' },
-  'azurerm_active_directory_domain_service': { componentType: 'azure-ad', category: 'security' },
+  azurerm_virtual_machine: { componentType: 'azure-vm', category: 'compute' },
+  azurerm_linux_virtual_machine: { componentType: 'azure-vm', category: 'compute' },
+  azurerm_windows_virtual_machine: { componentType: 'azure-vm', category: 'compute' },
+  azurerm_function_app: { componentType: 'azure-functions', category: 'compute' },
+  azurerm_app_service: { componentType: 'azure-app-service', category: 'compute' },
+  azurerm_kubernetes_cluster: { componentType: 'azure-aks', category: 'compute' },
+  azurerm_container_app: { componentType: 'azure-container-apps', category: 'compute' },
+  azurerm_storage_account: { componentType: 'azure-blob', category: 'storage' },
+  azurerm_mssql_server: { componentType: 'azure-sql', category: 'database' },
+  azurerm_mssql_database: { componentType: 'azure-sql', category: 'database' },
+  azurerm_cosmosdb_account: { componentType: 'azure-cosmosdb', category: 'database' },
+  azurerm_redis_cache: { componentType: 'azure-redis', category: 'database' },
+  azurerm_virtual_network: { componentType: 'azure-vnet', category: 'networking' },
+  azurerm_subnet: { componentType: 'azure-subnet', category: 'networking' },
+  azurerm_network_security_group: { componentType: 'azure-nsg', category: 'networking' },
+  azurerm_application_gateway: { componentType: 'azure-app-gw', category: 'networking' },
+  azurerm_lb: { componentType: 'azure-lb', category: 'networking' },
+  azurerm_public_ip: { componentType: 'azure-public-ip', category: 'networking' },
+  azurerm_frontdoor: { componentType: 'azure-front-door', category: 'networking' },
+  azurerm_dns_zone: { componentType: 'azure-dns', category: 'networking' },
+  azurerm_servicebus_namespace: { componentType: 'azure-service-bus', category: 'integration' },
+  azurerm_eventgrid_topic: { componentType: 'azure-event-grid', category: 'integration' },
+  azurerm_key_vault: { componentType: 'azure-keyvault', category: 'security' },
+  azurerm_active_directory_domain_service: { componentType: 'azure-ad', category: 'security' },
 
   // GCP Resources
-  'google_compute_instance': { componentType: 'gcp-compute', category: 'compute' },
-  'google_cloudfunctions_function': { componentType: 'gcp-functions', category: 'compute' },
-  'google_cloud_run_service': { componentType: 'gcp-cloud-run', category: 'compute' },
-  'google_container_cluster': { componentType: 'gcp-gke', category: 'compute' },
-  'google_app_engine_application': { componentType: 'gcp-app-engine', category: 'compute' },
-  'google_storage_bucket': { componentType: 'gcp-storage', category: 'storage' },
-  'google_sql_database_instance': { componentType: 'gcp-cloud-sql', category: 'database' },
-  'google_firestore_database': { componentType: 'gcp-firestore', category: 'database' },
-  'google_spanner_instance': { componentType: 'gcp-spanner', category: 'database' },
-  'google_compute_network': { componentType: 'gcp-vpc', category: 'networking' },
-  'google_compute_subnetwork': { componentType: 'gcp-subnet', category: 'networking' },
-  'google_compute_firewall': { componentType: 'gcp-firewall', category: 'networking' },
-  'google_compute_global_address': { componentType: 'gcp-load-balancer', category: 'networking' },
-  'google_pubsub_topic': { componentType: 'gcp-pubsub', category: 'integration' },
-  'google_kms_key_ring': { componentType: 'gcp-kms', category: 'security' },
+  google_compute_instance: { componentType: 'gcp-compute', category: 'compute' },
+  google_cloudfunctions_function: { componentType: 'gcp-functions', category: 'compute' },
+  google_cloud_run_service: { componentType: 'gcp-cloud-run', category: 'compute' },
+  google_container_cluster: { componentType: 'gcp-gke', category: 'compute' },
+  google_app_engine_application: { componentType: 'gcp-app-engine', category: 'compute' },
+  google_storage_bucket: { componentType: 'gcp-storage', category: 'storage' },
+  google_sql_database_instance: { componentType: 'gcp-cloud-sql', category: 'database' },
+  google_firestore_database: { componentType: 'gcp-firestore', category: 'database' },
+  google_spanner_instance: { componentType: 'gcp-spanner', category: 'database' },
+  google_compute_network: { componentType: 'gcp-vpc', category: 'networking' },
+  google_compute_subnetwork: { componentType: 'gcp-subnet', category: 'networking' },
+  google_compute_firewall: { componentType: 'gcp-firewall', category: 'networking' },
+  google_compute_global_address: { componentType: 'gcp-load-balancer', category: 'networking' },
+  google_pubsub_topic: { componentType: 'gcp-pubsub', category: 'integration' },
+  google_kms_key_ring: { componentType: 'gcp-kms', category: 'security' },
 }
 
 // Parse HCL-like Terraform syntax (simplified parser)
@@ -128,8 +128,8 @@ function parseTerraformHCL(content: string): ParsedTerraform {
   // Remove comments
   const cleanContent = content
     .replace(/\/\*[\s\S]*?\*\//g, '') // Multi-line comments
-    .replace(/#.*$/gm, '')             // Hash comments
-    .replace(/\/\/.*$/gm, '')          // Double-slash comments
+    .replace(/#.*$/gm, '') // Hash comments
+    .replace(/\/\/.*$/gm, '') // Double-slash comments
 
   // Parse resource blocks
   const resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g
@@ -187,7 +187,7 @@ function parseTerraformHCL(content: string): ParsedTerraform {
     const attrs = parseAttributes(body)
     result.outputs.push({
       name,
-      value: attrs.value as string || '',
+      value: (attrs.value as string) || '',
       description: attrs.description as string | undefined,
     })
   }
@@ -199,7 +199,7 @@ function parseTerraformHCL(content: string): ParsedTerraform {
     const attrs = parseAttributes(body)
     result.modules.push({
       name,
-      source: attrs.source as string || '',
+      source: (attrs.source as string) || '',
       variables: attrs,
     })
   }
@@ -264,7 +264,7 @@ export function convertToNodes(parsed: ParsedTerraform): { nodes: Node[]; edges:
       type: mapping?.componentType || 'generic',
       position: {
         x: pos.x + (pos.count % 3) * 250,
-        y: pos.y + Math.floor(pos.count / 3) * 150
+        y: pos.y + Math.floor(pos.count / 3) * 150,
       },
       data: {
         label: resource.name,
@@ -354,7 +354,7 @@ export function importTerraform(content: string): {
       nodes: [],
       edges: [],
       parsed: { resources: [], variables: [], outputs: [], modules: [], providers: [] },
-      warnings
+      warnings,
     }
   }
 }

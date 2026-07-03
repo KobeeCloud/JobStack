@@ -49,7 +49,10 @@ export const POST = createApiHandler(
       .eq('id', version.diagram_id)
 
     if (updateError) {
-      log.error('Failed to restore version', updateError, { versionId, diagramId: version.diagram_id })
+      log.error('Failed to restore version', updateError, {
+        versionId,
+        diagramId: version.diagram_id,
+      })
       throw updateError
     }
 

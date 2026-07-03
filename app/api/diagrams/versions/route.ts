@@ -93,7 +93,11 @@ export const POST = createApiHandler(
         .single()
 
       if (!insertError) {
-        log.info('Diagram version created', { diagramId: parsedId, version: nextVersion, userId: auth.user.id })
+        log.info('Diagram version created', {
+          diagramId: parsedId,
+          version: nextVersion,
+          userId: auth.user.id,
+        })
         return NextResponse.json(version, { status: 201 })
       }
 
@@ -108,7 +112,11 @@ export const POST = createApiHandler(
     }
 
     log.error('Version creation failed after retries', lastError, { diagramId: parsedId })
-    throw new ApiError(409, 'Failed to create version — concurrent conflict. Please retry.', 'VERSION_CONFLICT')
+    throw new ApiError(
+      409,
+      'Failed to create version — concurrent conflict. Please retry.',
+      'VERSION_CONFLICT'
+    )
   },
   { requireAuth: true, method: 'POST' }
 )

@@ -5,11 +5,7 @@ import Link from 'next/link'
 import { Bell, Check, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -98,7 +94,7 @@ export function NotificationBell() {
           (payload: { new: Notification }) => {
             setNotifications(prev => [payload.new as Notification, ...prev])
             setUnreadCount(c => c + 1)
-          },
+          }
         )
         .subscribe()
     })
@@ -123,7 +119,9 @@ export function NotificationBell() {
     try {
       await fetch('/api/notifications', { method: 'POST' })
       setUnreadCount(0)
-      setNotifications((prev: Notification[]) => prev.map((n: Notification) => ({ ...n, is_read: true })))
+      setNotifications((prev: Notification[]) =>
+        prev.map((n: Notification) => ({ ...n, is_read: true }))
+      )
     } catch {
       // non-fatal
     } finally {
@@ -187,7 +185,11 @@ export function NotificationBell() {
               onClick={markAllRead}
               disabled={markingAll}
             >
-              {markingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+              {markingAll ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Check className="h-3 w-3 mr-1" />
+              )}
               Mark all read
             </Button>
           )}
@@ -224,12 +226,12 @@ export function NotificationBell() {
                   <div className="flex-1 min-w-0">
                     <p className={cn('text-sm', !n.is_read && 'font-medium')}>{n.title}</p>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.message}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">{timeAgo(n.created_at)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {timeAgo(n.created_at)}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    {!n.is_read && (
-                      <span className="w-2 h-2 rounded-full bg-primary mt-1" />
-                    )}
+                    {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary mt-1" />}
                     <button
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 hover:text-destructive"
                       onClick={(e: MouseEvent<HTMLButtonElement>) => deleteOne(n.id, e)}

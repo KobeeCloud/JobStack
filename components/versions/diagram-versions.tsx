@@ -20,8 +20,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import {
-  History, Save, RotateCcw, GitBranch, Eye, Trash2,
-  X, Calendar, User, Tag
+  History,
+  Save,
+  RotateCcw,
+  GitBranch,
+  Eye,
+  Trash2,
+  X,
+  Calendar,
+  User,
+  Tag,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -68,8 +76,8 @@ export function DiagramVersions({
   const [deleteTarget, setDeleteTarget] = useState<DiagramVersion | null>(null)
 
   const sortedVersions = useMemo(() => {
-    return [...versions].sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    return [...versions].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
   }, [versions])
 
@@ -108,9 +116,7 @@ export function DiagramVersions({
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <CardDescription>
-          Save and restore diagram versions
-        </CardDescription>
+        <CardDescription>Save and restore diagram versions</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -151,9 +157,7 @@ export function DiagramVersions({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <GitBranch className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-sm truncate">
-                          {version.name}
-                        </span>
+                        <span className="font-medium text-sm truncate">{version.name}</span>
                         {version.isAutosave && (
                           <Badge variant="secondary" className="text-xs">
                             Auto
@@ -190,9 +194,7 @@ export function DiagramVersions({
                         <Badge variant="outline" className="text-xs">
                           {version.edges.length} connections
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          v{version.version}
-                        </span>
+                        <span className="text-xs text-muted-foreground">v{version.version}</span>
                       </div>
 
                       {version.tags && version.tags.length > 0 && (
@@ -258,7 +260,7 @@ export function DiagramVersions({
               <Input
                 id="version-name"
                 value={versionName}
-                onChange={(e) => setVersionName(e.target.value)}
+                onChange={e => setVersionName(e.target.value)}
                 placeholder="e.g., Initial architecture, Added load balancer"
               />
             </div>
@@ -267,16 +269,18 @@ export function DiagramVersions({
               <Input
                 id="version-description"
                 value={versionDescription}
-                onChange={(e) => setVersionDescription(e.target.value)}
+                onChange={e => setVersionDescription(e.target.value)}
                 placeholder="Describe what changed in this version"
               />
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setVersionName('')
-              setVersionDescription('')
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setVersionName('')
+                setVersionDescription('')
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleSave} disabled={!versionName.trim()}>
@@ -293,8 +297,8 @@ export function DiagramVersions({
           <AlertDialogHeader>
             <AlertDialogTitle>Restore Version?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will replace the current diagram with version &ldquo;{restoreTarget?.name}&rdquo;.
-              Make sure to save your current work first if needed.
+              This will replace the current diagram with version &ldquo;{restoreTarget?.name}
+              &rdquo;. Make sure to save your current work first if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -313,12 +317,16 @@ export function DiagramVersions({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Version?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete version &ldquo;{deleteTarget?.name}&rdquo;. This action cannot be undone.
+              This will permanently delete version &ldquo;{deleteTarget?.name}&rdquo;. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </AlertDialogAction>

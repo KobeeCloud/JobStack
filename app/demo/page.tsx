@@ -19,9 +19,7 @@ import '@xyflow/react/dist/style.css'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LogoIcon } from '@/components/logo'
-import {
-  ArrowRight, ExternalLink, DollarSign, Code2, GitBranch
-} from 'lucide-react'
+import { ArrowRight, ExternalLink, DollarSign, Code2, GitBranch } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,12 +34,15 @@ type ServiceNodeData = {
   category: 'compute' | 'network' | 'database' | 'security' | 'storage'
 }
 
-const CATEGORY_COLORS: Record<ServiceNodeData['category'], { border: string; bg: string; text: string }> = {
-  compute:  { border: '#22c55e', bg: 'rgba(34,197,94,0.08)',  text: '#16a34a' },
-  network:  { border: '#3b82f6', bg: 'rgba(59,130,246,0.08)', text: '#2563eb' },
+const CATEGORY_COLORS: Record<
+  ServiceNodeData['category'],
+  { border: string; bg: string; text: string }
+> = {
+  compute: { border: '#22c55e', bg: 'rgba(34,197,94,0.08)', text: '#16a34a' },
+  network: { border: '#3b82f6', bg: 'rgba(59,130,246,0.08)', text: '#2563eb' },
   database: { border: '#a855f7', bg: 'rgba(168,85,247,0.08)', text: '#9333ea' },
   security: { border: '#f59e0b', bg: 'rgba(245,158,11,0.08)', text: '#d97706' },
-  storage:  { border: '#06b6d4', bg: 'rgba(6,182,212,0.08)',  text: '#0891b2' },
+  storage: { border: '#06b6d4', bg: 'rgba(6,182,212,0.08)', text: '#0891b2' },
 }
 
 const ServiceNode = memo(function ServiceNode({ data, selected }: NodeProps) {
@@ -59,11 +60,19 @@ const ServiceNode = memo(function ServiceNode({ data, selected }: NodeProps) {
     >
       <Handle type="target" position={Position.Top} className="!bg-border !border-none !w-2 !h-2" />
       <div className="flex items-center gap-1.5 mb-0.5">
-        <span style={{ color: colors.text }} className="text-sm">{d.icon as React.ReactNode}</span>
-        <span className="text-[11px] font-semibold" style={{ color: colors.text }}>{d.label}</span>
+        <span style={{ color: colors.text }} className="text-sm">
+          {d.icon as React.ReactNode}
+        </span>
+        <span className="text-[11px] font-semibold" style={{ color: colors.text }}>
+          {d.label}
+        </span>
       </div>
       <p className="text-[9.5px] text-muted-foreground ml-5">{d.sub}</p>
-      <Handle type="source" position={Position.Bottom} className="!bg-border !border-none !w-2 !h-2" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!bg-border !border-none !w-2 !h-2"
+      />
     </div>
   )
 })
@@ -82,10 +91,20 @@ const ContainerGroupNode = memo(function ContainerGroupNode({ data, selected }: 
     >
       <div
         className="inline-flex items-center gap-1.5 rounded-br-xl rounded-tl-xl px-3 py-1"
-        style={{ backgroundColor: `${color}18`, borderBottom: `1px solid ${color}33`, borderRight: `1px solid ${color}33` }}
+        style={{
+          backgroundColor: `${color}18`,
+          borderBottom: `1px solid ${color}33`,
+          borderRight: `1px solid ${color}33`,
+        }}
       >
-        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color }}>{d.label}</span>
-        {d.sub && <span className="text-[9px] opacity-60" style={{ color }}>{d.sub}</span>}
+        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color }}>
+          {d.label}
+        </span>
+        {d.sub && (
+          <span className="text-[9px] opacity-60" style={{ color }}>
+            {d.sub}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -154,7 +173,13 @@ const initialNodes: Node[] = [
     id: 'agw',
     type: 'service',
     position: { x: 20, y: 100 },
-    data: { label: 'App Gateway', sub: 'WAF v2', icon: '⚖️', provider: 'azure', category: 'network' },
+    data: {
+      label: 'App Gateway',
+      sub: 'WAF v2',
+      icon: '⚖️',
+      provider: 'azure',
+      category: 'network',
+    },
     parentId: 'sub-gw',
     extent: 'parent' as const,
   },
@@ -163,7 +188,13 @@ const initialNodes: Node[] = [
     id: 'vm1',
     type: 'service',
     position: { x: 20, y: 60 },
-    data: { label: 'Web VM 01', sub: 'Standard_D2s_v3', icon: '🖥️', provider: 'azure', category: 'compute' },
+    data: {
+      label: 'Web VM 01',
+      sub: 'Standard_D2s_v3',
+      icon: '🖥️',
+      provider: 'azure',
+      category: 'compute',
+    },
     parentId: 'sub-web',
     extent: 'parent' as const,
   },
@@ -172,7 +203,13 @@ const initialNodes: Node[] = [
     id: 'vm2',
     type: 'service',
     position: { x: 20, y: 130 },
-    data: { label: 'Web VM 02', sub: 'Standard_D2s_v3', icon: '🖥️', provider: 'azure', category: 'compute' },
+    data: {
+      label: 'Web VM 02',
+      sub: 'Standard_D2s_v3',
+      icon: '🖥️',
+      provider: 'azure',
+      category: 'compute',
+    },
     parentId: 'sub-web',
     extent: 'parent' as const,
   },
@@ -181,7 +218,13 @@ const initialNodes: Node[] = [
     id: 'sql',
     type: 'service',
     position: { x: 15, y: 90 },
-    data: { label: 'Azure SQL', sub: 'S2 Standard', icon: '🗄️', provider: 'azure', category: 'database' },
+    data: {
+      label: 'Azure SQL',
+      sub: 'S2 Standard',
+      icon: '🗄️',
+      provider: 'azure',
+      category: 'database',
+    },
     parentId: 'sub-db',
     extent: 'parent' as const,
   },
@@ -190,19 +233,44 @@ const initialNodes: Node[] = [
     id: 'kv',
     type: 'service',
     position: { x: 740, y: 160 },
-    data: { label: 'Key Vault', sub: 'Standard SKU', icon: '🔑', provider: 'azure', category: 'security' },
+    data: {
+      label: 'Key Vault',
+      sub: 'Standard SKU',
+      icon: '🔑',
+      provider: 'azure',
+      category: 'security',
+    },
     parentId: 'rg',
     extent: 'parent' as const,
   },
 ]
 
 const initialEdges: Edge[] = [
-  { id: 'e1', source: 'agw',  target: 'vm1',  animated: true, style: { strokeDasharray: '5 3', strokeWidth: 1.5 }, label: 'flow' },
-  { id: 'e2', source: 'agw',  target: 'vm2',  animated: true, style: { strokeDasharray: '5 3', strokeWidth: 1.5 } },
-  { id: 'e3', source: 'vm1',  target: 'sql',  style: { strokeWidth: 1.5 }, label: 'dependency' },
-  { id: 'e4', source: 'vm2',  target: 'sql',  style: { strokeWidth: 1.5 } },
-  { id: 'e5', source: 'vm1',  target: 'kv',   style: { strokeWidth: 1.5, strokeDasharray: '3 3' }, label: 'secrets' },
-  { id: 'e6', source: 'vm2',  target: 'kv',   style: { strokeWidth: 1.5, strokeDasharray: '3 3' } },
+  {
+    id: 'e1',
+    source: 'agw',
+    target: 'vm1',
+    animated: true,
+    style: { strokeDasharray: '5 3', strokeWidth: 1.5 },
+    label: 'flow',
+  },
+  {
+    id: 'e2',
+    source: 'agw',
+    target: 'vm2',
+    animated: true,
+    style: { strokeDasharray: '5 3', strokeWidth: 1.5 },
+  },
+  { id: 'e3', source: 'vm1', target: 'sql', style: { strokeWidth: 1.5 }, label: 'dependency' },
+  { id: 'e4', source: 'vm2', target: 'sql', style: { strokeWidth: 1.5 } },
+  {
+    id: 'e5',
+    source: 'vm1',
+    target: 'kv',
+    style: { strokeWidth: 1.5, strokeDasharray: '3 3' },
+    label: 'secrets',
+  },
+  { id: 'e6', source: 'vm2', target: 'kv', style: { strokeWidth: 1.5, strokeDasharray: '3 3' } },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,7 +278,7 @@ const initialEdges: Edge[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SIDEBAR_TABS = ['Cost', 'Terraform', 'CI/CD'] as const
-type SidebarTab = typeof SIDEBAR_TABS[number]
+type SidebarTab = (typeof SIDEBAR_TABS)[number]
 
 const TERRAFORM_SNIPPET = `# Auto-generated by JobStack
 
@@ -259,30 +327,40 @@ jobs:
 function SidebarCost() {
   const items = [
     { icon: <span>⚖️</span>, name: 'App Gateway WAF v2', cost: '$145', pct: 35, color: '#3b82f6' },
-    { icon: <span>🖥️</span>, name: 'VMs × 2 D2s_v3',    cost: '$148', pct: 36, color: '#22c55e' },
-    { icon: <span>🗄️</span>, name: 'Azure SQL S2',       cost: '$75',  pct: 18, color: '#a855f7' },
-    { icon: <span>🔑</span>, name: 'Key Vault',           cost: '$5',   pct:  1, color: '#f59e0b' },
+    { icon: <span>🖥️</span>, name: 'VMs × 2 D2s_v3', cost: '$148', pct: 36, color: '#22c55e' },
+    { icon: <span>🗄️</span>, name: 'Azure SQL S2', cost: '$75', pct: 18, color: '#a855f7' },
+    { icon: <span>🔑</span>, name: 'Key Vault', cost: '$5', pct: 1, color: '#f59e0b' },
   ]
   return (
     <div className="p-4 space-y-4">
       <div>
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Est. Monthly</p>
-        <p className="text-3xl font-bold text-primary mt-0.5">$373<span className="text-base font-normal text-muted-foreground"> /mo</span></p>
+        <p className="text-3xl font-bold text-primary mt-0.5">
+          $373<span className="text-base font-normal text-muted-foreground"> /mo</span>
+        </p>
       </div>
       <div className="space-y-3">
         {items.map(item => (
           <div key={item.name}>
             <div className="flex justify-between items-center text-xs mb-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">{item.icon}<span>{item.name}</span></div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                {item.icon}
+                <span>{item.name}</span>
+              </div>
               <span className="font-mono font-semibold">{item.cost}</span>
             </div>
             <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${item.pct}%`, backgroundColor: item.color }} />
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${item.pct}%`, backgroundColor: item.color }}
+              />
             </div>
           </div>
         ))}
       </div>
-      <p className="text-[10px] text-muted-foreground pt-2 border-t">Prices reflect East US region. Actual costs may vary.</p>
+      <p className="text-[10px] text-muted-foreground pt-2 border-t">
+        Prices reflect East US region. Actual costs may vary.
+      </p>
     </div>
   )
 }
@@ -316,8 +394,15 @@ export default function DemoPage() {
           <span className="text-muted-foreground/40">|</span>
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium">prod-azure-3tier</span>
-            <Badge variant="outline" className="text-[10px] py-0 border-blue-500/30 text-blue-500">Azure</Badge>
-            <Badge variant="outline" className="text-[10px] py-0 border-emerald-500/30 text-emerald-600">Demo</Badge>
+            <Badge variant="outline" className="text-[10px] py-0 border-blue-500/30 text-blue-500">
+              Azure
+            </Badge>
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 border-emerald-500/30 text-emerald-600"
+            >
+              Demo
+            </Badge>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -347,9 +432,9 @@ export default function DemoPage() {
                     : 'border-transparent text-muted-foreground hover:text-foreground',
                 ].join(' ')}
               >
-                {tab === 'Cost'      && <DollarSign className="h-3 w-3" />}
+                {tab === 'Cost' && <DollarSign className="h-3 w-3" />}
                 {tab === 'Terraform' && <Code2 className="h-3 w-3" />}
-                {tab === 'CI/CD'     && <GitBranch className="h-3 w-3" />}
+                {tab === 'CI/CD' && <GitBranch className="h-3 w-3" />}
                 {tab}
               </button>
             ))}
@@ -357,9 +442,17 @@ export default function DemoPage() {
 
           {/* Content */}
           <div className="flex-1 overflow-auto">
-            {activeTab === 'Cost'      && <SidebarCost />}
-            {activeTab === 'Terraform' && <div className="p-3 h-full"><CodeBlock code={TERRAFORM_SNIPPET} /></div>}
-            {activeTab === 'CI/CD'     && <div className="p-3 h-full"><CodeBlock code={CICD_SNIPPET} /></div>}
+            {activeTab === 'Cost' && <SidebarCost />}
+            {activeTab === 'Terraform' && (
+              <div className="p-3 h-full">
+                <CodeBlock code={TERRAFORM_SNIPPET} />
+              </div>
+            )}
+            {activeTab === 'CI/CD' && (
+              <div className="p-3 h-full">
+                <CodeBlock code={CICD_SNIPPET} />
+              </div>
+            )}
           </div>
 
           {/* CTA */}
@@ -391,7 +484,7 @@ export default function DemoPage() {
               className="!border-border !bg-background/80 !rounded-lg"
               nodeColor={n => {
                 const d = n.data as ServiceNodeData
-                return d.category ? CATEGORY_COLORS[d.category]?.border ?? '#64748b' : '#64748b'
+                return d.category ? (CATEGORY_COLORS[d.category]?.border ?? '#64748b') : '#64748b'
               }}
             />
           </ReactFlow>

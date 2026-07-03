@@ -39,7 +39,9 @@ export default function AcceptInvitePage({ params }: PageProps) {
 
   async function checkInvite() {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
         setStatus('login-required')
         return
@@ -108,19 +110,19 @@ export default function AcceptInvitePage({ params }: PageProps) {
               {status === 'success'
                 ? 'Welcome to the team!'
                 : status === 'error'
-                ? 'Invite Error'
-                : status === 'login-required'
-                ? 'Sign in Required'
-                : 'Organization Invite'}
+                  ? 'Invite Error'
+                  : status === 'login-required'
+                    ? 'Sign in Required'
+                    : 'Organization Invite'}
             </CardTitle>
             <CardDescription>
               {status === 'success'
                 ? 'You have successfully joined the organization.'
                 : status === 'login-required'
-                ? 'You need to sign in to accept this invite.'
-                : status === 'error'
-                ? 'There was a problem with this invite.'
-                : "You've been invited to join an organization on JobStack."}
+                  ? 'You need to sign in to accept this invite.'
+                  : status === 'error'
+                    ? 'There was a problem with this invite.'
+                    : "You've been invited to join an organization on JobStack."}
             </CardDescription>
           </CardHeader>
 
@@ -140,13 +142,14 @@ export default function AcceptInvitePage({ params }: PageProps) {
                   <span>Sign in with the email address the invite was sent to.</span>
                 </div>
                 <Button className="w-full" asChild>
-                  <Link href={`/login?redirect=/invites/accept/${token}`}>
-                    Sign In to Accept
-                  </Link>
+                  <Link href={`/login?redirect=/invites/accept/${token}`}>Sign In to Accept</Link>
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
                   Don&apos;t have an account?{' '}
-                  <Link href={`/register?redirect=/invites/accept/${token}`} className="text-primary hover:underline">
+                  <Link
+                    href={`/register?redirect=/invites/accept/${token}`}
+                    className="text-primary hover:underline"
+                  >
                     Sign up
                   </Link>
                 </p>
@@ -159,7 +162,9 @@ export default function AcceptInvitePage({ params }: PageProps) {
                 {inviteInfo.email && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
                     <Mail className="h-4 w-4 shrink-0" />
-                    <span>Signed in as <strong>{inviteInfo.email}</strong></span>
+                    <span>
+                      Signed in as <strong>{inviteInfo.email}</strong>
+                    </span>
                   </div>
                 )}
                 <Button className="w-full" onClick={handleAccept}>
@@ -182,14 +187,19 @@ export default function AcceptInvitePage({ params }: PageProps) {
                 <Alert>
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertDescription>
-                    You are now a member of the organization. You can access shared projects and resources.
+                    You are now a member of the organization. You can access shared projects and
+                    resources.
                   </AlertDescription>
                 </Alert>
                 <div className="flex gap-2">
                   <Button className="flex-1" onClick={() => router.push('/organizations')}>
                     Go to Organizations
                   </Button>
-                  <Button variant="outline" className="flex-1" onClick={() => router.push('/dashboard')}>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => router.push('/dashboard')}
+                  >
                     Dashboard
                   </Button>
                 </div>

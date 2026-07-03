@@ -80,9 +80,12 @@ export function highlightYAML(line: string) {
   const kvMatch = line.match(/^(\s*)([\w-]+)(\s*:\s*)(.*)$/)
   if (kvMatch) {
     const val = kvMatch[4]
-    const valEl = val.startsWith("'") || val.startsWith('"')
-      ? <span className="text-emerald-300">{val}</span>
-      : <span className="text-sky-300">{val}</span>
+    const valEl =
+      val.startsWith("'") || val.startsWith('"') ? (
+        <span className="text-emerald-300">{val}</span>
+      ) : (
+        <span className="text-sky-300">{val}</span>
+      )
     return (
       <>
         <span>{kvMatch[1]}</span>

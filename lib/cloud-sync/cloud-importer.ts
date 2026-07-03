@@ -85,7 +85,7 @@ export async function importFromAWS(
         multiAZ: true,
       },
       status: 'running',
-      cost: 145.00, // monthly
+      cost: 145.0, // monthly
       tags: {
         Environment: 'production',
       },
@@ -138,7 +138,7 @@ export async function importFromAzure(
         maxSizeBytes: 268435456000,
       },
       status: 'running',
-      cost: 149.00, // monthly
+      cost: 149.0, // monthly
       tags: {
         environment: 'production',
       },
@@ -271,7 +271,7 @@ export async function detectDrift(
 
   // Find resources added in cloud but not in diagram
   const diagramResourceIds = new Set(
-    diagramNodes.filter((n) => (n.data.config as any)?.imported).map((n) => n.id)
+    diagramNodes.filter(n => (n.data.config as any)?.imported).map(n => n.id)
   )
 
   for (const resource of actualResources) {
@@ -288,7 +288,7 @@ export async function detectDrift(
   }
 
   // Find resources removed from cloud but still in diagram
-  const actualResourceIds = new Set(actualResources.map((r) => r.id))
+  const actualResourceIds = new Set(actualResources.map(r => r.id))
   for (const node of diagramNodes) {
     const config = node.data.config as any
     if (config?.imported && !actualResourceIds.has(node.id)) {
@@ -308,7 +308,7 @@ export async function detectDrift(
     const config = node.data.config as any
     if (!config?.imported) continue
 
-    const actualResource = actualResources.find((r) => r.id === node.id)
+    const actualResource = actualResources.find(r => r.id === node.id)
     if (!actualResource) continue
 
     if (config.status !== actualResource.status) {
@@ -344,7 +344,7 @@ export async function validateCloudCredentials(
 ): Promise<{ valid: boolean; message: string }> {
   // In production, make actual API calls to validate credentials
   // For now, simulate success
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  await new Promise(resolve => setTimeout(resolve, 1000))
 
   return {
     valid: true,

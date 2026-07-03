@@ -130,16 +130,14 @@ export function VersionHistory({ diagramId, onRestore }: VersionHistoryProps) {
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Save Version</DialogTitle>
-            <DialogDescription>
-              Create a snapshot of the current diagram state
-            </DialogDescription>
+            <DialogDescription>Create a snapshot of the current diagram state</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Input
               placeholder="Version message (optional)"
               value={saveMessage}
-              onChange={(e) => setSaveMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSaveVersion()}
+              onChange={e => setSaveMessage(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSaveVersion()}
             />
           </div>
           <DialogFooter>
@@ -165,9 +163,7 @@ export function VersionHistory({ diagramId, onRestore }: VersionHistoryProps) {
         <SheetContent>
           <SheetHeader>
             <SheetTitle>Version History</SheetTitle>
-            <SheetDescription>
-              View and restore previous versions of this diagram
-            </SheetDescription>
+            <SheetDescription>View and restore previous versions of this diagram</SheetDescription>
           </SheetHeader>
           <ScrollArea className="h-[calc(100vh-10rem)] mt-4">
             {isLoading ? (
@@ -182,16 +178,14 @@ export function VersionHistory({ diagramId, onRestore }: VersionHistoryProps) {
               </div>
             ) : (
               <div className="space-y-3 pr-4">
-                {versions.map((v) => (
+                {versions.map(v => (
                   <div
                     key={v.id}
                     className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">v{v.version_number}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {v.message}
-                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{v.message}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {formatDate(v.created_at)}
                       </p>

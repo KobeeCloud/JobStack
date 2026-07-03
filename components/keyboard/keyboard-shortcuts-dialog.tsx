@@ -125,7 +125,7 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
 
         <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-6">
-            {SHORTCUTS.map((category) => (
+            {SHORTCUTS.map(category => (
               <div key={category.name}>
                 <h3 className="font-semibold text-sm text-muted-foreground mb-3">
                   {category.name}
@@ -160,7 +160,9 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
 
         <div className="flex items-center justify-center gap-2 pt-4 border-t text-sm text-muted-foreground">
           <Command className="h-4 w-4" />
-          <span>Press <KeyBadge>?</KeyBadge> anytime to show this dialog</span>
+          <span>
+            Press <KeyBadge>?</KeyBadge> anytime to show this dialog
+          </span>
         </div>
       </DialogContent>
     </Dialog>
@@ -190,124 +192,127 @@ export function useKeyboardShortcuts(handlers: {
   onSettings?: () => void
   onEscape?: () => void
 }) {
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Skip if typing in input fields
-    if (
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement ||
-      (e.target as HTMLElement).isContentEditable
-    ) {
-      return
-    }
-
-    const isMod = e.metaKey || e.ctrlKey
-
-    // Help
-    if (e.key === '?' && !isMod) {
-      e.preventDefault()
-      handlers.onShowHelp?.()
-      return
-    }
-
-    // Escape
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      handlers.onEscape?.()
-      return
-    }
-
-    // Fit view
-    if (e.key === 'f' && !isMod) {
-      e.preventDefault()
-      handlers.onFitView?.()
-      return
-    }
-
-    // Panel toggles (number keys)
-    if (e.key === '1' && !isMod) {
-      e.preventDefault()
-      handlers.onToggleCatalog?.()
-      return
-    }
-    if (e.key === '2' && !isMod) {
-      e.preventDefault()
-      handlers.onToggleProperties?.()
-      return
-    }
-    if (e.key === '3' && !isMod) {
-      e.preventDefault()
-      handlers.onToggleAI?.()
-      return
-    }
-
-    // Delete
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (!isMod) {
-        e.preventDefault()
-        handlers.onDelete?.()
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // Skip if typing in input fields
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
         return
       }
-    }
 
-    // Mod + key shortcuts
-    if (isMod) {
-      switch (e.key.toLowerCase()) {
-        case 's':
-          e.preventDefault()
-          handlers.onSave?.()
-          break
-        case 'z':
-          e.preventDefault()
-          if (e.shiftKey) {
-            handlers.onRedo?.()
-          } else {
-            handlers.onUndo?.()
-          }
-          break
-        case 'a':
-          e.preventDefault()
-          handlers.onSelectAll?.()
-          break
-        case 'c':
-          e.preventDefault()
-          handlers.onCopy?.()
-          break
-        case 'v':
-          e.preventDefault()
-          handlers.onPaste?.()
-          break
-        case 'd':
-          e.preventDefault()
-          handlers.onDuplicate?.()
-          break
-        case 'e':
-          e.preventDefault()
-          handlers.onExport?.()
-          break
-        case 'i':
-          e.preventDefault()
-          handlers.onImport?.()
-          break
-        case ',':
-          e.preventDefault()
-          handlers.onSettings?.()
-          break
-        case '0':
-          e.preventDefault()
-          handlers.onResetZoom?.()
-          break
-        case '=':
-        case '+':
-          e.preventDefault()
-          handlers.onZoomIn?.()
-          break
-        case '-':
-          e.preventDefault()
-          handlers.onZoomOut?.()
-          break
+      const isMod = e.metaKey || e.ctrlKey
+
+      // Help
+      if (e.key === '?' && !isMod) {
+        e.preventDefault()
+        handlers.onShowHelp?.()
+        return
       }
-    }
-  }, [handlers])
+
+      // Escape
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handlers.onEscape?.()
+        return
+      }
+
+      // Fit view
+      if (e.key === 'f' && !isMod) {
+        e.preventDefault()
+        handlers.onFitView?.()
+        return
+      }
+
+      // Panel toggles (number keys)
+      if (e.key === '1' && !isMod) {
+        e.preventDefault()
+        handlers.onToggleCatalog?.()
+        return
+      }
+      if (e.key === '2' && !isMod) {
+        e.preventDefault()
+        handlers.onToggleProperties?.()
+        return
+      }
+      if (e.key === '3' && !isMod) {
+        e.preventDefault()
+        handlers.onToggleAI?.()
+        return
+      }
+
+      // Delete
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (!isMod) {
+          e.preventDefault()
+          handlers.onDelete?.()
+          return
+        }
+      }
+
+      // Mod + key shortcuts
+      if (isMod) {
+        switch (e.key.toLowerCase()) {
+          case 's':
+            e.preventDefault()
+            handlers.onSave?.()
+            break
+          case 'z':
+            e.preventDefault()
+            if (e.shiftKey) {
+              handlers.onRedo?.()
+            } else {
+              handlers.onUndo?.()
+            }
+            break
+          case 'a':
+            e.preventDefault()
+            handlers.onSelectAll?.()
+            break
+          case 'c':
+            e.preventDefault()
+            handlers.onCopy?.()
+            break
+          case 'v':
+            e.preventDefault()
+            handlers.onPaste?.()
+            break
+          case 'd':
+            e.preventDefault()
+            handlers.onDuplicate?.()
+            break
+          case 'e':
+            e.preventDefault()
+            handlers.onExport?.()
+            break
+          case 'i':
+            e.preventDefault()
+            handlers.onImport?.()
+            break
+          case ',':
+            e.preventDefault()
+            handlers.onSettings?.()
+            break
+          case '0':
+            e.preventDefault()
+            handlers.onResetZoom?.()
+            break
+          case '=':
+          case '+':
+            e.preventDefault()
+            handlers.onZoomIn?.()
+            break
+          case '-':
+            e.preventDefault()
+            handlers.onZoomOut?.()
+            break
+        }
+      }
+    },
+    [handlers]
+  )
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)

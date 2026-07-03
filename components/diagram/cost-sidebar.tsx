@@ -42,7 +42,9 @@ export function CostSidebar({ nodes }: CostSidebarProps) {
       }
     }
     calculate()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [debouncedNodes])
 
   if (!costData) {
@@ -80,7 +82,9 @@ export function CostSidebar({ nodes }: CostSidebarProps) {
                 {Object.entries(byCategory).map(([category, costs]) => (
                   <div key={category} className="flex justify-between items-center text-sm">
                     <span className="capitalize">{category}</span>
-                    <span className="font-medium">{formatCost(costs.min)}-{formatCost(costs.max)}</span>
+                    <span className="font-medium">
+                      {formatCost(costs.min)}-{formatCost(costs.max)}
+                    </span>
                   </div>
                 ))}
               </div>

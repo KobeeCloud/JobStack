@@ -10,8 +10,15 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { analyzeCosts, CostReport, CostOptimization, formatCurrency } from '@/lib/cost-optimizer'
 import {
-  DollarSign, TrendingDown, Zap, Clock, ArrowRight,
-  Sparkles, CheckCircle, X, RefreshCw
+  DollarSign,
+  TrendingDown,
+  Zap,
+  Clock,
+  ArrowRight,
+  Sparkles,
+  CheckCircle,
+  X,
+  RefreshCw,
 } from 'lucide-react'
 
 interface CostOptimizerPanelProps {
@@ -42,7 +49,11 @@ const impactColors = {
   high: 'bg-green-500/10 text-green-600',
 }
 
-export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: CostOptimizerPanelProps) {
+export function CostOptimizerPanel({
+  nodes,
+  onApplyOptimization,
+  onClose,
+}: CostOptimizerPanelProps) {
   const [report, setReport] = useState<CostReport | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [appliedOptimizations, setAppliedOptimizations] = useState<Set<string>>(new Set())
@@ -65,9 +76,12 @@ export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: Cost
   }
 
   const savingsPercent = report
-    ? Math.round(((report.totalCurrentCost.min + report.totalCurrentCost.max) / 2 -
-        (report.totalOptimizedCost.min + report.totalOptimizedCost.max) / 2) /
-        ((report.totalCurrentCost.min + report.totalCurrentCost.max) / 2) * 100)
+    ? Math.round(
+        (((report.totalCurrentCost.min + report.totalCurrentCost.max) / 2 -
+          (report.totalOptimizedCost.min + report.totalOptimizedCost.max) / 2) /
+          ((report.totalCurrentCost.min + report.totalCurrentCost.max) / 2)) *
+          100
+      )
     : 0
 
   return (
@@ -120,7 +134,8 @@ export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: Cost
                 <CardContent className="pt-4">
                   <p className="text-xs text-muted-foreground">Current Cost</p>
                   <p className="text-xl font-bold">
-                    {formatCurrency(report.totalCurrentCost.min)} - {formatCurrency(report.totalCurrentCost.max)}
+                    {formatCurrency(report.totalCurrentCost.min)} -{' '}
+                    {formatCurrency(report.totalCurrentCost.max)}
                   </p>
                   <p className="text-xs text-muted-foreground">/month</p>
                 </CardContent>
@@ -129,7 +144,8 @@ export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: Cost
                 <CardContent className="pt-4">
                   <p className="text-xs text-green-600">Potential Savings</p>
                   <p className="text-xl font-bold text-green-600">
-                    {formatCurrency(report.potentialSavings.min)} - {formatCurrency(report.potentialSavings.max)}
+                    {formatCurrency(report.potentialSavings.min)} -{' '}
+                    {formatCurrency(report.potentialSavings.max)}
                   </p>
                   <p className="text-xs text-green-600">/month</p>
                 </CardContent>
@@ -138,7 +154,8 @@ export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: Cost
                 <CardContent className="pt-4">
                   <p className="text-xs text-muted-foreground">Optimized Cost</p>
                   <p className="text-xl font-bold">
-                    {formatCurrency(report.totalOptimizedCost.min)} - {formatCurrency(report.totalOptimizedCost.max)}
+                    {formatCurrency(report.totalOptimizedCost.min)} -{' '}
+                    {formatCurrency(report.totalOptimizedCost.max)}
                   </p>
                   <p className="text-xs text-muted-foreground">/month</p>
                 </CardContent>
@@ -158,8 +175,12 @@ export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: Cost
             <Tabs defaultValue="all">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all">All ({report.optimizations.length})</TabsTrigger>
-                <TabsTrigger value="alternative">Alternatives ({report.summary.alternativeCount})</TabsTrigger>
-                <TabsTrigger value="reserved">Reserved ({report.summary.reservedCount})</TabsTrigger>
+                <TabsTrigger value="alternative">
+                  Alternatives ({report.summary.alternativeCount})
+                </TabsTrigger>
+                <TabsTrigger value="reserved">
+                  Reserved ({report.summary.reservedCount})
+                </TabsTrigger>
                 <TabsTrigger value="spot">Spot ({report.summary.spotCount})</TabsTrigger>
               </TabsList>
 
@@ -175,34 +196,40 @@ export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: Cost
                   ))}
                 </TabsContent>
                 <TabsContent value="alternative" className="space-y-3 mt-0">
-                  {report.optimizations.filter(o => o.category === 'alternative').map((opt, i) => (
-                    <OptimizationCard
-                      key={i}
-                      optimization={opt}
-                      onApply={handleApply}
-                      applied={appliedOptimizations.has(opt.nodeId)}
-                    />
-                  ))}
+                  {report.optimizations
+                    .filter(o => o.category === 'alternative')
+                    .map((opt, i) => (
+                      <OptimizationCard
+                        key={i}
+                        optimization={opt}
+                        onApply={handleApply}
+                        applied={appliedOptimizations.has(opt.nodeId)}
+                      />
+                    ))}
                 </TabsContent>
                 <TabsContent value="reserved" className="space-y-3 mt-0">
-                  {report.optimizations.filter(o => o.category === 'reserved').map((opt, i) => (
-                    <OptimizationCard
-                      key={i}
-                      optimization={opt}
-                      onApply={handleApply}
-                      applied={appliedOptimizations.has(opt.nodeId)}
-                    />
-                  ))}
+                  {report.optimizations
+                    .filter(o => o.category === 'reserved')
+                    .map((opt, i) => (
+                      <OptimizationCard
+                        key={i}
+                        optimization={opt}
+                        onApply={handleApply}
+                        applied={appliedOptimizations.has(opt.nodeId)}
+                      />
+                    ))}
                 </TabsContent>
                 <TabsContent value="spot" className="space-y-3 mt-0">
-                  {report.optimizations.filter(o => o.category === 'spot').map((opt, i) => (
-                    <OptimizationCard
-                      key={i}
-                      optimization={opt}
-                      onApply={handleApply}
-                      applied={appliedOptimizations.has(opt.nodeId)}
-                    />
-                  ))}
+                  {report.optimizations
+                    .filter(o => o.category === 'spot')
+                    .map((opt, i) => (
+                      <OptimizationCard
+                        key={i}
+                        optimization={opt}
+                        onApply={handleApply}
+                        applied={appliedOptimizations.has(opt.nodeId)}
+                      />
+                    ))}
                 </TabsContent>
               </ScrollArea>
             </Tabs>
@@ -222,7 +249,7 @@ export function CostOptimizerPanel({ nodes, onApplyOptimization, onClose }: Cost
 function OptimizationCard({
   optimization,
   onApply,
-  applied
+  applied,
 }: {
   optimization: CostOptimization
   onApply: (opt: CostOptimization) => void
@@ -249,20 +276,20 @@ function OptimizationCard({
 
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">
-                {formatCurrency(optimization.currentCost.min)}-{formatCurrency(optimization.currentCost.max)}
+                {formatCurrency(optimization.currentCost.min)}-
+                {formatCurrency(optimization.currentCost.max)}
               </span>
               <ArrowRight className="h-4 w-4 text-green-600" />
               <span className="text-green-600 font-medium">
-                {formatCurrency(optimization.suggestion.estimatedCost.min)}-{formatCurrency(optimization.suggestion.estimatedCost.max)}
+                {formatCurrency(optimization.suggestion.estimatedCost.min)}-
+                {formatCurrency(optimization.suggestion.estimatedCost.max)}
               </span>
               <Badge variant="secondary" className="bg-green-500/10 text-green-600">
                 -{optimization.suggestion.savingsPercent}%
               </Badge>
             </div>
 
-            <p className="text-sm text-muted-foreground">
-              {optimization.suggestion.reason}
-            </p>
+            <p className="text-sm text-muted-foreground">{optimization.suggestion.reason}</p>
 
             {optimization.category === 'alternative' && (
               <p className="text-xs text-muted-foreground">

@@ -5,9 +5,20 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Plus, FolderOpen, LogOut, Settings, User,
-  Building2, Activity, Clock, TrendingUp, Layers,
-  FileCode, Star, ArrowRight, Sparkles
+  Plus,
+  FolderOpen,
+  LogOut,
+  Settings,
+  User,
+  Building2,
+  Activity,
+  Clock,
+  TrendingUp,
+  Layers,
+  FileCode,
+  Star,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react'
 import { Logo } from '@/components/logo'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -44,8 +55,11 @@ async function DashboardStats({ userId }: { userId: string }) {
   const supabase = await createClient()
 
   const [projectsRes, orgsRes] = await Promise.all([
-    supabase.from('projects').select('id, status, created_at', { count: 'exact' }).eq('user_id', userId),
-    supabase.from('organizations').select('id', { count: 'exact' }).eq('owner_id', userId)
+    supabase
+      .from('projects')
+      .select('id, status, created_at', { count: 'exact' })
+      .eq('user_id', userId),
+    supabase.from('organizations').select('id', { count: 'exact' }).eq('owner_id', userId),
   ])
 
   const projectCount = projectsRes.count || 0
@@ -55,9 +69,9 @@ async function DashboardStats({ userId }: { userId: string }) {
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
-  const recentProjects = projectsRes.data?.filter((p: { created_at: string }) =>
-    new Date(p.created_at) >= startOfMonth
-  ).length || 0
+  const recentProjects =
+    projectsRes.data?.filter((p: { created_at: string }) => new Date(p.created_at) >= startOfMonth)
+      .length || 0
 
   const stats = [
     {
@@ -65,44 +79,53 @@ async function DashboardStats({ userId }: { userId: string }) {
       value: projectCount,
       icon: FolderOpen,
       color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10'
+      bgColor: 'bg-blue-500/10',
     },
     {
       label: 'Organizations',
       value: orgCount,
       icon: Building2,
       color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10'
+      bgColor: 'bg-purple-500/10',
     },
     {
       label: 'This Month',
       value: recentProjects,
       icon: TrendingUp,
       color: 'text-green-500',
-      bgColor: 'bg-green-500/10'
+      bgColor: 'bg-green-500/10',
     },
     {
       label: 'Active',
       value: projectsRes.data?.filter((p: { status: string }) => p.status === 'active').length || 0,
       icon: Activity,
       color: 'text-orange-500',
-      bgColor: 'bg-orange-500/10'
+      bgColor: 'bg-orange-500/10',
     },
   ]
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      {stats.map((stat) => (
-        <Card key={stat.label} className="border-none shadow-md bg-background/60 backdrop-blur-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
-          <div className={`absolute top-0 right-0 w-24 h-24 rounded-full ${stat.bgColor} blur-2xl opacity-50 -mr-8 -mt-8 group-hover:scale-110 transition-transform`} />
+      {stats.map(stat => (
+        <Card
+          key={stat.label}
+          className="border-none shadow-md bg-background/60 backdrop-blur-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
+        >
+          <div
+            className={`absolute top-0 right-0 w-24 h-24 rounded-full ${stat.bgColor} blur-2xl opacity-50 -mr-8 -mt-8 group-hover:scale-110 transition-transform`}
+          />
           <CardContent className="p-5 relative z-10">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${stat.bgColor} shadow-sm group-hover:scale-110 transition-transform`}>
+              <div
+                className={`p-3 rounded-xl ${stat.bgColor} shadow-sm group-hover:scale-110 transition-transform`}
+              >
                 <stat.icon className={`h-6 w-6 ${stat.color}`} />
               </div>
               <div>
                 <p className="text-3xl font-extrabold tracking-tight">{stat.value}</p>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">
+                  {stat.label}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -120,34 +143,38 @@ function QuickActions() {
       href: '/projects/new',
       icon: Plus,
       description: 'Start a new infrastructure diagram',
-      color: 'bg-gradient-to-br from-blue-500 to-blue-600'
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600',
     },
     {
       label: 'Browse Templates',
       href: '/templates',
       icon: Layers,
       description: 'Use pre-built architectures',
-      color: 'bg-gradient-to-br from-purple-500 to-purple-600'
+      color: 'bg-gradient-to-br from-purple-500 to-purple-600',
     },
     {
       label: 'Create Organization',
       href: '/organizations/new',
       icon: Building2,
       description: 'Collaborate with your team',
-      color: 'bg-gradient-to-br from-green-500 to-green-600'
+      color: 'bg-gradient-to-br from-green-500 to-green-600',
     },
   ]
 
   return (
     <div className="grid md:grid-cols-3 gap-6 mb-8">
-      {actions.map((action) => (
+      {actions.map(action => (
         <Link key={action.label} href={action.href} className="block">
           <Card className="group h-full hover:shadow-lg transition-all duration-300 cursor-pointer border border-border/50 bg-background/50 backdrop-blur-sm relative overflow-hidden">
-            <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${action.color}`} />
+            <div
+              className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${action.color}`}
+            />
 
             <CardContent className="p-6 relative z-10 flex flex-col h-full">
               <div className="flex items-start justify-between mb-4">
-                <div className={`p-4 rounded-xl text-white ${action.color} shadow-md group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
+                <div
+                  className={`p-4 rounded-xl text-white ${action.color} shadow-md group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}
+                >
                   <action.icon className="h-6 w-6" />
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-primary transition-all duration-300" />
@@ -192,10 +219,14 @@ async function RecentActivity({ userId }: { userId: string }) {
 
   const getProviderColor = (provider: string) => {
     switch (provider) {
-      case 'aws': return 'bg-orange-500/10 text-orange-600'
-      case 'gcp': return 'bg-blue-500/10 text-blue-600'
-      case 'azure': return 'bg-sky-500/10 text-sky-600'
-      default: return 'bg-gray-500/10 text-gray-600'
+      case 'aws':
+        return 'bg-orange-500/10 text-orange-600'
+      case 'gcp':
+        return 'bg-blue-500/10 text-blue-600'
+      case 'azure':
+        return 'bg-sky-500/10 text-sky-600'
+      default:
+        return 'bg-gray-500/10 text-gray-600'
     }
   }
 
@@ -210,14 +241,18 @@ async function RecentActivity({ userId }: { userId: string }) {
             </div>
             <CardTitle className="text-lg font-semibold tracking-tight">Recent Activity</CardTitle>
           </div>
-          <Link href="/projects" className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group">
-            View all <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+          <Link
+            href="/projects"
+            className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1 group"
+          >
+            View all{' '}
+            <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-border/50">
-          {(recentProjects as RecentProject[]).map((project) => (
+          {(recentProjects as RecentProject[]).map(project => (
             <Link
               key={project.id}
               href={`/projects/${project.id}`}
@@ -232,7 +267,9 @@ async function RecentActivity({ userId }: { userId: string }) {
                   {project.name}
                 </p>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide border ${getProviderColor(project.cloud_provider)}`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide border ${getProviderColor(project.cloud_provider)}`}
+                  >
                     {project.cloud_provider}
                   </span>
                   <span className="flex items-center gap-1">
@@ -241,7 +278,10 @@ async function RecentActivity({ userId }: { userId: string }) {
                   </span>
                 </div>
               </div>
-              <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="px-3 py-1 text-xs font-semibold shadow-sm">
+              <Badge
+                variant={project.status === 'active' ? 'default' : 'secondary'}
+                className="px-3 py-1 text-xs font-semibold shadow-sm"
+              >
                 {project.status.toUpperCase()}
               </Badge>
             </Link>
@@ -308,7 +348,7 @@ async function ProjectsList({ userId }: { userId: string }) {
 function StatsLoadingSkeleton() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      {[1, 2, 3, 4].map((i) => (
+      {[1, 2, 3, 4].map(i => (
         <Card key={i} className="border-none shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -328,7 +368,7 @@ function StatsLoadingSkeleton() {
 function ProjectsListSkeleton() {
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[1, 2, 3].map((i) => (
+      {[1, 2, 3].map(i => (
         <Card key={i} className="animate-pulse">
           <CardHeader>
             <div className="h-6 bg-muted rounded w-3/4 mb-2" />
@@ -355,11 +395,14 @@ async function AnalyticsDashboard({ userId }: { userId: string }) {
   if (!projects || projects.length < 2) return null
 
   // Projects by provider
-  const providerCounts = projects.reduce((acc: Record<string, number>, p: { cloud_provider: string }) => {
-    const key = p.cloud_provider || 'other'
-    acc[key] = (acc[key] || 0) + 1
-    return acc
-  }, {})
+  const providerCounts = projects.reduce(
+    (acc: Record<string, number>, p: { cloud_provider: string }) => {
+      const key = p.cloud_provider || 'other'
+      acc[key] = (acc[key] || 0) + 1
+      return acc
+    },
+    {}
+  )
   const projectsByProvider = Object.entries(providerCounts).map(([name, count]) => ({
     name: name.toUpperCase(),
     count: count as number,
@@ -377,7 +420,20 @@ async function AnalyticsDashboard({ userId }: { userId: string }) {
   }))
 
   // Projects by month (last 6 months)
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
   const now = new Date()
   const projectsByMonth = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
@@ -392,13 +448,10 @@ async function AnalyticsDashboard({ userId }: { userId: string }) {
   // BUG-2: Only fetch diagram nodes for category counting — limit to most recent diagrams.
   // For large datasets, consider a Postgres RPC that aggregates categories server-side.
   const projectIds = projects.map((p: { id: string }) => p.id)
-  const { data: diagrams } = projectIds.length > 0
-    ? await supabase
-      .from('diagrams')
-      .select('nodes')
-      .in('project_id', projectIds)
-      .limit(100)
-    : { data: null }
+  const { data: diagrams } =
+    projectIds.length > 0
+      ? await supabase.from('diagrams').select('nodes').in('project_id', projectIds).limit(100)
+      : { data: null }
 
   const categoryCounts: Record<string, number> = {}
   if (diagrams) {
@@ -429,7 +482,9 @@ async function AnalyticsDashboard({ userId }: { userId: string }) {
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   // SR-3: Use i18n translations for footer
@@ -462,9 +517,13 @@ export default async function DashboardPage() {
               <NotificationBell />
               <ThemeToggle />
               {profile?.subscription_tier && profile.subscription_tier !== 'free' && (
-                <Badge variant="outline" className="hidden sm:flex gap-1 text-primary border-primary/30">
+                <Badge
+                  variant="outline"
+                  className="hidden sm:flex gap-1 text-primary border-primary/30"
+                >
                   <Star className="h-3 w-3 fill-primary" />
-                  {profile.subscription_tier.charAt(0).toUpperCase() + profile.subscription_tier.slice(1)}
+                  {profile.subscription_tier.charAt(0).toUpperCase() +
+                    profile.subscription_tier.slice(1)}
                 </Badge>
               )}
 
@@ -491,9 +550,7 @@ export default async function DashboardPage() {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{displayName}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -584,8 +641,12 @@ export default async function DashboardPage() {
           <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>{footerT('copyright', { year: new Date().getFullYear() })}</p>
             <div className="flex items-center gap-4">
-              <Link href="/privacy" className="hover:text-foreground transition-colors">{footerT('privacy')}</Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">{footerT('terms')}</Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">
+                {footerT('privacy')}
+              </Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">
+                {footerT('terms')}
+              </Link>
             </div>
           </div>
         </footer>

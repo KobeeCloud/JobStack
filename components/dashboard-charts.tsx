@@ -2,8 +2,17 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts'
 
 interface AnalyticsData {
@@ -67,9 +76,11 @@ export function DashboardCharts({ data }: { data: AnalyticsData }) {
                   paddingAngle={3}
                   dataKey="count"
                   nameKey="name"
-                  label={({ name, percent }: { name?: string; percent?: number }) => `${name || ''} ${((percent || 0) * 100).toFixed(0)}%`}
+                  label={({ name, percent }: { name?: string; percent?: number }) =>
+                    `${name || ''} ${((percent || 0) * 100).toFixed(0)}%`
+                  }
                 >
-                  {data.projectsByProvider.map((entry) => (
+                  {data.projectsByProvider.map(entry => (
                     <Cell
                       key={entry.name}
                       fill={PROVIDER_COLORS[entry.name.toLowerCase()] || '#8B5CF6'}
@@ -107,9 +118,11 @@ export function DashboardCharts({ data }: { data: AnalyticsData }) {
                   paddingAngle={3}
                   dataKey="count"
                   nameKey="name"
-                  label={({ name, value }: { name?: string; value?: number }) => `${name || ''} (${value || 0})`}
+                  label={({ name, value }: { name?: string; value?: number }) =>
+                    `${name || ''} (${value || 0})`
+                  }
                 >
-                  {data.projectsByStatus.map((entry) => (
+                  {data.projectsByStatus.map(entry => (
                     <Cell
                       key={entry.name}
                       fill={STATUS_COLORS[entry.name.toLowerCase()] || '#94A3B8'}
@@ -140,11 +153,7 @@ export function DashboardCharts({ data }: { data: AnalyticsData }) {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={data.projectsByMonth}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 12 }}
-                  className="fill-muted-foreground"
-                />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
                 <YAxis
                   allowDecimals={false}
                   tick={{ fontSize: 12 }}
@@ -182,12 +191,7 @@ export function DashboardCharts({ data }: { data: AnalyticsData }) {
               <BarChart data={data.componentsByCategory} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis type="number" allowDecimals={false} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={120}
-                  tick={{ fontSize: 12 }}
-                />
+                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',

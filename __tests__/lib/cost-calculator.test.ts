@@ -23,17 +23,13 @@ describe('calculateInfrastructureCost', () => {
   })
 
   it('returns zero for nodes with non-existent component IDs', () => {
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'nonexistent-component'),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'nonexistent-component')])
     expect(result.min).toBe(0)
     expect(result.max).toBe(0)
   })
 
   it('calculates cost for a single VM node', () => {
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'azure-vm'),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'azure-vm')])
     expect(result.min).toBeGreaterThan(0)
     expect(result.max).toBeGreaterThanOrEqual(result.min)
     expect(result.breakdown).toHaveLength(1)
@@ -42,52 +38,38 @@ describe('calculateInfrastructureCost', () => {
 
   it('handles GCP compute instance (not gcp-compute)', () => {
     // This was a bug — 'gcp-compute' didn't exist in catalog
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'gcp-compute-instance'),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'gcp-compute-instance')])
     expect(result.min).toBeGreaterThan(0)
   })
 
   it('handles azure-storage-account (not azure-storage)', () => {
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'azure-storage-account'),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'azure-storage-account')])
     expect(result.min).toBeGreaterThanOrEqual(0)
     expect(result.breakdown).toHaveLength(1)
   })
 
   it('handles gcp-cloud-storage (not gcp-storage)', () => {
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'gcp-cloud-storage'),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'gcp-cloud-storage')])
     expect(result.breakdown).toHaveLength(1)
   })
 
   it('handles azure-managed-disk (not azure-disk)', () => {
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'azure-managed-disk'),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'azure-managed-disk')])
     expect(result.breakdown).toHaveLength(1)
   })
 
   it('handles gcp-persistent-disk (not gcp-disk)', () => {
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'gcp-persistent-disk'),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'gcp-persistent-disk')])
     expect(result.breakdown).toHaveLength(1)
   })
 
   it('handles azure-sql (not azure-sql-database)', () => {
-    const result = calculateInfrastructureCost([
-      makeNode('1', 'azure-sql', { sku: 'S0' }),
-    ])
+    const result = calculateInfrastructureCost([makeNode('1', 'azure-sql', { sku: 'S0' })])
     expect(result.min).toBeGreaterThan(0)
   })
 
   it('applies VM size pricing', () => {
-    const defaultResult = calculateInfrastructureCost([
-      makeNode('1', 'aws-ec2'),
-    ])
+    const defaultResult = calculateInfrastructureCost([makeNode('1', 'aws-ec2')])
     const sizedResult = calculateInfrastructureCost([
       makeNode('1', 'aws-ec2', { size: 'Standard_D4s_v3' }),
     ])
@@ -96,12 +78,8 @@ describe('calculateInfrastructureCost', () => {
   })
 
   it('multiplies cost by replicas', () => {
-    const singleResult = calculateInfrastructureCost([
-      makeNode('1', 'aws-ec2'),
-    ])
-    const tripleResult = calculateInfrastructureCost([
-      makeNode('1', 'aws-ec2', { replicas: 3 }),
-    ])
+    const singleResult = calculateInfrastructureCost([makeNode('1', 'aws-ec2')])
+    const tripleResult = calculateInfrastructureCost([makeNode('1', 'aws-ec2', { replicas: 3 })])
     // 3 replicas should cost ~3x
     expect(tripleResult.min).toBeGreaterThan(singleResult.min)
   })

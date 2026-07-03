@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
-import createNextIntlPlugin from 'next-intl/plugin';
+import type { NextConfig } from 'next'
+import createNextIntlPlugin from 'next-intl/plugin'
 
-const withNextIntl = createNextIntlPlugin('./lib/i18n.ts');
+const withNextIntl = createNextIntlPlugin('./lib/i18n.ts')
 
 const nextConfig: NextConfig = {
   // 'standalone' enables self-hosted deployment (Docker / PM2 on Azure VMs).
@@ -70,6 +70,6 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
-};
+}
 
-export default withNextIntl(nextConfig);
+export default withNextIntl(nextConfig)

@@ -1,43 +1,43 @@
-import { Node, Edge } from '@xyflow/react';
+import { Node, Edge } from '@xyflow/react'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface PDFDocumentConfig {
-  title: string;
-  description?: string;
-  author?: string;
-  version?: string;
-  createdAt?: Date;
-  includeTableOfContents: boolean;
-  includeDiagramImage: boolean;
-  includeNodeDetails: boolean;
-  includeConnectionDetails: boolean;
-  includeTerraformCode: boolean;
-  includeEstimatedCosts: boolean;
-  companyLogo?: string;
-  theme: 'light' | 'dark' | 'corporate';
+  title: string
+  description?: string
+  author?: string
+  version?: string
+  createdAt?: Date
+  includeTableOfContents: boolean
+  includeDiagramImage: boolean
+  includeNodeDetails: boolean
+  includeConnectionDetails: boolean
+  includeTerraformCode: boolean
+  includeEstimatedCosts: boolean
+  companyLogo?: string
+  theme: 'light' | 'dark' | 'corporate'
 }
 
 export interface NodeDocumentation {
-  id: string;
-  name: string;
-  type: string;
-  description?: string;
-  configuration?: Record<string, unknown>;
+  id: string
+  name: string
+  type: string
+  description?: string
+  configuration?: Record<string, unknown>
   connections: {
-    incoming: Array<{ from: string; label?: string }>;
-    outgoing: Array<{ to: string; label?: string }>;
-  };
-  estimatedCost?: string;
-  tags?: string[];
+    incoming: Array<{ from: string; label?: string }>
+    outgoing: Array<{ to: string; label?: string }>
+  }
+  estimatedCost?: string
+  tags?: string[]
 }
 
 export interface DocumentSection {
-  title: string;
-  content: string;
-  level: 1 | 2 | 3;
+  title: string
+  content: string
+  level: 1 | 2 | 3
 }
 
 // ============================================================================
@@ -46,24 +46,25 @@ export interface DocumentSection {
 
 const NODE_TYPE_DESCRIPTIONS: Record<string, string> = {
   // AWS
-  'ec2': 'Amazon EC2 provides scalable computing capacity in the AWS cloud.',
-  's3': 'Amazon S3 is an object storage service with industry-leading scalability.',
-  'rds': 'Amazon RDS makes it easy to set up, operate, and scale a relational database.',
-  'lambda': 'AWS Lambda lets you run code without provisioning servers.',
-  'vpc': 'Amazon VPC lets you provision a logically isolated section of the AWS Cloud.',
-  'load-balancer': 'Elastic Load Balancing distributes incoming application traffic across targets.',
+  ec2: 'Amazon EC2 provides scalable computing capacity in the AWS cloud.',
+  s3: 'Amazon S3 is an object storage service with industry-leading scalability.',
+  rds: 'Amazon RDS makes it easy to set up, operate, and scale a relational database.',
+  lambda: 'AWS Lambda lets you run code without provisioning servers.',
+  vpc: 'Amazon VPC lets you provision a logically isolated section of the AWS Cloud.',
+  'load-balancer':
+    'Elastic Load Balancing distributes incoming application traffic across targets.',
   'api-gateway': 'Amazon API Gateway is a fully managed service for creating APIs.',
-  'dynamodb': 'Amazon DynamoDB is a fast and flexible NoSQL database service.',
-  'cloudfront': 'Amazon CloudFront is a fast content delivery network (CDN) service.',
-  'sns': 'Amazon SNS is a fully managed messaging service for pub/sub.',
-  'sqs': 'Amazon SQS is a fully managed message queuing service.',
+  dynamodb: 'Amazon DynamoDB is a fast and flexible NoSQL database service.',
+  cloudfront: 'Amazon CloudFront is a fast content delivery network (CDN) service.',
+  sns: 'Amazon SNS is a fully managed messaging service for pub/sub.',
+  sqs: 'Amazon SQS is a fully managed message queuing service.',
 
   // Azure
-  'vm': 'Azure Virtual Machines provide on-demand, scalable computing resources.',
+  vm: 'Azure Virtual Machines provide on-demand, scalable computing resources.',
   'blob-storage': 'Azure Blob Storage is massively scalable object storage.',
   'sql-database': 'Azure SQL Database is a fully managed relational database.',
   'function-app': 'Azure Functions is a serverless compute service.',
-  'vnet': 'Azure Virtual Network is the fundamental building block for private networks.',
+  vnet: 'Azure Virtual Network is the fundamental building block for private networks.',
 
   // GCP
   'compute-engine': 'Google Compute Engine delivers configurable virtual machines.',
@@ -72,51 +73,48 @@ const NODE_TYPE_DESCRIPTIONS: Record<string, string> = {
   'cloud-function': 'Cloud Functions is a serverless execution environment.',
 
   // Generic
-  'database': 'Database storage component',
-  'server': 'Server or compute instance',
-  'storage': 'Storage component',
-  'network': 'Network component',
-  'default': 'Cloud resource component',
-};
+  database: 'Database storage component',
+  server: 'Server or compute instance',
+  storage: 'Storage component',
+  network: 'Network component',
+  default: 'Cloud resource component',
+}
 
 // ============================================================================
 // Document Generation Functions
 // ============================================================================
 
-function generateNodeDocumentation(
-  node: Node,
-  edges: Edge[],
-  allNodes: Node[]
-): NodeDocumentation {
-  const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
+function generateNodeDocumentation(node: Node, edges: Edge[], allNodes: Node[]): NodeDocumentation {
+  const nodeMap = new Map(allNodes.map(n => [n.id, n]))
 
   // Find connections
-  const incomingEdges = edges.filter((e) => e.target === node.id);
-  const outgoingEdges = edges.filter((e) => e.source === node.id);
+  const incomingEdges = edges.filter(e => e.target === node.id)
+  const outgoingEdges = edges.filter(e => e.source === node.id)
 
   return {
     id: node.id,
     name: (node.data?.label as string) || node.id,
     type: node.type || 'default',
-    description: (node.data?.description as string) || NODE_TYPE_DESCRIPTIONS[node.type || 'default'],
+    description:
+      (node.data?.description as string) || NODE_TYPE_DESCRIPTIONS[node.type || 'default'],
     configuration: node.data as Record<string, unknown>,
     connections: {
-      incoming: incomingEdges.map((e) => ({
+      incoming: incomingEdges.map(e => ({
         from: (nodeMap.get(e.source)?.data?.label as string) || e.source,
         label: e.label as string | undefined,
       })),
-      outgoing: outgoingEdges.map((e) => ({
+      outgoing: outgoingEdges.map(e => ({
         to: (nodeMap.get(e.target)?.data?.label as string) || e.target,
         label: e.label as string | undefined,
       })),
     },
     tags: (node.data?.tags as string[]) || [],
-  };
+  }
 }
 
 function generateMarkdownSection(section: DocumentSection): string {
-  const heading = '#'.repeat(section.level);
-  return `${heading} ${section.title}\n\n${section.content}\n\n`;
+  const heading = '#'.repeat(section.level)
+  return `${heading} ${section.title}\n\n${section.content}\n\n`
 }
 
 // ============================================================================
@@ -128,7 +126,7 @@ export function generatePDFDocumentation(
   edges: Edge[],
   config: PDFDocumentConfig
 ): string {
-  const sections: DocumentSection[] = [];
+  const sections: DocumentSection[] = []
 
   // Title Page
   sections.push({
@@ -140,9 +138,11 @@ export function generatePDFDocumentation(
       `**Generated:** ${new Date().toLocaleDateString()}`,
       '',
       '---',
-    ].filter(Boolean).join('\n\n'),
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
     level: 1,
-  });
+  })
 
   // Executive Summary
   sections.push({
@@ -158,11 +158,11 @@ export function generatePDFDocumentation(
       `|--------|-------|`,
       `| Total Components | ${nodes.length} |`,
       `| Total Connections | ${edges.length} |`,
-      `| Component Types | ${new Set(nodes.map((n) => n.type || 'default')).size} |`,
-      `| Container Groups | ${nodes.filter((n) => n.type === 'vpc' || n.type === 'vnet' || n.type === 'group').length} |`,
+      `| Component Types | ${new Set(nodes.map(n => n.type || 'default')).size} |`,
+      `| Container Groups | ${nodes.filter(n => n.type === 'vpc' || n.type === 'vnet' || n.type === 'group').length} |`,
     ].join('\n'),
     level: 1,
-  });
+  })
 
   // Table of Contents
   if (config.includeTableOfContents) {
@@ -174,13 +174,13 @@ export function generatePDFDocumentation(
       config.includeTerraformCode && '5. Infrastructure as Code',
       config.includeEstimatedCosts && '6. Cost Estimation',
       '7. Appendix',
-    ].filter(Boolean);
+    ].filter(Boolean)
 
     sections.push({
       title: 'Table of Contents',
       content: tocItems.join('\n\n'),
       level: 1,
-    });
+    })
   }
 
   // Architecture Overview
@@ -196,7 +196,7 @@ export function generatePDFDocumentation(
       generateComponentDistributionTable(nodes),
     ].join('\n'),
     level: 1,
-  });
+  })
 
   // Component Details
   if (config.includeNodeDetails) {
@@ -204,22 +204,24 @@ export function generatePDFDocumentation(
       title: 'Component Details',
       content: 'Detailed documentation for each component in the architecture.',
       level: 1,
-    });
+    })
 
     // Group nodes by type for better organization
-    const nodesByType = groupNodesByType(nodes);
+    const nodesByType = groupNodesByType(nodes)
 
     for (const [type, typeNodes] of Object.entries(nodesByType)) {
-      const typeLabel = formatNodeType(type);
+      const typeLabel = formatNodeType(type)
 
       sections.push({
         title: typeLabel,
-        content: typeNodes.map((node) => {
-          const doc = generateNodeDocumentation(node, edges, nodes);
-          return formatNodeDocSection(doc);
-        }).join('\n\n---\n\n'),
+        content: typeNodes
+          .map(node => {
+            const doc = generateNodeDocumentation(node, edges, nodes)
+            return formatNodeDocSection(doc)
+          })
+          .join('\n\n---\n\n'),
         level: 2,
-      });
+      })
     }
   }
 
@@ -233,7 +235,7 @@ export function generatePDFDocumentation(
         generateConnectionTable(nodes, edges),
       ].join('\n'),
       level: 1,
-    });
+    })
   }
 
   // Cost Estimation
@@ -246,7 +248,7 @@ export function generatePDFDocumentation(
         generateCostTable(nodes),
       ].join('\n'),
       level: 1,
-    });
+    })
   }
 
   // Appendix
@@ -264,10 +266,10 @@ export function generatePDFDocumentation(
       `- **Document Version:** ${config.version || '1.0.0'}`,
     ].join('\n'),
     level: 1,
-  });
+  })
 
   // Generate final Markdown
-  return sections.map(generateMarkdownSection).join('\n');
+  return sections.map(generateMarkdownSection).join('\n')
 }
 
 // ============================================================================
@@ -275,24 +277,24 @@ export function generatePDFDocumentation(
 // ============================================================================
 
 function groupNodesByType(nodes: Node[]): Record<string, Node[]> {
-  const groups: Record<string, Node[]> = {};
+  const groups: Record<string, Node[]> = {}
 
   for (const node of nodes) {
-    const type = node.type || 'default';
+    const type = node.type || 'default'
     if (!groups[type]) {
-      groups[type] = [];
+      groups[type] = []
     }
-    groups[type].push(node);
+    groups[type].push(node)
   }
 
-  return groups;
+  return groups
 }
 
 function formatNodeType(type: string): string {
   return type
     .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }
 
 function formatNodeDocSection(doc: NodeDocumentation): string {
@@ -302,112 +304,100 @@ function formatNodeDocSection(doc: NodeDocumentation): string {
     `**Type:** ${formatNodeType(doc.type)}`,
     '',
     doc.description || '',
-  ];
+  ]
 
   if (doc.connections.incoming.length > 0) {
-    lines.push('', '**Receives data from:**');
+    lines.push('', '**Receives data from:**')
     for (const conn of doc.connections.incoming) {
-      lines.push(`- ${conn.from}${conn.label ? ` (${conn.label})` : ''}`);
+      lines.push(`- ${conn.from}${conn.label ? ` (${conn.label})` : ''}`)
     }
   }
 
   if (doc.connections.outgoing.length > 0) {
-    lines.push('', '**Sends data to:**');
+    lines.push('', '**Sends data to:**')
     for (const conn of doc.connections.outgoing) {
-      lines.push(`- ${conn.to}${conn.label ? ` (${conn.label})` : ''}`);
+      lines.push(`- ${conn.to}${conn.label ? ` (${conn.label})` : ''}`)
     }
   }
 
   if (doc.tags && doc.tags.length > 0) {
-    lines.push('', `**Tags:** ${doc.tags.join(', ')}`);
+    lines.push('', `**Tags:** ${doc.tags.join(', ')}`)
   }
 
-  return lines.join('\n');
+  return lines.join('\n')
 }
 
 function generateComponentDistributionTable(nodes: Node[]): string {
-  const typeCount = new Map<string, number>();
+  const typeCount = new Map<string, number>()
 
   for (const node of nodes) {
-    const type = node.type || 'default';
-    typeCount.set(type, (typeCount.get(type) || 0) + 1);
+    const type = node.type || 'default'
+    typeCount.set(type, (typeCount.get(type) || 0) + 1)
   }
 
   const rows = Array.from(typeCount.entries())
     .sort((a, b) => b[1] - a[1])
-    .map(([type, count]) => `| ${formatNodeType(type)} | ${count} |`);
+    .map(([type, count]) => `| ${formatNodeType(type)} | ${count} |`)
 
-  return [
-    '| Component Type | Count |',
-    '|----------------|-------|',
-    ...rows,
-  ].join('\n');
+  return ['| Component Type | Count |', '|----------------|-------|', ...rows].join('\n')
 }
 
 function generateConnectionTable(nodes: Node[], edges: Edge[]): string {
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
-  const rows = edges.map((edge) => {
-    const source = nodeMap.get(edge.source);
-    const target = nodeMap.get(edge.target);
-    const sourceName = (source?.data?.label as string) || edge.source;
-    const targetName = (target?.data?.label as string) || edge.target;
-    const label = (edge.label as string) || '-';
+  const rows = edges.map(edge => {
+    const source = nodeMap.get(edge.source)
+    const target = nodeMap.get(edge.target)
+    const sourceName = (source?.data?.label as string) || edge.source
+    const targetName = (target?.data?.label as string) || edge.target
+    const label = (edge.label as string) || '-'
 
-    return `| ${sourceName} | ${targetName} | ${label} |`;
-  });
+    return `| ${sourceName} | ${targetName} | ${label} |`
+  })
 
-  return [
-    '| Source | Target | Label |',
-    '|--------|--------|-------|',
-    ...rows,
-  ].join('\n');
+  return ['| Source | Target | Label |', '|--------|--------|-------|', ...rows].join('\n')
 }
 
 function generateCostTable(nodes: Node[]): string {
   const MONTHLY_ESTIMATES: Record<string, string> = {
-    'ec2': '$50-500/mo',
-    's3': '$5-50/mo',
-    'rds': '$100-1000/mo',
-    'lambda': '$0-100/mo',
+    ec2: '$50-500/mo',
+    s3: '$5-50/mo',
+    rds: '$100-1000/mo',
+    lambda: '$0-100/mo',
     'load-balancer': '$20-200/mo',
     'api-gateway': '$5-50/mo',
-    'dynamodb': '$25-250/mo',
-    'cloudfront': '$10-100/mo',
-    'vm': '$50-500/mo',
+    dynamodb: '$25-250/mo',
+    cloudfront: '$10-100/mo',
+    vm: '$50-500/mo',
     'sql-database': '$100-1000/mo',
     'function-app': '$0-100/mo',
     'compute-engine': '$50-500/mo',
     'cloud-sql': '$100-1000/mo',
-    'default': 'Varies',
-  };
+    default: 'Varies',
+  }
 
-  const rows = nodes.map((node) => {
-    const name = (node.data?.label as string) || node.id;
-    const type = formatNodeType(node.type || 'default');
-    const estimate = MONTHLY_ESTIMATES[node.type || 'default'] || 'Varies';
+  const rows = nodes.map(node => {
+    const name = (node.data?.label as string) || node.id
+    const type = formatNodeType(node.type || 'default')
+    const estimate = MONTHLY_ESTIMATES[node.type || 'default'] || 'Varies'
 
-    return `| ${name} | ${type} | ${estimate} |`;
-  });
+    return `| ${name} | ${type} | ${estimate} |`
+  })
 
   return [
     '| Component | Type | Est. Monthly Cost |',
     '|-----------|------|-------------------|',
     ...rows,
-  ].join('\n');
+  ].join('\n')
 }
 
 function generateIdReferenceTable(nodes: Node[]): string {
-  const rows = nodes.map((node) => {
-    const name = (node.data?.label as string) || node.id;
-    return `| ${node.id} | ${name} | ${node.type || 'default'} |`;
-  });
+  const rows = nodes.map(node => {
+    const name = (node.data?.label as string) || node.id
+    return `| ${node.id} | ${name} | ${node.type || 'default'} |`
+  })
 
-  return [
-    '| ID | Name | Type |',
-    '|----|------|------|',
-    ...rows,
-  ].join('\n');
+  return ['| ID | Name | Type |', '|----|------|------|', ...rows].join('\n')
 }
 
 // ============================================================================
@@ -415,18 +405,21 @@ function generateIdReferenceTable(nodes: Node[]): string {
 // ============================================================================
 
 export function downloadAsMarkdown(content: string, filename: string = 'documentation.md'): void {
-  const blob = new Blob([content], { type: 'text/markdown' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  const blob = new Blob([content], { type: 'text/markdown' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
-export function downloadAsHTML(markdownContent: string, filename: string = 'documentation.html'): void {
+export function downloadAsHTML(
+  markdownContent: string,
+  filename: string = 'documentation.html'
+): void {
   // Simple Markdown to HTML conversion (basic)
   const html = `
 <!DOCTYPE html>
@@ -450,17 +443,17 @@ export function downloadAsHTML(markdownContent: string, filename: string = 'docu
 <body>
   ${simpleMarkdownToHTML(markdownContent)}
 </body>
-</html>`;
+</html>`
 
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 function simpleMarkdownToHTML(md: string): string {
@@ -474,13 +467,13 @@ function simpleMarkdownToHTML(md: string): string {
     .replace(/^\- (.*$)/gim, '<li>$1</li>')
     .replace(/^---$/gim, '<hr>')
     .replace(/\n\n/g, '</p><p>')
-    .replace(/\|(.+)\|/g, (match) => {
-      const cells = match.split('|').filter(Boolean);
-      const isHeader = cells.some((c) => c.includes('---'));
-      if (isHeader) return '';
-      const tag = 'td';
-      return `<tr>${cells.map((c) => `<${tag}>${c.trim()}</${tag}>`).join('')}</tr>`;
-    });
+    .replace(/\|(.+)\|/g, match => {
+      const cells = match.split('|').filter(Boolean)
+      const isHeader = cells.some(c => c.includes('---'))
+      if (isHeader) return ''
+      const tag = 'td'
+      return `<tr>${cells.map(c => `<${tag}>${c.trim()}</${tag}>`).join('')}</tr>`
+    })
 }
 
-export default generatePDFDocumentation;
+export default generatePDFDocumentation

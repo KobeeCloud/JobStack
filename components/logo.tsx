@@ -55,7 +55,8 @@ export function Logo({ size = 32, className = '' }: LogoProps) {
 
       {/* Wordmark — embedded in the SVG, no separate HTML needed */}
       <text x="66" y="35">
-        <tspan className="js-text-job">Job</tspan><tspan className="js-text-stack">Stack</tspan>
+        <tspan className="js-text-job">Job</tspan>
+        <tspan className="js-text-stack">Stack</tspan>
       </text>
     </svg>
   )

@@ -63,9 +63,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 <Button onClick={this.resetError} variant="outline">
                   Try Again
                 </Button>
-                <Button onClick={() => window.location.reload()}>
-                  Refresh Page
-                </Button>
+                <Button onClick={() => window.location.reload()}>Refresh Page</Button>
               </div>
             </CardContent>
           </Card>

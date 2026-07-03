@@ -36,11 +36,19 @@ const PULUMI_MAPPINGS: Record<string, { package: string; type: string; imports: 
   'aws-eks': { package: '@pulumi/aws', type: 'aws.eks.Cluster', imports: ['aws'] },
   'aws-ecs': { package: '@pulumi/aws', type: 'aws.ecs.Cluster', imports: ['aws'] },
   'aws-api-gateway': { package: '@pulumi/aws', type: 'aws.apigateway.RestApi', imports: ['aws'] },
-  'aws-cloudfront': { package: '@pulumi/aws', type: 'aws.cloudfront.Distribution', imports: ['aws'] },
+  'aws-cloudfront': {
+    package: '@pulumi/aws',
+    type: 'aws.cloudfront.Distribution',
+    imports: ['aws'],
+  },
   'aws-sqs': { package: '@pulumi/aws', type: 'aws.sqs.Queue', imports: ['aws'] },
   'aws-sns': { package: '@pulumi/aws', type: 'aws.sns.Topic', imports: ['aws'] },
   'aws-nat-gateway': { package: '@pulumi/aws', type: 'aws.ec2.NatGateway', imports: ['aws'] },
-  'aws-internet-gateway': { package: '@pulumi/aws', type: 'aws.ec2.InternetGateway', imports: ['aws'] },
+  'aws-internet-gateway': {
+    package: '@pulumi/aws',
+    type: 'aws.ec2.InternetGateway',
+    imports: ['aws'],
+  },
   'aws-eip': { package: '@pulumi/aws', type: 'aws.ec2.Eip', imports: ['aws'] },
   'aws-route-table': { package: '@pulumi/aws', type: 'aws.ec2.RouteTable', imports: ['aws'] },
   'aws-ecr': { package: '@pulumi/aws', type: 'aws.ecr.Repository', imports: ['aws'] },
@@ -50,7 +58,11 @@ const PULUMI_MAPPINGS: Record<string, { package: string; type: string; imports: 
   'aws-cognito': { package: '@pulumi/aws', type: 'aws.cognito.UserPool', imports: ['aws'] },
   'aws-iam-role': { package: '@pulumi/aws', type: 'aws.iam.Role', imports: ['aws'] },
   'aws-kms': { package: '@pulumi/aws', type: 'aws.kms.Key', imports: ['aws'] },
-  'aws-secrets-manager': { package: '@pulumi/aws', type: 'aws.secretsmanager.Secret', imports: ['aws'] },
+  'aws-secrets-manager': {
+    package: '@pulumi/aws',
+    type: 'aws.secretsmanager.Secret',
+    imports: ['aws'],
+  },
   'aws-waf': { package: '@pulumi/aws', type: 'aws.wafv2.WebAcl', imports: ['aws'] },
   'aws-kinesis': { package: '@pulumi/aws', type: 'aws.kinesis.Stream', imports: ['aws'] },
   'aws-step-functions': { package: '@pulumi/aws', type: 'aws.sfn.StateMachine', imports: ['aws'] },
@@ -59,61 +71,194 @@ const PULUMI_MAPPINGS: Record<string, { package: string; type: string; imports: 
   'aws-cloudwatch': { package: '@pulumi/aws', type: 'aws.cloudwatch.Dashboard', imports: ['aws'] },
 
   // Azure
-  'azure-vnet': { package: '@pulumi/azure-native', type: 'azure.network.VirtualNetwork', imports: ['azure'] },
-  'azure-subnet': { package: '@pulumi/azure-native', type: 'azure.network.Subnet', imports: ['azure'] },
-  'azure-nsg': { package: '@pulumi/azure-native', type: 'azure.network.NetworkSecurityGroup', imports: ['azure'] },
-  'azure-vm': { package: '@pulumi/azure-native', type: 'azure.compute.VirtualMachine', imports: ['azure'] },
-  'azure-vmss': { package: '@pulumi/azure-native', type: 'azure.compute.VirtualMachineScaleSet', imports: ['azure'] },
-  'azure-functions': { package: '@pulumi/azure-native', type: 'azure.web.WebApp', imports: ['azure'] },
-  'azure-function': { package: '@pulumi/azure-native', type: 'azure.web.WebApp', imports: ['azure'] },
-  'azure-app-service': { package: '@pulumi/azure-native', type: 'azure.web.WebApp', imports: ['azure'] },
-  'azure-blob': { package: '@pulumi/azure-native', type: 'azure.storage.StorageAccount', imports: ['azure'] },
-  'azure-storage-account': { package: '@pulumi/azure-native', type: 'azure.storage.StorageAccount', imports: ['azure'] },
+  'azure-vnet': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.VirtualNetwork',
+    imports: ['azure'],
+  },
+  'azure-subnet': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.Subnet',
+    imports: ['azure'],
+  },
+  'azure-nsg': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.NetworkSecurityGroup',
+    imports: ['azure'],
+  },
+  'azure-vm': {
+    package: '@pulumi/azure-native',
+    type: 'azure.compute.VirtualMachine',
+    imports: ['azure'],
+  },
+  'azure-vmss': {
+    package: '@pulumi/azure-native',
+    type: 'azure.compute.VirtualMachineScaleSet',
+    imports: ['azure'],
+  },
+  'azure-functions': {
+    package: '@pulumi/azure-native',
+    type: 'azure.web.WebApp',
+    imports: ['azure'],
+  },
+  'azure-function': {
+    package: '@pulumi/azure-native',
+    type: 'azure.web.WebApp',
+    imports: ['azure'],
+  },
+  'azure-app-service': {
+    package: '@pulumi/azure-native',
+    type: 'azure.web.WebApp',
+    imports: ['azure'],
+  },
+  'azure-blob': {
+    package: '@pulumi/azure-native',
+    type: 'azure.storage.StorageAccount',
+    imports: ['azure'],
+  },
+  'azure-storage-account': {
+    package: '@pulumi/azure-native',
+    type: 'azure.storage.StorageAccount',
+    imports: ['azure'],
+  },
   'azure-sql': { package: '@pulumi/azure-native', type: 'azure.sql.Server', imports: ['azure'] },
-  'azure-cosmos': { package: '@pulumi/azure-native', type: 'azure.documentdb.DatabaseAccount', imports: ['azure'] },
-  'azure-cosmosdb': { package: '@pulumi/azure-native', type: 'azure.documentdb.DatabaseAccount', imports: ['azure'] },
-  'azure-mysql': { package: '@pulumi/azure-native', type: 'azure.dbformysql.Server', imports: ['azure'] },
-  'azure-postgresql': { package: '@pulumi/azure-native', type: 'azure.dbforpostgresql.Server', imports: ['azure'] },
-  'azure-aks': { package: '@pulumi/azure-native', type: 'azure.containerservice.ManagedCluster', imports: ['azure'] },
-  'azure-acr': { package: '@pulumi/azure-native', type: 'azure.containerregistry.Registry', imports: ['azure'] },
-  'azure-app-gw': { package: '@pulumi/azure-native', type: 'azure.network.ApplicationGateway', imports: ['azure'] },
-  'azure-lb': { package: '@pulumi/azure-native', type: 'azure.network.LoadBalancer', imports: ['azure'] },
-  'azure-key-vault': { package: '@pulumi/azure-native', type: 'azure.keyvault.Vault', imports: ['azure'] },
-  'azure-keyvault': { package: '@pulumi/azure-native', type: 'azure.keyvault.Vault', imports: ['azure'] },
+  'azure-cosmos': {
+    package: '@pulumi/azure-native',
+    type: 'azure.documentdb.DatabaseAccount',
+    imports: ['azure'],
+  },
+  'azure-cosmosdb': {
+    package: '@pulumi/azure-native',
+    type: 'azure.documentdb.DatabaseAccount',
+    imports: ['azure'],
+  },
+  'azure-mysql': {
+    package: '@pulumi/azure-native',
+    type: 'azure.dbformysql.Server',
+    imports: ['azure'],
+  },
+  'azure-postgresql': {
+    package: '@pulumi/azure-native',
+    type: 'azure.dbforpostgresql.Server',
+    imports: ['azure'],
+  },
+  'azure-aks': {
+    package: '@pulumi/azure-native',
+    type: 'azure.containerservice.ManagedCluster',
+    imports: ['azure'],
+  },
+  'azure-acr': {
+    package: '@pulumi/azure-native',
+    type: 'azure.containerregistry.Registry',
+    imports: ['azure'],
+  },
+  'azure-app-gw': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.ApplicationGateway',
+    imports: ['azure'],
+  },
+  'azure-lb': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.LoadBalancer',
+    imports: ['azure'],
+  },
+  'azure-key-vault': {
+    package: '@pulumi/azure-native',
+    type: 'azure.keyvault.Vault',
+    imports: ['azure'],
+  },
+  'azure-keyvault': {
+    package: '@pulumi/azure-native',
+    type: 'azure.keyvault.Vault',
+    imports: ['azure'],
+  },
   'azure-redis': { package: '@pulumi/azure-native', type: 'azure.cache.Redis', imports: ['azure'] },
-  'azure-service-bus': { package: '@pulumi/azure-native', type: 'azure.servicebus.Namespace', imports: ['azure'] },
-  'azure-event-hub': { package: '@pulumi/azure-native', type: 'azure.eventhub.Namespace', imports: ['azure'] },
-  'azure-firewall': { package: '@pulumi/azure-native', type: 'azure.network.AzureFirewall', imports: ['azure'] },
-  'azure-bastion': { package: '@pulumi/azure-native', type: 'azure.network.BastionHost', imports: ['azure'] },
-  'azure-public-ip': { package: '@pulumi/azure-native', type: 'azure.network.PublicIPAddress', imports: ['azure'] },
-  'azure-nic': { package: '@pulumi/azure-native', type: 'azure.network.NetworkInterface', imports: ['azure'] },
-  'azure-app-insights': { package: '@pulumi/azure-native', type: 'azure.insights.Component', imports: ['azure'] },
-  'azure-log-analytics': { package: '@pulumi/azure-native', type: 'azure.operationalinsights.Workspace', imports: ['azure'] },
+  'azure-service-bus': {
+    package: '@pulumi/azure-native',
+    type: 'azure.servicebus.Namespace',
+    imports: ['azure'],
+  },
+  'azure-event-hub': {
+    package: '@pulumi/azure-native',
+    type: 'azure.eventhub.Namespace',
+    imports: ['azure'],
+  },
+  'azure-firewall': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.AzureFirewall',
+    imports: ['azure'],
+  },
+  'azure-bastion': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.BastionHost',
+    imports: ['azure'],
+  },
+  'azure-public-ip': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.PublicIPAddress',
+    imports: ['azure'],
+  },
+  'azure-nic': {
+    package: '@pulumi/azure-native',
+    type: 'azure.network.NetworkInterface',
+    imports: ['azure'],
+  },
+  'azure-app-insights': {
+    package: '@pulumi/azure-native',
+    type: 'azure.insights.Component',
+    imports: ['azure'],
+  },
+  'azure-log-analytics': {
+    package: '@pulumi/azure-native',
+    type: 'azure.operationalinsights.Workspace',
+    imports: ['azure'],
+  },
 
   // GCP
   'gcp-vpc': { package: '@pulumi/gcp', type: 'gcp.compute.Network', imports: ['gcp'] },
   'gcp-subnet': { package: '@pulumi/gcp', type: 'gcp.compute.Subnetwork', imports: ['gcp'] },
   'gcp-firewall-rule': { package: '@pulumi/gcp', type: 'gcp.compute.Firewall', imports: ['gcp'] },
-  'gcp-compute-instance': { package: '@pulumi/gcp', type: 'gcp.compute.Instance', imports: ['gcp'] },
-  'gcp-cloud-function': { package: '@pulumi/gcp', type: 'gcp.cloudfunctions.Function', imports: ['gcp'] },
+  'gcp-compute-instance': {
+    package: '@pulumi/gcp',
+    type: 'gcp.compute.Instance',
+    imports: ['gcp'],
+  },
+  'gcp-cloud-function': {
+    package: '@pulumi/gcp',
+    type: 'gcp.cloudfunctions.Function',
+    imports: ['gcp'],
+  },
   'gcp-cloud-run': { package: '@pulumi/gcp', type: 'gcp.cloudrun.Service', imports: ['gcp'] },
   'gcp-cloud-storage': { package: '@pulumi/gcp', type: 'gcp.storage.Bucket', imports: ['gcp'] },
   'gcp-cloud-sql': { package: '@pulumi/gcp', type: 'gcp.sql.DatabaseInstance', imports: ['gcp'] },
   'gcp-gke': { package: '@pulumi/gcp', type: 'gcp.container.Cluster', imports: ['gcp'] },
   'gcp-pubsub': { package: '@pulumi/gcp', type: 'gcp.pubsub.Topic', imports: ['gcp'] },
-  'gcp-artifact-registry': { package: '@pulumi/gcp', type: 'gcp.artifactregistry.Repository', imports: ['gcp'] },
+  'gcp-artifact-registry': {
+    package: '@pulumi/gcp',
+    type: 'gcp.artifactregistry.Repository',
+    imports: ['gcp'],
+  },
   'gcp-memorystore': { package: '@pulumi/gcp', type: 'gcp.redis.Instance', imports: ['gcp'] },
   'gcp-bigquery': { package: '@pulumi/gcp', type: 'gcp.bigquery.Dataset', imports: ['gcp'] },
   'gcp-lb': { package: '@pulumi/gcp', type: 'gcp.compute.ForwardingRule', imports: ['gcp'] },
   'gcp-cloud-dns': { package: '@pulumi/gcp', type: 'gcp.dns.ManagedZone', imports: ['gcp'] },
   'gcp-cloud-nat': { package: '@pulumi/gcp', type: 'gcp.compute.RouterNat', imports: ['gcp'] },
-  'gcp-cloud-monitoring': { package: '@pulumi/gcp', type: 'gcp.monitoring.AlertPolicy', imports: ['gcp'] },
+  'gcp-cloud-monitoring': {
+    package: '@pulumi/gcp',
+    type: 'gcp.monitoring.AlertPolicy',
+    imports: ['gcp'],
+  },
   'gcp-firestore': { package: '@pulumi/gcp', type: 'gcp.firestore.Database', imports: ['gcp'] },
   'gcp-cloud-spanner': { package: '@pulumi/gcp', type: 'gcp.spanner.Instance', imports: ['gcp'] },
 }
 
 function sanitizeName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9]/g, '_').replace(/^[0-9]/, '_$&').toLowerCase() || 'resource'
+  return (
+    name
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .replace(/^[0-9]/, '_$&')
+      .toLowerCase() || 'resource'
+  )
 }
 
 // Removed duplicate getNodeComponentId — now imported from shared core
@@ -121,7 +266,11 @@ function sanitizeName(name: string): string {
 // Removed duplicate findAncestor — now imported from shared core as findAncestorByComponentId
 // Removed duplicate findConnectedNodes — now imported from shared core
 
-function findAncestor(nodeId: string, targetComponentId: string, nodeMap: Map<string, Node>): Node | null {
+function findAncestor(
+  nodeId: string,
+  targetComponentId: string,
+  nodeMap: Map<string, Node>
+): Node | null {
   return findAncestorByComponentId(nodeId, targetComponentId, nodeMap)
 }
 
@@ -167,31 +316,61 @@ export function generatePulumi(nodes: Node[], edges: Edge[] = []): string {
       const subnetVar = subnetNode ? nodeIdToVar.get(subnetNode.id) : null
 
       if (componentId === 'aws-subnet' && vpcVar) {
-        props.vpcId = `REF:${vpcVar}.id`; deps.push(vpcVar)
+        props.vpcId = `REF:${vpcVar}.id`
+        deps.push(vpcVar)
         if (!props.cidrBlock) props.cidrBlock = '10.0.1.0/24'
       }
-      if (['aws-security-group', 'aws-route-table', 'aws-nacl', 'aws-internet-gateway'].includes(componentId)) {
-        const vpc = vpcVar || findConnectedNodes(node.id, ['aws-vpc'], edges, nodeMap).map(n => nodeIdToVar.get(n.id))[0]
-        if (vpc) { props.vpcId = `REF:${vpc}.id`; deps.push(vpc) }
+      if (
+        ['aws-security-group', 'aws-route-table', 'aws-nacl', 'aws-internet-gateway'].includes(
+          componentId
+        )
+      ) {
+        const vpc =
+          vpcVar ||
+          findConnectedNodes(node.id, ['aws-vpc'], edges, nodeMap).map(n =>
+            nodeIdToVar.get(n.id)
+          )[0]
+        if (vpc) {
+          props.vpcId = `REF:${vpc}.id`
+          deps.push(vpc)
+        }
       }
-      if (['aws-ec2', 'aws-rds', 'aws-aurora', 'aws-elasticache', 'aws-nat-gateway'].includes(componentId) && subnetVar) {
-        props.subnetId = `REF:${subnetVar}.id`; deps.push(subnetVar)
+      if (
+        ['aws-ec2', 'aws-rds', 'aws-aurora', 'aws-elasticache', 'aws-nat-gateway'].includes(
+          componentId
+        ) &&
+        subnetVar
+      ) {
+        props.subnetId = `REF:${subnetVar}.id`
+        deps.push(subnetVar)
         if (vpcVar) deps.push(vpcVar)
       }
       if (['aws-alb', 'aws-nlb'].includes(componentId) && subnetVar) {
-        props.subnets = `REF_ARRAY:[${subnetVar}.id]`; deps.push(subnetVar)
+        props.subnets = `REF_ARRAY:[${subnetVar}.id]`
+        deps.push(subnetVar)
       }
       if (componentId === 'aws-eks' && subnetVar) {
-        props.vpcConfig = { subnetIds: `REF_ARRAY:[${subnetVar}.id]` }; deps.push(subnetVar)
+        props.vpcConfig = { subnetIds: `REF_ARRAY:[${subnetVar}.id]` }
+        deps.push(subnetVar)
       }
       if (componentId === 'aws-lambda' && subnetVar) {
-        const sgs = findConnectedNodes(node.id, ['aws-security-group'], edges, nodeMap).map(n => nodeIdToVar.get(n.id)!).filter(Boolean)
-        props.vpcConfig = { subnetIds: `REF_ARRAY:[${subnetVar}.id]`, securityGroupIds: sgs.length > 0 ? `REF_ARRAY:[${sgs.map(s => s + '.id').join(', ')}]` : '[]' }
+        const sgs = findConnectedNodes(node.id, ['aws-security-group'], edges, nodeMap)
+          .map(n => nodeIdToVar.get(n.id)!)
+          .filter(Boolean)
+        props.vpcConfig = {
+          subnetIds: `REF_ARRAY:[${subnetVar}.id]`,
+          securityGroupIds:
+            sgs.length > 0 ? `REF_ARRAY:[${sgs.map(s => s + '.id').join(', ')}]` : '[]',
+        }
         deps.push(subnetVar, ...sgs)
       }
 
       // Edge-based: security groups
-      if (['aws-ec2', 'aws-rds', 'aws-aurora', 'aws-ecs', 'aws-eks', 'aws-elasticache'].includes(componentId)) {
+      if (
+        ['aws-ec2', 'aws-rds', 'aws-aurora', 'aws-ecs', 'aws-eks', 'aws-elasticache'].includes(
+          componentId
+        )
+      ) {
         const sgNodes = findConnectedNodes(node.id, ['aws-security-group'], edges, nodeMap)
         const sgVars = sgNodes.map(n => nodeIdToVar.get(n.id)!).filter(Boolean)
         if (sgVars.length > 0) {
@@ -203,7 +382,10 @@ export function generatePulumi(nodes: Node[], edges: Edge[] = []): string {
         const eipNodes = findConnectedNodes(node.id, ['aws-eip'], edges, nodeMap)
         if (eipNodes.length > 0) {
           const eipVar = nodeIdToVar.get(eipNodes[0].id)
-          if (eipVar) { props.allocationId = `REF:${eipVar}.id`; deps.push(eipVar) }
+          if (eipVar) {
+            props.allocationId = `REF:${eipVar}.id`
+            deps.push(eipVar)
+          }
         }
       }
     }
@@ -216,11 +398,16 @@ export function generatePulumi(nodes: Node[], edges: Edge[] = []): string {
       const subnetVar = subnetNode ? nodeIdToVar.get(subnetNode.id) : null
 
       if (componentId === 'azure-subnet' && vnetVar) {
-        props.virtualNetworkName = `REF:${vnetVar}.name`; deps.push(vnetVar)
+        props.virtualNetworkName = `REF:${vnetVar}.name`
+        deps.push(vnetVar)
         if (!props.addressPrefix) props.addressPrefix = '10.0.1.0/24'
       }
-      if (['azure-vm', 'azure-vmss', 'azure-aks', 'azure-container-instance'].includes(componentId) && subnetVar) {
-        props._subnetId = `REF:${subnetVar}.id`; deps.push(subnetVar)
+      if (
+        ['azure-vm', 'azure-vmss', 'azure-aks', 'azure-container-instance'].includes(componentId) &&
+        subnetVar
+      ) {
+        props._subnetId = `REF:${subnetVar}.id`
+        deps.push(subnetVar)
         if (vnetVar) deps.push(vnetVar)
       }
       if (['azure-firewall', 'azure-bastion'].includes(componentId) && vnetVar) {
@@ -243,33 +430,54 @@ export function generatePulumi(nodes: Node[], edges: Edge[] = []): string {
       const subnetVar = subnetNode ? nodeIdToVar.get(subnetNode.id) : null
 
       if (componentId === 'gcp-subnet' && vpcVar) {
-        props.network = `REF:${vpcVar}.id`; deps.push(vpcVar)
+        props.network = `REF:${vpcVar}.id`
+        deps.push(vpcVar)
         if (!props.ipCidrRange) props.ipCidrRange = '10.0.1.0/24'
       }
       if (componentId === 'gcp-firewall-rule' && vpcVar) {
-        props.network = `REF:${vpcVar}.selfLink`; deps.push(vpcVar)
+        props.network = `REF:${vpcVar}.selfLink`
+        deps.push(vpcVar)
       }
-      if (['gcp-compute-instance', 'gcp-cloud-sql', 'gcp-gke', 'gcp-memorystore'].includes(componentId) && subnetVar) {
-        props._subnetwork = `REF:${subnetVar}.id`; deps.push(subnetVar)
+      if (
+        ['gcp-compute-instance', 'gcp-cloud-sql', 'gcp-gke', 'gcp-memorystore'].includes(
+          componentId
+        ) &&
+        subnetVar
+      ) {
+        props._subnetwork = `REF:${subnetVar}.id`
+        deps.push(subnetVar)
         if (vpcVar) deps.push(vpcVar)
       }
     }
 
     // Tags
     if (componentId.startsWith('aws-')) {
-      props.tags = { ...(props.tags as any || {}), Name: node.data?.label || varName, ManagedBy: 'Pulumi', GeneratedFrom: 'JobStack' }
+      props.tags = {
+        ...((props.tags as any) || {}),
+        Name: node.data?.label || varName,
+        ManagedBy: 'Pulumi',
+        GeneratedFrom: 'JobStack',
+      }
     }
 
     // Edge-based deps from remaining edges
     for (const edge of edges) {
-      const otherId = edge.source === node.id ? edge.target : edge.target === node.id ? edge.source : null
+      const otherId =
+        edge.source === node.id ? edge.target : edge.target === node.id ? edge.source : null
       if (otherId) {
         const otherVar = nodeIdToVar.get(otherId)
         if (otherVar && !deps.includes(otherVar)) deps.push(otherVar)
       }
     }
 
-    resources.push({ name: String(node.data?.label || node.id), varName, type: mapping.type, properties: props, dependencies: [...new Set(deps)], componentId })
+    resources.push({
+      name: String(node.data?.label || node.id),
+      varName,
+      type: mapping.type,
+      properties: props,
+      dependencies: [...new Set(deps)],
+      componentId,
+    })
   }
 
   // Generate code
@@ -290,8 +498,15 @@ export function generatePulumi(nodes: Node[], edges: Edge[] = []): string {
   lines.push('')
 
   for (const resource of resources) {
-    const propsStr = formatProperties(resource.properties, resource.dependencies, 2, resource.componentId.startsWith('azure-'))
-    lines.push(`const ${resource.varName} = new ${resource.type}("${resource.varName}", ${propsStr});`)
+    const propsStr = formatProperties(
+      resource.properties,
+      resource.dependencies,
+      2,
+      resource.componentId.startsWith('azure-')
+    )
+    lines.push(
+      `const ${resource.varName} = new ${resource.type}("${resource.varName}", ${propsStr});`
+    )
     lines.push('')
   }
 
@@ -303,7 +518,12 @@ export function generatePulumi(nodes: Node[], edges: Edge[] = []): string {
   return lines.join('\n')
 }
 
-function formatProperties(props: Record<string, unknown>, deps: string[], indent: number, isAzure: boolean): string {
+function formatProperties(
+  props: Record<string, unknown>,
+  deps: string[],
+  indent: number,
+  isAzure: boolean
+): string {
   const pad = ' '.repeat(indent)
   const entries: string[] = []
 
@@ -347,7 +567,9 @@ function formatNestedObject(obj: Record<string, unknown>, indent: number): strin
     } else if (typeof value === 'string' && value.startsWith('REF_ARRAY:')) {
       entries.push(`${pad}${key}: ${value.substring(10)},`)
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      entries.push(`${pad}${key}: ${formatNestedObject(value as Record<string, unknown>, indent + 2)},`)
+      entries.push(
+        `${pad}${key}: ${formatNestedObject(value as Record<string, unknown>, indent + 2)},`
+      )
     } else {
       entries.push(`${pad}${key}: ${JSON.stringify(value)},`)
     }

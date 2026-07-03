@@ -61,9 +61,9 @@ export function AIAssistantPanel({ issues, onApplyFix, isAnalyzing }: AIAssistan
   }
 
   // Group issues by severity
-  const criticalIssues = issues.filter((i) => i.severity === 'critical')
-  const warningIssues = issues.filter((i) => i.severity === 'warning')
-  const infoIssues = issues.filter((i) => i.severity === 'info')
+  const criticalIssues = issues.filter(i => i.severity === 'critical')
+  const warningIssues = issues.filter(i => i.severity === 'warning')
+  const infoIssues = issues.filter(i => i.severity === 'info')
 
   if (isAnalyzing) {
     return (
@@ -123,9 +123,7 @@ export function AIAssistantPanel({ issues, onApplyFix, isAnalyzing }: AIAssistan
             {warningIssues.length > 0 && (
               <Badge variant="default">{warningIssues.length} Warnings</Badge>
             )}
-            {infoIssues.length > 0 && (
-              <Badge variant="secondary">{infoIssues.length} Info</Badge>
-            )}
+            {infoIssues.length > 0 && <Badge variant="secondary">{infoIssues.length} Info</Badge>}
           </div>
         </CardTitle>
       </CardHeader>
@@ -142,7 +140,9 @@ export function AIAssistantPanel({ issues, onApplyFix, isAnalyzing }: AIAssistan
                     issue={issue}
                     isExpanded={expandedIssue === `critical-${idx}`}
                     onToggle={() =>
-                      setExpandedIssue(expandedIssue === `critical-${idx}` ? null : `critical-${idx}`)
+                      setExpandedIssue(
+                        expandedIssue === `critical-${idx}` ? null : `critical-${idx}`
+                      )
                     }
                     onApplyFix={onApplyFix}
                     getIcon={getIcon}
@@ -265,7 +265,7 @@ function IssueCard({
                     size="sm"
                     variant="outline"
                     className="mt-2"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       onApplyFix(issue)
                     }}

@@ -1,6 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -80,18 +86,24 @@ export function TemplateDialog({ open, onClose, onApply }: TemplateDialogProps) 
     }, 0)
   }
 
-  const providers = ['all', ...Array.from(new Set(templates.map(t => t.cloud_provider).filter(Boolean)))]
+  const providers = [
+    'all',
+    ...Array.from(new Set(templates.map(t => t.cloud_provider).filter(Boolean))),
+  ]
 
-  const filteredTemplates = providerFilter === 'all'
-    ? templates
-    : templates.filter(t => t.cloud_provider === providerFilter)
+  const filteredTemplates =
+    providerFilter === 'all'
+      ? templates
+      : templates.filter(t => t.cloud_provider === providerFilter)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Choose a Template</DialogTitle>
-          <DialogDescription>Select a pre-built architecture template to get started quickly</DialogDescription>
+          <DialogDescription>
+            Select a pre-built architecture template to get started quickly
+          </DialogDescription>
         </DialogHeader>
 
         {/* Provider filter tabs */}
@@ -129,7 +141,7 @@ export function TemplateDialog({ open, onClose, onApply }: TemplateDialogProps) 
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-4 p-1">
-              {filteredTemplates.map((template) => {
+              {filteredTemplates.map(template => {
                 const estimatedCost = getTemplateCost(template)
                 return (
                   <Card
@@ -145,16 +157,22 @@ export function TemplateDialog({ open, onClose, onApply }: TemplateDialogProps) 
                         <CardTitle className="text-base leading-tight">{template.name}</CardTitle>
                         <div className="flex gap-1 flex-shrink-0">
                           {template.cloud_provider && (
-                            <Badge className={`text-xs ${providerColors[template.cloud_provider] || 'bg-gray-100 text-gray-800'}`}>
+                            <Badge
+                              className={`text-xs ${providerColors[template.cloud_provider] || 'bg-gray-100 text-gray-800'}`}
+                            >
                               {template.cloud_provider.toUpperCase()}
                             </Badge>
                           )}
-                          <Badge className={`text-xs ${categoryColors[template.category] || 'bg-gray-100 text-gray-800'}`}>
+                          <Badge
+                            className={`text-xs ${categoryColors[template.category] || 'bg-gray-100 text-gray-800'}`}
+                          >
                             {template.category}
                           </Badge>
                         </div>
                       </div>
-                      <CardDescription className="line-clamp-2 text-xs">{template.description}</CardDescription>
+                      <CardDescription className="line-clamp-2 text-xs">
+                        {template.description}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">

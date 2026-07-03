@@ -14,7 +14,9 @@ export function ResendVerificationButton() {
     setLoading(true)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user?.email) {
         toast.error('No email found. Please sign in again.')
         return

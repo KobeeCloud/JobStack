@@ -16,7 +16,9 @@ import { WebhookSettings } from '@/components/webhook-settings'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   return (
@@ -110,9 +112,7 @@ export default async function SettingsPage() {
                   </div>
                   <div>
                     <CardTitle className="text-xl">Preferences</CardTitle>
-                    <CardDescription className="mt-1">
-                      Customize your experience
-                    </CardDescription>
+                    <CardDescription className="mt-1">Customize your experience</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -120,7 +120,9 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="font-semibold mb-1">Theme</p>
-                    <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
+                    <p className="text-sm text-muted-foreground">
+                      Switch between light and dark mode
+                    </p>
                   </div>
                   <ThemeToggle />
                 </div>
@@ -176,7 +178,8 @@ export default async function SettingsPage() {
                   <div>
                     <p className="font-semibold mb-1">Export Your Data</p>
                     <p className="text-sm text-muted-foreground">
-                      Download a copy of all your data including profile, projects, diagrams and organizations
+                      Download a copy of all your data including profile, projects, diagrams and
+                      organizations
                     </p>
                   </div>
                   <ExportDataButton />
@@ -209,7 +212,9 @@ export default async function SettingsPage() {
                     </p>
                   </div>
                   <Link href="/settings/billing">
-                    <Button variant="outline" size="sm" className="shadow-sm">View plans</Button>
+                    <Button variant="outline" size="sm" className="shadow-sm">
+                      View plans
+                    </Button>
                   </Link>
                 </div>
               </CardContent>
@@ -255,7 +260,10 @@ export default async function SettingsPage() {
               <CardContent className="relative z-10 space-y-4">
                 <div className="flex items-center justify-between p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-colors">
                   <div>
-                    <p className="font-semibold text-destructive mb-1">Delete Account <span className="text-xs font-normal opacity-80">(7-day grace period)</span></p>
+                    <p className="font-semibold text-destructive mb-1">
+                      Delete Account{' '}
+                      <span className="text-xs font-normal opacity-80">(7-day grace period)</span>
+                    </p>
                     <p className="text-sm text-destructive/80">
                       Schedule deletion — you can cancel within 7 days
                     </p>
@@ -264,7 +272,10 @@ export default async function SettingsPage() {
                 </div>
                 <div className="flex items-center justify-between p-4 rounded-xl bg-destructive/10 border border-destructive/20 hover:bg-destructive/20 transition-colors">
                   <div>
-                    <p className="font-semibold text-destructive mb-1">Immediate Erasure <span className="text-xs font-normal opacity-80">(GDPR Art.&nbsp;17)</span></p>
+                    <p className="font-semibold text-destructive mb-1">
+                      Immediate Erasure{' '}
+                      <span className="text-xs font-normal opacity-80">(GDPR Art.&nbsp;17)</span>
+                    </p>
                     <p className="text-sm text-destructive/80">
                       Permanently erase all data right now — no grace period
                     </p>

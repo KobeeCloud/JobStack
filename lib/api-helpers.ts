@@ -14,7 +14,10 @@ export interface AuthenticatedRequest {
  */
 export async function getAuthenticatedUser(_request: NextRequest): Promise<AuthenticatedRequest> {
   const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
 
   if (error || !user) {
     throw new ApiError(401, 'Unauthorized', 'UNAUTHORIZED')
@@ -59,16 +62,15 @@ export async function applyRateLimit(
   limiter: typeof checkRateLimit = checkRateLimit
 ): Promise<void> {
   const forwarded = request.headers.get('x-forwarded-for')
-  const ip = forwarded ? forwarded.split(',')[0].trim() : request.headers.get('x-real-ip') || `anon-${Date.now()}`
+  const ip = forwarded
+    ? forwarded.split(',')[0].trim()
+    : request.headers.get('x-real-ip') || `anon-${Date.now()}`
   const result = await limiter(ip)
 
   if (!result.success) {
-    throw new ApiError(
-      429,
-      'Too many requests. Please try again later.',
-      'RATE_LIMIT_EXCEEDED',
-      { reset: result.reset }
-    )
+    throw new ApiError(429, 'Too many requests. Please try again later.', 'RATE_LIMIT_EXCEEDED', {
+      reset: result.reset,
+    })
   }
 }
 
@@ -76,7 +78,11 @@ export async function applyRateLimit(
  * Wrapper for API route handlers with authentication, validation, and error handling
  */
 export function createApiHandler<T = unknown>(
-  handler: (req: NextRequest, context: { auth: AuthenticatedRequest; body?: T }, routeContext?: any) => Promise<NextResponse>,
+  handler: (
+    req: NextRequest,
+    context: { auth: AuthenticatedRequest; body?: T },
+    routeContext?: any
+  ) => Promise<NextResponse>,
   options?: {
     requireAuth?: boolean
     validateBody?: ZodSchema<T>
@@ -114,7 +120,10 @@ export function createApiHandler<T = unknown>(
 
       // Validate request body if schema provided
       let body: T | undefined
-      if (options?.validateBody && (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH')) {
+      if (
+        options?.validateBody &&
+        (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH')
+      ) {
         body = await validateRequestBody(request, options.validateBody)
       }
 

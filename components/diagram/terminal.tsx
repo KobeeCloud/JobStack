@@ -79,7 +79,10 @@ export function Terminal({ nodes, edges, onClose }: TerminalProps) {
     result = result.replace(/\x1b\[31m(.*?)(\x1b\[0m|$)/g, '<span style="color: #ef4444">$1</span>') // Red
     result = result.replace(/\x1b\[32m(.*?)(\x1b\[0m|$)/g, '<span style="color: #22c55e">$1</span>') // Green
     result = result.replace(/\x1b\[33m(.*?)(\x1b\[0m|$)/g, '<span style="color: #eab308">$1</span>') // Yellow
-    result = result.replace(/\x1b\[1m(.*?)(\x1b\[0m|$)/g, '<span style="font-weight: bold">$1</span>') // Bold
+    result = result.replace(
+      /\x1b\[1m(.*?)(\x1b\[0m|$)/g,
+      '<span style="font-weight: bold">$1</span>'
+    ) // Bold
     result = result.replace(/\n/g, '<br/>')
     return result
   }
@@ -92,7 +95,12 @@ export function Terminal({ nodes, edges, onClose }: TerminalProps) {
             <span className="text-slate-400">$</span> terraform plan (Dry Run)
           </CardTitle>
           {!isRunning && !hasRun && (
-            <Button size="sm" variant="secondary" className="h-6 text-xs bg-slate-800 hover:bg-slate-700 text-slate-100" onClick={startDryRun}>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-6 text-xs bg-slate-800 hover:bg-slate-700 text-slate-100"
+              onClick={startDryRun}
+            >
               <PlayCircle className="w-3 h-3 mr-1" /> Run Plan
             </Button>
           )}
@@ -102,12 +110,22 @@ export function Terminal({ nodes, edges, onClose }: TerminalProps) {
             </div>
           )}
           {!isRunning && hasRun && (
-            <Button size="sm" variant="ghost" className="h-6 text-xs hover:bg-slate-800 text-slate-400" onClick={startDryRun}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 text-xs hover:bg-slate-800 text-slate-400"
+              onClick={startDryRun}
+            >
               Rerun
             </Button>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-slate-800 text-slate-400" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 hover:bg-slate-800 text-slate-400"
+          onClick={onClose}
+        >
           <X className="h-4 w-4" />
         </Button>
       </CardHeader>

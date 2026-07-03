@@ -1,9 +1,9 @@
-'use client';
+'use client'
 
-import { useState, useCallback, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { useState, useCallback, useMemo } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import {
   Search,
   Download,
@@ -20,7 +20,7 @@ import {
   XCircle,
   Eye,
   RefreshCw,
-} from 'lucide-react';
+} from 'lucide-react'
 
 // ============================================================================
 // Types
@@ -38,61 +38,61 @@ export type AuditAction =
   | 'logout'
   | 'permission_change'
   | 'settings_change'
-  | 'api_call';
+  | 'api_call'
 
-export type AuditSeverity = 'info' | 'warning' | 'critical';
-export type AuditStatus = 'success' | 'failure' | 'pending';
+export type AuditSeverity = 'info' | 'warning' | 'critical'
+export type AuditStatus = 'success' | 'failure' | 'pending'
 
 export interface AuditLogEntry {
-  id: string;
-  timestamp: Date;
-  action: AuditAction;
-  severity: AuditSeverity;
-  status: AuditStatus;
+  id: string
+  timestamp: Date
+  action: AuditAction
+  severity: AuditSeverity
+  status: AuditStatus
   user: {
-    id: string;
-    email: string;
-    name: string;
-    ipAddress?: string;
-    userAgent?: string;
-  };
+    id: string
+    email: string
+    name: string
+    ipAddress?: string
+    userAgent?: string
+  }
   resource: {
-    type: 'diagram' | 'node' | 'edge' | 'user' | 'team' | 'settings' | 'api_key';
-    id: string;
-    name?: string;
-  };
+    type: 'diagram' | 'node' | 'edge' | 'user' | 'team' | 'settings' | 'api_key'
+    id: string
+    name?: string
+  }
   details: {
-    description: string;
+    description: string
     changes?: {
-      field: string;
-      oldValue: unknown;
-      newValue: unknown;
-    }[];
-    metadata?: Record<string, unknown>;
-  };
+      field: string
+      oldValue: unknown
+      newValue: unknown
+    }[]
+    metadata?: Record<string, unknown>
+  }
   location?: {
-    country?: string;
-    city?: string;
-    coordinates?: { lat: number; lng: number };
-  };
+    country?: string
+    city?: string
+    coordinates?: { lat: number; lng: number }
+  }
 }
 
 export interface AuditFilters {
-  startDate?: Date;
-  endDate?: Date;
-  actions?: AuditAction[];
-  severity?: AuditSeverity[];
-  status?: AuditStatus[];
-  userId?: string;
-  resourceType?: string;
-  searchQuery?: string;
+  startDate?: Date
+  endDate?: Date
+  actions?: AuditAction[]
+  severity?: AuditSeverity[]
+  status?: AuditStatus[]
+  userId?: string
+  resourceType?: string
+  searchQuery?: string
 }
 
 interface AuditLogViewerProps {
-  logs: AuditLogEntry[];
-  onExport?: (filters: AuditFilters) => void;
-  onRefresh?: () => void;
-  className?: string;
+  logs: AuditLogEntry[]
+  onExport?: (filters: AuditFilters) => void
+  onRefresh?: () => void
+  className?: string
 }
 
 // ============================================================================
@@ -112,7 +112,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   permission_change: 'Changed permissions',
   settings_change: 'Changed settings',
   api_call: 'API call',
-};
+}
 
 const SEVERITY_CONFIG: Record<
   AuditSeverity,
@@ -121,16 +121,13 @@ const SEVERITY_CONFIG: Record<
   info: { icon: Info, color: 'text-blue-600', bgColor: 'bg-blue-50' },
   warning: { icon: AlertTriangle, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
   critical: { icon: Shield, color: 'text-red-600', bgColor: 'bg-red-50' },
-};
+}
 
-const STATUS_CONFIG: Record<
-  AuditStatus,
-  { icon: typeof CheckCircle; color: string }
-> = {
+const STATUS_CONFIG: Record<AuditStatus, { icon: typeof CheckCircle; color: string }> = {
   success: { icon: CheckCircle, color: 'text-green-500' },
   failure: { icon: XCircle, color: 'text-red-500' },
   pending: { icon: Clock, color: 'text-yellow-500' },
-};
+}
 
 // ============================================================================
 // Helper Functions
@@ -143,17 +140,17 @@ function formatTimestamp(date: Date): string {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-  }).format(date);
+  }).format(date)
 }
 
 function formatRelativeTime(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
 
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-  return formatTimestamp(date);
+  if (seconds < 60) return 'just now'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
+  return formatTimestamp(date)
 }
 
 // ============================================================================
@@ -165,27 +162,21 @@ function AuditLogEntryItem({
   expanded,
   onToggle,
 }: {
-  entry: AuditLogEntry;
-  expanded: boolean;
-  onToggle: () => void;
+  entry: AuditLogEntry
+  expanded: boolean
+  onToggle: () => void
 }) {
-  const severityConfig = SEVERITY_CONFIG[entry.severity];
-  const statusConfig = STATUS_CONFIG[entry.status];
-  const SeverityIcon = severityConfig.icon;
-  const StatusIcon = statusConfig.icon;
+  const severityConfig = SEVERITY_CONFIG[entry.severity]
+  const statusConfig = STATUS_CONFIG[entry.status]
+  const SeverityIcon = severityConfig.icon
+  const StatusIcon = statusConfig.icon
 
   return (
     <div
-      className={cn(
-        'border rounded-lg transition-all',
-        expanded ? 'shadow-md' : 'hover:shadow-sm'
-      )}
+      className={cn('border rounded-lg transition-all', expanded ? 'shadow-md' : 'hover:shadow-sm')}
     >
       {/* Main Row */}
-      <div
-        className="flex items-center gap-4 p-4 cursor-pointer"
-        onClick={onToggle}
-      >
+      <div className="flex items-center gap-4 p-4 cursor-pointer" onClick={onToggle}>
         {/* Severity Icon */}
         <div className={cn('p-2 rounded-lg', severityConfig.bgColor)}>
           <SeverityIcon className={cn('h-4 w-4', severityConfig.color)} />
@@ -194,16 +185,12 @@ function AuditLogEntryItem({
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm">
-              {ACTION_LABELS[entry.action]}
-            </span>
+            <span className="font-medium text-sm">{ACTION_LABELS[entry.action]}</span>
             <span className="text-gray-400">•</span>
             <span className="text-sm text-gray-600 truncate">
               {entry.resource.name || entry.resource.id}
             </span>
-            <span className="text-xs text-gray-400 capitalize">
-              ({entry.resource.type})
-            </span>
+            <span className="text-xs text-gray-400 capitalize">({entry.resource.type})</span>
           </div>
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <span className="flex items-center gap-1">
@@ -214,9 +201,7 @@ function AuditLogEntryItem({
               <Clock className="h-3 w-3" />
               {formatRelativeTime(entry.timestamp)}
             </span>
-            {entry.user.ipAddress && (
-              <span className="text-gray-400">{entry.user.ipAddress}</span>
-            )}
+            {entry.user.ipAddress && <span className="text-gray-400">{entry.user.ipAddress}</span>}
           </div>
         </div>
 
@@ -237,24 +222,17 @@ function AuditLogEntryItem({
           <div className="pt-4 space-y-4">
             {/* Description */}
             <div>
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">
-                Description
-              </h4>
+              <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">Description</h4>
               <p className="text-sm">{entry.details.description}</p>
             </div>
 
             {/* Changes */}
             {entry.details.changes && entry.details.changes.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">
-                  Changes
-                </h4>
+                <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Changes</h4>
                 <div className="bg-white rounded border divide-y">
                   {entry.details.changes.map((change, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 p-2 text-sm"
-                    >
+                    <div key={index} className="flex items-center gap-4 p-2 text-sm">
                       <span className="font-medium text-gray-700 w-32 truncate">
                         {change.field}
                       </span>
@@ -274,31 +252,24 @@ function AuditLogEntryItem({
             {/* Metadata */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">
-                  User Details
-                </h4>
+                <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">User Details</h4>
                 <div className="text-xs space-y-1">
                   <p>
-                    <span className="text-gray-500">Email:</span>{' '}
-                    {entry.user.email}
+                    <span className="text-gray-500">Email:</span> {entry.user.email}
                   </p>
                   <p>
-                    <span className="text-gray-500">IP:</span>{' '}
-                    {entry.user.ipAddress || 'N/A'}
+                    <span className="text-gray-500">IP:</span> {entry.user.ipAddress || 'N/A'}
                   </p>
                   {entry.user.userAgent && (
                     <p className="truncate">
-                      <span className="text-gray-500">Agent:</span>{' '}
-                      {entry.user.userAgent}
+                      <span className="text-gray-500">Agent:</span> {entry.user.userAgent}
                     </p>
                   )}
                 </div>
               </div>
               {entry.location && (
                 <div>
-                  <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">
-                    Location
-                  </h4>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase mb-1">Location</h4>
                   <div className="text-xs">
                     <p>
                       {entry.location.city && `${entry.location.city}, `}
@@ -311,14 +282,13 @@ function AuditLogEntryItem({
 
             {/* Timestamp */}
             <div className="text-xs text-gray-400 pt-2 border-t">
-              Full timestamp: {formatTimestamp(entry.timestamp)} • Entry ID:{' '}
-              {entry.id}
+              Full timestamp: {formatTimestamp(entry.timestamp)} • Entry ID: {entry.id}
             </div>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -330,9 +300,9 @@ function FilterPanel({
   onFilterChange,
   onClear,
 }: {
-  filters: AuditFilters;
-  onFilterChange: (filters: AuditFilters) => void;
-  onClear: () => void;
+  filters: AuditFilters
+  onFilterChange: (filters: AuditFilters) => void
+  onClear: () => void
 }) {
   return (
     <div className="p-4 border rounded-lg bg-gray-50 space-y-4">
@@ -350,12 +320,10 @@ function FilterPanel({
           <select
             className="w-full h-9 px-2 border rounded text-sm"
             value={filters.severity?.[0] || ''}
-            onChange={(e) =>
+            onChange={e =>
               onFilterChange({
                 ...filters,
-                severity: e.target.value
-                  ? [e.target.value as AuditSeverity]
-                  : undefined,
+                severity: e.target.value ? [e.target.value as AuditSeverity] : undefined,
               })
             }
           >
@@ -372,12 +340,10 @@ function FilterPanel({
           <select
             className="w-full h-9 px-2 border rounded text-sm"
             value={filters.status?.[0] || ''}
-            onChange={(e) =>
+            onChange={e =>
               onFilterChange({
                 ...filters,
-                status: e.target.value
-                  ? [e.target.value as AuditStatus]
-                  : undefined,
+                status: e.target.value ? [e.target.value as AuditStatus] : undefined,
               })
             }
           >
@@ -394,12 +360,10 @@ function FilterPanel({
           <select
             className="w-full h-9 px-2 border rounded text-sm"
             value={filters.actions?.[0] || ''}
-            onChange={(e) =>
+            onChange={e =>
               onFilterChange({
                 ...filters,
-                actions: e.target.value
-                  ? [e.target.value as AuditAction]
-                  : undefined,
+                actions: e.target.value ? [e.target.value as AuditAction] : undefined,
               })
             }
           >
@@ -418,7 +382,7 @@ function FilterPanel({
           <select
             className="w-full h-9 px-2 border rounded text-sm"
             value={filters.resourceType || ''}
-            onChange={(e) =>
+            onChange={e =>
               onFilterChange({
                 ...filters,
                 resourceType: e.target.value || undefined,
@@ -436,30 +400,25 @@ function FilterPanel({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export function AuditLogViewer({
-  logs,
-  onExport,
-  onRefresh,
-  className,
-}: AuditLogViewerProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<AuditFilters>({});
-  const [showFilters, setShowFilters] = useState(false);
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+export function AuditLogViewer({ logs, onExport, onRefresh, className }: AuditLogViewerProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState<AuditFilters>({})
+  const [showFilters, setShowFilters] = useState(false)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   // Filter logs
   const filteredLogs = useMemo(() => {
-    return logs.filter((log) => {
+    return logs.filter(log => {
       // Search query
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
+        const query = searchQuery.toLowerCase()
         const searchable = [
           log.user.name,
           log.user.email,
@@ -468,67 +427,64 @@ export function AuditLogViewer({
         ]
           .filter(Boolean)
           .join(' ')
-          .toLowerCase();
-        if (!searchable.includes(query)) return false;
+          .toLowerCase()
+        if (!searchable.includes(query)) return false
       }
 
       // Severity filter
       if (filters.severity?.length && !filters.severity.includes(log.severity)) {
-        return false;
+        return false
       }
 
       // Status filter
       if (filters.status?.length && !filters.status.includes(log.status)) {
-        return false;
+        return false
       }
 
       // Action filter
       if (filters.actions?.length && !filters.actions.includes(log.action)) {
-        return false;
+        return false
       }
 
       // Resource type filter
-      if (
-        filters.resourceType &&
-        log.resource.type !== filters.resourceType
-      ) {
-        return false;
+      if (filters.resourceType && log.resource.type !== filters.resourceType) {
+        return false
       }
 
       // Date filter
       if (filters.startDate && log.timestamp < filters.startDate) {
-        return false;
+        return false
       }
       if (filters.endDate && log.timestamp > filters.endDate) {
-        return false;
+        return false
       }
 
-      return true;
-    });
-  }, [logs, searchQuery, filters]);
+      return true
+    })
+  }, [logs, searchQuery, filters])
 
   const toggleExpanded = useCallback((id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
+    setExpandedIds(prev => {
+      const next = new Set(prev)
       if (next.has(id)) {
-        next.delete(id);
+        next.delete(id)
       } else {
-        next.add(id);
+        next.add(id)
       }
-      return next;
-    });
-  }, []);
+      return next
+    })
+  }, [])
 
   const handleExport = useCallback(() => {
-    onExport?.({ ...filters, searchQuery });
-  }, [onExport, filters, searchQuery]);
+    onExport?.({ ...filters, searchQuery })
+  }, [onExport, filters, searchQuery])
 
   // Stats
   const stats = useMemo(() => {
-    const critical = filteredLogs.filter((l) => l.severity === 'critical').length;
-    const failed = filteredLogs.filter((l) => l.status === 'failure').length;
-    return { total: filteredLogs.length, critical, failed };
-  }, [filteredLogs]);
+    const critical = filteredLogs.filter(l => l.severity === 'critical').length
+    const failed = filteredLogs.filter(l => l.status === 'failure').length
+    return { total: filteredLogs.length, critical, failed }
+  }, [filteredLogs])
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
@@ -577,7 +533,7 @@ export function AuditLogViewer({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search logs..."
               className="pl-9"
             />
@@ -609,12 +565,10 @@ export function AuditLogViewer({
           <div className="text-center py-12 text-gray-500">
             <Eye className="h-10 w-10 mx-auto mb-2 text-gray-300" />
             <p className="text-sm">No audit logs found</p>
-            <p className="text-xs text-gray-400 mt-1">
-              Try adjusting your filters
-            </p>
+            <p className="text-xs text-gray-400 mt-1">Try adjusting your filters</p>
           </div>
         ) : (
-          filteredLogs.map((entry) => (
+          filteredLogs.map(entry => (
             <AuditLogEntryItem
               key={entry.id}
               entry={entry}
@@ -625,7 +579,7 @@ export function AuditLogViewer({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -645,9 +599,9 @@ export function exportLogsToCSV(logs: AuditLogEntry[]): string {
     'Resource ID',
     'Resource Name',
     'Description',
-  ];
+  ]
 
-  const rows = logs.map((log) => [
+  const rows = logs.map(log => [
     log.timestamp.toISOString(),
     log.action,
     log.severity,
@@ -659,28 +613,26 @@ export function exportLogsToCSV(logs: AuditLogEntry[]): string {
     log.resource.id,
     log.resource.name || '',
     log.details.description,
-  ]);
+  ])
 
   const csvContent = [
     headers.join(','),
-    ...rows.map((row) =>
-      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-    ),
-  ].join('\n');
+    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+  ].join('\n')
 
-  return csvContent;
+  return csvContent
 }
 
 export function downloadCSV(content: string, filename: string): void {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
-export default AuditLogViewer;
+export default AuditLogViewer

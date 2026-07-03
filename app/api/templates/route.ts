@@ -16,15 +16,43 @@ const defaultTemplates = [
     cloud_provider: 'aws',
     data: {
       nodes: [
-        { id: 'cdn-1',  type: 'custom', position: { x: 200, y: -50  }, data: { componentId: 'aws-cloudfront',   label: 'CloudFront CDN',   config: {} } },
-        { id: 'web-1',  type: 'custom', position: { x: 200, y: 150  }, data: { componentId: 'aws-ec2',          label: 'Web Server',        config: { size: 't3-medium', replicas: 2, osImage: 'ubuntu-22.04' } } },
-        { id: 'db-1',   type: 'custom', position: { x: 500, y: 150  }, data: { componentId: 'aws-rds',          label: 'PostgreSQL DB',     config: { sku: 'db.t3.micro', maxSizeGb: 100, backupRetentionDays: 7 } } },
-        { id: 's3-1',   type: 'custom', position: { x: 500, y: -50  }, data: { componentId: 'aws-s3',           label: 'Static Assets',    config: { size: 50 } } },
+        {
+          id: 'cdn-1',
+          type: 'custom',
+          position: { x: 200, y: -50 },
+          data: { componentId: 'aws-cloudfront', label: 'CloudFront CDN', config: {} },
+        },
+        {
+          id: 'web-1',
+          type: 'custom',
+          position: { x: 200, y: 150 },
+          data: {
+            componentId: 'aws-ec2',
+            label: 'Web Server',
+            config: { size: 't3-medium', replicas: 2, osImage: 'ubuntu-22.04' },
+          },
+        },
+        {
+          id: 'db-1',
+          type: 'custom',
+          position: { x: 500, y: 150 },
+          data: {
+            componentId: 'aws-rds',
+            label: 'PostgreSQL DB',
+            config: { sku: 'db.t3.micro', maxSizeGb: 100, backupRetentionDays: 7 },
+          },
+        },
+        {
+          id: 's3-1',
+          type: 'custom',
+          position: { x: 500, y: -50 },
+          data: { componentId: 'aws-s3', label: 'Static Assets', config: { size: 50 } },
+        },
       ],
       edges: [
         { id: 'e1', source: 'cdn-1', target: 'web-1', animated: false },
-        { id: 'e2', source: 'cdn-1', target: 's3-1',  animated: false },
-        { id: 'e3', source: 'web-1', target: 'db-1',  animated: true },
+        { id: 'e2', source: 'cdn-1', target: 's3-1', animated: false },
+        { id: 'e3', source: 'web-1', target: 'db-1', animated: true },
       ],
     },
     is_public: true,
@@ -38,17 +66,42 @@ const defaultTemplates = [
     cloud_provider: 'aws',
     data: {
       nodes: [
-        { id: 'apigw-1',  type: 'custom', position: { x: 250, y: -50  }, data: { componentId: 'aws-api-gateway', label: 'API Gateway',        config: {} } },
-        { id: 'lambda-1', type: 'custom', position: { x: 250, y: 150  }, data: { componentId: 'aws-lambda',       label: 'Lambda Functions',   config: { replicas: 1 } } },
-        { id: 'dynamo-1', type: 'custom', position: { x: 500, y: 150  }, data: { componentId: 'aws-dynamodb',     label: 'DynamoDB Table',     config: {} } },
-        { id: 's3-1',     type: 'custom', position: { x: 0,   y: 150  }, data: { componentId: 'aws-s3',           label: 'S3 Bucket',          config: { size: 100 } } },
-        { id: 'cw-1',     type: 'custom', position: { x: 250, y: 350  }, data: { componentId: 'aws-cloudwatch',   label: 'CloudWatch Logs',    config: {} } },
+        {
+          id: 'apigw-1',
+          type: 'custom',
+          position: { x: 250, y: -50 },
+          data: { componentId: 'aws-api-gateway', label: 'API Gateway', config: {} },
+        },
+        {
+          id: 'lambda-1',
+          type: 'custom',
+          position: { x: 250, y: 150 },
+          data: { componentId: 'aws-lambda', label: 'Lambda Functions', config: { replicas: 1 } },
+        },
+        {
+          id: 'dynamo-1',
+          type: 'custom',
+          position: { x: 500, y: 150 },
+          data: { componentId: 'aws-dynamodb', label: 'DynamoDB Table', config: {} },
+        },
+        {
+          id: 's3-1',
+          type: 'custom',
+          position: { x: 0, y: 150 },
+          data: { componentId: 'aws-s3', label: 'S3 Bucket', config: { size: 100 } },
+        },
+        {
+          id: 'cw-1',
+          type: 'custom',
+          position: { x: 250, y: 350 },
+          data: { componentId: 'aws-cloudwatch', label: 'CloudWatch Logs', config: {} },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'apigw-1',  target: 'lambda-1', animated: true  },
-        { id: 'e2', source: 'lambda-1', target: 'dynamo-1', animated: true  },
-        { id: 'e3', source: 'lambda-1', target: 's3-1',     animated: false },
-        { id: 'e4', source: 'lambda-1', target: 'cw-1',     animated: false },
+        { id: 'e1', source: 'apigw-1', target: 'lambda-1', animated: true },
+        { id: 'e2', source: 'lambda-1', target: 'dynamo-1', animated: true },
+        { id: 'e3', source: 'lambda-1', target: 's3-1', animated: false },
+        { id: 'e4', source: 'lambda-1', target: 'cw-1', animated: false },
       ],
     },
     is_public: true,
@@ -62,19 +115,53 @@ const defaultTemplates = [
     cloud_provider: 'aws',
     data: {
       nodes: [
-        { id: 'apigw-1', type: 'custom', position: { x: 300, y: -50  }, data: { componentId: 'aws-api-gateway',   label: 'API Gateway',        config: {} } },
-        { id: 'eks-1',   type: 'custom', position: { x: 300, y: 150  }, data: { componentId: 'aws-eks',           label: 'EKS Cluster',        config: { replicas: 3 } } },
-        { id: 'ecr-1',   type: 'custom', position: { x: 600, y: 50   }, data: { componentId: 'aws-ecr',           label: 'Container Registry', config: {} } },
-        { id: 'sqs-1',   type: 'custom', position: { x: 600, y: 250  }, data: { componentId: 'aws-sqs',           label: 'Message Queue (SQS)', config: {} } },
-        { id: 'cache-1', type: 'custom', position: { x: 0,   y: 250  }, data: { componentId: 'aws-elasticache',   label: 'Redis Cache',        config: {} } },
-        { id: 'rds-1',   type: 'custom', position: { x: 300, y: 350  }, data: { componentId: 'aws-rds',           label: 'Primary DB (RDS)',   config: { sku: 'db.t3.medium', backupRetentionDays: 14 } } },
+        {
+          id: 'apigw-1',
+          type: 'custom',
+          position: { x: 300, y: -50 },
+          data: { componentId: 'aws-api-gateway', label: 'API Gateway', config: {} },
+        },
+        {
+          id: 'eks-1',
+          type: 'custom',
+          position: { x: 300, y: 150 },
+          data: { componentId: 'aws-eks', label: 'EKS Cluster', config: { replicas: 3 } },
+        },
+        {
+          id: 'ecr-1',
+          type: 'custom',
+          position: { x: 600, y: 50 },
+          data: { componentId: 'aws-ecr', label: 'Container Registry', config: {} },
+        },
+        {
+          id: 'sqs-1',
+          type: 'custom',
+          position: { x: 600, y: 250 },
+          data: { componentId: 'aws-sqs', label: 'Message Queue (SQS)', config: {} },
+        },
+        {
+          id: 'cache-1',
+          type: 'custom',
+          position: { x: 0, y: 250 },
+          data: { componentId: 'aws-elasticache', label: 'Redis Cache', config: {} },
+        },
+        {
+          id: 'rds-1',
+          type: 'custom',
+          position: { x: 300, y: 350 },
+          data: {
+            componentId: 'aws-rds',
+            label: 'Primary DB (RDS)',
+            config: { sku: 'db.t3.medium', backupRetentionDays: 14 },
+          },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'apigw-1', target: 'eks-1',   animated: true  },
-        { id: 'e2', source: 'ecr-1',   target: 'eks-1',   animated: false },
-        { id: 'e3', source: 'eks-1',   target: 'sqs-1',   animated: true  },
-        { id: 'e4', source: 'eks-1',   target: 'cache-1', animated: true  },
-        { id: 'e5', source: 'eks-1',   target: 'rds-1',   animated: true  },
+        { id: 'e1', source: 'apigw-1', target: 'eks-1', animated: true },
+        { id: 'e2', source: 'ecr-1', target: 'eks-1', animated: false },
+        { id: 'e3', source: 'eks-1', target: 'sqs-1', animated: true },
+        { id: 'e4', source: 'eks-1', target: 'cache-1', animated: true },
+        { id: 'e5', source: 'eks-1', target: 'rds-1', animated: true },
       ],
     },
     is_public: true,
@@ -88,20 +175,62 @@ const defaultTemplates = [
     cloud_provider: 'aws',
     data: {
       nodes: [
-        { id: 'alb-1',     type: 'custom', position: { x: 300, y: 0   }, data: { componentId: 'aws-alb',          label: 'App Load Balancer',   config: {} } },
-        { id: 'asg-1',     type: 'custom', position: { x: 100, y: 180 }, data: { componentId: 'aws-auto-scaling', label: 'Web Tier (ASG)',      config: { replicas: 3 } } },
-        { id: 'asg-2',     type: 'custom', position: { x: 500, y: 180 }, data: { componentId: 'aws-auto-scaling', label: 'App Tier (ASG)',      config: { replicas: 3 } } },
-        { id: 'cache-1',   type: 'custom', position: { x: 100, y: 360 }, data: { componentId: 'aws-elasticache',  label: 'Redis Cluster',       config: {} } },
-        { id: 'aurora-1',  type: 'custom', position: { x: 500, y: 360 }, data: { componentId: 'aws-aurora',       label: 'Aurora DB Cluster',   config: { sku: 'db.r5.large', backupRetentionDays: 30 } } },
-        { id: 'cw-1',      type: 'custom', position: { x: 300, y: 540 }, data: { componentId: 'aws-cloudwatch',   label: 'CloudWatch Monitor',  config: {} } },
+        {
+          id: 'alb-1',
+          type: 'custom',
+          position: { x: 300, y: 0 },
+          data: { componentId: 'aws-alb', label: 'App Load Balancer', config: {} },
+        },
+        {
+          id: 'asg-1',
+          type: 'custom',
+          position: { x: 100, y: 180 },
+          data: {
+            componentId: 'aws-auto-scaling',
+            label: 'Web Tier (ASG)',
+            config: { replicas: 3 },
+          },
+        },
+        {
+          id: 'asg-2',
+          type: 'custom',
+          position: { x: 500, y: 180 },
+          data: {
+            componentId: 'aws-auto-scaling',
+            label: 'App Tier (ASG)',
+            config: { replicas: 3 },
+          },
+        },
+        {
+          id: 'cache-1',
+          type: 'custom',
+          position: { x: 100, y: 360 },
+          data: { componentId: 'aws-elasticache', label: 'Redis Cluster', config: {} },
+        },
+        {
+          id: 'aurora-1',
+          type: 'custom',
+          position: { x: 500, y: 360 },
+          data: {
+            componentId: 'aws-aurora',
+            label: 'Aurora DB Cluster',
+            config: { sku: 'db.r5.large', backupRetentionDays: 30 },
+          },
+        },
+        {
+          id: 'cw-1',
+          type: 'custom',
+          position: { x: 300, y: 540 },
+          data: { componentId: 'aws-cloudwatch', label: 'CloudWatch Monitor', config: {} },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'alb-1',    target: 'asg-1',    animated: true  },
-        { id: 'e2', source: 'alb-1',    target: 'asg-2',    animated: true  },
-        { id: 'e3', source: 'asg-1',    target: 'cache-1',  animated: true  },
-        { id: 'e4', source: 'asg-2',    target: 'aurora-1', animated: true  },
-        { id: 'e5', source: 'asg-1',    target: 'cw-1',     animated: false },
-        { id: 'e6', source: 'asg-2',    target: 'cw-1',     animated: false },
+        { id: 'e1', source: 'alb-1', target: 'asg-1', animated: true },
+        { id: 'e2', source: 'alb-1', target: 'asg-2', animated: true },
+        { id: 'e3', source: 'asg-1', target: 'cache-1', animated: true },
+        { id: 'e4', source: 'asg-2', target: 'aurora-1', animated: true },
+        { id: 'e5', source: 'asg-1', target: 'cw-1', animated: false },
+        { id: 'e6', source: 'asg-2', target: 'cw-1', animated: false },
       ],
     },
     is_public: true,
@@ -115,19 +244,49 @@ const defaultTemplates = [
     cloud_provider: 'aws',
     data: {
       nodes: [
-        { id: 'kinesis-1',  type: 'custom', position: { x: 0,   y: 150 }, data: { componentId: 'aws-kinesis',    label: 'Kinesis Stream',    config: {} } },
-        { id: 'lambda-1',   type: 'custom', position: { x: 250, y: 150 }, data: { componentId: 'aws-lambda',     label: 'Stream Processor',  config: {} } },
-        { id: 's3-1',       type: 'custom', position: { x: 250, y: -50 }, data: { componentId: 'aws-s3',         label: 'Data Lake (S3)',     config: { size: 10000 } } },
-        { id: 'glue-1',     type: 'custom', position: { x: 500, y: -50 }, data: { componentId: 'aws-glue',       label: 'Glue ETL Jobs',     config: {} } },
-        { id: 'redshift-1', type: 'custom', position: { x: 500, y: 150 }, data: { componentId: 'aws-redshift',   label: 'Redshift DWH',      config: {} } },
-        { id: 'cw-1',       type: 'custom', position: { x: 750, y: 150 }, data: { componentId: 'aws-cloudwatch', label: 'Monitoring',        config: {} } },
+        {
+          id: 'kinesis-1',
+          type: 'custom',
+          position: { x: 0, y: 150 },
+          data: { componentId: 'aws-kinesis', label: 'Kinesis Stream', config: {} },
+        },
+        {
+          id: 'lambda-1',
+          type: 'custom',
+          position: { x: 250, y: 150 },
+          data: { componentId: 'aws-lambda', label: 'Stream Processor', config: {} },
+        },
+        {
+          id: 's3-1',
+          type: 'custom',
+          position: { x: 250, y: -50 },
+          data: { componentId: 'aws-s3', label: 'Data Lake (S3)', config: { size: 10000 } },
+        },
+        {
+          id: 'glue-1',
+          type: 'custom',
+          position: { x: 500, y: -50 },
+          data: { componentId: 'aws-glue', label: 'Glue ETL Jobs', config: {} },
+        },
+        {
+          id: 'redshift-1',
+          type: 'custom',
+          position: { x: 500, y: 150 },
+          data: { componentId: 'aws-redshift', label: 'Redshift DWH', config: {} },
+        },
+        {
+          id: 'cw-1',
+          type: 'custom',
+          position: { x: 750, y: 150 },
+          data: { componentId: 'aws-cloudwatch', label: 'Monitoring', config: {} },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'kinesis-1',  target: 'lambda-1',   animated: true  },
-        { id: 'e2', source: 'lambda-1',   target: 's3-1',        animated: true  },
-        { id: 'e3', source: 's3-1',        target: 'glue-1',      animated: false },
-        { id: 'e4', source: 'glue-1',      target: 'redshift-1',  animated: false },
-        { id: 'e5', source: 'redshift-1',  target: 'cw-1',        animated: false },
+        { id: 'e1', source: 'kinesis-1', target: 'lambda-1', animated: true },
+        { id: 'e2', source: 'lambda-1', target: 's3-1', animated: true },
+        { id: 'e3', source: 's3-1', target: 'glue-1', animated: false },
+        { id: 'e4', source: 'glue-1', target: 'redshift-1', animated: false },
+        { id: 'e5', source: 'redshift-1', target: 'cw-1', animated: false },
       ],
     },
     is_public: true,
@@ -141,19 +300,57 @@ const defaultTemplates = [
     cloud_provider: 'azure',
     data: {
       nodes: [
-        { id: 'appgw-1', type: 'custom', position: { x: 250, y: -50  }, data: { componentId: 'azure-app-gw',       label: 'Application Gateway', config: {} } },
-        { id: 'app-1',   type: 'custom', position: { x: 250, y: 150  }, data: { componentId: 'azure-app-service',  label: 'App Service',         config: { sku: 'S1', runtime: 'node|20-lts', alwaysOn: true } } },
-        { id: 'sql-1',   type: 'custom', position: { x: 550, y: 150  }, data: { componentId: 'azure-sql',          label: 'Azure SQL Database',  config: { sku: 'S2', maxSizeGb: 50, backupRetentionDays: 7 } } },
-        { id: 'redis-1', type: 'custom', position: { x: -50, y: 150  }, data: { componentId: 'azure-redis',        label: 'Redis Cache',         config: {} } },
-        { id: 'kv-1',    type: 'custom', position: { x: 250, y: 350  }, data: { componentId: 'azure-key-vault',    label: 'Key Vault',           config: {} } },
-        { id: 'ai-1',    type: 'custom', position: { x: 550, y: 350  }, data: { componentId: 'azure-app-insights', label: 'Application Insights', config: {} } },
+        {
+          id: 'appgw-1',
+          type: 'custom',
+          position: { x: 250, y: -50 },
+          data: { componentId: 'azure-app-gw', label: 'Application Gateway', config: {} },
+        },
+        {
+          id: 'app-1',
+          type: 'custom',
+          position: { x: 250, y: 150 },
+          data: {
+            componentId: 'azure-app-service',
+            label: 'App Service',
+            config: { sku: 'S1', runtime: 'node|20-lts', alwaysOn: true },
+          },
+        },
+        {
+          id: 'sql-1',
+          type: 'custom',
+          position: { x: 550, y: 150 },
+          data: {
+            componentId: 'azure-sql',
+            label: 'Azure SQL Database',
+            config: { sku: 'S2', maxSizeGb: 50, backupRetentionDays: 7 },
+          },
+        },
+        {
+          id: 'redis-1',
+          type: 'custom',
+          position: { x: -50, y: 150 },
+          data: { componentId: 'azure-redis', label: 'Redis Cache', config: {} },
+        },
+        {
+          id: 'kv-1',
+          type: 'custom',
+          position: { x: 250, y: 350 },
+          data: { componentId: 'azure-key-vault', label: 'Key Vault', config: {} },
+        },
+        {
+          id: 'ai-1',
+          type: 'custom',
+          position: { x: 550, y: 350 },
+          data: { componentId: 'azure-app-insights', label: 'Application Insights', config: {} },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'appgw-1', target: 'app-1',   animated: true  },
-        { id: 'e2', source: 'app-1',   target: 'sql-1',   animated: true  },
-        { id: 'e3', source: 'app-1',   target: 'redis-1', animated: true  },
-        { id: 'e4', source: 'app-1',   target: 'kv-1',    animated: false },
-        { id: 'e5', source: 'app-1',   target: 'ai-1',    animated: false },
+        { id: 'e1', source: 'appgw-1', target: 'app-1', animated: true },
+        { id: 'e2', source: 'app-1', target: 'sql-1', animated: true },
+        { id: 'e3', source: 'app-1', target: 'redis-1', animated: true },
+        { id: 'e4', source: 'app-1', target: 'kv-1', animated: false },
+        { id: 'e5', source: 'app-1', target: 'ai-1', animated: false },
       ],
     },
     is_public: true,
@@ -167,19 +364,53 @@ const defaultTemplates = [
     cloud_provider: 'azure',
     data: {
       nodes: [
-        { id: 'appgw-1', type: 'custom', position: { x: 300, y: -50  }, data: { componentId: 'azure-app-gw',       label: 'Application Gateway', config: {} } },
-        { id: 'aks-1',   type: 'custom', position: { x: 300, y: 150  }, data: { componentId: 'azure-aks',          label: 'AKS Cluster',         config: { replicas: 3 } } },
-        { id: 'acr-1',   type: 'custom', position: { x: 600, y: 50   }, data: { componentId: 'azure-acr',          label: 'Container Registry',  config: {} } },
-        { id: 'sql-1',   type: 'custom', position: { x: 600, y: 250  }, data: { componentId: 'azure-sql',          label: 'Azure SQL Database',  config: { sku: 'P1', maxSizeGb: 250 } } },
-        { id: 'kv-1',    type: 'custom', position: { x: 0,   y: 150  }, data: { componentId: 'azure-key-vault',    label: 'Key Vault',           config: {} } },
-        { id: 'ai-1',    type: 'custom', position: { x: 300, y: 350  }, data: { componentId: 'azure-app-insights', label: 'Application Insights', config: {} } },
+        {
+          id: 'appgw-1',
+          type: 'custom',
+          position: { x: 300, y: -50 },
+          data: { componentId: 'azure-app-gw', label: 'Application Gateway', config: {} },
+        },
+        {
+          id: 'aks-1',
+          type: 'custom',
+          position: { x: 300, y: 150 },
+          data: { componentId: 'azure-aks', label: 'AKS Cluster', config: { replicas: 3 } },
+        },
+        {
+          id: 'acr-1',
+          type: 'custom',
+          position: { x: 600, y: 50 },
+          data: { componentId: 'azure-acr', label: 'Container Registry', config: {} },
+        },
+        {
+          id: 'sql-1',
+          type: 'custom',
+          position: { x: 600, y: 250 },
+          data: {
+            componentId: 'azure-sql',
+            label: 'Azure SQL Database',
+            config: { sku: 'P1', maxSizeGb: 250 },
+          },
+        },
+        {
+          id: 'kv-1',
+          type: 'custom',
+          position: { x: 0, y: 150 },
+          data: { componentId: 'azure-key-vault', label: 'Key Vault', config: {} },
+        },
+        {
+          id: 'ai-1',
+          type: 'custom',
+          position: { x: 300, y: 350 },
+          data: { componentId: 'azure-app-insights', label: 'Application Insights', config: {} },
+        },
       ],
       edges: [
-        { id: 'e1', source: 'appgw-1', target: 'aks-1',  animated: true  },
-        { id: 'e2', source: 'acr-1',   target: 'aks-1',  animated: false },
-        { id: 'e3', source: 'aks-1',   target: 'sql-1',  animated: true  },
-        { id: 'e4', source: 'aks-1',   target: 'kv-1',   animated: false },
-        { id: 'e5', source: 'aks-1',   target: 'ai-1',   animated: false },
+        { id: 'e1', source: 'appgw-1', target: 'aks-1', animated: true },
+        { id: 'e2', source: 'acr-1', target: 'aks-1', animated: false },
+        { id: 'e3', source: 'aks-1', target: 'sql-1', animated: true },
+        { id: 'e4', source: 'aks-1', target: 'kv-1', animated: false },
+        { id: 'e5', source: 'aks-1', target: 'ai-1', animated: false },
       ],
     },
     is_public: true,
@@ -219,7 +450,9 @@ export const GET = createApiHandler(
 
     let query = auth.supabase
       .from('templates')
-      .select('id, name, description, category, cloud_provider, nodes, edges, is_public, created_by, organization_id, created_at')
+      .select(
+        'id, name, description, category, cloud_provider, nodes, edges, is_public, created_by, organization_id, created_at'
+      )
       .eq('is_public', true)
 
     if (category) query = query.eq('category', category)
@@ -253,7 +486,9 @@ export const POST = createApiHandler(
     }
 
     let body: unknown
-    try { body = await request.json() } catch {
+    try {
+      body = await request.json()
+    } catch {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
 
@@ -262,7 +497,16 @@ export const POST = createApiHandler(
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 })
     }
 
-    const { name, description, category, cloud_provider, nodes, edges, is_public, organization_id } = parsed.data
+    const {
+      name,
+      description,
+      category,
+      cloud_provider,
+      nodes,
+      edges,
+      is_public,
+      organization_id,
+    } = parsed.data
 
     const { data: template, error } = await auth.supabase
       .from('templates')

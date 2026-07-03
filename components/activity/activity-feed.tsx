@@ -7,11 +7,29 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
-  Activity, Plus, Trash2, Edit2, Link, Unlink,
-  Save, Share2, Download, Upload, Search,
-  X, Clock, User, GitCommit
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Activity,
+  Plus,
+  Trash2,
+  Edit2,
+  Link,
+  Unlink,
+  Save,
+  Share2,
+  Download,
+  Upload,
+  Search,
+  X,
+  Clock,
+  User,
+  GitCommit,
 } from 'lucide-react'
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns'
 
@@ -170,16 +188,19 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
   }, [activities])
 
   const filteredActivities = useMemo(() => {
-    return activities.filter(activity => {
-      const matchesSearch = search === '' ||
-        getActivityMessage(activity).toLowerCase().includes(search.toLowerCase()) ||
-        activity.userName.toLowerCase().includes(search.toLowerCase())
+    return activities
+      .filter(activity => {
+        const matchesSearch =
+          search === '' ||
+          getActivityMessage(activity).toLowerCase().includes(search.toLowerCase()) ||
+          activity.userName.toLowerCase().includes(search.toLowerCase())
 
-      const matchesType = typeFilter === 'all' || activity.type === typeFilter
-      const matchesUser = userFilter === 'all' || activity.userId === userFilter
+        const matchesType = typeFilter === 'all' || activity.type === typeFilter
+        const matchesUser = userFilter === 'all' || activity.userId === userFilter
 
-      return matchesSearch && matchesType && matchesUser
-    }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        return matchesSearch && matchesType && matchesUser
+      })
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
   }, [activities, search, typeFilter, userFilter])
 
   const groupedActivities = useMemo(() => {
@@ -208,9 +229,7 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <CardDescription>
-          Recent changes and updates to this diagram
-        </CardDescription>
+        <CardDescription>Recent changes and updates to this diagram</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -221,7 +240,7 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
             <Input
               placeholder="Search activities..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               className="pl-8"
             />
           </div>
@@ -288,9 +307,7 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">
-                                {activity.userName}
-                              </span>
+                              <span className="font-medium text-sm">{activity.userName}</span>
                               <Badge variant="outline" className={`text-xs ${color}`}>
                                 <Icon className="h-3 w-3 mr-1" />
                                 {activity.type.split('_').join(' ')}
@@ -320,59 +337,83 @@ export function ActivityFeed({ activities, onClose }: ActivityFeedProps) {
 
 // Hook to track activities
 export function useActivityTracker(
-  currentUser: { id: string; name: string; avatar?: string } = { id: 'anonymous', name: 'Anonymous' }
+  currentUser: { id: string; name: string; avatar?: string } = {
+    id: 'anonymous',
+    name: 'Anonymous',
+  }
 ) {
   const [activities, setActivities] = useState<ActivityEvent[]>([])
 
-  const trackActivity = useCallback((
-    type: ActivityType,
-    details: ActivityEvent['details'] = {}
-  ) => {
-    const activity: ActivityEvent = {
-      id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userAvatar: currentUser.avatar,
-      timestamp: new Date(),
-      details,
-    }
+  const trackActivity = useCallback(
+    (type: ActivityType, details: ActivityEvent['details'] = {}) => {
+      const activity: ActivityEvent = {
+        id: `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userAvatar: currentUser.avatar,
+        timestamp: new Date(),
+        details,
+      }
 
-    setActivities(prev => [activity, ...prev])
-    return activity
-  }, [currentUser])
+      setActivities(prev => [activity, ...prev])
+      return activity
+    },
+    [currentUser]
+  )
 
-  const trackNodeAdded = useCallback((nodeId: string, nodeName: string, nodeType?: string) => {
-    return trackActivity('node_added', { nodeId, nodeName, nodeType })
-  }, [trackActivity])
+  const trackNodeAdded = useCallback(
+    (nodeId: string, nodeName: string, nodeType?: string) => {
+      return trackActivity('node_added', { nodeId, nodeName, nodeType })
+    },
+    [trackActivity]
+  )
 
-  const trackNodeDeleted = useCallback((nodeId: string, nodeName: string, nodeType?: string) => {
-    return trackActivity('node_deleted', { nodeId, nodeName, nodeType })
-  }, [trackActivity])
+  const trackNodeDeleted = useCallback(
+    (nodeId: string, nodeName: string, nodeType?: string) => {
+      return trackActivity('node_deleted', { nodeId, nodeName, nodeType })
+    },
+    [trackActivity]
+  )
 
-  const trackNodeUpdated = useCallback((nodeId: string, nodeName: string) => {
-    return trackActivity('node_updated', { nodeId, nodeName })
-  }, [trackActivity])
+  const trackNodeUpdated = useCallback(
+    (nodeId: string, nodeName: string) => {
+      return trackActivity('node_updated', { nodeId, nodeName })
+    },
+    [trackActivity]
+  )
 
-  const trackEdgeAdded = useCallback((edgeId: string, sourceName: string, targetName: string) => {
-    return trackActivity('edge_added', { edgeId, sourceName, targetName })
-  }, [trackActivity])
+  const trackEdgeAdded = useCallback(
+    (edgeId: string, sourceName: string, targetName: string) => {
+      return trackActivity('edge_added', { edgeId, sourceName, targetName })
+    },
+    [trackActivity]
+  )
 
-  const trackEdgeDeleted = useCallback((edgeId: string, sourceName: string, targetName: string) => {
-    return trackActivity('edge_deleted', { edgeId, sourceName, targetName })
-  }, [trackActivity])
+  const trackEdgeDeleted = useCallback(
+    (edgeId: string, sourceName: string, targetName: string) => {
+      return trackActivity('edge_deleted', { edgeId, sourceName, targetName })
+    },
+    [trackActivity]
+  )
 
   const trackDiagramSaved = useCallback(() => {
     return trackActivity('diagram_saved')
   }, [trackActivity])
 
-  const trackVersionSaved = useCallback((versionName: string) => {
-    return trackActivity('version_saved', { versionName })
-  }, [trackActivity])
+  const trackVersionSaved = useCallback(
+    (versionName: string) => {
+      return trackActivity('version_saved', { versionName })
+    },
+    [trackActivity]
+  )
 
-  const trackExport = useCallback((format: string) => {
-    return trackActivity('diagram_exported', { format })
-  }, [trackActivity])
+  const trackExport = useCallback(
+    (format: string) => {
+      return trackActivity('diagram_exported', { format })
+    },
+    [trackActivity]
+  )
 
   return {
     activities,

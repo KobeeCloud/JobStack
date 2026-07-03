@@ -18,8 +18,8 @@ export default function VerifyEmailPage() {
           </div>
           <CardTitle className="text-2xl">Verify your email</CardTitle>
           <CardDescription>
-            We sent a verification link to your email address.
-            Please check your inbox and click the link to verify your account.
+            We sent a verification link to your email address. Please check your inbox and click the
+            link to verify your account.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

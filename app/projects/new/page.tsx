@@ -19,8 +19,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  ArrowLeft, ArrowRight, Loader2, Server,
-  Cloud, Globe, Check, ChevronRight, Boxes, Building2
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Server,
+  Cloud,
+  Globe,
+  Check,
+  ChevronRight,
+  Boxes,
+  Building2,
 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { createProjectSchema, type CreateProjectInput } from '@/lib/validation/schemas'
@@ -53,29 +61,43 @@ const projectTypes: ProjectTypeConfig[] = [
     name: 'Infrastructure (IaaS)',
     description: 'Virtual machines, networks, storage, containers',
     icon: Server,
-    features: ['VMs', 'VNets', 'Storage', 'Load Balancers', 'Kubernetes', 'Terraform Export']
+    features: ['VMs', 'VNets', 'Storage', 'Load Balancers', 'Kubernetes', 'Terraform Export'],
   },
   {
     id: 'paas',
     name: 'Platform (PaaS)',
     description: 'App Services, Functions, Databases, Queues',
     icon: Cloud,
-    features: ['App Services', 'Functions', 'Managed DBs', 'Redis', 'Message Queues', 'Terraform Export']
+    features: [
+      'App Services',
+      'Functions',
+      'Managed DBs',
+      'Redis',
+      'Message Queues',
+      'Terraform Export',
+    ],
   },
   {
     id: 'saas',
     name: 'Software (SaaS)',
     description: 'AI/ML, Cognitive Services, Analytics',
     icon: Boxes,
-    features: ['AI Services', 'Analytics', 'Monitoring', 'Identity', 'IoT', 'Terraform Export']
+    features: ['AI Services', 'Analytics', 'Monitoring', 'Identity', 'IoT', 'Terraform Export'],
   },
   {
     id: 'hosting',
     name: 'Web Hosting',
     description: 'Static sites, JAMstack, Edge functions',
     icon: Globe,
-    features: ['Static Sites', 'Edge Functions', 'CDN', 'SSL', 'Instant Deploys', 'Git Integration']
-  }
+    features: [
+      'Static Sites',
+      'Edge Functions',
+      'CDN',
+      'SSL',
+      'Instant Deploys',
+      'Git Integration',
+    ],
+  },
 ]
 
 function NewProjectPageContent() {
@@ -100,33 +122,37 @@ function NewProjectPageContent() {
     setOrgsLoading(true)
     setOrgsError(null)
     fetch('/api/organizations')
-      .then((res) => {
+      .then(res => {
         // 429 rate limit — not a real error, just skip silently
         if (res.status === 429) return { organizations: [] }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
       })
-      .then((data) => {
+      .then(data => {
         if (!cancelled) setOrganizations(data.organizations ?? [])
       })
-      .catch((err) => {
+      .catch(err => {
         if (!cancelled) setOrgsError(err instanceof Error ? err.message : 'Failed to load')
       })
       .finally(() => {
         if (!cancelled) setOrgsLoading(false)
       })
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateProjectInput>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
-    defaultValues: { name: '', description: '' }
+    defaultValues: { name: '', description: '' },
   })
 
   const toggleType = (type: ProjectType) => {
-    setSelectedTypes(prev =>
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    )
+    setSelectedTypes(prev => (prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]))
   }
 
   const onSubmit = async (data: CreateProjectInput) => {
@@ -143,7 +169,7 @@ function NewProjectPageContent() {
           environment: selectedEnvironment,
           organization_id: selectedOrgId ?? undefined,
           templateId: templateId ?? undefined,
-        })
+        }),
       })
 
       if (!response.ok) {
@@ -155,20 +181,28 @@ function NewProjectPageContent() {
       toast.success('Project created!', { description: data.name + ' is ready for design' })
       router.push('/projects/' + project.id)
     } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to create project' })
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to create project',
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const canProceedToStep2 = selectedTypes.length > 0
-  const STEPS = [{ num: 1, label: 'Type' }, { num: 2, label: 'Details' }]
+  const STEPS = [
+    { num: 1, label: 'Type' },
+    { num: 2, label: 'Details' },
+  ]
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center gap-4">
-          <Link href="/projects" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            href="/projects"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to Projects
           </Link>
@@ -186,13 +220,22 @@ function NewProjectPageContent() {
           <div className="flex items-center justify-center mb-10">
             {STEPS.map((s, idx) => (
               <div key={s.num} className="flex items-center">
-                <div className={
-                  'w-10 h-10 rounded-full flex items-center justify-center font-semibold ' +
-                  (step >= s.num ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')
-                }>
+                <div
+                  className={
+                    'w-10 h-10 rounded-full flex items-center justify-center font-semibold ' +
+                    (step >= s.num
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground')
+                  }
+                >
                   {step > s.num ? <Check className="w-5 h-5" /> : s.num}
                 </div>
-                <span className={'ml-2 text-sm font-medium ' + (step >= s.num ? 'text-foreground' : 'text-muted-foreground')}>
+                <span
+                  className={
+                    'ml-2 text-sm font-medium ' +
+                    (step >= s.num ? 'text-foreground' : 'text-muted-foreground')
+                  }
+                >
                   {s.label}
                 </span>
                 {idx < STEPS.length - 1 && (
@@ -208,18 +251,20 @@ function NewProjectPageContent() {
               <div className="text-center">
                 <h1 className="text-3xl font-bold">What are you building?</h1>
                 <p className="text-muted-foreground mt-2">
-                  Choose the type of cloud infrastructure you need. You can mix components from any cloud provider inside the diagram.
+                  Choose the type of cloud infrastructure you need. You can mix components from any
+                  cloud provider inside the diagram.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {projectTypes.map((type) => {
+                {projectTypes.map(type => {
                   const Icon = type.icon
                   const isSelected = selectedTypes.includes(type.id)
                   return (
                     <Card
                       key={type.id}
-                      className={'cursor-pointer transition-all hover:border-primary ' +
+                      className={
+                        'cursor-pointer transition-all hover:border-primary ' +
                         (isSelected ? 'border-primary bg-primary/5 ring-2 ring-primary' : '')
                       }
                       onClick={() => toggleType(type.id)}
@@ -240,8 +285,10 @@ function NewProjectPageContent() {
                       <CardContent>
                         <p className="text-muted-foreground text-sm mb-4">{type.description}</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {type.features.map((feature) => (
-                            <Badge key={feature} variant="secondary" className="text-xs">{feature}</Badge>
+                          {type.features.map(feature => (
+                            <Badge key={feature} variant="secondary" className="text-xs">
+                              {feature}
+                            </Badge>
                           ))}
                         </div>
                       </CardContent>
@@ -251,7 +298,11 @@ function NewProjectPageContent() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => setStep(2)} disabled={!canProceedToStep2} className="min-w-[140px]">
+                <Button
+                  onClick={() => setStep(2)}
+                  disabled={!canProceedToStep2}
+                  className="min-w-[140px]"
+                >
                   Continue <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
@@ -294,7 +345,7 @@ function NewProjectPageContent() {
                 <div className="space-y-2">
                   <Label>Environment</Label>
                   <div className="flex gap-2">
-                    {(['development', 'staging', 'production'] as EnvironmentType[]).map((env) => (
+                    {(['development', 'staging', 'production'] as EnvironmentType[]).map(env => (
                       <button
                         key={env}
                         type="button"
@@ -316,7 +367,8 @@ function NewProjectPageContent() {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Building2 className="w-4 h-4" />
-                    Organization <span className="text-muted-foreground font-normal">(optional)</span>
+                    Organization{' '}
+                    <span className="text-muted-foreground font-normal">(optional)</span>
                   </Label>
                   {orgsLoading ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -329,17 +381,19 @@ function NewProjectPageContent() {
                   ) : organizations.length > 0 ? (
                     <Select
                       value={selectedOrgId ?? 'personal'}
-                      onValueChange={(val) => setSelectedOrgId(val === 'personal' ? null : val)}
+                      onValueChange={val => setSelectedOrgId(val === 'personal' ? null : val)}
                     >
                       <SelectTrigger className="w-full md:w-80">
                         <SelectValue placeholder="Personal project" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="personal">Personal project</SelectItem>
-                        {organizations.map((org) => (
+                        {organizations.map(org => (
                           <SelectItem key={org.id} value={org.id}>
                             {org.name}
-                            <span className="ml-2 text-xs text-muted-foreground capitalize">({org.role})</span>
+                            <span className="ml-2 text-xs text-muted-foreground capitalize">
+                              ({org.role})
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -347,7 +401,9 @@ function NewProjectPageContent() {
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       No organizations yet —{' '}
-                      <Link href="/organizations/new" className="text-primary hover:underline">create one</Link>{' '}
+                      <Link href="/organizations/new" className="text-primary hover:underline">
+                        create one
+                      </Link>{' '}
                       or this will be a personal project.
                     </p>
                   )}
@@ -363,17 +419,24 @@ function NewProjectPageContent() {
                       {...register('name')}
                       className={errors.name ? 'border-destructive' : ''}
                     />
-                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                    {errors.name && (
+                      <p className="text-sm text-destructive">{errors.name.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <Label htmlFor="description">
+                      Description{' '}
+                      <span className="text-muted-foreground font-normal">(optional)</span>
+                    </Label>
                     <Textarea
                       id="description"
                       placeholder="Production infrastructure for our web application..."
                       {...register('description')}
                       rows={3}
                     />
-                    {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+                    {errors.description && (
+                      <p className="text-sm text-destructive">{errors.description.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -383,9 +446,13 @@ function NewProjectPageContent() {
                   </Button>
                   <Button type="submit" disabled={isSubmitting} className="min-w-[160px]">
                     {isSubmitting ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...
+                      </>
                     ) : (
-                      <>Create Project <Boxes className="w-4 h-4 ml-2" /></>
+                      <>
+                        Create Project <Boxes className="w-4 h-4 ml-2" />
+                      </>
                     )}
                   </Button>
                 </div>
@@ -400,11 +467,13 @@ function NewProjectPageContent() {
 
 export default function NewProjectPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
       <NewProjectPageContent />
     </Suspense>
   )

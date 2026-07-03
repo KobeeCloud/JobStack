@@ -19,15 +19,12 @@ interface MultiCloudComparePanelProps {
 export function MultiCloudComparePanel({ onSelectComponent }: MultiCloudComparePanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
-  const categories = [
-    'all',
-    ...Array.from(new Set(CLOUD_AGNOSTIC_MAPPINGS.map((m) => m.category))),
-  ]
+  const categories = ['all', ...Array.from(new Set(CLOUD_AGNOSTIC_MAPPINGS.map(m => m.category)))]
 
   const filteredMappings =
     selectedCategory === 'all'
       ? CLOUD_AGNOSTIC_MAPPINGS
-      : CLOUD_AGNOSTIC_MAPPINGS.filter((m) => m.category === selectedCategory)
+      : CLOUD_AGNOSTIC_MAPPINGS.filter(m => m.category === selectedCategory)
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -43,7 +40,7 @@ export function MultiCloudComparePanel({ onSelectComponent }: MultiCloudCompareP
 
       {/* Category Filters */}
       <div className="p-4 border-b flex gap-2 flex-wrap">
-        {categories.map((cat) => (
+        {categories.map(cat => (
           <Button
             key={cat}
             variant={selectedCategory === cat ? 'default' : 'outline'}
@@ -58,7 +55,7 @@ export function MultiCloudComparePanel({ onSelectComponent }: MultiCloudCompareP
       {/* Component List */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-4">
-          {filteredMappings.map((mapping) => (
+          {filteredMappings.map(mapping => (
             <ComponentComparisonCard
               key={mapping.genericId}
               mapping={mapping}
@@ -138,7 +135,13 @@ interface ProviderRowProps {
   onSelect: () => void
 }
 
-function ProviderRow({ provider, providerKey: _providerKey, details, isCheapest, onSelect }: ProviderRowProps) {
+function ProviderRow({
+  provider,
+  providerKey: _providerKey,
+  details,
+  isCheapest,
+  onSelect,
+}: ProviderRowProps) {
   const avgCost = (details.estimatedCost.min + details.estimatedCost.max) / 2
 
   return (

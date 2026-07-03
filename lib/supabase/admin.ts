@@ -20,8 +20,8 @@ function getSupabaseAdmin(): SupabaseClient {
   _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   })
 
   return _supabaseAdmin

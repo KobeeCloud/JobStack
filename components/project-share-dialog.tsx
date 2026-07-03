@@ -89,14 +89,12 @@ export function ProjectShareDialog({ projectId, projectName }: ProjectShareDialo
         .eq('email', email.trim())
         .single()
 
-      const { error } = await supabase
-        .from('project_shares')
-        .insert({
-          project_id: projectId,
-          shared_with_user_id: profile?.id || null,
-          email: email.trim(),
-          permission,
-        })
+      const { error } = await supabase.from('project_shares').insert({
+        project_id: projectId,
+        shared_with_user_id: profile?.id || null,
+        email: email.trim(),
+        permission,
+      })
 
       if (error) throw error
 
@@ -112,10 +110,7 @@ export function ProjectShareDialog({ projectId, projectName }: ProjectShareDialo
 
   const handleRemoveShare = async (shareId: string) => {
     try {
-      const { error } = await supabase
-        .from('project_shares')
-        .delete()
-        .eq('id', shareId)
+      const { error } = await supabase.from('project_shares').delete().eq('id', shareId)
 
       if (error) throw error
       setShares(prev => prev.filter(s => s.id !== shareId))
@@ -144,9 +139,7 @@ export function ProjectShareDialog({ projectId, projectName }: ProjectShareDialo
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Share Project</DialogTitle>
-          <DialogDescription>
-            Share &quot;{projectName}&quot; with team members
-          </DialogDescription>
+          <DialogDescription>Share &quot;{projectName}&quot; with team members</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -157,11 +150,11 @@ export function ProjectShareDialog({ projectId, projectName }: ProjectShareDialo
                 placeholder="Email address"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleShare()}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleShare()}
               />
             </div>
-            <Select value={permission} onValueChange={(v) => setPermission(v as 'view' | 'edit')}>
+            <Select value={permission} onValueChange={v => setPermission(v as 'view' | 'edit')}>
               <SelectTrigger className="w-24">
                 <SelectValue />
               </SelectTrigger>
@@ -171,7 +164,11 @@ export function ProjectShareDialog({ projectId, projectName }: ProjectShareDialo
               </SelectContent>
             </Select>
             <Button onClick={handleShare} disabled={sharing || !email.trim()} size="icon">
-              {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {sharing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
             </Button>
           </div>
 
@@ -179,7 +176,9 @@ export function ProjectShareDialog({ projectId, projectName }: ProjectShareDialo
           <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
             <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-xs text-muted-foreground truncate flex-1">
-              {typeof window !== 'undefined' ? `${window.location.origin}/projects/${projectId}` : ''}
+              {typeof window !== 'undefined'
+                ? `${window.location.origin}/projects/${projectId}`
+                : ''}
             </span>
             <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handleCopyLink}>
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -199,8 +198,11 @@ export function ProjectShareDialog({ projectId, projectName }: ProjectShareDialo
               </p>
             ) : (
               <div className="space-y-2 mt-2 max-h-48 overflow-y-auto">
-                {shares.map((share) => (
-                  <div key={share.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
+                {shares.map(share => (
+                  <div
+                    key={share.id}
+                    className="flex items-center justify-between gap-2 p-2 rounded-md border"
+                  >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{share.email}</p>
                       <p className="text-xs text-muted-foreground capitalize">{share.permission}</p>

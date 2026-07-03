@@ -7,14 +7,14 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
-  CloudRegion,
-  ALL_REGIONS,
-
-  getPairedRegion,
-  estimateLatency
-} from '@/lib/regions'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { CloudRegion, ALL_REGIONS, getPairedRegion, estimateLatency } from '@/lib/regions'
 import { Globe, MapPin, Search, X, ArrowRight, Clock, Shield } from 'lucide-react'
 
 interface MultiRegionSelectorProps {
@@ -28,10 +28,10 @@ interface MultiRegionSelectorProps {
 const continentLabels: Record<string, string> = {
   'north-america': 'North America',
   'south-america': 'South America',
-  'europe': 'Europe',
+  europe: 'Europe',
   'asia-pacific': 'Asia Pacific',
   'middle-east': 'Middle East',
-  'africa': 'Africa',
+  africa: 'Africa',
 }
 
 const providerColors: Record<string, string> = {
@@ -53,7 +53,8 @@ export function MultiRegionSelector({
 
   const filteredRegions = useMemo(() => {
     return ALL_REGIONS.filter(region => {
-      const matchesSearch = search === '' ||
+      const matchesSearch =
+        search === '' ||
         region.name.toLowerCase().includes(search.toLowerCase()) ||
         region.displayName.toLowerCase().includes(search.toLowerCase()) ||
         region.id.toLowerCase().includes(search.toLowerCase())
@@ -130,7 +131,7 @@ export function MultiRegionSelector({
               <Input
                 placeholder="Search regions..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={e => setSearch(e.target.value)}
                 className="pl-8"
               />
             </div>
@@ -206,9 +207,7 @@ export function MultiRegionSelector({
           {/* Selected Regions */}
           <div className="border rounded-lg">
             <div className="p-2 border-b bg-muted/50 flex items-center justify-between">
-              <h3 className="text-sm font-medium">
-                Selected Regions ({selectedRegions.length})
-              </h3>
+              <h3 className="text-sm font-medium">Selected Regions ({selectedRegions.length})</h3>
               {primaryRegion && getPairedRegion(primaryRegion) && (
                 <Button variant="ghost" size="sm" onClick={suggestDRRegion}>
                   <Shield className="h-3 w-3 mr-1" />
@@ -227,9 +226,10 @@ export function MultiRegionSelector({
                 ) : (
                   selectedRegionObjects.map(region => {
                     const isPrimary = region.id === primaryRegion
-                    const latency = primaryRegion && primaryRegion !== region.id
-                      ? estimateLatency(primaryRegion, region.id)
-                      : null
+                    const latency =
+                      primaryRegion && primaryRegion !== region.id
+                        ? estimateLatency(primaryRegion, region.id)
+                        : null
 
                     return (
                       <div

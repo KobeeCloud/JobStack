@@ -22,6 +22,7 @@
 The JobStack IaC engine is a multi-format infrastructure code generator that converts React Flow diagrams into Terraform HCL, CloudFormation YAML/JSON, ARM Templates, Pulumi TypeScript, and CI/CD configs. The codebase is ~12,000 lines across 24+ files.
 
 **Key metrics:**
+
 - 155 components in the catalog
 - 5 output formats (Terraform, CloudFormation, ARM, Pulumi, CI/CD)
 - 5 compliance frameworks (CIS, GDPR, SOC2, PCI-DSS, HIPAA)
@@ -429,14 +430,14 @@ The **most impactful bug** is a name-reference mismatch in `terraform.ts` where 
 
 The single most pervasive problem across the codebase is **inconsistent component IDs** between the catalog and the modules that reference those IDs. The catalog is the source of truth (155 entries), but at least 6 other modules reference non-existent IDs:
 
-| Module | Non-Existent IDs Referenced |
-|--------|---------------------------|
-| `cost-calculator.ts` | `gcp-compute`, `azure-storage`, `gcp-storage`, `azure-disk`, `gcp-disk`, `azure-sql-database` |
-| `cost-optimizer.ts` | `azure-sql-serverless`, `gcp-spanner`, `gcp-firestore` |
-| `openai-client.ts` | `ec2-instance`, `rds`, `cloud-sql`, `alb`, `gcs`, `s3`, `azure-storage`, `vpc`, `gcp-lb`, `gcp-compute` |
-| `cloud-mappings.ts` | `azure-redis`, `gcp-memorystore`, `gcp-secret-manager`, `gcp-cloud-dns` |
-| `pulumi-generator.ts` | `gcp-lb`, `azure-cosmosdb`, `azure-keyvault`, `azure-redis`, `azure-acr`, `azure-mysql`, `azure-postgresql` |
-| `architecture-templates.ts` | `gcp-load-balancer`, `gcp-storage`, `gcp-vertex-ai`, `github` |
+| Module                      | Non-Existent IDs Referenced                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `cost-calculator.ts`        | `gcp-compute`, `azure-storage`, `gcp-storage`, `azure-disk`, `gcp-disk`, `azure-sql-database`               |
+| `cost-optimizer.ts`         | `azure-sql-serverless`, `gcp-spanner`, `gcp-firestore`                                                      |
+| `openai-client.ts`          | `ec2-instance`, `rds`, `cloud-sql`, `alb`, `gcs`, `s3`, `azure-storage`, `vpc`, `gcp-lb`, `gcp-compute`     |
+| `cloud-mappings.ts`         | `azure-redis`, `gcp-memorystore`, `gcp-secret-manager`, `gcp-cloud-dns`                                     |
+| `pulumi-generator.ts`       | `gcp-lb`, `azure-cosmosdb`, `azure-keyvault`, `azure-redis`, `azure-acr`, `azure-mysql`, `azure-postgresql` |
+| `architecture-templates.ts` | `gcp-load-balancer`, `gcp-storage`, `gcp-vertex-ai`, `github`                                               |
 
 **Root cause:** No single-source validation. Each module manages its own ID mapping independently. A compile-time check (e.g., a shared type union of all valid IDs from the catalog) would prevent these mismatches.
 
@@ -454,49 +455,49 @@ The main resource loop correctly uses `nodeIdToTfName` (collision-safe names), b
 
 ### CRITICAL (4)
 
-| # | ID | File | Lines | Description |
-|---|-----|------|-------|-------------|
-| 1 | CRITICAL-1 | `lib/generators/terraform.ts` | 704, 756, 856, 941 | **Attachment, flow, peering, and connection sections use `toTfName()` directly instead of `nodeIdToTfName` map.** When nodes have colliding labels, generated Terraform references non-existent or wrong resources. `terraform plan` fails with "resource not found" or silently cross-wires resources. |
-| 2 | CRITICAL-2 | `lib/generators/terraform.ts` | 768 | **Implicit NIC fallback in flow edges uses `toTfName()` instead of `implicitNics` map.** Load Balancer → VM backend pool may reference wrong NIC when names collide. |
-| 3 | CRITICAL-3 | `lib/cost-calculator.ts` | 74, 116, 126, 135, 150 | **Component ID mismatches** (`gcp-compute`, `azure-storage`, `azure-disk`, `gcp-storage`, `gcp-disk`, `azure-sql-database`). Specialized pricing logic never triggers; costs silently fall back to generic estimates. |
-| 4 | CRITICAL-4 | `lib/ai/architecture-analyzer.ts` | ~288 | **Idle resource check iterates `nodes` instead of `edges`.** `nodes.some((edge) => (edge as any).target === resource.id ...)` — Node objects lack `.target`/`.source`, so check always returns false. **Every** compute resource is flagged as "idle." |
+| #   | ID         | File                              | Lines                  | Description                                                                                                                                                                                                                                                                                             |
+| --- | ---------- | --------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | CRITICAL-1 | `lib/generators/terraform.ts`     | 704, 756, 856, 941     | **Attachment, flow, peering, and connection sections use `toTfName()` directly instead of `nodeIdToTfName` map.** When nodes have colliding labels, generated Terraform references non-existent or wrong resources. `terraform plan` fails with "resource not found" or silently cross-wires resources. |
+| 2   | CRITICAL-2 | `lib/generators/terraform.ts`     | 768                    | **Implicit NIC fallback in flow edges uses `toTfName()` instead of `implicitNics` map.** Load Balancer → VM backend pool may reference wrong NIC when names collide.                                                                                                                                    |
+| 3   | CRITICAL-3 | `lib/cost-calculator.ts`          | 74, 116, 126, 135, 150 | **Component ID mismatches** (`gcp-compute`, `azure-storage`, `azure-disk`, `gcp-storage`, `gcp-disk`, `azure-sql-database`). Specialized pricing logic never triggers; costs silently fall back to generic estimates.                                                                                   |
+| 4   | CRITICAL-4 | `lib/ai/architecture-analyzer.ts` | ~288                   | **Idle resource check iterates `nodes` instead of `edges`.** `nodes.some((edge) => (edge as any).target === resource.id ...)` — Node objects lack `.target`/`.source`, so check always returns false. **Every** compute resource is flagged as "idle."                                                  |
 
 ### HIGH (6)
 
-| # | ID | File | Lines | Description |
-|---|-----|------|-------|-------------|
-| 5 | HIGH-1 | `lib/catalog.ts` | — | **Missing catalog entries** referenced by cloud-mappings, ARM, Pulumi: `azure-redis`, `azure-acr`, `azure-mysql`, `azure-postgresql`, `azure-container-instance`, `gcp-cloud-dns`, `gcp-memorystore`, `gcp-secret-manager`. Cross-provider conversion produces orphan nodes. |
-| 6 | HIGH-2 | `lib/cost-optimizer.ts` | 42, 56, 68-69 | **Suggestion alternatives reference non-existent IDs** (`azure-sql-serverless`, `gcp-spanner`, `gcp-firestore`). Users can't add suggested components. |
-| 7 | HIGH-3 | `lib/multi-cloud/cloud-mappings.ts` | `tryConvertComponent` | **Converts to non-catalog IDs** (`azure-redis`, `gcp-memorystore`, `gcp-secret-manager`, `gcp-cloud-dns`). Converted diagrams break silently. |
-| 8 | HIGH-4 | `lib/export/pulumi-generator.ts` | PULUMI_MAPPINGS | **Mapping keys mismatch catalog IDs**: `gcp-lb` (s/b `gcp-cloud-lb`), `azure-cosmosdb` (s/b `azure-cosmos`), `azure-keyvault` (s/b `azure-key-vault`). Nodes with correct catalog IDs are dropped from Pulumi output. |
-| 9 | HIGH-5 | `lib/templates/architecture-templates.ts` | GCP templates | **Templates use non-existent component IDs**: `gcp-load-balancer`, `gcp-storage`, `gcp-vertex-ai`, `github`. Loading these templates creates broken nodes. |
-| 10 | HIGH-6 | `lib/ai/openai-client.ts` | prompt | **AI diagram generation prompt uses 10+ wrong component IDs.** AI-generated diagrams contain unrecognized nodes. |
-| 11 | HIGH-7 | `lib/compliance/compliance-validator.ts` | all validation helpers | **All helpers use `n.type` instead of `n.data.componentId`.** Every compliance check always fails — all architectures get maximum violations. |
+| #   | ID     | File                                      | Lines                  | Description                                                                                                                                                                                                                                                                  |
+| --- | ------ | ----------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5   | HIGH-1 | `lib/catalog.ts`                          | —                      | **Missing catalog entries** referenced by cloud-mappings, ARM, Pulumi: `azure-redis`, `azure-acr`, `azure-mysql`, `azure-postgresql`, `azure-container-instance`, `gcp-cloud-dns`, `gcp-memorystore`, `gcp-secret-manager`. Cross-provider conversion produces orphan nodes. |
+| 6   | HIGH-2 | `lib/cost-optimizer.ts`                   | 42, 56, 68-69          | **Suggestion alternatives reference non-existent IDs** (`azure-sql-serverless`, `gcp-spanner`, `gcp-firestore`). Users can't add suggested components.                                                                                                                       |
+| 7   | HIGH-3 | `lib/multi-cloud/cloud-mappings.ts`       | `tryConvertComponent`  | **Converts to non-catalog IDs** (`azure-redis`, `gcp-memorystore`, `gcp-secret-manager`, `gcp-cloud-dns`). Converted diagrams break silently.                                                                                                                                |
+| 8   | HIGH-4 | `lib/export/pulumi-generator.ts`          | PULUMI_MAPPINGS        | **Mapping keys mismatch catalog IDs**: `gcp-lb` (s/b `gcp-cloud-lb`), `azure-cosmosdb` (s/b `azure-cosmos`), `azure-keyvault` (s/b `azure-key-vault`). Nodes with correct catalog IDs are dropped from Pulumi output.                                                        |
+| 9   | HIGH-5 | `lib/templates/architecture-templates.ts` | GCP templates          | **Templates use non-existent component IDs**: `gcp-load-balancer`, `gcp-storage`, `gcp-vertex-ai`, `github`. Loading these templates creates broken nodes.                                                                                                                   |
+| 10  | HIGH-6 | `lib/ai/openai-client.ts`                 | prompt                 | **AI diagram generation prompt uses 10+ wrong component IDs.** AI-generated diagrams contain unrecognized nodes.                                                                                                                                                             |
+| 11  | HIGH-7 | `lib/compliance/compliance-validator.ts`  | all validation helpers | **All helpers use `n.type` instead of `n.data.componentId`.** Every compliance check always fails — all architectures get maximum violations.                                                                                                                                |
 
 ### MEDIUM (8)
 
-| # | ID | File | Lines | Description |
-|---|-----|------|-------|-------------|
-| 12 | MED-1 | `lib/generators/terraform.ts` | 115, 124, 132 | Azure helper functions use `toTfName()` directly to reference parent resources instead of `nodeIdToTfName` map. |
-| 13 | MED-2 | `lib/export/arm-generator.ts` | `sanitizeARMName` | Truncates ALL ARM names to 24 chars. Correct for storage accounts but too restrictive for VMs (64 chars), VNets (64), RGs (90). |
-| 14 | MED-3 | `lib/export/arm-generator.ts` | ARM_MAPPINGS | Contains dead mappings for non-catalog IDs (`azure-redis`, `azure-acr`, `azure-mysql`, `azure-postgresql`). |
-| 15 | MED-4 | `lib/export/pdf-documentation.ts` | `generateCostTable` | Uses `node.type` (React Flow type) for pricing lookup. All nodes get "Varies" estimate. |
-| 16 | MED-5 | `lib/compliance/compliance-scanner.ts` | `getTotalCheckCount` | Hardcoded total check counts (25 CIS, 15 GDPR) don't match actual checks implemented (5 CIS, 3 GDPR). Score is inflated. |
-| 17 | MED-6 | `components/diagram/node-config-panel.tsx` | ~195-210 | UI sets `diskSize`/`diskType` — potential field name mismatch with generator expectations. |
-| 18 | MED-7 | `lib/multi-cloud/cloud-mappings.ts` | `convertDiagramToProvider` | Reads `node.data.component` (old field) but codebase also uses `node.data.componentId` (new field). |
-| 19 | MED-8 | `lib/generators/core/graph-utils.ts` | `detectCycles` | Returns all cycle participants as a flat array. Multiple independent cycles are indistinguishable in the error message. |
+| #   | ID    | File                                       | Lines                      | Description                                                                                                                     |
+| --- | ----- | ------------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 12  | MED-1 | `lib/generators/terraform.ts`              | 115, 124, 132              | Azure helper functions use `toTfName()` directly to reference parent resources instead of `nodeIdToTfName` map.                 |
+| 13  | MED-2 | `lib/export/arm-generator.ts`              | `sanitizeARMName`          | Truncates ALL ARM names to 24 chars. Correct for storage accounts but too restrictive for VMs (64 chars), VNets (64), RGs (90). |
+| 14  | MED-3 | `lib/export/arm-generator.ts`              | ARM_MAPPINGS               | Contains dead mappings for non-catalog IDs (`azure-redis`, `azure-acr`, `azure-mysql`, `azure-postgresql`).                     |
+| 15  | MED-4 | `lib/export/pdf-documentation.ts`          | `generateCostTable`        | Uses `node.type` (React Flow type) for pricing lookup. All nodes get "Varies" estimate.                                         |
+| 16  | MED-5 | `lib/compliance/compliance-scanner.ts`     | `getTotalCheckCount`       | Hardcoded total check counts (25 CIS, 15 GDPR) don't match actual checks implemented (5 CIS, 3 GDPR). Score is inflated.        |
+| 17  | MED-6 | `components/diagram/node-config-panel.tsx` | ~195-210                   | UI sets `diskSize`/`diskType` — potential field name mismatch with generator expectations.                                      |
+| 18  | MED-7 | `lib/multi-cloud/cloud-mappings.ts`        | `convertDiagramToProvider` | Reads `node.data.component` (old field) but codebase also uses `node.data.componentId` (new field).                             |
+| 19  | MED-8 | `lib/generators/core/graph-utils.ts`       | `detectCycles`             | Returns all cycle participants as a flat array. Multiple independent cycles are indistinguishable in the error message.         |
 
 ### LOW (7)
 
-| # | ID | File | Lines | Description |
-|---|-----|------|-------|-------------|
-| 20 | LOW-1 | `lib/generators/terraform.ts` | — | Duplicate utility functions alongside shared core imports. Maintenance divergence risk. |
-| 21 | LOW-2 | `lib/export/cloudformation-generator.ts` | — | Local `findSiblings()` duplicate. |
-| 22 | LOW-3 | `lib/export/cloudformation-generator.ts` | `convertToYaml` | Custom YAML serializer — any edge case could produce invalid YAML. |
-| 23 | LOW-4 | `lib/export/pulumi-generator.ts` | ~107 | Unnecessary `findAncestor()` wrapper around imported function. |
-| 24 | LOW-5 | `lib/catalog.ts` | — | `gcp-compute-instance` and `gcp-compute-engine` are duplicate GCP compute entries (categories: 'compute' vs 'cloud'). Ambiguous. |
-| 25 | LOW-6 | `lib/ai/architecture-analyzer.ts` | `checkCostOptimization` | `'STANDARD_IA'` and `'GLACIER'` (cheap S3 tiers) flagged as "premium storage" — incorrect classification. |
-| 26 | LOW-7 | `lib/export/pdf-documentation.ts` | `simpleMarkdownToHTML` | Regex-based MD→HTML has known limitations (tables, nesting, HTML entities). |
+| #   | ID    | File                                     | Lines                   | Description                                                                                                                      |
+| --- | ----- | ---------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 20  | LOW-1 | `lib/generators/terraform.ts`            | —                       | Duplicate utility functions alongside shared core imports. Maintenance divergence risk.                                          |
+| 21  | LOW-2 | `lib/export/cloudformation-generator.ts` | —                       | Local `findSiblings()` duplicate.                                                                                                |
+| 22  | LOW-3 | `lib/export/cloudformation-generator.ts` | `convertToYaml`         | Custom YAML serializer — any edge case could produce invalid YAML.                                                               |
+| 23  | LOW-4 | `lib/export/pulumi-generator.ts`         | ~107                    | Unnecessary `findAncestor()` wrapper around imported function.                                                                   |
+| 24  | LOW-5 | `lib/catalog.ts`                         | —                       | `gcp-compute-instance` and `gcp-compute-engine` are duplicate GCP compute entries (categories: 'compute' vs 'cloud'). Ambiguous. |
+| 25  | LOW-6 | `lib/ai/architecture-analyzer.ts`        | `checkCostOptimization` | `'STANDARD_IA'` and `'GLACIER'` (cheap S3 tiers) flagged as "premium storage" — incorrect classification.                        |
+| 26  | LOW-7 | `lib/export/pdf-documentation.ts`        | `simpleMarkdownToHTML`  | Regex-based MD→HTML has known limitations (tables, nesting, HTML entities).                                                      |
 
 ---
 

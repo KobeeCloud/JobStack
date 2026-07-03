@@ -6,7 +6,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
-import { FlaskConical, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  FlaskConical,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import type { InfrastructureTest } from '@/lib/testing/infrastructure-tester'
 
 export interface TestSummary {
@@ -40,11 +47,7 @@ export function TestResultsPanel({ results, onRunTests, isTesting }: TestResults
 
       {/* Test Controls */}
       <div className="p-4 border-b">
-        <Button
-          className="w-full"
-          onClick={onRunTests}
-          disabled={isTesting}
-        >
+        <Button className="w-full" onClick={onRunTests} disabled={isTesting}>
           {isTesting ? 'Running Tests...' : 'Run All Tests'}
         </Button>
       </div>
@@ -96,19 +99,19 @@ export function TestResultsPanel({ results, onRunTests, isTesting }: TestResults
             {/* Test Results by Category */}
             <TestCategorySection
               title="Connectivity Tests"
-              results={results.filter((r) => r.type === 'connectivity')}
+              results={results.filter(r => r.type === 'connectivity')}
             />
             <TestCategorySection
               title="Security Tests"
-              results={results.filter((r) => r.type === 'security')}
+              results={results.filter(r => r.type === 'security')}
             />
             <TestCategorySection
               title="Cost Optimization Tests"
-              results={results.filter((r) => r.type === 'cost')}
+              results={results.filter(r => r.type === 'cost')}
             />
             <TestCategorySection
               title="Configuration Tests"
-              results={results.filter((r) => r.type === 'configuration')}
+              results={results.filter(r => r.type === 'configuration')}
             />
           </div>
         </ScrollArea>
@@ -125,9 +128,9 @@ export function TestResultsPanel({ results, onRunTests, isTesting }: TestResults
 }
 
 function getTestSummary(results: InfrastructureTest[]): TestSummary {
-  const passed = results.filter((r) => r.status === 'pass').length
-  const failed = results.filter((r) => r.status === 'fail').length
-  const warnings = results.filter((r) => r.status === 'warning').length
+  const passed = results.filter(r => r.status === 'pass').length
+  const failed = results.filter(r => r.status === 'fail').length
+  const warnings = results.filter(r => r.status === 'warning').length
   const totalTests = results.length
   const successRate = Math.round((passed / totalTests) * 100)
 
@@ -146,9 +149,9 @@ interface TestCategorySectionProps {
 }
 
 function TestCategorySection({ title, results }: TestCategorySectionProps) {
-  const passed = results.filter((r) => r.status === 'pass').length
-  const failed = results.filter((r) => r.status === 'fail').length
-  const warnings = results.filter((r) => r.status === 'warning').length
+  const passed = results.filter(r => r.status === 'pass').length
+  const failed = results.filter(r => r.status === 'fail').length
+  const warnings = results.filter(r => r.status === 'warning').length
 
   return (
     <div>
@@ -173,7 +176,7 @@ function TestCategorySection({ title, results }: TestCategorySectionProps) {
         </div>
       </div>
       <div className="space-y-2">
-        {results.map((result) => (
+        {results.map(result => (
           <TestResultCard key={result.id} result={result} />
         ))}
       </div>
@@ -213,9 +216,7 @@ function TestResultCard({ result }: { result: InfrastructureTest }) {
             <p className="text-sm mb-2">{result.message}</p>
 
             {result.details && (
-              <div className="text-sm text-muted-foreground mb-2">
-                {result.details}
-              </div>
+              <div className="text-sm text-muted-foreground mb-2">{result.details}</div>
             )}
 
             {result.affectedResources && result.affectedResources.length > 0 && (

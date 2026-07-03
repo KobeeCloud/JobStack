@@ -18,8 +18,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from '@/components/ui/alert-dialog'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface User {
   id: string
@@ -47,7 +47,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
         data: {
           full_name: fullName,
           avatar_url: avatarUrl,
-        }
+        },
       })
 
       if (error) throw error
@@ -71,7 +71,12 @@ export function SettingsForm({ user }: SettingsFormProps) {
 
   const getInitials = (name: string, email?: string) => {
     if (name) {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      return name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
     }
     return email?.slice(0, 2).toUpperCase() || 'U'
   }
@@ -82,34 +87,24 @@ export function SettingsForm({ user }: SettingsFormProps) {
       <div className="flex items-center gap-4">
         <Avatar className="h-20 w-20">
           <AvatarImage src={avatarUrl} alt={fullName || 'User avatar'} />
-          <AvatarFallback className="text-lg">
-            {getInitials(fullName, user.email)}
-          </AvatarFallback>
+          <AvatarFallback className="text-lg">{getInitials(fullName, user.email)}</AvatarFallback>
         </Avatar>
         <div className="space-y-2">
           <Label htmlFor="avatarUrl">Avatar URL</Label>
           <Input
             id="avatarUrl"
             value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
+            onChange={e => setAvatarUrl(e.target.value)}
             placeholder="https://example.com/avatar.jpg"
             className="w-80"
           />
-          <p className="text-xs text-muted-foreground">
-            Enter a URL to your profile picture
-          </p>
+          <p className="text-xs text-muted-foreground">Enter a URL to your profile picture</p>
         </div>
       </div>
 
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={user.email || ''}
-          disabled
-          className="bg-muted"
-        />
+        <Input id="email" type="email" value={user.email || ''} disabled className="bg-muted" />
         <p className="text-xs text-muted-foreground">
           Your email is managed by your authentication provider
         </p>
@@ -120,7 +115,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
         <Input
           id="fullName"
           value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          onChange={e => setFullName(e.target.value)}
           placeholder="Enter your full name"
         />
       </div>
@@ -218,11 +213,7 @@ export function DeleteAccountButton({ user }: { user: User }) {
         <p className="text-sm text-destructive font-medium">
           Deletion scheduled for {scheduledDate.toLocaleDateString()}
         </p>
-        <Button
-          variant="outline"
-          onClick={handleCancelDeletion}
-          disabled={isCancelling}
-        >
+        <Button variant="outline" onClick={handleCancelDeletion} disabled={isCancelling}>
           {isCancelling ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -260,7 +251,7 @@ export function DeleteAccountButton({ user }: { user: User }) {
           <Input
             id="confirm-email"
             value={deleteConfirmation}
-            onChange={(e) => setDeleteConfirmation(e.target.value)}
+            onChange={e => setDeleteConfirmation(e.target.value)}
             placeholder="Enter your email"
             className="mt-2"
           />
@@ -330,9 +321,10 @@ export function HardDeleteAccountButton({ user: _user }: { user: User }) {
           </AlertDialogTitle>
           <AlertDialogDescription>
             This action is <strong>immediate and irreversible</strong>. All your data — profile,
-            projects, diagrams, organization memberships and settings — will be erased
-            right now. There is no grace period and no recovery option.
-            <br /><br />
+            projects, diagrams, organization memberships and settings — will be erased right now.
+            There is no grace period and no recovery option.
+            <br />
+            <br />
             This fulfils your <strong>GDPR Art.&nbsp;17 Right to Erasure</strong>.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -343,7 +335,7 @@ export function HardDeleteAccountButton({ user: _user }: { user: User }) {
           <Input
             id="confirm-hard-delete"
             value={deleteConfirmation}
-            onChange={(e) => setDeleteConfirmation(e.target.value)}
+            onChange={e => setDeleteConfirmation(e.target.value)}
             placeholder="DELETE"
             className="mt-2"
           />
