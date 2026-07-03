@@ -14,8 +14,8 @@ export const POST = createApiHandler(
     const { error } = await auth.supabase
       .from('profiles')
       .update({
-        deleted_at: new Date().toISOString(),
-        deletion_scheduled_for: scheduledFor.toISOString(),
+        deletion_requested_at: new Date().toISOString(),
+        deletion_scheduled_at: scheduledFor.toISOString(),
       })
       .eq('id', auth.user.id)
 
@@ -28,7 +28,7 @@ export const POST = createApiHandler(
 
     return NextResponse.json({
       message: 'Account deletion scheduled',
-      deletion_scheduled_for: scheduledFor.toISOString(),
+      deletion_scheduled_at: scheduledFor.toISOString(),
       grace_period_days: GRACE_PERIOD_DAYS,
     })
   },
@@ -41,8 +41,8 @@ export const DELETE = createApiHandler(
     const { error } = await auth.supabase
       .from('profiles')
       .update({
-        deleted_at: null,
-        deletion_scheduled_for: null,
+        deletion_requested_at: null,
+        deletion_scheduled_at: null,
       })
       .eq('id', auth.user.id)
 

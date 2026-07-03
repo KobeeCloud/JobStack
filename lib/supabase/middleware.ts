@@ -65,7 +65,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // MEDIUM-005: Soft-delete enforcement — block access for users with deleted_at set
+  // MEDIUM-005: Soft-delete enforcement — block access for users with a scheduled deletion
   if (user && isProtectedRoute) {
     // Cache profile status in a short-lived cookie to avoid a DB query on every request.
     // The cookie stores JSON { deletedAt, tosAccepted, checkedAt }.
@@ -73,7 +73,7 @@ export async function updateSession(request: NextRequest) {
     const PROFILE_CACHE_COOKIE = '__js_profile_cache'
     const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
-    let profileDeletedAt: string | null = null
+    let deletionScheduledAt: string | null = null
     let profileTosAccepted: boolean = false
     let cacheHit = false
 
@@ -86,7 +86,7 @@ export async function updateSession(request: NextRequest) {
           parsed.checkedAt &&
           Date.now() - parsed.checkedAt < CACHE_TTL_MS
         ) {
-          profileDeletedAt = parsed.deletedAt ?? null
+          deletionScheduledAt = parsed.deletionScheduledAt ?? null
           profileTosAccepted = !!parsed.tosAccepted
           cacheHit = true
         }
@@ -96,32 +96,34 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (!cacheHit) {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('deleted_at, tos_accepted_at')
+        .select('deletion_scheduled_at, tos_accepted_at')
         .eq('id', user.id)
         .single()
 
-      profileDeletedAt = profile?.deleted_at ?? null
-      profileTosAccepted = !!profile?.tos_accepted_at
+      if (!profileError) {
+        deletionScheduledAt = profile?.deletion_scheduled_at ?? null
+        profileTosAccepted = !!profile?.tos_accepted_at
 
-      // Store result in cookie so subsequent requests skip the DB query
-      const cacheValue = JSON.stringify({
-        userId: user.id,
-        deletedAt: profileDeletedAt,
-        tosAccepted: profileTosAccepted,
-        checkedAt: Date.now(),
-      })
-      supabaseResponse.cookies.set(PROFILE_CACHE_COOKIE, cacheValue, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 300, // 5 minutes
-        path: '/',
-      })
+        // Store result in cookie so subsequent requests skip the DB query
+        const cacheValue = JSON.stringify({
+          userId: user.id,
+          deletionScheduledAt,
+          tosAccepted: profileTosAccepted,
+          checkedAt: Date.now(),
+        })
+        supabaseResponse.cookies.set(PROFILE_CACHE_COOKIE, cacheValue, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 300, // 5 minutes
+          path: '/',
+        })
+      }
     }
 
-    if (profileDeletedAt) {
+    if (deletionScheduledAt) {
       // User account is scheduled for deletion — sign them out and redirect
       await supabase.auth.signOut()
       const deletedUrl = request.nextUrl.clone()
