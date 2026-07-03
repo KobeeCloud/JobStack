@@ -443,7 +443,7 @@ export const CLOUD_AGNOSTIC_MAPPINGS: CloudAgnosticMapping[] = [
 ]
 
 export function getCloudAgnosticComponent(genericId: string): CloudAgnosticMapping | undefined {
-  return CLOUD_AGNOSTIC_MAPPINGS.find((m) => m.genericId === genericId)
+  return CLOUD_AGNOSTIC_MAPPINGS.find(m => m.genericId === genericId)
 }
 
 export function getComponentForProvider(
@@ -491,11 +491,9 @@ export function convertDiagramToProvider(
   edges: any[],
   targetProvider: 'aws' | 'azure' | 'gcp'
 ): { nodes: any[]; edges: any[] } {
-  const convertedNodes = nodes.map((node) => {
+  const convertedNodes = nodes.map(node => {
     // Check if this is a generic component
-    const genericMapping = CLOUD_AGNOSTIC_MAPPINGS.find(
-      (m) => m.genericId === node.data.component
-    )
+    const genericMapping = CLOUD_AGNOSTIC_MAPPINGS.find(m => m.genericId === node.data.component)
 
     if (genericMapping) {
       const providerMapping = genericMapping.providers[targetProvider]
@@ -546,10 +544,7 @@ function tryConvertComponent(
   sourceComponentId: string,
   targetProvider: 'aws' | 'azure' | 'gcp'
 ): { componentId: string; defaultConfig: Record<string, any> } | null {
-  const conversions: Record<
-    string,
-    { aws?: string; azure?: string; gcp?: string }
-  > = {
+  const conversions: Record<string, { aws?: string; azure?: string; gcp?: string }> = {
     // VMs
     'aws-ec2': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
     'azure-vm': { aws: 'aws-ec2', azure: 'azure-vm', gcp: 'gcp-compute-instance' },
@@ -597,7 +592,11 @@ function tryConvertComponent(
     // Serverless Functions
     'aws-lambda': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-function' },
     'azure-functions': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-function' },
-    'gcp-cloud-function': { aws: 'aws-lambda', azure: 'azure-functions', gcp: 'gcp-cloud-function' },
+    'gcp-cloud-function': {
+      aws: 'aws-lambda',
+      azure: 'azure-functions',
+      gcp: 'gcp-cloud-function',
+    },
 
     // Message Queues
     'aws-sqs': { aws: 'aws-sqs', azure: 'azure-service-bus', gcp: 'gcp-pubsub' },
@@ -619,23 +618,47 @@ function tryConvertComponent(
 
     // DNS
     'aws-route53': { aws: 'aws-route53', azure: 'azure-traffic-manager', gcp: 'gcp-cloud-dns' },
-    'azure-traffic-manager': { aws: 'aws-route53', azure: 'azure-traffic-manager', gcp: 'gcp-cloud-dns' },
+    'azure-traffic-manager': {
+      aws: 'aws-route53',
+      azure: 'azure-traffic-manager',
+      gcp: 'gcp-cloud-dns',
+    },
 
     // Secret Store
-    'aws-secrets-manager': { aws: 'aws-secrets-manager', azure: 'azure-key-vault', gcp: 'gcp-secret-manager' },
-    'azure-key-vault': { aws: 'aws-secrets-manager', azure: 'azure-key-vault', gcp: 'gcp-secret-manager' },
+    'aws-secrets-manager': {
+      aws: 'aws-secrets-manager',
+      azure: 'azure-key-vault',
+      gcp: 'gcp-secret-manager',
+    },
+    'azure-key-vault': {
+      aws: 'aws-secrets-manager',
+      azure: 'azure-key-vault',
+      gcp: 'gcp-secret-manager',
+    },
 
     // Cache
     'aws-elasticache': { aws: 'aws-elasticache', azure: 'azure-redis', gcp: 'gcp-memorystore' },
 
     // Firewall / NSG
-    'aws-security-group': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall-rule' },
+    'aws-security-group': {
+      aws: 'aws-security-group',
+      azure: 'azure-nsg',
+      gcp: 'gcp-firewall-rule',
+    },
     'azure-nsg': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall-rule' },
-    'gcp-firewall-rule': { aws: 'aws-security-group', azure: 'azure-nsg', gcp: 'gcp-firewall-rule' },
+    'gcp-firewall-rule': {
+      aws: 'aws-security-group',
+      azure: 'azure-nsg',
+      gcp: 'gcp-firewall-rule',
+    },
 
     // NAT Gateway
     'aws-nat-gateway': { aws: 'aws-nat-gateway', azure: 'azure-nat-gateway', gcp: 'gcp-cloud-nat' },
-    'azure-nat-gateway': { aws: 'aws-nat-gateway', azure: 'azure-nat-gateway', gcp: 'gcp-cloud-nat' },
+    'azure-nat-gateway': {
+      aws: 'aws-nat-gateway',
+      azure: 'azure-nat-gateway',
+      gcp: 'gcp-cloud-nat',
+    },
     'gcp-cloud-nat': { aws: 'aws-nat-gateway', azure: 'azure-nat-gateway', gcp: 'gcp-cloud-nat' },
 
     // PaaS / App Service

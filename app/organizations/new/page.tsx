@@ -18,7 +18,8 @@ import { toast } from 'sonner'
 
 const createOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-  slug: z.string()
+  slug: z
+    .string()
     .min(2, 'Slug must be at least 2 characters')
     .max(50)
     .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
@@ -54,7 +55,9 @@ export default function NewOrganizationPage() {
   const onSubmit = async (data: CreateOrgInput) => {
     setLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
         toast.error('You must be logged in')
         router.push('/login')
@@ -70,14 +73,12 @@ export default function NewOrganizationPage() {
 
       if (profileError || !profile) {
         // If profile doesn't exist, create it
-        const { error: createProfileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email!,
-            full_name: user.user_metadata?.full_name || null,
-            avatar_url: user.user_metadata?.avatar_url || null,
-          })
+        const { error: createProfileError } = await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email!,
+          full_name: user.user_metadata?.full_name || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+        })
 
         if (createProfileError) {
           toast.error('Failed to create user profile', { description: createProfileError.message })
@@ -107,13 +108,11 @@ export default function NewOrganizationPage() {
       }
 
       // Add owner as member — rollback org if this fails
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: org.id,
-          user_id: user.id,
-          role: 'owner',
-        })
+      const { error: memberError } = await supabase.from('organization_members').insert({
+        organization_id: org.id,
+        user_id: user.id,
+        role: 'owner',
+      })
 
       if (memberError) {
         // Rollback: delete the orphaned organization
@@ -165,16 +164,14 @@ export default function NewOrganizationPage() {
                 <Input
                   id="name"
                   {...register('name')}
-                  onChange={(e) => {
+                  onChange={e => {
                     register('name').onChange(e)
                     setValue('slug', generateSlug(e.target.value))
                   }}
                   placeholder="Acme Inc"
                   disabled={loading}
                 />
-                {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
-                )}
+                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
               </div>
 
               <div className="space-y-2">
@@ -189,9 +186,7 @@ export default function NewOrganizationPage() {
                     className="flex-1"
                   />
                 </div>
-                {errors.slug && (
-                  <p className="text-sm text-destructive">{errors.slug.message}</p>
-                )}
+                {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
               </div>
 
               <div className="space-y-2">

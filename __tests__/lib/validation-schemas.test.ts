@@ -34,12 +34,9 @@ describe('uuidSchema', () => {
 // ─── Cloud Provider ─────────────────────────────────────────────────────────
 
 describe('cloudProviderSchema', () => {
-  it.each(['aws', 'azure', 'gcp', 'vercel', 'netlify', 'cloudflare'])(
-    'accepts "%s"',
-    (provider) => {
-      expect(cloudProviderSchema.safeParse(provider).success).toBe(true)
-    }
-  )
+  it.each(['aws', 'azure', 'gcp', 'vercel', 'netlify', 'cloudflare'])('accepts "%s"', provider => {
+    expect(cloudProviderSchema.safeParse(provider).success).toBe(true)
+  })
 
   it('rejects unknown provider', () => {
     expect(cloudProviderSchema.safeParse('oracle').success).toBe(false)
@@ -196,7 +193,7 @@ describe('registerSchema', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.issues.some((i) => i.path.includes('confirmPassword'))).toBe(true)
+      expect(result.error.issues.some(i => i.path.includes('confirmPassword'))).toBe(true)
     }
   })
 

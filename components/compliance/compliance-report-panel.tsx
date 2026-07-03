@@ -15,8 +15,14 @@ interface ComplianceReportPanelProps {
   isScanning: boolean
 }
 
-export function ComplianceReportPanel({ report, onRunScan, isScanning }: ComplianceReportPanelProps) {
-  const [selectedFramework, setSelectedFramework] = useState<'cis' | 'gdpr' | 'soc2' | 'pci-dss' | 'hipaa'>('cis')
+export function ComplianceReportPanel({
+  report,
+  onRunScan,
+  isScanning,
+}: ComplianceReportPanelProps) {
+  const [selectedFramework, setSelectedFramework] = useState<
+    'cis' | 'gdpr' | 'soc2' | 'pci-dss' | 'hipaa'
+  >('cis')
 
   const frameworks = [
     { id: 'cis' as const, name: 'CIS Benchmark', description: 'Center for Internet Security' },
@@ -41,7 +47,7 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
       {/* Framework Selection */}
       <div className="p-4 border-b space-y-3">
         <div className="grid grid-cols-2 gap-2">
-          {frameworks.map((fw) => (
+          {frameworks.map(fw => (
             <Button
               key={fw.id}
               variant={selectedFramework === fw.id ? 'default' : 'outline'}
@@ -61,7 +67,9 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
           onClick={() => onRunScan(selectedFramework)}
           disabled={isScanning}
         >
-          {isScanning ? 'Scanning...' : `Run ${frameworks.find((f) => f.id === selectedFramework)?.name} Scan`}
+          {isScanning
+            ? 'Scanning...'
+            : `Run ${frameworks.find(f => f.id === selectedFramework)?.name} Scan`}
         </Button>
       </div>
 
@@ -80,9 +88,7 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold">
-                      {report.score}%
-                    </span>
+                    <span className="text-3xl font-bold">{report.score}%</span>
                     <ScoreBadge score={report.score} />
                   </div>
                   <Progress value={report.score} className="h-2" />
@@ -97,7 +103,14 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
                     </div>
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                      <span>{report.findings.filter(f => f.severity === 'medium' || f.severity === 'low').length} Warnings</span>
+                      <span>
+                        {
+                          report.findings.filter(
+                            f => f.severity === 'medium' || f.severity === 'low'
+                          ).length
+                        }{' '}
+                        Warnings
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -107,7 +120,7 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
             {/* Findings by Severity */}
             <div>
               <h4 className="font-semibold mb-2">Critical Issues</h4>
-              {report.findings.filter((f) => f.severity === 'critical').length === 0 ? (
+              {report.findings.filter(f => f.severity === 'critical').length === 0 ? (
                 <Card className="bg-green-50 border-green-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 text-green-700">
@@ -119,7 +132,7 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
               ) : (
                 <div className="space-y-2">
                   {report.findings
-                    .filter((f) => f.severity === 'critical')
+                    .filter(f => f.severity === 'critical')
                     .map((finding, idx) => (
                       <FindingCard key={idx} finding={finding} />
                     ))}
@@ -129,7 +142,7 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
 
             <div>
               <h4 className="font-semibold mb-2">High Priority Issues</h4>
-              {report.findings.filter((f) => f.severity === 'high').length === 0 ? (
+              {report.findings.filter(f => f.severity === 'high').length === 0 ? (
                 <Card className="bg-green-50 border-green-200">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 text-green-700">
@@ -141,7 +154,7 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
               ) : (
                 <div className="space-y-2">
                   {report.findings
-                    .filter((f) => f.severity === 'high')
+                    .filter(f => f.severity === 'high')
                     .map((finding, idx) => (
                       <FindingCard key={idx} finding={finding} />
                     ))}
@@ -153,14 +166,14 @@ export function ComplianceReportPanel({ report, onRunScan, isScanning }: Complia
               <h4 className="font-semibold mb-2">Medium Priority Issues</h4>
               <div className="space-y-2">
                 {report.findings
-                  .filter((f) => f.severity === 'medium')
+                  .filter(f => f.severity === 'medium')
                   .slice(0, 5)
                   .map((finding, idx) => (
                     <FindingCard key={idx} finding={finding} />
                   ))}
-                {report.findings.filter((f) => f.severity === 'medium').length > 5 && (
+                {report.findings.filter(f => f.severity === 'medium').length > 5 && (
                   <p className="text-sm text-muted-foreground text-center">
-                    +{report.findings.filter((f) => f.severity === 'medium').length - 5} more
+                    +{report.findings.filter(f => f.severity === 'medium').length - 5} more
                   </p>
                 )}
               </div>
@@ -225,7 +238,8 @@ function FindingCard({ finding }: { finding: ComplianceFinding }) {
             {finding.affectedResources.length > 0 && (
               <div className="text-sm text-muted-foreground mb-2">
                 Affected: {finding.affectedResources.slice(0, 3).join(', ')}
-                {finding.affectedResources.length > 3 && ` +${finding.affectedResources.length - 3} more`}
+                {finding.affectedResources.length > 3 &&
+                  ` +${finding.affectedResources.length - 3} more`}
               </div>
             )}
 

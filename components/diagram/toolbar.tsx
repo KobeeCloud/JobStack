@@ -9,12 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   ZoomIn,
   ZoomOut,
@@ -152,7 +147,7 @@ export function DiagramToolbar({
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.json'
-    input.onchange = async (e) => {
+    input.onchange = async e => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file && onImport) {
         try {
@@ -172,7 +167,7 @@ export function DiagramToolbar({
     input.type = 'file'
     input.accept = '.tf'
     input.multiple = true
-    input.onchange = (e) => {
+    input.onchange = e => {
       const files = (e.target as HTMLInputElement).files
       if (files && files.length > 0 && onImportTerraform) {
         onImportTerraform(files)
@@ -224,7 +219,13 @@ export function DiagramToolbar({
         {/* Zoom Controls */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onZoomIn} aria-label="Zoom in">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onZoomIn}
+              aria-label="Zoom in"
+            >
               <ZoomIn className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -232,7 +233,13 @@ export function DiagramToolbar({
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onZoomOut} aria-label="Zoom out">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onZoomOut}
+              aria-label="Zoom out"
+            >
               <ZoomOut className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -240,7 +247,13 @@ export function DiagramToolbar({
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onFitView} aria-label="Fit view">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onFitView}
+              aria-label="Fit view"
+            >
               <Maximize className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -249,7 +262,13 @@ export function DiagramToolbar({
         {onLayout && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLayout} aria-label="Auto layout">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onLayout}
+                aria-label="Auto layout"
+              >
                 <Network className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -259,7 +278,13 @@ export function DiagramToolbar({
         {onLayout && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onLayout} aria-label="Auto layout">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onLayout}
+                aria-label="Auto layout"
+              >
                 <Network className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -671,17 +696,16 @@ export function DiagramToolbar({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Keyboard Shortcuts</DialogTitle>
-            <DialogDescription>
-              Quick actions for efficient diagram editing
-            </DialogDescription>
+            <DialogDescription>Quick actions for efficient diagram editing</DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
             {keyboardShortcuts.map((shortcut, i) => (
-              <div key={i} className="flex justify-between items-center py-2 border-b last:border-0">
+              <div
+                key={i}
+                className="flex justify-between items-center py-2 border-b last:border-0"
+              >
                 <span className="text-sm text-muted-foreground">{shortcut.action}</span>
-                <kbd className="px-2 py-1 text-xs font-mono bg-muted rounded">
-                  {shortcut.key}
-                </kbd>
+                <kbd className="px-2 py-1 text-xs font-mono bg-muted rounded">{shortcut.key}</kbd>
               </div>
             ))}
           </div>

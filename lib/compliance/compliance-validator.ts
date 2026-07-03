@@ -52,54 +52,55 @@ const _hasComponent = (nodes: Node[], types: string[]) =>
 const hasEncryption = (nodes: Node[]) =>
   nodes.some(n => {
     const id = getCompId(n)
-    return id.includes('kms') ||
-      id.includes('keyvault') ||
-      n.data?.encryption === true
+    return id.includes('kms') || id.includes('keyvault') || n.data?.encryption === true
   })
 
 const hasNetworkSegmentation = (nodes: Node[]) =>
   nodes.some(n => {
     const id = getCompId(n)
-    return id.includes('subnet') ||
-      id.includes('vnet') ||
-      id.includes('vpc') ||
-      id.includes('network')
+    return (
+      id.includes('subnet') || id.includes('vnet') || id.includes('vpc') || id.includes('network')
+    )
   })
 
 const hasFirewall = (nodes: Node[]) =>
   nodes.some(n => {
     const id = getCompId(n)
-    return id.includes('nsg') ||
+    return (
+      id.includes('nsg') ||
       id.includes('security-group') ||
       id.includes('firewall') ||
       id.includes('waf')
+    )
   })
 
 const hasLoadBalancer = (nodes: Node[]) =>
   nodes.some(n => {
     const id = getCompId(n)
-    return id.includes('alb') ||
+    return (
+      id.includes('alb') ||
       id.includes('lb') ||
       id.includes('app-gw') ||
       id.includes('load-balancer') ||
       id.includes('application-gateway')
+    )
   })
 
 const hasMonitoring = (nodes: Node[]) =>
   nodes.some(n => {
     const id = getCompId(n)
-    return id.includes('cloudwatch') ||
+    return (
+      id.includes('cloudwatch') ||
       id.includes('monitor') ||
       id.includes('logging') ||
       id.includes('log')
+    )
   })
 
 const hasBackup = (nodes: Node[]) =>
   nodes.some(n => {
     const id = getCompId(n)
-    return id.includes('backup') ||
-      id.includes('recovery') ||
-      n.data?.backup === true
+    return id.includes('backup') || id.includes('recovery') || n.data?.backup === true
   })
 
 // HIPAA Compliance Rules
@@ -110,18 +111,20 @@ const HIPAA_RULES: ComplianceRule[] = [
     description: 'All PHI must be encrypted at rest and in transit',
     severity: 'error',
     category: 'Security',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasEncryption(nodes)) {
-        return [{
-          ruleId: 'hipaa-encryption',
-          ruleName: 'Data Encryption',
-          severity: 'error',
-          message: 'No encryption service detected. HIPAA requires encryption of PHI.',
-          suggestion: 'Add AWS KMS, Azure Key Vault, or GCP KMS for key management'
-        }]
+        return [
+          {
+            ruleId: 'hipaa-encryption',
+            ruleName: 'Data Encryption',
+            severity: 'error',
+            message: 'No encryption service detected. HIPAA requires encryption of PHI.',
+            suggestion: 'Add AWS KMS, Azure Key Vault, or GCP KMS for key management',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'hipaa-access-control',
@@ -129,25 +132,29 @@ const HIPAA_RULES: ComplianceRule[] = [
     description: 'Implement strict access controls for PHI',
     severity: 'error',
     category: 'Security',
-    validate: (nodes) => {
+    validate: nodes => {
       const hasIdentity = nodes.some(n => {
         const id = getCompId(n)
-        return id.includes('cognito') ||
+        return (
+          id.includes('cognito') ||
           id.includes('ad') ||
           id.includes('iam') ||
           id.includes('active-directory')
+        )
       })
       if (!hasIdentity) {
-        return [{
-          ruleId: 'hipaa-access-control',
-          ruleName: 'Access Control',
-          severity: 'error',
-          message: 'No identity management service detected.',
-          suggestion: 'Add AWS Cognito, Azure AD, or IAM for access control'
-        }]
+        return [
+          {
+            ruleId: 'hipaa-access-control',
+            ruleName: 'Access Control',
+            severity: 'error',
+            message: 'No identity management service detected.',
+            suggestion: 'Add AWS Cognito, Azure AD, or IAM for access control',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'hipaa-audit-logs',
@@ -155,18 +162,20 @@ const HIPAA_RULES: ComplianceRule[] = [
     description: 'Maintain comprehensive audit logs',
     severity: 'error',
     category: 'Compliance',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasMonitoring(nodes)) {
-        return [{
-          ruleId: 'hipaa-audit-logs',
-          ruleName: 'Audit Logging',
-          severity: 'error',
-          message: 'No logging/monitoring service detected.',
-          suggestion: 'Add CloudWatch, Azure Monitor, or GCP Logging'
-        }]
+        return [
+          {
+            ruleId: 'hipaa-audit-logs',
+            ruleName: 'Audit Logging',
+            severity: 'error',
+            message: 'No logging/monitoring service detected.',
+            suggestion: 'Add CloudWatch, Azure Monitor, or GCP Logging',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'hipaa-network-security',
@@ -174,7 +183,7 @@ const HIPAA_RULES: ComplianceRule[] = [
     description: 'Implement network segmentation and firewalls',
     severity: 'error',
     category: 'Network',
-    validate: (nodes) => {
+    validate: nodes => {
       const violations: ComplianceViolation[] = []
       if (!hasNetworkSegmentation(nodes)) {
         violations.push({
@@ -182,7 +191,7 @@ const HIPAA_RULES: ComplianceRule[] = [
           ruleName: 'Network Security',
           severity: 'error',
           message: 'No network segmentation detected.',
-          suggestion: 'Add VPC/VNet with subnets for network isolation'
+          suggestion: 'Add VPC/VNet with subnets for network isolation',
         })
       }
       if (!hasFirewall(nodes)) {
@@ -191,11 +200,11 @@ const HIPAA_RULES: ComplianceRule[] = [
           ruleName: 'Network Security',
           severity: 'error',
           message: 'No firewall/security group detected.',
-          suggestion: 'Add NSG, Security Group, or Firewall rules'
+          suggestion: 'Add NSG, Security Group, or Firewall rules',
         })
       }
       return violations
-    }
+    },
   },
   {
     id: 'hipaa-backup',
@@ -203,18 +212,20 @@ const HIPAA_RULES: ComplianceRule[] = [
     description: 'Implement regular data backups',
     severity: 'warning',
     category: 'Disaster Recovery',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasBackup(nodes)) {
-        return [{
-          ruleId: 'hipaa-backup',
-          ruleName: 'Data Backup',
-          severity: 'warning',
-          message: 'No backup service detected.',
-          suggestion: 'Configure backup for databases and storage'
-        }]
+        return [
+          {
+            ruleId: 'hipaa-backup',
+            ruleName: 'Data Backup',
+            severity: 'warning',
+            message: 'No backup service detected.',
+            suggestion: 'Configure backup for databases and storage',
+          },
+        ]
       }
       return []
-    }
+    },
   },
 ]
 
@@ -226,18 +237,20 @@ const PCI_DSS_RULES: ComplianceRule[] = [
     description: 'Install and maintain a firewall configuration',
     severity: 'error',
     category: 'Network',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasFirewall(nodes)) {
-        return [{
-          ruleId: 'pci-firewall',
-          ruleName: 'Firewall Configuration',
-          severity: 'error',
-          message: 'No firewall detected. PCI-DSS Requirement 1.',
-          suggestion: 'Add firewall or security groups to protect cardholder data'
-        }]
+        return [
+          {
+            ruleId: 'pci-firewall',
+            ruleName: 'Firewall Configuration',
+            severity: 'error',
+            message: 'No firewall detected. PCI-DSS Requirement 1.',
+            suggestion: 'Add firewall or security groups to protect cardholder data',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'pci-encryption',
@@ -245,18 +258,20 @@ const PCI_DSS_RULES: ComplianceRule[] = [
     description: 'Encrypt transmission of cardholder data',
     severity: 'error',
     category: 'Security',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasEncryption(nodes)) {
-        return [{
-          ruleId: 'pci-encryption',
-          ruleName: 'Encrypt Cardholder Data',
-          severity: 'error',
-          message: 'No encryption service detected. PCI-DSS Requirement 4.',
-          suggestion: 'Add key management service for data encryption'
-        }]
+        return [
+          {
+            ruleId: 'pci-encryption',
+            ruleName: 'Encrypt Cardholder Data',
+            severity: 'error',
+            message: 'No encryption service detected. PCI-DSS Requirement 4.',
+            suggestion: 'Add key management service for data encryption',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'pci-waf',
@@ -264,32 +279,34 @@ const PCI_DSS_RULES: ComplianceRule[] = [
     description: 'Protect web applications with WAF',
     severity: 'error',
     category: 'Security',
-    validate: (nodes) => {
+    validate: nodes => {
       const hasWAF = nodes.some(n => {
         const id = getCompId(n)
-        return id.includes('waf') ||
-          id.includes('front-door') ||
-          id.includes('cloudfront')
+        return id.includes('waf') || id.includes('front-door') || id.includes('cloudfront')
       })
       const hasWebApp = nodes.some(n => {
         const id = getCompId(n)
-        return id.includes('app-service') ||
+        return (
+          id.includes('app-service') ||
           id.includes('lambda') ||
           id.includes('functions') ||
           id.includes('webapp') ||
           id.includes('vercel')
+        )
       })
       if (hasWebApp && !hasWAF) {
-        return [{
-          ruleId: 'pci-waf',
-          ruleName: 'Web Application Firewall',
-          severity: 'error',
-          message: 'Web applications detected without WAF protection.',
-          suggestion: 'Add AWS WAF, Azure Front Door, or CloudFlare for web protection'
-        }]
+        return [
+          {
+            ruleId: 'pci-waf',
+            ruleName: 'Web Application Firewall',
+            severity: 'error',
+            message: 'Web applications detected without WAF protection.',
+            suggestion: 'Add AWS WAF, Azure Front Door, or CloudFlare for web protection',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'pci-monitoring',
@@ -297,18 +314,20 @@ const PCI_DSS_RULES: ComplianceRule[] = [
     description: 'Track and monitor all access to cardholder data',
     severity: 'error',
     category: 'Monitoring',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasMonitoring(nodes)) {
-        return [{
-          ruleId: 'pci-monitoring',
-          ruleName: 'Track and Monitor Access',
-          severity: 'error',
-          message: 'No monitoring service detected. PCI-DSS Requirement 10.',
-          suggestion: 'Add comprehensive logging and monitoring'
-        }]
+        return [
+          {
+            ruleId: 'pci-monitoring',
+            ruleName: 'Track and Monitor Access',
+            severity: 'error',
+            message: 'No monitoring service detected. PCI-DSS Requirement 10.',
+            suggestion: 'Add comprehensive logging and monitoring',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'pci-network-segmentation',
@@ -316,18 +335,20 @@ const PCI_DSS_RULES: ComplianceRule[] = [
     description: 'Segment cardholder data environment',
     severity: 'error',
     category: 'Network',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasNetworkSegmentation(nodes)) {
-        return [{
-          ruleId: 'pci-network-segmentation',
-          ruleName: 'Network Segmentation',
-          severity: 'error',
-          message: 'No network segmentation detected.',
-          suggestion: 'Isolate cardholder data environment with dedicated subnets'
-        }]
+        return [
+          {
+            ruleId: 'pci-network-segmentation',
+            ruleName: 'Network Segmentation',
+            severity: 'error',
+            message: 'No network segmentation detected.',
+            suggestion: 'Isolate cardholder data environment with dedicated subnets',
+          },
+        ]
       }
       return []
-    }
+    },
   },
 ]
 
@@ -339,18 +360,20 @@ const SOC2_RULES: ComplianceRule[] = [
     description: 'System is available for operation as committed',
     severity: 'warning',
     category: 'Availability',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasLoadBalancer(nodes)) {
-        return [{
-          ruleId: 'soc2-availability',
-          ruleName: 'Availability',
-          severity: 'warning',
-          message: 'No load balancer detected for high availability.',
-          suggestion: 'Add load balancer for improved availability'
-        }]
+        return [
+          {
+            ruleId: 'soc2-availability',
+            ruleName: 'Availability',
+            severity: 'warning',
+            message: 'No load balancer detected for high availability.',
+            suggestion: 'Add load balancer for improved availability',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'soc2-security',
@@ -358,7 +381,7 @@ const SOC2_RULES: ComplianceRule[] = [
     description: 'System is protected against unauthorized access',
     severity: 'error',
     category: 'Security',
-    validate: (nodes) => {
+    validate: nodes => {
       const violations: ComplianceViolation[] = []
       if (!hasFirewall(nodes)) {
         violations.push({
@@ -366,7 +389,7 @@ const SOC2_RULES: ComplianceRule[] = [
           ruleName: 'Security',
           severity: 'error',
           message: 'No firewall protection detected.',
-          suggestion: 'Add security groups or firewalls'
+          suggestion: 'Add security groups or firewalls',
         })
       }
       if (!hasEncryption(nodes)) {
@@ -375,11 +398,11 @@ const SOC2_RULES: ComplianceRule[] = [
           ruleName: 'Security',
           severity: 'error',
           message: 'No encryption service detected.',
-          suggestion: 'Add key management for encryption'
+          suggestion: 'Add key management for encryption',
         })
       }
       return violations
-    }
+    },
   },
   {
     id: 'soc2-confidentiality',
@@ -387,18 +410,20 @@ const SOC2_RULES: ComplianceRule[] = [
     description: 'Confidential information is protected',
     severity: 'error',
     category: 'Security',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasEncryption(nodes)) {
-        return [{
-          ruleId: 'soc2-confidentiality',
-          ruleName: 'Confidentiality',
-          severity: 'error',
-          message: 'No encryption detected for data confidentiality.',
-          suggestion: 'Implement encryption at rest and in transit'
-        }]
+        return [
+          {
+            ruleId: 'soc2-confidentiality',
+            ruleName: 'Confidentiality',
+            severity: 'error',
+            message: 'No encryption detected for data confidentiality.',
+            suggestion: 'Implement encryption at rest and in transit',
+          },
+        ]
       }
       return []
-    }
+    },
   },
 ]
 
@@ -410,18 +435,20 @@ const GDPR_RULES: ComplianceRule[] = [
     description: 'Personal data must be encrypted',
     severity: 'error',
     category: 'Security',
-    validate: (nodes) => {
+    validate: nodes => {
       if (!hasEncryption(nodes)) {
-        return [{
-          ruleId: 'gdpr-encryption',
-          ruleName: 'Data Protection',
-          severity: 'error',
-          message: 'No encryption detected. GDPR Article 32 requires appropriate security.',
-          suggestion: 'Add encryption services for personal data protection'
-        }]
+        return [
+          {
+            ruleId: 'gdpr-encryption',
+            ruleName: 'Data Protection',
+            severity: 'error',
+            message: 'No encryption detected. GDPR Article 32 requires appropriate security.',
+            suggestion: 'Add encryption services for personal data protection',
+          },
+        ]
       }
       return []
-    }
+    },
   },
   {
     id: 'gdpr-data-residency',
@@ -429,22 +456,24 @@ const GDPR_RULES: ComplianceRule[] = [
     description: 'Personal data must stay within EU region',
     severity: 'warning',
     category: 'Compliance',
-    validate: (nodes) => {
+    validate: nodes => {
       const nonEuRegions = nodes.filter(n => {
-        const region = n.data?.region as string || ''
+        const region = (n.data?.region as string) || ''
         return region && !region.includes('eu') && !region.includes('europe')
       })
       if (nonEuRegions.length > 0) {
-        return [{
-          ruleId: 'gdpr-data-residency',
-          ruleName: 'Data Residency',
-          severity: 'warning',
-          message: `${nonEuRegions.length} resource(s) may be outside EU regions.`,
-          suggestion: 'Consider using EU regions for GDPR compliance'
-        }]
+        return [
+          {
+            ruleId: 'gdpr-data-residency',
+            ruleName: 'Data Residency',
+            severity: 'warning',
+            message: `${nonEuRegions.length} resource(s) may be outside EU regions.`,
+            suggestion: 'Consider using EU regions for GDPR compliance',
+          },
+        ]
       }
       return []
-    }
+    },
   },
 ]
 
@@ -457,7 +486,7 @@ export const COMPLIANCE_FRAMEWORKS: ComplianceFramework[] = [
     icon: '🏥',
     rules: HIPAA_RULES,
     requiredComponents: ['kms', 'keyvault', 'vpc', 'vnet', 'nsg', 'security-group'],
-    recommendedComponents: ['waf', 'monitor', 'backup']
+    recommendedComponents: ['waf', 'monitor', 'backup'],
   },
   {
     id: 'pci-dss',
@@ -466,7 +495,7 @@ export const COMPLIANCE_FRAMEWORKS: ComplianceFramework[] = [
     icon: '💳',
     rules: PCI_DSS_RULES,
     requiredComponents: ['kms', 'keyvault', 'waf', 'nsg', 'security-group', 'vpc', 'vnet'],
-    recommendedComponents: ['cloudfront', 'front-door', 'monitor']
+    recommendedComponents: ['cloudfront', 'front-door', 'monitor'],
   },
   {
     id: 'soc2',
@@ -475,7 +504,7 @@ export const COMPLIANCE_FRAMEWORKS: ComplianceFramework[] = [
     icon: '🔒',
     rules: SOC2_RULES,
     requiredComponents: ['kms', 'keyvault', 'nsg', 'security-group'],
-    recommendedComponents: ['alb', 'lb', 'monitor', 'backup']
+    recommendedComponents: ['alb', 'lb', 'monitor', 'backup'],
   },
   {
     id: 'gdpr',
@@ -484,7 +513,7 @@ export const COMPLIANCE_FRAMEWORKS: ComplianceFramework[] = [
     icon: '🇪🇺',
     rules: GDPR_RULES,
     requiredComponents: ['kms', 'keyvault'],
-    recommendedComponents: ['monitor', 'backup']
+    recommendedComponents: ['monitor', 'backup'],
   },
 ]
 
@@ -524,6 +553,6 @@ export function getComplianceScore(
     score: Math.round((passed / total) * 100),
     total,
     passed,
-    failed: errorCount
+    failed: errorCount,
   }
 }

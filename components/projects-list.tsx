@@ -46,7 +46,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
   const [sortBy, setSortBy] = useState<string>('updated')
 
   const providers = useMemo(
-    () => Array.from(new Set(projects.map((p) => p.cloud_provider).filter(Boolean))),
+    () => Array.from(new Set(projects.map(p => p.cloud_provider).filter(Boolean))),
     [projects]
   )
 
@@ -56,22 +56,24 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.description ?? '').toLowerCase().includes(q)
+        p => p.name.toLowerCase().includes(q) || (p.description ?? '').toLowerCase().includes(q)
       )
     }
     if (providerFilter !== 'all') {
-      list = list.filter((p) => p.cloud_provider === providerFilter)
+      list = list.filter(p => p.cloud_provider === providerFilter)
     }
     if (statusFilter !== 'all') {
-      list = list.filter((p) => p.status === statusFilter)
+      list = list.filter(p => p.status === statusFilter)
     }
 
     if (sortBy === 'updated') {
-      list = [...list].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      list = [...list].sort(
+        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      )
     } else if (sortBy === 'created') {
-      list = [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      list = [...list].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
     } else if (sortBy === 'name') {
       list = [...list].sort((a, b) => a.name.localeCompare(b.name))
     }
@@ -90,7 +92,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
           <Input
             placeholder="Search projects…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="pl-9 pr-8"
           />
           {search && (
@@ -111,7 +113,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All providers</SelectItem>
-              {providers.map((p) => (
+              {providers.map(p => (
                 <SelectItem key={p} value={p}>
                   {p.toUpperCase()}
                 </SelectItem>
@@ -175,10 +177,15 @@ export function ProjectsList({ projects }: ProjectsListProps) {
               <>
                 <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <h3 className="text-lg font-semibold mb-2">No matching projects</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your search or filters.
-                </p>
-                <Button variant="outline" onClick={() => { setSearch(''); setProviderFilter('all'); setStatusFilter('all') }}>
+                <p className="text-muted-foreground mb-4">Try adjusting your search or filters.</p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearch('')
+                    setProviderFilter('all')
+                    setStatusFilter('all')
+                  }}
+                >
                   Clear filters
                 </Button>
               </>
@@ -201,14 +208,11 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((project) => (
+          {filtered.map(project => (
             <div key={project.id} className="relative">
               <ProjectCard project={project} />
               <div className="absolute top-3 right-12 z-10">
-                <Badge
-                  variant="secondary"
-                  className={providerColors[project.cloud_provider] || ''}
-                >
+                <Badge variant="secondary" className={providerColors[project.cloud_provider] || ''}>
                   {project.cloud_provider?.toUpperCase() || 'N/A'}
                 </Badge>
               </div>

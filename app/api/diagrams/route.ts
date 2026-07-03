@@ -4,7 +4,12 @@ import { createDiagramSchema, uuidSchema, paginationSchema } from '@/lib/validat
 import { ApiError } from '@/lib/api-error'
 import { log } from '@/lib/logger'
 
-async function verifyProjectAccess(supabase: any, projectId: string, userId: string, userEmail: string): Promise<void> {
+async function verifyProjectAccess(
+  supabase: any,
+  projectId: string,
+  userId: string,
+  userEmail: string
+): Promise<void> {
   const { data: project, error } = await supabase
     .from('projects')
     .select('id, user_id')
@@ -57,7 +62,11 @@ export const GET = createApiHandler(
       limit: searchParams.get('limit') || '20',
     })
 
-    const { data: diagrams, error, count } = await auth.supabase
+    const {
+      data: diagrams,
+      error,
+      count,
+    } = await auth.supabase
       .from('diagrams')
       .select('*', { count: 'exact' })
       .eq('project_id', projectId)
@@ -72,7 +81,7 @@ export const GET = createApiHandler(
     // Transform to include data wrapper for compatibility
     const transformedDiagrams = (diagrams || []).map((d: any) => ({
       ...d,
-      data: { nodes: d.nodes || [], edges: d.edges || [] }
+      data: { nodes: d.nodes || [], edges: d.edges || [] },
     }))
 
     return NextResponse.json({
@@ -114,17 +123,24 @@ export const POST = createApiHandler(
       .single()
 
     if (error) {
-      log.error('Failed to create diagram', error, { projectId: body.project_id, userId: auth.user.id })
+      log.error('Failed to create diagram', error, {
+        projectId: body.project_id,
+        userId: auth.user.id,
+      })
       throw error
     }
 
     // Return with data wrapper for compatibility
     const responseData = {
       ...diagram,
-      data: { nodes: diagram.nodes, edges: diagram.edges }
+      data: { nodes: diagram.nodes, edges: diagram.edges },
     }
 
-    log.info('Diagram created', { diagramId: diagram.id, projectId: body.project_id, userId: auth.user.id })
+    log.info('Diagram created', {
+      diagramId: diagram.id,
+      projectId: body.project_id,
+      userId: auth.user.id,
+    })
 
     return NextResponse.json(responseData, { status: 201 })
   },

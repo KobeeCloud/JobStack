@@ -25,7 +25,7 @@ export function ComponentPalette({
   components,
   onDragStart,
   cloudProvider,
-  projectTypes
+  projectTypes,
 }: ComponentPaletteProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -40,40 +40,45 @@ export function ComponentPalette({
   }, [cloudProvider, activeProvider])
 
   // Custom drag start handler with proper drag image
-  const handleDragStart = useCallback((e: React.DragEvent, component: ComponentConfig) => {
-    // Create custom drag image
-    const dragImage = document.createElement('div')
-    dragImage.className = 'fixed pointer-events-none bg-background border rounded-lg shadow-lg p-3 flex items-center gap-2 z-50'
-    dragImage.style.width = '180px'
-    dragImage.innerHTML = `
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, component: ComponentConfig) => {
+      // Create custom drag image
+      const dragImage = document.createElement('div')
+      dragImage.className =
+        'fixed pointer-events-none bg-background border rounded-lg shadow-lg p-3 flex items-center gap-2 z-50'
+      dragImage.style.width = '180px'
+      dragImage.innerHTML = `
       <span class="text-sm font-medium">${component.name}</span>
     `
-    document.body.appendChild(dragImage)
+      document.body.appendChild(dragImage)
 
-    // Position off-screen initially
-    dragImage.style.top = '-1000px'
-    dragImage.style.left = '-1000px'
+      // Position off-screen initially
+      dragImage.style.top = '-1000px'
+      dragImage.style.left = '-1000px'
 
-    // Set as drag image
-    e.dataTransfer.setDragImage(dragImage, 90, 20)
+      // Set as drag image
+      e.dataTransfer.setDragImage(dragImage, 90, 20)
 
-    // Clean up after drag ends
-    setTimeout(() => {
-      document.body.removeChild(dragImage)
-    }, 0)
+      // Clean up after drag ends
+      setTimeout(() => {
+        document.body.removeChild(dragImage)
+      }, 0)
 
-    // Call the original onDragStart
-    onDragStart(e, component)
-  }, [onDragStart])
+      // Call the original onDragStart
+      onDragStart(e, component)
+    },
+    [onDragStart]
+  )
 
   // Filter components by provider and service type
   const providerFilteredComponents = useMemo(() => {
     let filtered = components
 
     // Filter by selected provider (local state — user can override)
-    const effectiveProvider = activeProvider === 'all' ? undefined : activeProvider as CloudProvider
+    const effectiveProvider =
+      activeProvider === 'all' ? undefined : (activeProvider as CloudProvider)
     if (effectiveProvider) {
-      filtered = filtered.filter((c) => {
+      filtered = filtered.filter(c => {
         // Only include components without provider (generic) OR exact match
         if (!c.provider || c.provider === 'generic') return true
         return c.provider === effectiveProvider
@@ -83,13 +88,13 @@ export function ComponentPalette({
     // Filter by project types (iaas, paas, saas, hosting)
     // For 'hosting' projects the provider filter already limits scope correctly —
     // skip serviceType filtering so vercel/netlify/cloudflare components are visible.
-    const hasNonHostingType = projectTypes && projectTypes.some(
-      (t) => t === 'iaas' || t === 'paas' || t === 'saas'
-    )
+    const hasNonHostingType =
+      projectTypes && projectTypes.some(t => t === 'iaas' || t === 'paas' || t === 'saas')
     if (projectTypes && projectTypes.length > 0 && hasNonHostingType) {
-      filtered = filtered.filter((c) => {
+      filtered = filtered.filter(c => {
         // Include generic components OR matching service type
-        if (!c.serviceType || c.serviceType === 'generic' || c.serviceType === 'hosting') return true
+        if (!c.serviceType || c.serviceType === 'generic' || c.serviceType === 'hosting')
+          return true
         return projectTypes.includes(c.serviceType)
       })
     }
@@ -97,21 +102,21 @@ export function ComponentPalette({
     return filtered
   }, [components, activeProvider, projectTypes])
 
-  const categories = Array.from(new Set(providerFilteredComponents.map((c) => c.category)))
+  const categories = Array.from(new Set(providerFilteredComponents.map(c => c.category)))
 
   const filteredComponents = useMemo(() => {
     let filtered = providerFilteredComponents
 
     // Filter by category
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter((c) => c.category === selectedCategory)
+      filtered = filtered.filter(c => c.category === selectedCategory)
     }
 
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
-        (c) =>
+        c =>
           c.name.toLowerCase().includes(query) ||
           c.description.toLowerCase().includes(query) ||
           c.category.toLowerCase().includes(query)
@@ -121,7 +126,7 @@ export function ComponentPalette({
     return filtered
   }, [providerFilteredComponents, searchQuery, selectedCategory])
 
-  const filteredCategories = Array.from(new Set(filteredComponents.map((c) => c.category)))
+  const filteredCategories = Array.from(new Set(filteredComponents.map(c => c.category)))
 
   // Category display names
   const categoryNames: Record<string, string> = {
@@ -150,7 +155,7 @@ export function ComponentPalette({
         </div>
         {/* Provider switcher — always visible so user can filter regardless of project setting */}
         <div className="flex gap-0.5 p-0.5 bg-muted rounded-lg">
-          {(['all', 'azure', 'aws', 'gcp'] as const).map((p) => (
+          {(['all', 'azure', 'aws', 'gcp'] as const).map(p => (
             <button
               key={p}
               onClick={() => setActiveProvider(p)}
@@ -167,7 +172,7 @@ export function ComponentPalette({
         </div>
         {projectTypes && projectTypes.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {projectTypes.map((type) => (
+            {projectTypes.map(type => (
               <Badge key={type} variant="secondary" className="text-xs uppercase">
                 {type}
               </Badge>
@@ -179,7 +184,7 @@ export function ComponentPalette({
           <Input
             placeholder="Search components..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-8 pr-8"
             aria-label="Search components"
           />
@@ -200,12 +205,15 @@ export function ComponentPalette({
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories ({providerFilteredComponents.length})</SelectItem>
-            {categories.map((category) => {
+            <SelectItem value="all">
+              All Categories ({providerFilteredComponents.length})
+            </SelectItem>
+            {categories.map(category => {
               const count = providerFilteredComponents.filter(c => c.category === category).length
               return (
                 <SelectItem key={category} value={category}>
-                  {categoryNames[category] || category.charAt(0).toUpperCase() + category.slice(1)} ({count})
+                  {categoryNames[category] || category.charAt(0).toUpperCase() + category.slice(1)}{' '}
+                  ({count})
                 </SelectItem>
               )
             })}
@@ -217,13 +225,11 @@ export function ComponentPalette({
           <div className="text-center text-sm text-muted-foreground py-8">
             <Filter className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No components found</p>
-            {cloudProvider && (
-              <p className="text-xs mt-1">for {cloudProvider.toUpperCase()}</p>
-            )}
+            {cloudProvider && <p className="text-xs mt-1">for {cloudProvider.toUpperCase()}</p>}
           </div>
         ) : (
-          filteredCategories.map((category) => {
-            const categoryComponents = filteredComponents.filter((c) => c.category === category)
+          filteredCategories.map(category => {
+            const categoryComponents = filteredComponents.filter(c => c.category === category)
             return (
               <div key={category} className="mb-6">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
@@ -231,22 +237,27 @@ export function ComponentPalette({
                   <span className="ml-1 text-xs">({categoryComponents.length})</span>
                 </h4>
                 <div className="space-y-2">
-                  {categoryComponents.map((component) => {
+                  {categoryComponents.map(component => {
                     const Icon = component.icon as LucideIcon
                     return (
                       <Card
                         key={component.id}
                         className="p-3 cursor-grab active:cursor-grabbing hover:border-primary transition-colors group"
                         draggable
-                        onDragStart={(e) => handleDragStart(e, component)}
+                        onDragStart={e => handleDragStart(e, component)}
                         role="button"
                         tabIndex={0}
                         aria-label={`Drag ${component.name} component`}
                       >
                         <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 flex-shrink-0" style={{ color: component.color }} />
+                          <Icon
+                            className="h-4 w-4 flex-shrink-0"
+                            style={{ color: component.color }}
+                          />
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium block truncate">{component.name}</span>
+                            <span className="text-sm font-medium block truncate">
+                              {component.name}
+                            </span>
                             {component.estimatedCost.max > 0 && (
                               <span className="text-xs text-muted-foreground">
                                 ${component.estimatedCost.min}-${component.estimatedCost.max}/mo

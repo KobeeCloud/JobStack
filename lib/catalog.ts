@@ -34,7 +34,22 @@ import {
   CreditCard,
 } from 'lucide-react'
 
-export type ComponentCategory = 'frontend' | 'backend' | 'database' | 'cloud' | 'service' | 'devops' | 'security' | 'analytics' | 'networking' | 'compute' | 'storage' | 'identity' | 'containers' | 'ai' | 'monitoring'
+export type ComponentCategory =
+  | 'frontend'
+  | 'backend'
+  | 'database'
+  | 'cloud'
+  | 'service'
+  | 'devops'
+  | 'security'
+  | 'analytics'
+  | 'networking'
+  | 'compute'
+  | 'storage'
+  | 'identity'
+  | 'containers'
+  | 'ai'
+  | 'monitoring'
 export type CloudProvider = 'aws' | 'gcp' | 'azure' | 'cloudflare' | 'vercel' | 'generic'
 export type ServiceType = 'iaas' | 'paas' | 'saas' | 'hosting' | 'generic'
 
@@ -47,21 +62,27 @@ export type ServiceType = 'iaas' | 'paas' | 'saas' | 'hosting' | 'generic'
  * - 'monitoring'   → observability config (Datadog agent, Prometheus scrape config)
  * - 'documentation'→ no code generated; component is an architectural annotation only
  */
-export type GeneratorType = 'terraform' | 'cicd' | 'kubernetes' | 'docker' | 'monitoring' | 'documentation'
+export type GeneratorType =
+  | 'terraform'
+  | 'cicd'
+  | 'kubernetes'
+  | 'docker'
+  | 'monitoring'
+  | 'documentation'
 
 export interface CICDConfig {
   /** Which CI/CD tool/file format this node represents */
   tool: 'github-actions' | 'gitlab-ci' | 'jenkins' | 'argocd' | 'helm' | 'generic'
   /** Default pipeline config values shown in the Config tab */
   defaultConfig: {
-    triggers?: string[]         // e.g. ['push', 'pull_request', 'schedule']
-    branches?: string[]         // e.g. ['main', 'develop']
-    runsOn?: string             // runner label: 'ubuntu-latest', 'self-hosted'
-    stages?: string[]           // pipeline stages
+    triggers?: string[] // e.g. ['push', 'pull_request', 'schedule']
+    branches?: string[] // e.g. ['main', 'develop']
+    runsOn?: string // runner label: 'ubuntu-latest', 'self-hosted'
+    stages?: string[] // pipeline stages
     nodeVersion?: string
     pythonVersion?: string
     dockerRegistry?: string
-    deployTarget?: string       // 'kubernetes' | 'ecs' | 'appservice' | 'lambda' | 'custom'
+    deployTarget?: string // 'kubernetes' | 'ecs' | 'appservice' | 'lambda' | 'custom'
     [key: string]: any
   }
 }
@@ -117,8 +138,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_management_group',
-      defaultConfig: { display_name: 'Root Landing Zone' }
-    }
+      defaultConfig: { display_name: 'Root Landing Zone' },
+    },
   },
   {
     id: 'azure-management-group',
@@ -134,8 +155,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_management_group',
-      defaultConfig: { display_name: 'Management Group' }
-    }
+      defaultConfig: { display_name: 'Management Group' },
+    },
   },
   {
     id: 'azure-subscription',
@@ -151,8 +172,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_subscription',
-      defaultConfig: { subscription_name: 'Subscription' }
-    }
+      defaultConfig: { subscription_name: 'Subscription' },
+    },
   },
   // ==========================================
   // AZURE IaaS - Networking
@@ -168,18 +189,42 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     description: 'Azure Resource Group - container for related resources',
     estimatedCost: { min: 0, max: 0 },
     canContain: [
-      'azure-vnet', 'azure-vm', 'azure-vmss', 'azure-nsg', 'azure-lb', 'azure-app-gw', 'azure-sql',
-      'azure-aks', 'azure-functions', 'azure-app-service', 'azure-key-vault', 'azure-cosmos',
-      'azure-storage-account', 'azure-managed-disk', 'azure-public-ip', 'azure-nic',
-      'azure-firewall', 'azure-bastion', 'azure-nat-gateway', 'azure-service-bus', 'azure-event-hub',
-      'azure-front-door', 'azure-traffic-manager', 'azure-route-table', 'azure-availability-set',
-      'azure-blob', 'azure-file-share', 'azure-express-route', 'azure-ddos-protection', 'azure-vpn-gateway'
+      'azure-vnet',
+      'azure-vm',
+      'azure-vmss',
+      'azure-nsg',
+      'azure-lb',
+      'azure-app-gw',
+      'azure-sql',
+      'azure-aks',
+      'azure-functions',
+      'azure-app-service',
+      'azure-key-vault',
+      'azure-cosmos',
+      'azure-storage-account',
+      'azure-managed-disk',
+      'azure-public-ip',
+      'azure-nic',
+      'azure-firewall',
+      'azure-bastion',
+      'azure-nat-gateway',
+      'azure-service-bus',
+      'azure-event-hub',
+      'azure-front-door',
+      'azure-traffic-manager',
+      'azure-route-table',
+      'azure-availability-set',
+      'azure-blob',
+      'azure-file-share',
+      'azure-express-route',
+      'azure-ddos-protection',
+      'azure-vpn-gateway',
     ],
     terraform: {
       provider: 'azure',
       resource: 'azurerm_resource_group',
-      defaultConfig: { location: 'westeurope' }
-    }
+      defaultConfig: { location: 'westeurope' },
+    },
   },
   {
     id: 'azure-vnet',
@@ -195,8 +240,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_virtual_network',
-      defaultConfig: { address_space: ['10.0.0.0/16'] }
-    }
+      defaultConfig: { address_space: ['10.0.0.0/16'] },
+    },
   },
   {
     id: 'azure-subnet',
@@ -213,8 +258,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_subnet',
-      defaultConfig: { address_prefixes: ['10.0.1.0/24'] }
-    }
+      defaultConfig: { address_prefixes: ['10.0.1.0/24'] },
+    },
   },
   {
     id: 'azure-nsg',
@@ -241,7 +286,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '443',
             source_address_prefix: 'Internet',
             destination_address_prefix: '*',
-            description: 'Allow HTTPS inbound traffic'
+            description: 'Allow HTTPS inbound traffic',
           },
           {
             name: 'Allow-HTTP-Inbound',
@@ -253,7 +298,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '80',
             source_address_prefix: 'Internet',
             destination_address_prefix: '*',
-            description: 'Allow HTTP inbound traffic'
+            description: 'Allow HTTP inbound traffic',
           },
           {
             name: 'Allow-SSH-Inbound',
@@ -265,7 +310,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '22',
             source_address_prefix: 'VirtualNetwork',
             destination_address_prefix: '*',
-            description: 'Allow SSH from VNet only'
+            description: 'Allow SSH from VNet only',
           },
           {
             name: 'Allow-RDP-Inbound',
@@ -277,7 +322,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '3389',
             source_address_prefix: 'VirtualNetwork',
             destination_address_prefix: '*',
-            description: 'Allow RDP from VNet only'
+            description: 'Allow RDP from VNet only',
           },
           {
             name: 'Allow-VNet-Inbound',
@@ -289,7 +334,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '*',
             source_address_prefix: 'VirtualNetwork',
             destination_address_prefix: 'VirtualNetwork',
-            description: 'Allow intra-VNet traffic'
+            description: 'Allow intra-VNet traffic',
           },
           {
             name: 'Allow-AzureLoadBalancer-Inbound',
@@ -301,7 +346,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '*',
             source_address_prefix: 'AzureLoadBalancer',
             destination_address_prefix: '*',
-            description: 'Allow Azure Load Balancer probes'
+            description: 'Allow Azure Load Balancer probes',
           },
           {
             name: 'Deny-All-Inbound',
@@ -313,7 +358,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '*',
             source_address_prefix: '*',
             destination_address_prefix: '*',
-            description: 'Deny all other inbound traffic'
+            description: 'Deny all other inbound traffic',
           },
           {
             name: 'Allow-VNet-Outbound',
@@ -325,7 +370,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '*',
             source_address_prefix: 'VirtualNetwork',
             destination_address_prefix: 'VirtualNetwork',
-            description: 'Allow intra-VNet outbound'
+            description: 'Allow intra-VNet outbound',
           },
           {
             name: 'Allow-Internet-Outbound',
@@ -337,7 +382,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '443',
             source_address_prefix: '*',
             destination_address_prefix: 'Internet',
-            description: 'Allow HTTPS outbound to Internet'
+            description: 'Allow HTTPS outbound to Internet',
           },
           {
             name: 'Deny-All-Outbound',
@@ -349,11 +394,11 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
             destination_port_range: '*',
             source_address_prefix: '*',
             destination_address_prefix: '*',
-            description: 'Deny all other outbound traffic'
-          }
-        ]
-      }
-    }
+            description: 'Deny all other outbound traffic',
+          },
+        ],
+      },
+    },
   },
   {
     id: 'azure-nic',
@@ -369,8 +414,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_network_interface',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'azure-public-ip',
@@ -385,8 +430,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_public_ip',
-      defaultConfig: { allocation_method: 'Static', sku: 'Standard' }
-    }
+      defaultConfig: { allocation_method: 'Static', sku: 'Standard' },
+    },
   },
   {
     id: 'azure-route-table',
@@ -401,8 +446,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_route_table',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'azure-nat-gateway',
@@ -417,8 +462,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_nat_gateway',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'azure-vpn-gateway',
@@ -433,8 +478,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_virtual_network_gateway',
-      defaultConfig: { type: 'Vpn', vpn_type: 'RouteBased' }
-    }
+      defaultConfig: { type: 'Vpn', vpn_type: 'RouteBased' },
+    },
   },
   {
     id: 'azure-express-route',
@@ -449,8 +494,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_express_route_circuit',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'azure-bastion',
@@ -465,8 +510,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_bastion_host',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'azure-firewall',
@@ -481,8 +526,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_firewall',
-      defaultConfig: { sku_tier: 'Standard' }
-    }
+      defaultConfig: { sku_tier: 'Standard' },
+    },
   },
   {
     id: 'azure-ddos-protection',
@@ -497,8 +542,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_network_ddos_protection_plan',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   // ==========================================
   // AZURE IaaS - Compute
@@ -517,13 +562,13 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       replicas: true,
       size: true,
       osImage: true,
-      attachments: ['azure-nic', 'azure-managed-disk']
+      attachments: ['azure-nic', 'azure-managed-disk'],
     },
     terraform: {
       provider: 'azure',
       resource: 'azurerm_linux_virtual_machine',
-      defaultConfig: { size: 'Standard_B2s' }
-    }
+      defaultConfig: { size: 'Standard_B2s' },
+    },
   },
   {
     id: 'azure-vmss',
@@ -539,8 +584,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_linux_virtual_machine_scale_set',
-      defaultConfig: { instances: 2, sku: 'Standard_B2s' }
-    }
+      defaultConfig: { instances: 2, sku: 'Standard_B2s' },
+    },
   },
   {
     id: 'azure-availability-set',
@@ -556,8 +601,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_availability_set',
-      defaultConfig: { platform_fault_domain_count: 2, platform_update_domain_count: 5 }
-    }
+      defaultConfig: { platform_fault_domain_count: 2, platform_update_domain_count: 5 },
+    },
   },
   // ==========================================
   // AZURE IaaS - Storage
@@ -575,8 +620,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_storage_account',
-      defaultConfig: { account_tier: 'Standard', account_replication_type: 'LRS' }
-    }
+      defaultConfig: { account_tier: 'Standard', account_replication_type: 'LRS' },
+    },
   },
   {
     id: 'azure-managed-disk',
@@ -591,8 +636,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_managed_disk',
-      defaultConfig: { storage_account_type: 'Premium_LRS', disk_size_gb: 128 }
-    }
+      defaultConfig: { storage_account_type: 'Premium_LRS', disk_size_gb: 128 },
+    },
   },
   {
     id: 'azure-file-share',
@@ -607,8 +652,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_storage_share',
-      defaultConfig: { quota: 100 }
-    }
+      defaultConfig: { quota: 100 },
+    },
   },
   // ==========================================
   // AZURE IaaS - Load Balancing
@@ -626,8 +671,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_lb',
-      defaultConfig: { sku: 'Standard' }
-    }
+      defaultConfig: { sku: 'Standard' },
+    },
   },
   {
     id: 'azure-app-gw',
@@ -642,8 +687,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_application_gateway',
-      defaultConfig: { sku: { name: 'Standard_v2', tier: 'Standard_v2' } }
-    }
+      defaultConfig: { sku: { name: 'Standard_v2', tier: 'Standard_v2' } },
+    },
   },
   {
     id: 'azure-front-door',
@@ -658,8 +703,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'azure',
       resource: 'azurerm_frontdoor',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'azure-traffic-manager',
@@ -670,12 +715,12 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     icon: Globe,
     color: '#0078D4',
     description: 'Azure Traffic Manager - DNS-based traffic routing',
-    estimatedCost: { min: 0.50, max: 50 },
+    estimatedCost: { min: 0.5, max: 50 },
     terraform: {
       provider: 'azure',
       resource: 'azurerm_traffic_manager_profile',
-      defaultConfig: { traffic_routing_method: 'Performance' }
-    }
+      defaultConfig: { traffic_routing_method: 'Performance' },
+    },
   },
   // ==========================================
   // AWS IaaS - Networking
@@ -690,12 +735,18 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     color: '#FF9900',
     description: 'AWS Virtual Private Cloud - isolated network',
     estimatedCost: { min: 0, max: 5 },
-    canContain: ['aws-subnet', 'aws-internet-gateway', 'aws-nat-gateway', 'aws-route-table', 'aws-security-group'],
+    canContain: [
+      'aws-subnet',
+      'aws-internet-gateway',
+      'aws-nat-gateway',
+      'aws-route-table',
+      'aws-security-group',
+    ],
     terraform: {
       provider: 'aws',
       resource: 'aws_vpc',
-      defaultConfig: { cidr_block: '10.0.0.0/16' }
-    }
+      defaultConfig: { cidr_block: '10.0.0.0/16' },
+    },
   },
   {
     id: 'aws-subnet',
@@ -711,8 +762,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_subnet',
-      defaultConfig: { cidr_block: '10.0.1.0/24' }
-    }
+      defaultConfig: { cidr_block: '10.0.1.0/24' },
+    },
   },
   {
     id: 'aws-security-group',
@@ -727,8 +778,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_security_group',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-internet-gateway',
@@ -743,8 +794,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_internet_gateway',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-nat-gateway',
@@ -759,8 +810,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_nat_gateway',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-route-table',
@@ -775,8 +826,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_route_table',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-elastic-ip',
@@ -791,8 +842,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_eip',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-alb',
@@ -807,8 +858,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_lb',
-      defaultConfig: { load_balancer_type: 'application' }
-    }
+      defaultConfig: { load_balancer_type: 'application' },
+    },
   },
   {
     id: 'aws-nlb',
@@ -823,8 +874,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_lb',
-      defaultConfig: { load_balancer_type: 'network' }
-    }
+      defaultConfig: { load_balancer_type: 'network' },
+    },
   },
   {
     id: 'aws-cloudfront',
@@ -839,8 +890,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_cloudfront_distribution',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-route53',
@@ -851,12 +902,12 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     icon: Globe,
     color: '#FF9900',
     description: 'AWS Route 53 - DNS service',
-    estimatedCost: { min: 0.50, max: 50 },
+    estimatedCost: { min: 0.5, max: 50 },
     terraform: {
       provider: 'aws',
       resource: 'aws_route53_zone',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   // ==========================================
   // AWS IaaS - Compute
@@ -875,8 +926,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_instance',
-      defaultConfig: { instance_type: 't3.micro' }
-    }
+      defaultConfig: { instance_type: 't3.micro' },
+    },
   },
   {
     id: 'aws-auto-scaling',
@@ -891,8 +942,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_autoscaling_group',
-      defaultConfig: { min_size: 1, max_size: 10 }
-    }
+      defaultConfig: { min_size: 1, max_size: 10 },
+    },
   },
   // ==========================================
   // AWS IaaS - Storage
@@ -912,10 +963,10 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       resource: 'aws_s3_bucket',
       defaultConfig: {
         versioning: {
-          enabled: true
-        }
-      }
-    }
+          enabled: true,
+        },
+      },
+    },
   },
   {
     id: 'aws-ebs',
@@ -930,8 +981,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_ebs_volume',
-      defaultConfig: { type: 'gp3', size: 100 }
-    }
+      defaultConfig: { type: 'gp3', size: 100 },
+    },
   },
   {
     id: 'aws-efs',
@@ -946,8 +997,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_efs_file_system',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   // ==========================================
   // GCP IaaS - Networking
@@ -966,8 +1017,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_network',
-      defaultConfig: { auto_create_subnetworks: false }
-    }
+      defaultConfig: { auto_create_subnetworks: false },
+    },
   },
   {
     id: 'gcp-subnet',
@@ -983,8 +1034,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_subnetwork',
-      defaultConfig: { ip_cidr_range: '10.0.1.0/24' }
-    }
+      defaultConfig: { ip_cidr_range: '10.0.1.0/24' },
+    },
   },
   {
     id: 'gcp-firewall',
@@ -999,8 +1050,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_firewall',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'gcp-cloud-nat',
@@ -1015,8 +1066,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_router_nat',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'gcp-cloud-lb',
@@ -1031,8 +1082,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_global_forwarding_rule',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'gcp-cloud-cdn',
@@ -1047,8 +1098,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_backend_service',
-      defaultConfig: { enable_cdn: true }
-    }
+      defaultConfig: { enable_cdn: true },
+    },
   },
   // ==========================================
   // GCP IaaS - Compute
@@ -1067,8 +1118,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_instance',
-      defaultConfig: { machine_type: 'e2-medium' }
-    }
+      defaultConfig: { machine_type: 'e2-medium' },
+    },
   },
   {
     id: 'gcp-instance-group',
@@ -1083,8 +1134,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_instance_group_manager',
-      defaultConfig: { target_size: 2 }
-    }
+      defaultConfig: { target_size: 2 },
+    },
   },
   // ==========================================
   // GCP IaaS - Storage
@@ -1102,8 +1153,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_storage_bucket',
-      defaultConfig: { location: 'EU' }
-    }
+      defaultConfig: { location: 'EU' },
+    },
   },
   {
     id: 'gcp-persistent-disk',
@@ -1118,8 +1169,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_disk',
-      defaultConfig: { type: 'pd-ssd', size: 100 }
-    }
+      defaultConfig: { type: 'pd-ssd', size: 100 },
+    },
   },
   // ==========================================
   // Frontend Components
@@ -1137,9 +1188,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       provider: 'vercel',
       resource: 'vercel_project',
       defaultConfig: {
-        framework: 'react'
-      }
-    }
+        framework: 'react',
+      },
+    },
   },
   {
     id: 'nextjs-app',
@@ -1154,9 +1205,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       provider: 'vercel',
       resource: 'vercel_project',
       defaultConfig: {
-        framework: 'nextjs'
-      }
-    }
+        framework: 'nextjs',
+      },
+    },
   },
   {
     id: 'vue-app',
@@ -1192,10 +1243,10 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       resource: 'aws_s3_bucket',
       defaultConfig: {
         website: {
-          index_document: 'index.html'
-        }
-      }
-    }
+          index_document: 'index.html',
+        },
+      },
+    },
   },
 
   // Backend Components
@@ -1212,9 +1263,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       provider: 'aws',
       resource: 'aws_ecs_service',
       defaultConfig: {
-        launch_type: 'FARGATE'
-      }
-    }
+        launch_type: 'FARGATE',
+      },
+    },
   },
   {
     id: 'python-api',
@@ -1283,9 +1334,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       defaultConfig: {
         engine: 'postgres',
         engine_version: '15.3',
-        instance_class: 'db.t3.micro'
-      }
-    }
+        instance_class: 'db.t3.micro',
+      },
+    },
   },
   {
     id: 'mysql',
@@ -1302,9 +1353,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       defaultConfig: {
         engine: 'mysql',
         engine_version: '8.0',
-        instance_class: 'db.t3.micro'
-      }
-    }
+        instance_class: 'db.t3.micro',
+      },
+    },
   },
   {
     id: 'mongodb',
@@ -1330,9 +1381,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       resource: 'aws_elasticache_cluster',
       defaultConfig: {
         engine: 'redis',
-        node_type: 'cache.t3.micro'
-      }
-    }
+        node_type: 'cache.t3.micro',
+      },
+    },
   },
   {
     id: 'supabase',
@@ -1357,9 +1408,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       provider: 'aws',
       resource: 'aws_dynamodb_table',
       defaultConfig: {
-        billing_mode: 'PAY_PER_REQUEST'
-      }
-    }
+        billing_mode: 'PAY_PER_REQUEST',
+      },
+    },
   },
 
   // Cloud Services - AWS
@@ -1378,9 +1429,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       defaultConfig: {
         runtime: 'nodejs18.x',
         memory_size: 128,
-        timeout: 30
-      }
-    }
+        timeout: 30,
+      },
+    },
   },
   {
     id: 'aws-ecs',
@@ -1394,8 +1445,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_ecs_cluster',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-api-gateway',
@@ -1409,8 +1460,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_api_gateway_rest_api',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-sqs',
@@ -1425,9 +1476,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       provider: 'aws',
       resource: 'aws_sqs_queue',
       defaultConfig: {
-        visibility_timeout_seconds: 30
-      }
-    }
+        visibility_timeout_seconds: 30,
+      },
+    },
   },
 
   // Cloud Services - GCP
@@ -1443,8 +1494,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_cloud_run_service',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'gcp-cloud-functions',
@@ -1459,9 +1510,9 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       provider: 'gcp',
       resource: 'google_cloudfunctions_function',
       defaultConfig: {
-        runtime: 'nodejs18'
-      }
-    }
+        runtime: 'nodejs18',
+      },
+    },
   },
 
   // Cloud Services - Azure
@@ -1484,8 +1535,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         runtime_stack: 'node',
         runtime_version: '20',
         https_only: true,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-app-service',
@@ -1506,8 +1557,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         always_on: true,
         runtime_stack: 'NODE',
         runtime_version: '20-lts',
-      }
-    }
+      },
+    },
   },
 
   // Additional Services
@@ -1596,8 +1647,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_db_instance',
-      defaultConfig: { engine: 'postgres', instance_class: 'db.t3.micro' }
-    }
+      defaultConfig: { engine: 'postgres', instance_class: 'db.t3.micro' },
+    },
   },
   {
     id: 'aws-aurora',
@@ -1607,13 +1658,14 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     provider: 'aws',
     icon: Database,
     color: '#FF9900',
-    description: 'High-performance managed relational database compatible with MySQL and PostgreSQL',
+    description:
+      'High-performance managed relational database compatible with MySQL and PostgreSQL',
     estimatedCost: { min: 60, max: 2000 },
     terraform: {
       provider: 'aws',
       resource: 'aws_rds_cluster',
-      defaultConfig: { engine: 'aurora-postgresql', engine_version: '15.4' }
-    }
+      defaultConfig: { engine: 'aurora-postgresql', engine_version: '15.4' },
+    },
   },
   {
     id: 'aws-aurora-serverless',
@@ -1628,8 +1680,12 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_rds_cluster',
-      defaultConfig: { engine: 'aurora-postgresql', engine_mode: 'serverless', engine_version: '15.4' }
-    }
+      defaultConfig: {
+        engine: 'aurora-postgresql',
+        engine_mode: 'serverless',
+        engine_version: '15.4',
+      },
+    },
   },
   {
     id: 'aws-eks',
@@ -1652,8 +1708,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         desired_size: 2,
         min_size: 1,
         max_size: 5,
-      }
-    }
+      },
+    },
   },
   {
     id: 'aws-sns',
@@ -1668,8 +1724,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_sns_topic',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-cognito',
@@ -1684,8 +1740,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_cognito_user_pool',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-secrets-manager',
@@ -1696,12 +1752,12 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     icon: Key,
     color: '#FF9900',
     description: 'Manage secrets and credentials',
-    estimatedCost: { min: 0.40, max: 50 },
+    estimatedCost: { min: 0.4, max: 50 },
     terraform: {
       provider: 'aws',
       resource: 'aws_secretsmanager_secret',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-step-functions',
@@ -1716,8 +1772,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_sfn_state_machine',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-eventbridge',
@@ -1732,8 +1788,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_cloudwatch_event_bus',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'aws-elb',
@@ -1748,8 +1804,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_lb',
-      defaultConfig: { load_balancer_type: 'application' }
-    }
+      defaultConfig: { load_balancer_type: 'application' },
+    },
   },
   {
     id: 'aws-elasticache',
@@ -1764,8 +1820,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_elasticache_cluster',
-      defaultConfig: { engine: 'redis', node_type: 'cache.t3.micro' }
-    }
+      defaultConfig: { engine: 'redis', node_type: 'cache.t3.micro' },
+    },
   },
   {
     id: 'aws-redshift',
@@ -1780,8 +1836,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_redshift_cluster',
-      defaultConfig: { cluster_type: 'single-node', node_type: 'dc2.large', number_of_nodes: 1 }
-    }
+      defaultConfig: { cluster_type: 'single-node', node_type: 'dc2.large', number_of_nodes: 1 },
+    },
   },
   {
     id: 'aws-kinesis',
@@ -1796,8 +1852,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'aws',
       resource: 'aws_kinesis_stream',
-      defaultConfig: { shard_count: 1 }
-    }
+      defaultConfig: { shard_count: 1 },
+    },
   },
   // Additional GCP Services
   {
@@ -1813,8 +1869,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_compute_instance',
-      defaultConfig: { machine_type: 'e2-micro' }
-    }
+      defaultConfig: { machine_type: 'e2-micro' },
+    },
   },
   {
     id: 'gcp-gke',
@@ -1842,8 +1898,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         auto_upgrade: true,
         network: 'default',
         subnetwork: 'default',
-      }
-    }
+      },
+    },
   },
   {
     id: 'gcp-cloud-sql',
@@ -1858,8 +1914,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_sql_database_instance',
-      defaultConfig: { database_version: 'POSTGRES_14' }
-    }
+      defaultConfig: { database_version: 'POSTGRES_14' },
+    },
   },
   {
     id: 'gcp-firestore',
@@ -1874,8 +1930,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_firestore_database',
-      defaultConfig: { type: 'FIRESTORE_NATIVE', location_id: 'us-central1' }
-    }
+      defaultConfig: { type: 'FIRESTORE_NATIVE', location_id: 'us-central1' },
+    },
   },
   {
     id: 'gcp-spanner',
@@ -1890,8 +1946,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_spanner_instance',
-      defaultConfig: { num_nodes: 1, display_name: 'Main Instance' }
-    }
+      defaultConfig: { num_nodes: 1, display_name: 'Main Instance' },
+    },
   },
   {
     id: 'gcp-memorystore',
@@ -1906,8 +1962,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_redis_instance',
-      defaultConfig: { tier: 'BASIC', memory_size_gb: 1 }
-    }
+      defaultConfig: { tier: 'BASIC', memory_size_gb: 1 },
+    },
   },
   {
     id: 'gcp-secret-manager',
@@ -1922,8 +1978,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_secret_manager_secret',
-      defaultConfig: { replication: { automatic: true } }
-    }
+      defaultConfig: { replication: { automatic: true } },
+    },
   },
   {
     id: 'gcp-cloud-dns',
@@ -1938,8 +1994,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_dns_managed_zone',
-      defaultConfig: { dns_name: 'example.com.', visibility: 'public' }
-    }
+      defaultConfig: { dns_name: 'example.com.', visibility: 'public' },
+    },
   },
   {
     id: 'gcp-pubsub',
@@ -1954,8 +2010,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_pubsub_topic',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'gcp-bigquery',
@@ -1970,8 +2026,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     terraform: {
       provider: 'gcp',
       resource: 'google_bigquery_dataset',
-      defaultConfig: {}
-    }
+      defaultConfig: {},
+    },
   },
   {
     id: 'gcp-firebase',
@@ -2010,8 +2066,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         network_plugin: 'azure',
         network_policy: 'azure',
         load_balancer_sku: 'standard',
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-container-apps',
@@ -2032,8 +2088,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         ingress_target_port: 80,
         min_replicas: 0,
         max_replicas: 10,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-sql',
@@ -2054,8 +2110,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         collation: 'SQL_Latin1_General_CP1_CI_AS',
         zone_redundant: false,
         read_scale: false,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-blob',
@@ -2077,8 +2133,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         access_tier: 'Hot',
         min_tls_version: 'TLS1_2',
         allow_nested_items_to_be_public: false,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-cosmos',
@@ -2099,8 +2155,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         consistency_level: 'Session',
         geo_location_failover_priority: 0,
         enable_automatic_failover: false,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-redis',
@@ -2120,8 +2176,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         family: 'C',
         sku_name: 'Basic',
         minimum_tls_version: '1.2',
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-cdn',
@@ -2138,8 +2194,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       resource: 'azurerm_cdn_profile',
       defaultConfig: {
         sku: 'Standard_Microsoft',
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-sql-serverless',
@@ -2158,8 +2214,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         sku_name: 'GP_S_Gen5_1',
         auto_pause_delay_in_minutes: 60,
         min_capacity: 0.5,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-event-hub',
@@ -2179,8 +2235,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         message_retention: 1,
         namespace_sku: 'Standard',
         capacity: 1,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-service-bus',
@@ -2199,8 +2255,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         sku: 'Standard',
         capacity: 0,
         zone_redundant: false,
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-ad',
@@ -2217,8 +2273,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
       resource: 'azurerm_user_assigned_identity',
       defaultConfig: {
         name: 'app-identity',
-      }
-    }
+      },
+    },
   },
   {
     id: 'azure-key-vault',
@@ -2238,8 +2294,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
         soft_delete_retention_days: 90,
         purge_protection_enabled: true,
         enable_rbac_authorization: true,
-      }
-    }
+      },
+    },
   },
 
   // DevOps & CI/CD Tools
@@ -2264,7 +2320,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     generatorType: 'documentation',
     icon: FileCode,
     color: '#7B42BC',
-    description: 'Infrastructure as Code annotation — architectural reference node; all cloud components already generate Terraform',
+    description:
+      'Infrastructure as Code annotation — architectural reference node; all cloud components already generate Terraform',
     estimatedCost: { min: 0, max: 0 },
   },
   {
@@ -2276,7 +2333,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     generatorType: 'documentation',
     icon: Terminal,
     color: '#EE0000',
-    description: 'Configuration management annotation — documents that Ansible manages this part of the infrastructure',
+    description:
+      'Configuration management annotation — documents that Ansible manages this part of the infrastructure',
     estimatedCost: { min: 0, max: 0 },
   },
   {
@@ -2606,7 +2664,8 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
     generatorType: 'documentation',
     icon: Lock,
     color: '#000000',
-    description: 'Secrets management — architectural annotation; secrets should be provided via environment variables',
+    description:
+      'Secrets management — architectural annotation; secrets should be provided via environment variables',
     estimatedCost: { min: 0, max: 100 },
   },
   {
@@ -2741,9 +2800,7 @@ export const COMPONENT_CATALOG: ComponentConfig[] = [
 ]
 
 // O(1) lookup map — built once at module load instead of O(n) linear scan per call
-const CATALOG_MAP = new Map<string, ComponentConfig>(
-  COMPONENT_CATALOG.map(c => [c.id, c])
-)
+const CATALOG_MAP = new Map<string, ComponentConfig>(COMPONENT_CATALOG.map(c => [c.id, c]))
 
 export function getComponentById(id: string): ComponentConfig | undefined {
   return CATALOG_MAP.get(id)
@@ -2764,13 +2821,40 @@ export function getEffectiveGeneratorType(component: ComponentConfig): Generator
 }
 
 /** Human-readable label + color for each generator type — used in UI badges */
-export const GENERATOR_TYPE_META: Record<GeneratorType, { label: string; color: string; bgColor: string }> = {
-  terraform: { label: 'Terraform', color: '#7B42BC', bgColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
-  cicd: { label: 'CI/CD', color: '#2088FF', bgColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
-  kubernetes: { label: 'Kubernetes', color: '#326CE5', bgColor: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300' },
-  docker: { label: 'Docker', color: '#2496ED', bgColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' },
-  monitoring: { label: 'Monitoring', color: '#E6522C', bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
-  documentation: { label: 'Annotation', color: '#6B7280', bgColor: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400' },
+export const GENERATOR_TYPE_META: Record<
+  GeneratorType,
+  { label: string; color: string; bgColor: string }
+> = {
+  terraform: {
+    label: 'Terraform',
+    color: '#7B42BC',
+    bgColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  },
+  cicd: {
+    label: 'CI/CD',
+    color: '#2088FF',
+    bgColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  },
+  kubernetes: {
+    label: 'Kubernetes',
+    color: '#326CE5',
+    bgColor: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300',
+  },
+  docker: {
+    label: 'Docker',
+    color: '#2496ED',
+    bgColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+  },
+  monitoring: {
+    label: 'Monitoring',
+    color: '#E6522C',
+    bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+  },
+  documentation: {
+    label: 'Annotation',
+    color: '#6B7280',
+    bgColor: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400',
+  },
 }
 
 export function getComponentsByCategory(category: ComponentConfig['category']): ComponentConfig[] {
@@ -2783,11 +2867,12 @@ export function getComponentsByProvider(provider: ComponentConfig['provider']): 
 
 export function searchComponents(query: string): ComponentConfig[] {
   const lowerQuery = query.toLowerCase()
-  return COMPONENT_CATALOG.filter(c =>
-    c.name.toLowerCase().includes(lowerQuery) ||
-    c.description.toLowerCase().includes(lowerQuery) ||
-    c.category.toLowerCase().includes(lowerQuery) ||
-    (c.provider && c.provider.toLowerCase().includes(lowerQuery))
+  return COMPONENT_CATALOG.filter(
+    c =>
+      c.name.toLowerCase().includes(lowerQuery) ||
+      c.description.toLowerCase().includes(lowerQuery) ||
+      c.category.toLowerCase().includes(lowerQuery) ||
+      (c.provider && c.provider.toLowerCase().includes(lowerQuery))
   )
 }
 
@@ -2811,4 +2896,4 @@ export const PROVIDERS = [
   { id: 'generic', name: 'Multi-Cloud / Generic', color: '#6B7280' },
 ] as const
 
-export type ValidComponentId = typeof COMPONENT_CATALOG[number]['id']
+export type ValidComponentId = (typeof COMPONENT_CATALOG)[number]['id']

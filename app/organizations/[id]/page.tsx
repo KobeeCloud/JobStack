@@ -33,8 +33,19 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  ArrowLeft, Building2, Users, Crown, Shield, User,
-  Plus, Trash2, Mail, Loader2, Copy, Check, Pencil
+  ArrowLeft,
+  Building2,
+  Users,
+  Crown,
+  Shield,
+  User,
+  Plus,
+  Trash2,
+  Mail,
+  Loader2,
+  Copy,
+  Check,
+  Pencil,
 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import {
@@ -139,14 +150,20 @@ export default function OrganizationManagePage({ params }: PageProps) {
 
       // Load pending invites
       if (orgData.userRole === 'owner' || orgData.userRole === 'admin') {
-        const invitesRes = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}/invites`, {}, 10000)
+        const invitesRes = await fetchWithTimeout(
+          `/api/organizations/${resolvedParams.id}/invites`,
+          {},
+          10000
+        )
         if (invitesRes.ok) {
           const invitesData = await invitesRes.json()
           setInvites(invitesData.invites || [])
         }
       }
     } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to load organization' })
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to load organization',
+      })
     } finally {
       setLoading(false)
     }
@@ -157,11 +174,15 @@ export default function OrganizationManagePage({ params }: PageProps) {
 
     setInviting(true)
     try {
-      const res = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}/invites`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
-      }, 10000)
+      const res = await fetchWithTimeout(
+        `/api/organizations/${resolvedParams.id}/invites`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+        },
+        10000
+      )
 
       if (!res.ok) {
         const error = await res.json()
@@ -174,7 +195,9 @@ export default function OrganizationManagePage({ params }: PageProps) {
       setInviteDialogOpen(false)
       setInvites([...invites, data.invite])
     } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to send invite' })
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to send invite',
+      })
     } finally {
       setInviting(false)
     }
@@ -182,9 +205,13 @@ export default function OrganizationManagePage({ params }: PageProps) {
 
   const handleDeleteInvite = async (inviteId: string) => {
     try {
-      const res = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}/invites/${inviteId}`, {
-        method: 'DELETE',
-      }, 10000)
+      const res = await fetchWithTimeout(
+        `/api/organizations/${resolvedParams.id}/invites/${inviteId}`,
+        {
+          method: 'DELETE',
+        },
+        10000
+      )
 
       if (!res.ok) {
         throw new Error('Failed to delete invite')
@@ -193,24 +220,34 @@ export default function OrganizationManagePage({ params }: PageProps) {
       toast.success('Invite cancelled', { description: 'Invitation has been cancelled' })
       setInvites(invites.filter(i => i.id !== inviteId))
     } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to cancel invite' })
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to cancel invite',
+      })
     }
   }
 
   const handleRemoveMember = async (memberId: string) => {
     try {
-      const res = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}/members/${memberId}`, {
-        method: 'DELETE',
-      }, 10000)
+      const res = await fetchWithTimeout(
+        `/api/organizations/${resolvedParams.id}/members/${memberId}`,
+        {
+          method: 'DELETE',
+        },
+        10000
+      )
 
       if (!res.ok) {
         throw new Error('Failed to remove member')
       }
 
-      toast.success('Member removed', { description: 'Member has been removed from the organization' })
+      toast.success('Member removed', {
+        description: 'Member has been removed from the organization',
+      })
       setMembers(members.filter(m => m.id !== memberId))
     } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to remove member' })
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to remove member',
+      })
     }
   }
 
@@ -227,14 +264,18 @@ export default function OrganizationManagePage({ params }: PageProps) {
 
     setSaving(true)
     try {
-      const res = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editName.trim(),
-          description: editDescription.trim() || null,
-        }),
-      }, 10000)
+      const res = await fetchWithTimeout(
+        `/api/organizations/${resolvedParams.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: editName.trim(),
+            description: editDescription.trim() || null,
+          }),
+        },
+        10000
+      )
 
       if (!res.ok) {
         const error = await res.json()
@@ -246,7 +287,9 @@ export default function OrganizationManagePage({ params }: PageProps) {
       setEditDialogOpen(false)
       toast.success('Updated', { description: 'Organization updated successfully' })
     } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to update organization' })
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to update organization',
+      })
     } finally {
       setSaving(false)
     }
@@ -255,9 +298,13 @@ export default function OrganizationManagePage({ params }: PageProps) {
   const handleDeleteOrganization = async () => {
     setDeleting(true)
     try {
-      const res = await fetchWithTimeout(`/api/organizations/${resolvedParams.id}`, {
-        method: 'DELETE',
-      }, 10000)
+      const res = await fetchWithTimeout(
+        `/api/organizations/${resolvedParams.id}`,
+        {
+          method: 'DELETE',
+        },
+        10000
+      )
 
       if (!res.ok) {
         const error = await res.json()
@@ -267,7 +314,9 @@ export default function OrganizationManagePage({ params }: PageProps) {
       toast.success('Deleted', { description: 'Organization has been deleted' })
       router.push('/organizations')
     } catch (error) {
-      toast.error('Error', { description: error instanceof Error ? error.message : 'Failed to delete organization' })
+      toast.error('Error', {
+        description: error instanceof Error ? error.message : 'Failed to delete organization',
+      })
       setDeleting(false)
     }
   }
@@ -282,9 +331,12 @@ export default function OrganizationManagePage({ params }: PageProps) {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'owner': return <Crown className="h-4 w-4 text-yellow-500" />
-      case 'admin': return <Shield className="h-4 w-4 text-blue-500" />
-      default: return <User className="h-4 w-4 text-muted-foreground" />
+      case 'owner':
+        return <Crown className="h-4 w-4 text-yellow-500" />
+      case 'admin':
+        return <Shield className="h-4 w-4 text-blue-500" />
+      default:
+        return <User className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -361,7 +413,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                           <Input
                             id="org-name"
                             value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
+                            onChange={e => setEditName(e.target.value)}
                             placeholder="My Organization"
                           />
                         </div>
@@ -370,7 +422,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                           <Textarea
                             id="org-description"
                             value={editDescription}
-                            onChange={(e) => setEditDescription(e.target.value)}
+                            onChange={e => setEditDescription(e.target.value)}
                             placeholder="A brief description of your organization"
                             rows={3}
                           />
@@ -380,7 +432,10 @@ export default function OrganizationManagePage({ params }: PageProps) {
                         <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
                           Cancel
                         </Button>
-                        <Button onClick={handleEditOrganization} disabled={saving || !editName.trim()}>
+                        <Button
+                          onClick={handleEditOrganization}
+                          disabled={saving || !editName.trim()}
+                        >
                           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Save Changes
                         </Button>
@@ -399,8 +454,9 @@ export default function OrganizationManagePage({ params }: PageProps) {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Organization</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete &quot;{organization.name}&quot;? This action cannot be undone.
-                          All members will be removed and all data associated with this organization will be permanently deleted.
+                          Are you sure you want to delete &quot;{organization.name}&quot;? This
+                          action cannot be undone. All members will be removed and all data
+                          associated with this organization will be permanently deleted.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -436,9 +492,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                   <Users className="h-5 w-5" />
                   Members ({members.length}/{organization.max_members})
                 </CardTitle>
-                <CardDescription>
-                  Manage team members and their roles
-                </CardDescription>
+                <CardDescription>Manage team members and their roles</CardDescription>
               </div>
               {canManageMembers && (
                 <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
@@ -463,7 +517,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                           type="email"
                           placeholder="colleague@example.com"
                           value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
+                          onChange={e => setInviteEmail(e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
@@ -475,9 +529,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                           <SelectContent>
                             <SelectItem value="member">Member</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
-                            {userRole === 'owner' && (
-                              <SelectItem value="owner">Owner</SelectItem>
-                            )}
+                            {userRole === 'owner' && <SelectItem value="owner">Owner</SelectItem>}
                           </SelectContent>
                         </Select>
                       </div>
@@ -507,7 +559,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members.map((member) => (
+                {members.map(member => (
                   <TableRow key={member.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -541,9 +593,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                         <span className="capitalize">{member.role}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {new Date(member.joined_at).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(member.joined_at).toLocaleDateString()}</TableCell>
                     {canManageMembers && (
                       <TableCell>
                         {member.role !== 'owner' && (
@@ -572,9 +622,7 @@ export default function OrganizationManagePage({ params }: PageProps) {
                 <Mail className="h-5 w-5" />
                 Pending Invites ({invites.length})
               </CardTitle>
-              <CardDescription>
-                Invitations waiting to be accepted
-              </CardDescription>
+              <CardDescription>Invitations waiting to be accepted</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -587,13 +635,11 @@ export default function OrganizationManagePage({ params }: PageProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invites.map((invite) => (
+                  {invites.map(invite => (
                     <TableRow key={invite.id}>
                       <TableCell>{invite.email}</TableCell>
                       <TableCell className="capitalize">{invite.role}</TableCell>
-                      <TableCell>
-                        {new Date(invite.expires_at).toLocaleDateString()}
-                      </TableCell>
+                      <TableCell>{new Date(invite.expires_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button

@@ -10,8 +10,16 @@ export async function updateSession(request: NextRequest) {
   // ST-2: In production, block protected routes when Supabase is unconfigured
   if (!url || !key || url.includes('your-project') || key.includes('your-')) {
     if (process.env.NODE_ENV === 'production') {
-      const protectedPaths = ['/dashboard', '/projects', '/organizations', '/settings', '/templates']
-      const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
+      const protectedPaths = [
+        '/dashboard',
+        '/projects',
+        '/organizations',
+        '/settings',
+        '/templates',
+      ]
+      const isProtectedRoute = protectedPaths.some(path =>
+        request.nextUrl.pathname.startsWith(path)
+      )
       if (isProtectedRoute) {
         const loginUrl = request.nextUrl.clone()
         loginUrl.pathname = '/login'
@@ -27,9 +35,7 @@ export async function updateSession(request: NextRequest) {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        )
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
         supabaseResponse = NextResponse.next({ request })
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options)
@@ -38,10 +44,19 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   // Protected routes that require authentication
-  const protectedPaths = ['/dashboard', '/projects', '/organizations', '/settings', '/templates', '/accept-terms']
+  const protectedPaths = [
+    '/dashboard',
+    '/projects',
+    '/organizations',
+    '/settings',
+    '/templates',
+    '/accept-terms',
+  ]
   const isProtectedRoute = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
   if (!user && isProtectedRoute) {
@@ -66,7 +81,11 @@ export async function updateSession(request: NextRequest) {
     if (cached) {
       try {
         const parsed = JSON.parse(cached)
-        if (parsed.userId === user.id && parsed.checkedAt && Date.now() - parsed.checkedAt < CACHE_TTL_MS) {
+        if (
+          parsed.userId === user.id &&
+          parsed.checkedAt &&
+          Date.now() - parsed.checkedAt < CACHE_TTL_MS
+        ) {
           profileDeletedAt = parsed.deletedAt ?? null
           profileTosAccepted = !!parsed.tosAccepted
           cacheHit = true

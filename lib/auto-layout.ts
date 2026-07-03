@@ -8,7 +8,7 @@ export function getLayoutedElements(nodes: Node[], edges: Edge[], direction: 'TB
   const isHorizontal = direction === 'LR'
   dagreGraph.setGraph({ rankdir: direction })
 
-  nodes.forEach((node) => {
+  nodes.forEach(node => {
     // We base dimensions on node type or data. Containers need more space.
     let width = 200
     let height = 80
@@ -21,13 +21,13 @@ export function getLayoutedElements(nodes: Node[], edges: Edge[], direction: 'TB
     dagreGraph.setNode(node.id, { width, height })
   })
 
-  edges.forEach((edge) => {
+  edges.forEach(edge => {
     dagreGraph.setEdge(edge.source, edge.target)
   })
 
   dagre.layout(dagreGraph)
 
-  const newNodes = nodes.map((node) => {
+  const newNodes = nodes.map(node => {
     const nodeWithPosition = dagreGraph.node(node.id)
 
     return {

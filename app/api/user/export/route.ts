@@ -6,19 +6,27 @@ export const GET = createApiHandler(
     const user = auth.user
 
     // Fetch full Supabase user for metadata fields
-    const { data: { user: fullUser } } = await auth.supabase.auth.getUser()
+    const {
+      data: { user: fullUser },
+    } = await auth.supabase.auth.getUser()
 
     // 1. Profile data — explicit columns, no internal flags
     const { data: profile } = await auth.supabase
       .from('profiles')
-      .select('id, email, full_name, avatar_url, created_at, updated_at, tos_accepted_at, privacy_accepted_at')
+      .select(
+        'id, email, full_name, avatar_url, created_at, updated_at, tos_accepted_at, privacy_accepted_at'
+      )
       .eq('id', user.id)
       .single()
 
     // SECURITY: Strip OAuth provider tokens / refresh tokens from user_metadata
     const safeMetadata = fullUser?.user_metadata
       ? (() => {
-          const { provider_token: _provider_token, provider_refresh_token: _provider_refresh_token, ...safe } = fullUser.user_metadata as Record<string, unknown>
+          const {
+            provider_token: _provider_token,
+            provider_refresh_token: _provider_refresh_token,
+            ...safe
+          } = fullUser.user_metadata as Record<string, unknown>
           return safe
         })()
       : null
@@ -43,7 +51,8 @@ export const GET = createApiHandler(
     // 3. Organization memberships
     const { data: memberships } = await auth.supabase
       .from('organization_members')
-      .select(`
+      .select(
+        `
         role,
         joined_at,
         organizations (
@@ -52,7 +61,8 @@ export const GET = createApiHandler(
           slug,
           created_at
         )
-      `)
+      `
+      )
       .eq('user_id', user.id)
 
     // 4. Invitations sent/received — SECURITY: exclude secret token

@@ -15,10 +15,17 @@ const WEBHOOK_EVENTS = [
 
 const createWebhookSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  url: z.string().url('Invalid URL').refine(
-    (u) => { try { const p = new URL(u); return ['http:', 'https:'].includes(p.protocol) } catch { return false } },
-    'URL must use http or https'
-  ),
+  url: z
+    .string()
+    .url('Invalid URL')
+    .refine(u => {
+      try {
+        const p = new URL(u)
+        return ['http:', 'https:'].includes(p.protocol)
+      } catch {
+        return false
+      }
+    }, 'URL must use http or https'),
   events: z.array(z.enum(WEBHOOK_EVENTS)).min(1, 'At least one valid event is required'),
 })
 
@@ -44,7 +51,11 @@ export const POST = createApiHandler(
     const body = await request.json()
     const parsed = createWebhookSchema.safeParse(body)
     if (!parsed.success) {
-      throw new ApiError(400, parsed.error.errors[0]?.message ?? 'Invalid input', 'VALIDATION_ERROR')
+      throw new ApiError(
+        400,
+        parsed.error.errors[0]?.message ?? 'Invalid input',
+        'VALIDATION_ERROR'
+      )
     }
 
     const { name, url, events } = parsed.data

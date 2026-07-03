@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Node, Edge } from '@xyflow/react'
 
 interface HistoryState {
@@ -24,7 +24,7 @@ const MAX_HISTORY = 50 // Maximum number of states to keep
 
 export function useHistory(initialNodes: Node[] = [], initialEdges: Edge[] = []): UseHistoryReturn {
   const [history, setHistory] = useState<HistoryState[]>([
-    { nodes: initialNodes, edges: initialEdges, timestamp: 0 }
+    { nodes: initialNodes, edges: initialEdges, timestamp: 0 },
   ])
   const [currentIndex, setCurrentIndex] = useState(0)
   const currentIndexRef = useRef(0)

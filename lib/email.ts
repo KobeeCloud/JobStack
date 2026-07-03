@@ -2,9 +2,7 @@ import { Resend } from 'resend'
 import { log } from '@/lib/logger'
 
 // Resend is optional — if not configured, emails are logged to console
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'JobStack <noreply@jobstack.app>'
 
@@ -124,9 +122,7 @@ export function accountDeletionScheduledEmail(params: {
   return { subject, html }
 }
 
-export function accountDeletionCancelledEmail(params: {
-  userName: string
-}) {
+export function accountDeletionCancelledEmail(params: { userName: string }) {
   const subject = 'Your JobStack account deletion has been cancelled'
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -155,10 +151,14 @@ export function weeklyDigestEmail(params: {
       <h2>Weekly Digest</h2>
       <p>Hi ${params.userName},</p>
       <p>You have <strong>${params.projectCount}</strong> project${params.projectCount !== 1 ? 's' : ''} in JobStack.</p>
-      ${params.recentProjects.length > 0 ? `
+      ${
+        params.recentProjects.length > 0
+          ? `
         <h3>Recently updated:</h3>
         <ul>${projectList}</ul>
-      ` : ''}
+      `
+          : ''
+      }
       <p>
         <a href="${params.dashboardUrl}"
            style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">

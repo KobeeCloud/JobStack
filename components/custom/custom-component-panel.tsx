@@ -34,10 +34,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-import {
-  useCustomComponents,
-  type CustomComponentRecord,
-} from '@/hooks/use-custom-components'
+import { useCustomComponents, type CustomComponentRecord } from '@/hooks/use-custom-components'
 import {
   Plus,
   Trash2,
@@ -58,9 +55,36 @@ import { cn } from '@/lib/utils'
 // ============================================================================
 
 const PRESET_ICONS = [
-  '📦', '🔧', '⚙️', '🌐', '💾', '🔒', '📊', '🚀', '💻', '☁️',
-  '🔥', '⚡', '🎯', '📡', '🔌', '🗄️', '🔑', '📈', '🤖', '🛡️',
-  '🎛️', '📱', '🖥️', '🧩', '🔗', '💡', '🧪', '🏗️', '📝', '🔍',
+  '📦',
+  '🔧',
+  '⚙️',
+  '🌐',
+  '💾',
+  '🔒',
+  '📊',
+  '🚀',
+  '💻',
+  '☁️',
+  '🔥',
+  '⚡',
+  '🎯',
+  '📡',
+  '🔌',
+  '🗄️',
+  '🔑',
+  '📈',
+  '🤖',
+  '🛡️',
+  '🎛️',
+  '📱',
+  '🖥️',
+  '🧩',
+  '🔗',
+  '💡',
+  '🧪',
+  '🏗️',
+  '📝',
+  '🔍',
 ]
 
 const CATEGORIES = [
@@ -168,7 +192,7 @@ function ComponentEditorDialog({
   }
 
   const removeConnectionRule = (rule: string) => {
-    setConnectionRules(connectionRules.filter((r) => r !== rule))
+    setConnectionRules(connectionRules.filter(r => r !== rule))
   }
 
   return (
@@ -213,7 +237,7 @@ function ComponentEditorDialog({
               <Input
                 id="comp-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder="e.g., Redis Cluster"
                 maxLength={64}
               />
@@ -225,7 +249,7 @@ function ComponentEditorDialog({
               <Input
                 id="comp-desc"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 placeholder="What does this component do?"
               />
             </div>
@@ -239,7 +263,7 @@ function ComponentEditorDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => (
+                    {CATEGORIES.map(c => (
                       <SelectItem key={c.value} value={c.value}>
                         {c.label}
                       </SelectItem>
@@ -254,7 +278,7 @@ function ComponentEditorDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {PROVIDERS.map((p) => (
+                    {PROVIDERS.map(p => (
                       <SelectItem key={p.value} value={p.value}>
                         {p.label}
                       </SelectItem>
@@ -268,7 +292,7 @@ function ComponentEditorDialog({
             <div className="space-y-2">
               <Label>Icon</Label>
               <div className="flex flex-wrap gap-1.5 p-2 border rounded-lg bg-muted/30">
-                {PRESET_ICONS.map((emoji) => (
+                {PRESET_ICONS.map(emoji => (
                   <button
                     key={emoji}
                     type="button"
@@ -291,13 +315,13 @@ function ComponentEditorDialog({
                 <input
                   type="color"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={e => setColor(e.target.value)}
                   className="w-10 h-10 rounded cursor-pointer border"
                 />
                 <Input
                   id="comp-color"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={e => setColor(e.target.value)}
                   placeholder="#6366f1"
                   className="flex-1"
                 />
@@ -310,9 +334,9 @@ function ComponentEditorDialog({
               <div className="flex gap-2">
                 <Input
                   value={newRule}
-                  onChange={(e) => setNewRule(e.target.value)}
+                  onChange={e => setNewRule(e.target.value)}
                   placeholder="e.g., aws-ec2, azure-vm"
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addConnectionRule())}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addConnectionRule())}
                   className="flex-1"
                 />
                 <Button
@@ -327,10 +351,13 @@ function ComponentEditorDialog({
               </div>
               {connectionRules.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {connectionRules.map((rule) => (
+                  {connectionRules.map(rule => (
                     <Badge key={rule} variant="secondary" className="gap-1">
                       {rule}
-                      <button onClick={() => removeConnectionRule(rule)} className="hover:text-destructive">
+                      <button
+                        onClick={() => removeConnectionRule(rule)}
+                        className="hover:text-destructive"
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
@@ -364,7 +391,14 @@ interface CustomComponentPanelProps {
   organizationId: string | null
   onDragStart: (
     e: React.DragEvent,
-    component: { id: string; name: string; icon: string; color: string; category: string; provider: string }
+    component: {
+      id: string
+      name: string
+      icon: string
+      color: string
+      category: string
+      provider: string
+    }
   ) => void
   className?: string
 }
@@ -374,8 +408,14 @@ export function CustomComponentPanel({
   onDragStart,
   className,
 }: CustomComponentPanelProps) {
-  const { components, loading, createComponent, updateComponent, deleteComponent, duplicateComponent } =
-    useCustomComponents({ organizationId })
+  const {
+    components,
+    loading,
+    createComponent,
+    updateComponent,
+    deleteComponent,
+    duplicateComponent,
+  } = useCustomComponents({ organizationId })
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingComponent, setEditingComponent] = useState<CustomComponentRecord | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -385,7 +425,7 @@ export function CustomComponentPanel({
 
   const filteredComponents = search
     ? components.filter(
-        (c) =>
+        c =>
           c.name.toLowerCase().includes(search.toLowerCase()) ||
           c.category.toLowerCase().includes(search.toLowerCase())
       )
@@ -421,7 +461,9 @@ export function CustomComponentPanel({
           toast.success('Created', { description: `${data.name} created successfully` })
         }
       } catch (err) {
-        toast.error('Error', { description: err instanceof Error ? err.message : 'Operation failed' })
+        toast.error('Error', {
+          description: err instanceof Error ? err.message : 'Operation failed',
+        })
         throw err // re-throw so dialog stays open
       } finally {
         setSaving(false)
@@ -450,7 +492,9 @@ export function CustomComponentPanel({
         await duplicateComponent(comp)
         toast.success('Duplicated', { description: `${comp.name} duplicated` })
       } catch (err) {
-      toast.error('Error', { description: err instanceof Error ? err.message : 'Failed to delete' })
+        toast.error('Error', {
+          description: err instanceof Error ? err.message : 'Failed to delete',
+        })
       }
     },
     [duplicateComponent]
@@ -493,7 +537,7 @@ export function CustomComponentPanel({
               <Input
                 placeholder="Search..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={e => setSearch(e.target.value)}
                 className="pl-7 h-8 text-sm"
               />
             </div>
@@ -530,16 +574,16 @@ export function CustomComponentPanel({
               Object.entries(grouped).map(([category, comps]) => (
                 <div key={category} className="mb-3">
                   <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
-                    {CATEGORIES.find((c) => c.value === category)?.label || category}
+                    {CATEGORIES.find(c => c.value === category)?.label || category}
                     <span className="ml-1">({comps.length})</span>
                   </h4>
                   <div className="space-y-1">
-                    {comps.map((comp) => (
+                    {comps.map(comp => (
                       <Card
                         key={comp.id}
                         className="p-2 cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors group relative"
                         draggable
-                        onDragStart={(e) => {
+                        onDragStart={e => {
                           e.dataTransfer.setData(
                             'application/reactflow',
                             JSON.stringify({
@@ -578,7 +622,7 @@ export function CustomComponentPanel({
                         <div className="absolute right-1 top-1 hidden group-hover:flex gap-0.5 bg-background/90 rounded shadow-sm border p-0.5">
                           <button
                             className="p-1 hover:bg-muted rounded"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation()
                               setEditingComponent(comp)
                               setEditorOpen(true)
@@ -589,7 +633,7 @@ export function CustomComponentPanel({
                           </button>
                           <button
                             className="p-1 hover:bg-muted rounded"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation()
                               handleDuplicate(comp)
                             }}
@@ -599,7 +643,7 @@ export function CustomComponentPanel({
                           </button>
                           <button
                             className="p-1 hover:bg-muted rounded text-destructive"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation()
                               setDeletingId(comp.id)
                               setDeleteDialogOpen(true)
@@ -622,7 +666,7 @@ export function CustomComponentPanel({
       {/* Editor Dialog */}
       <ComponentEditorDialog
         open={editorOpen}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           setEditorOpen(open)
           if (!open) setEditingComponent(null)
         }}
@@ -643,7 +687,10 @@ export function CustomComponentPanel({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

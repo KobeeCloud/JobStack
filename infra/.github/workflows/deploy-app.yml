@@ -1,0 +1,166 @@
+name: "Deploy App"
+# Build Next.js → copy to VMs via Ansible → health check
+# Triggered on push to main when app code (not infra) changes
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "infra/**"
+      - "docs/**"
+      - "*.md"
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deploy target"
+        required: true
+        default: "dev"
+        type: choice
+        options: [dev, prod]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel in-flight deploys
+
+jobs:
+  # ── Build ────────────────────────────────────────────────────────────────────
+  build:
+    name: Build Next.js
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Security audit
+        run: npm audit --audit-level=high
+        continue-on-error: true  # Don't block deploy on audit warnings
+
+      - name: Build Next.js (standalone)
+        run: npm run build
+        env:
+          # Dummy env vars for build (secrets injected at runtime via Key Vault)
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder"
+          NEXT_PUBLIC_APP_URL: "https://jobstack.kobecloud.pl"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: |
+            .next/standalone
+            .next/static
+            public
+          retention-days: 1
+
+  # ── Deploy to Dev ───────────────────────────────────────────────────────────
+  deploy-dev:
+    name: Deploy → dev
+    needs: build
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: /tmp/nextjs-build
+
+      - name: Restructure build for deployment
+        run: |
+          cp -r /tmp/nextjs-build/.next/static /tmp/nextjs-build/standalone/.next/static
+          cp -r /tmp/nextjs-build/public /tmp/nextjs-build/standalone/public
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEV_VM_HOST_KEYS }}" >> ~/.ssh/known_hosts
+
+      - name: Install Ansible
+        run: |
+          pip install ansible
+          ansible-galaxy collection install community.general ansible.posix
+
+      - name: Run Ansible deploy playbook
+        run: |
+          ansible-playbook \
+            -i infra/ansible/inventory/dev.yml \
+            infra/ansible/playbooks/app-setup.yml \
+            --private-key ~/.ssh/deploy_key \
+            -e "local_build_path=/tmp/nextjs-build/standalone" \
+            -e "azure_key_vault_name=${{ secrets.DEV_KEY_VAULT_NAME }}" \
+            -e "azure_resource_group=rg-jobstack-dev"
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+  # ── Deploy to Prod ──────────────────────────────────────────────────────────
+  deploy-prod:
+    name: Deploy → prod
+    needs: deploy-dev
+    runs-on: ubuntu-latest
+    environment: prod  # Manual approval required
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+          path: /tmp/nextjs-build
+
+      - name: Restructure build for deployment
+        run: |
+          cp -r /tmp/nextjs-build/.next/static /tmp/nextjs-build/standalone/.next/static
+          cp -r /tmp/nextjs-build/public /tmp/nextjs-build/standalone/public
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.PROD_VM_HOST_KEYS }}" >> ~/.ssh/known_hosts
+
+      - name: Install Ansible
+        run: |
+          pip install ansible
+          ansible-galaxy collection install community.general ansible.posix
+
+      - name: Run Ansible deploy playbook
+        run: |
+          ansible-playbook \
+            -i infra/ansible/inventory/prod.yml \
+            infra/ansible/playbooks/app-setup.yml \
+            --private-key ~/.ssh/deploy_key \
+            -e "local_build_path=/tmp/nextjs-build/standalone" \
+            -e "azure_key_vault_name=${{ secrets.PROD_KEY_VAULT_NAME }}" \
+            -e "azure_resource_group=rg-jobstack-prod"
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

@@ -15,20 +15,21 @@ jest.mock('next/link', () => {
 })
 
 // Mock lucide-react icons to simple spans
-jest.mock('lucide-react', () =>
-  new Proxy(
-    {},
-    {
-      get: (_target, name) => {
-        return (props: Record<string, unknown>) =>
-          React.createElement('span', { 'data-testid': `icon-${String(name)}`, ...props })
-      },
-    }
-  )
+jest.mock(
+  'lucide-react',
+  () =>
+    new Proxy(
+      {},
+      {
+        get: (_target, name) => {
+          return (props: Record<string, unknown>) =>
+            React.createElement('span', { 'data-testid': `icon-${String(name)}`, ...props })
+        },
+      }
+    )
 )
 
 describe('NotFound page', () => {
-
   const NotFound = require('@/app/not-found').default
 
   it('renders 404 heading', () => {
@@ -57,7 +58,6 @@ describe('NotFound page', () => {
 // ─── app/loading.tsx ────────────────────────────────────────────────────────
 
 describe('Loading page', () => {
-
   const Loading = require('@/app/loading').default
 
   it('renders skeleton cards', () => {
@@ -76,7 +76,6 @@ describe('Loading page', () => {
 // ─── app/error.tsx ──────────────────────────────────────────────────────────
 
 describe('Error page', () => {
-
   const ErrorPage = require('@/app/error').default
 
   it('renders error message', () => {

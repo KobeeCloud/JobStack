@@ -32,56 +32,122 @@ export interface CostReport {
 }
 
 // Component alternatives for cost optimization
-const COST_ALTERNATIVES: Record<string, { alternative: string; reason: string; savingsPercent: number }[]> = {
+const COST_ALTERNATIVES: Record<
+  string,
+  { alternative: string; reason: string; savingsPercent: number }[]
+> = {
   // AWS alternatives
   'aws-ec2': [
-    { alternative: 'aws-lambda', reason: 'Consider serverless for variable workloads', savingsPercent: 60 },
-    { alternative: 'aws-ecs', reason: 'Containerize for better resource utilization', savingsPercent: 30 },
+    {
+      alternative: 'aws-lambda',
+      reason: 'Consider serverless for variable workloads',
+      savingsPercent: 60,
+    },
+    {
+      alternative: 'aws-ecs',
+      reason: 'Containerize for better resource utilization',
+      savingsPercent: 30,
+    },
   ],
   'aws-rds': [
-    { alternative: 'aws-aurora-serverless', reason: 'Aurora Serverless for variable DB loads', savingsPercent: 40 },
+    {
+      alternative: 'aws-aurora-serverless',
+      reason: 'Aurora Serverless for variable DB loads',
+      savingsPercent: 40,
+    },
     { alternative: 'aws-dynamodb', reason: 'DynamoDB for NoSQL workloads', savingsPercent: 50 },
   ],
   'aws-alb': [
-    { alternative: 'aws-api-gateway', reason: 'API Gateway for API-only traffic', savingsPercent: 35 },
+    {
+      alternative: 'aws-api-gateway',
+      reason: 'API Gateway for API-only traffic',
+      savingsPercent: 35,
+    },
   ],
 
   // Azure alternatives
   'azure-vm': [
-    { alternative: 'azure-functions', reason: 'Serverless for event-driven workloads', savingsPercent: 55 },
-    { alternative: 'azure-container-apps', reason: 'Container Apps for microservices', savingsPercent: 35 },
+    {
+      alternative: 'azure-functions',
+      reason: 'Serverless for event-driven workloads',
+      savingsPercent: 55,
+    },
+    {
+      alternative: 'azure-container-apps',
+      reason: 'Container Apps for microservices',
+      savingsPercent: 35,
+    },
   ],
   'azure-sql': [
-    { alternative: 'azure-cosmos', reason: 'Cosmos DB for globally distributed data', savingsPercent: 25 },
-    { alternative: 'azure-sql-serverless', reason: 'SQL Serverless for intermittent usage', savingsPercent: 45 },
+    {
+      alternative: 'azure-cosmos',
+      reason: 'Cosmos DB for globally distributed data',
+      savingsPercent: 25,
+    },
+    {
+      alternative: 'azure-sql-serverless',
+      reason: 'SQL Serverless for intermittent usage',
+      savingsPercent: 45,
+    },
   ],
   'azure-app-gw': [
-    { alternative: 'azure-front-door', reason: 'Front Door for global load balancing', savingsPercent: 20 },
+    {
+      alternative: 'azure-front-door',
+      reason: 'Front Door for global load balancing',
+      savingsPercent: 20,
+    },
   ],
 
   // GCP alternatives
   'gcp-compute-instance': [
-    { alternative: 'gcp-cloud-run', reason: 'Cloud Run for containerized apps', savingsPercent: 50 },
-    { alternative: 'gcp-cloud-functions', reason: 'Functions for event-driven code', savingsPercent: 60 },
+    {
+      alternative: 'gcp-cloud-run',
+      reason: 'Cloud Run for containerized apps',
+      savingsPercent: 50,
+    },
+    {
+      alternative: 'gcp-cloud-functions',
+      reason: 'Functions for event-driven code',
+      savingsPercent: 60,
+    },
   ],
   'gcp-cloud-sql': [
-    { alternative: 'gcp-firestore', reason: 'Firestore for document-based data', savingsPercent: 40 },
-    { alternative: 'gcp-spanner', reason: 'Spanner for global consistency needs', savingsPercent: -20 },
+    {
+      alternative: 'gcp-firestore',
+      reason: 'Firestore for document-based data',
+      savingsPercent: 40,
+    },
+    {
+      alternative: 'gcp-spanner',
+      reason: 'Spanner for global consistency needs',
+      savingsPercent: -20,
+    },
   ],
 }
 
 // Components that can use reserved pricing
 const RESERVED_ELIGIBLE = [
-  'aws-ec2', 'aws-rds', 'aws-elasticache', 'aws-redshift',
-  'azure-vm', 'azure-sql', 'azure-cosmos',
-  'gcp-compute-instance', 'gcp-cloud-sql',
+  'aws-ec2',
+  'aws-rds',
+  'aws-elasticache',
+  'aws-redshift',
+  'azure-vm',
+  'azure-sql',
+  'azure-cosmos',
+  'gcp-compute-instance',
+  'gcp-cloud-sql',
 ]
 
 // Components that can use spot/preemptible instances
 const SPOT_ELIGIBLE = [
-  'aws-ec2', 'aws-eks', 'aws-ecs',
-  'azure-vm', 'azure-vmss', 'azure-aks',
-  'gcp-compute-instance', 'gcp-gke',
+  'aws-ec2',
+  'aws-eks',
+  'aws-ecs',
+  'azure-vm',
+  'azure-vmss',
+  'azure-aks',
+  'gcp-compute-instance',
+  'gcp-gke',
 ]
 
 export function analyzeCosts(nodes: Node[]): CostReport {
@@ -129,7 +195,12 @@ export function analyzeCosts(nodes: Node[]): CostReport {
             savingsPercent: bestAlternative.savingsPercent,
           },
           category: 'alternative',
-          impact: bestAlternative.savingsPercent > 40 ? 'high' : bestAlternative.savingsPercent > 20 ? 'medium' : 'low',
+          impact:
+            bestAlternative.savingsPercent > 40
+              ? 'high'
+              : bestAlternative.savingsPercent > 20
+                ? 'medium'
+                : 'low',
         })
         summary.alternativeCount++
 

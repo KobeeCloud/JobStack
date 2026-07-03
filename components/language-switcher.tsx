@@ -45,11 +45,8 @@ export function LanguageSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {languages.map((lang) => (
-          <DropdownMenuItem
-            key={lang.code}
-            onClick={() => handleChange(lang.code)}
-          >
+        {languages.map(lang => (
+          <DropdownMenuItem key={lang.code} onClick={() => handleChange(lang.code)}>
             <span className="mr-2">{lang.flag}</span>
             {lang.label}
           </DropdownMenuItem>

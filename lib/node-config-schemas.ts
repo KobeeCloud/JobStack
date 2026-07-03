@@ -39,17 +39,21 @@ export const subnetConfigSchema = z.object({
 })
 
 export const nsgConfigSchema = z.object({
-  rules: z.array(z.object({
-    name: z.string(),
-    priority: z.number().min(100).max(4096),
-    direction: z.enum(['inbound', 'outbound']),
-    access: z.enum(['allow', 'deny']),
-    protocol: z.enum(['tcp', 'udp', 'icmp', '*']),
-    sourcePort: z.string(), // e.g., "80", "80-90", "*"
-    destinationPort: z.string(),
-    sourceAddress: z.string(),
-    destinationAddress: z.string(),
-  })).optional(),
+  rules: z
+    .array(
+      z.object({
+        name: z.string(),
+        priority: z.number().min(100).max(4096),
+        direction: z.enum(['inbound', 'outbound']),
+        access: z.enum(['allow', 'deny']),
+        protocol: z.enum(['tcp', 'udp', 'icmp', '*']),
+        sourcePort: z.string(), // e.g., "80", "80-90", "*"
+        destinationPort: z.string(),
+        sourceAddress: z.string(),
+        destinationAddress: z.string(),
+      })
+    )
+    .optional(),
   attachedTo: z.array(z.string()).optional(), // IDs of subnets or NICs
   tags: z.record(z.string()).optional(),
 })
@@ -70,27 +74,43 @@ export const publicIpConfigSchema = z.object({
 
 export const loadBalancerConfigSchema = z.object({
   sku: z.enum(['basic', 'standard', 'gateway']).optional().default('standard'),
-  frontendIpConfigs: z.array(z.object({
-    name: z.string(),
-    publicIpId: z.string().optional(),
-    privateIpAddress: z.string().optional(),
-  })).optional(),
-  backendPools: z.array(z.object({
-    name: z.string(),
-    vmIds: z.array(z.string()),
-  })).optional(),
-  probes: z.array(z.object({
-    name: z.string(),
-    protocol: z.enum(['tcp', 'http', 'https']),
-    port: z.number(),
-    path: z.string().optional(),
-  })).optional(),
-  rules: z.array(z.object({
-    name: z.string(),
-    protocol: z.enum(['tcp', 'udp', 'all']),
-    frontendPort: z.number(),
-    backendPort: z.number(),
-  })).optional(),
+  frontendIpConfigs: z
+    .array(
+      z.object({
+        name: z.string(),
+        publicIpId: z.string().optional(),
+        privateIpAddress: z.string().optional(),
+      })
+    )
+    .optional(),
+  backendPools: z
+    .array(
+      z.object({
+        name: z.string(),
+        vmIds: z.array(z.string()),
+      })
+    )
+    .optional(),
+  probes: z
+    .array(
+      z.object({
+        name: z.string(),
+        protocol: z.enum(['tcp', 'http', 'https']),
+        port: z.number(),
+        path: z.string().optional(),
+      })
+    )
+    .optional(),
+  rules: z
+    .array(
+      z.object({
+        name: z.string(),
+        protocol: z.enum(['tcp', 'udp', 'all']),
+        frontendPort: z.number(),
+        backendPort: z.number(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -99,8 +119,14 @@ export const loadBalancerConfigSchema = z.object({
 // ==========================================
 export const storageAccountConfigSchema = z.object({
   accountTier: z.enum(['standard', 'premium']).optional().default('standard'),
-  replicationType: z.enum(['lrs', 'grs', 'ragrs', 'zrs', 'gzrs', 'ragzrs']).optional().default('lrs'),
-  kind: z.enum(['storage', 'storagev2', 'blobstorage', 'blockblobstorage', 'filestorage']).optional().default('storagev2'),
+  replicationType: z
+    .enum(['lrs', 'grs', 'ragrs', 'zrs', 'gzrs', 'ragzrs'])
+    .optional()
+    .default('lrs'),
+  kind: z
+    .enum(['storage', 'storagev2', 'blobstorage', 'blockblobstorage', 'filestorage'])
+    .optional()
+    .default('storagev2'),
   accessTier: z.enum(['hot', 'cool']).optional().default('hot'),
   enableHttpsOnly: z.boolean().optional().default(true),
   tags: z.record(z.string()).optional(),
@@ -108,8 +134,14 @@ export const storageAccountConfigSchema = z.object({
 
 export const diskConfigSchema = z.object({
   size: z.number().min(1).max(65536).optional(), // GB
-  sku: z.enum(['standard_hdd', 'standard_ssd', 'premium_ssd', 'ultrassd']).optional().default('premium_ssd'),
-  createOption: z.enum(['empty', 'copy', 'fromimage', 'import', 'restore']).optional().default('empty'),
+  sku: z
+    .enum(['standard_hdd', 'standard_ssd', 'premium_ssd', 'ultrassd'])
+    .optional()
+    .default('premium_ssd'),
+  createOption: z
+    .enum(['empty', 'copy', 'fromimage', 'import', 'restore'])
+    .optional()
+    .default('empty'),
   diskIops: z.number().optional(),
   diskMbps: z.number().optional(),
   tags: z.record(z.string()).optional(),
@@ -141,16 +173,26 @@ export const sqlDatabaseConfigSchema = z.object({
 
 export const cosmosDbConfigSchema = z.object({
   offerType: z.enum(['standard']).optional().default('standard'),
-  kind: z.enum(['GlobalDocumentDB', 'MongoDB', 'Cassandra', 'Gremlin', 'Table']).optional().default('GlobalDocumentDB'),
-  consistencyLevel: z.enum(['eventual', 'consistentprefix', 'session', 'boundedstale', 'strong']).optional().default('session'),
+  kind: z
+    .enum(['GlobalDocumentDB', 'MongoDB', 'Cassandra', 'Gremlin', 'Table'])
+    .optional()
+    .default('GlobalDocumentDB'),
+  consistencyLevel: z
+    .enum(['eventual', 'consistentprefix', 'session', 'boundedstale', 'strong'])
+    .optional()
+    .default('session'),
   maxStalenessSeconds: z.number().optional(),
   maxIntervalInSeconds: z.number().optional(),
   enableAutomaticFailover: z.boolean().optional().default(true),
   enableMultipleWriteLocations: z.boolean().optional().default(false),
-  geoLocations: z.array(z.object({
-    location: z.string(),
-    failoverPriority: z.number(),
-  })).optional(),
+  geoLocations: z
+    .array(
+      z.object({
+        location: z.string(),
+        failoverPriority: z.number(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -161,25 +203,29 @@ export const aksConfigSchema = z.object({
   kubernetesVersion: z.string().optional(),
   dnsPrefix: z.string().optional(),
   oidc_issuer_enabled: z.boolean().optional().default(true),
-  defaultNodePool: z.object({
-    name: z.string(),
-    vmSize: z.string(),
-    nodeCount: z.number().min(1).max(100),
-    minCount: z.number().optional(),
-    maxCount: z.number().optional(),
-    enableAutoScaling: z.boolean().optional().default(false),
-    maxPods: z.number().optional(),
-    osDiskSizeGb: z.number().optional(),
-    taints: z.array(z.string()).optional(),
-  }).optional(),
-  networkProfile: z.object({
-    networkPlugin: z.enum(['azure', 'kubenet']).optional().default('azure'),
-    networkPluginMode: z.enum(['overlay']).optional(),
-    networkPolicy: z.enum(['azure', 'calico', 'cilium']).optional(),
-    serviceCidr: z.string().optional(),
-    dnsServiceIp: z.string().optional(),
-    dockerBridgeCidr: z.string().optional(),
-  }).optional(),
+  defaultNodePool: z
+    .object({
+      name: z.string(),
+      vmSize: z.string(),
+      nodeCount: z.number().min(1).max(100),
+      minCount: z.number().optional(),
+      maxCount: z.number().optional(),
+      enableAutoScaling: z.boolean().optional().default(false),
+      maxPods: z.number().optional(),
+      osDiskSizeGb: z.number().optional(),
+      taints: z.array(z.string()).optional(),
+    })
+    .optional(),
+  networkProfile: z
+    .object({
+      networkPlugin: z.enum(['azure', 'kubenet']).optional().default('azure'),
+      networkPluginMode: z.enum(['overlay']).optional(),
+      networkPolicy: z.enum(['azure', 'calico', 'cilium']).optional(),
+      serviceCidr: z.string().optional(),
+      dnsServiceIp: z.string().optional(),
+      dockerBridgeCidr: z.string().optional(),
+    })
+    .optional(),
   enableRbac: z.boolean().optional().default(true),
   tags: z.record(z.string()).optional(),
 })
@@ -187,14 +233,18 @@ export const aksConfigSchema = z.object({
 export const aciConfigSchema = z.object({
   osType: z.enum(['linux', 'windows']).optional().default('linux'),
   restartPolicy: z.enum(['always', 'onfailure', 'never']).optional().default('always'),
-  containers: z.array(z.object({
-    name: z.string(),
-    image: z.string(),
-    cpu: z.number(),
-    memory: z.number(),
-    ports: z.array(z.number()).optional(),
-    environmentVariables: z.record(z.string()).optional(),
-  })).optional(),
+  containers: z
+    .array(
+      z.object({
+        name: z.string(),
+        image: z.string(),
+        cpu: z.number(),
+        memory: z.number(),
+        ports: z.array(z.number()).optional(),
+        environmentVariables: z.record(z.string()).optional(),
+      })
+    )
+    .optional(),
   ipAddressType: z.enum(['public', 'private']).optional().default('public'),
   dnsNameLabel: z.string().optional(),
   tags: z.record(z.string()).optional(),
@@ -211,11 +261,15 @@ export const appServiceConfigSchema = z.object({
   enableHttps: z.boolean().optional().default(true),
   runtime: z.string().optional(), // e.g., "node|18-lts", "python|3.11", "dotnet|7.0"
   appSettings: z.record(z.string()).optional(),
-  connectionStrings: z.array(z.object({
-    name: z.string(),
-    type: z.string(),
-    value: z.string(),
-  })).optional(),
+  connectionStrings: z
+    .array(
+      z.object({
+        name: z.string(),
+        type: z.string(),
+        value: z.string(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -232,9 +286,20 @@ export const functionAppConfigSchema = z.object({
 // CI/CD & DEVOPS CONFIGURATION
 // ==========================================
 export const githubActionsConfigSchema = z.object({
-  triggers: z.array(z.enum(['push', 'pull_request', 'schedule', 'workflow_dispatch', 'release'])).optional(),
+  triggers: z
+    .array(z.enum(['push', 'pull_request', 'schedule', 'workflow_dispatch', 'release']))
+    .optional(),
   branches: z.array(z.string()).optional(),
-  runsOn: z.enum(['ubuntu-latest', 'ubuntu-22.04', 'ubuntu-20.04', 'windows-latest', 'macos-latest', 'self-hosted']).optional(),
+  runsOn: z
+    .enum([
+      'ubuntu-latest',
+      'ubuntu-22.04',
+      'ubuntu-20.04',
+      'windows-latest',
+      'macos-latest',
+      'self-hosted',
+    ])
+    .optional(),
   stages: z.array(z.string()).optional(),
   nodeVersion: z.string().optional(),
   pythonVersion: z.string().optional(),
@@ -284,7 +349,9 @@ export const helmConfigSchema = z.object({
 })
 
 export const datadogConfigSchema = z.object({
-  site: z.enum(['datadoghq.com', 'datadoghq.eu', 'us3.datadoghq.com', 'us5.datadoghq.com']).optional(),
+  site: z
+    .enum(['datadoghq.com', 'datadoghq.eu', 'us3.datadoghq.com', 'us5.datadoghq.com'])
+    .optional(),
   env: z.string().optional(),
   service: z.string().optional(),
   logLevel: z.enum(['debug', 'info', 'warn', 'error']).optional(),
@@ -327,18 +394,29 @@ export const s3ConfigSchema = z.object({
   bucketName: z.string().optional(),
   versioning: z.boolean().optional().default(false),
   encryption: z.enum(['none', 'sse-s3', 'sse-kms', 'sse-c']).optional().default('sse-s3'),
-  accessControl: z.enum(['private', 'public-read', 'public-read-write', 'authenticated-read']).optional().default('private'),
-  lifecycleRules: z.array(z.object({
-    prefix: z.string().optional(),
-    transitionDays: z.number().optional(),
-    transitionStorageClass: z.string().optional(),
-    expirationDays: z.number().optional(),
-  })).optional(),
-  corsRules: z.array(z.object({
-    allowedOrigins: z.array(z.string()),
-    allowedMethods: z.array(z.enum(['GET', 'PUT', 'POST', 'DELETE', 'HEAD'])),
-    allowedHeaders: z.array(z.string()).optional(),
-  })).optional(),
+  accessControl: z
+    .enum(['private', 'public-read', 'public-read-write', 'authenticated-read'])
+    .optional()
+    .default('private'),
+  lifecycleRules: z
+    .array(
+      z.object({
+        prefix: z.string().optional(),
+        transitionDays: z.number().optional(),
+        transitionStorageClass: z.string().optional(),
+        expirationDays: z.number().optional(),
+      })
+    )
+    .optional(),
+  corsRules: z
+    .array(
+      z.object({
+        allowedOrigins: z.array(z.string()),
+        allowedMethods: z.array(z.enum(['GET', 'PUT', 'POST', 'DELETE', 'HEAD'])),
+        allowedHeaders: z.array(z.string()).optional(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -389,16 +467,22 @@ export const cacheConfigSchema = z.object({
 // CDN CONFIGURATION
 // ==========================================
 export const cdnConfigSchema = z.object({
-  origins: z.array(z.object({
-    domainName: z.string(),
-    originId: z.string().optional(),
-    protocol: z.enum(['http-only', 'https-only', 'match-viewer']).optional(),
-  })).optional(),
-  defaultCacheBehavior: z.object({
-    viewerProtocolPolicy: z.enum(['allow-all', 'https-only', 'redirect-to-https']).optional(),
-    cachePolicyId: z.string().optional(),
-    ttl: z.number().optional(),
-  }).optional(),
+  origins: z
+    .array(
+      z.object({
+        domainName: z.string(),
+        originId: z.string().optional(),
+        protocol: z.enum(['http-only', 'https-only', 'match-viewer']).optional(),
+      })
+    )
+    .optional(),
+  defaultCacheBehavior: z
+    .object({
+      viewerProtocolPolicy: z.enum(['allow-all', 'https-only', 'redirect-to-https']).optional(),
+      cachePolicyId: z.string().optional(),
+      ttl: z.number().optional(),
+    })
+    .optional(),
   priceClass: z.string().optional(),
   wafEnabled: z.boolean().optional().default(false),
   customDomain: z.string().optional(),
@@ -412,12 +496,16 @@ export const cdnConfigSchema = z.object({
 export const dnsConfigSchema = z.object({
   zoneName: z.string().optional(),
   zoneType: z.enum(['public', 'private']).optional().default('public'),
-  records: z.array(z.object({
-    name: z.string(),
-    type: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'SRV', 'PTR']),
-    ttl: z.number().optional().default(300),
-    values: z.array(z.string()),
-  })).optional(),
+  records: z
+    .array(
+      z.object({
+        name: z.string(),
+        type: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SOA', 'SRV', 'PTR']),
+        ttl: z.number().optional().default(300),
+        values: z.array(z.string()),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -445,10 +533,14 @@ export const notificationConfigSchema = z.object({
   displayName: z.string().optional(),
   fifo: z.boolean().optional().default(false),
   encryption: z.boolean().optional().default(true),
-  subscriptions: z.array(z.object({
-    protocol: z.enum(['email', 'sms', 'http', 'https', 'sqs', 'lambda', 'application']),
-    endpoint: z.string(),
-  })).optional(),
+  subscriptions: z
+    .array(
+      z.object({
+        protocol: z.enum(['email', 'sms', 'http', 'https', 'sqs', 'lambda', 'application']),
+        endpoint: z.string(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -459,11 +551,16 @@ export const apiGatewayConfigSchema = z.object({
   apiName: z.string().optional(),
   apiType: z.enum(['rest', 'http', 'websocket']).optional().default('rest'),
   stageName: z.string().optional().default('prod'),
-  authorizationType: z.enum(['none', 'api_key', 'iam', 'cognito', 'lambda']).optional().default('none'),
-  throttling: z.object({
-    rateLimit: z.number().optional(),
-    burstLimit: z.number().optional(),
-  }).optional(),
+  authorizationType: z
+    .enum(['none', 'api_key', 'iam', 'cognito', 'lambda'])
+    .optional()
+    .default('none'),
+  throttling: z
+    .object({
+      rateLimit: z.number().optional(),
+      burstLimit: z.number().optional(),
+    })
+    .optional(),
   cors: z.boolean().optional().default(true),
   loggingLevel: z.enum(['OFF', 'ERROR', 'INFO']).optional().default('ERROR'),
   tags: z.record(z.string()).optional(),
@@ -479,10 +576,12 @@ export const secretStoreConfigSchema = z.object({
   softDeleteRetentionDays: z.number().min(7).max(90).optional().default(90),
   enablePurgeProtection: z.boolean().optional().default(false),
   enableRbac: z.boolean().optional().default(true),
-  networkAcls: z.object({
-    defaultAction: z.enum(['allow', 'deny']).optional().default('deny'),
-    ipRules: z.array(z.string()).optional(),
-  }).optional(),
+  networkAcls: z
+    .object({
+      defaultAction: z.enum(['allow', 'deny']).optional().default('deny'),
+      ipRules: z.array(z.string()).optional(),
+    })
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -519,16 +618,20 @@ export const firewallConfigSchema = z.object({
   sku: z.enum(['standard', 'premium']).optional().default('standard'),
   threatIntelMode: z.enum(['alert', 'deny', 'off']).optional().default('alert'),
   dnsProxyEnabled: z.boolean().optional().default(false),
-  rules: z.array(z.object({
-    name: z.string(),
-    priority: z.number().min(100).max(65000),
-    action: z.enum(['allow', 'deny']),
-    ruleType: z.enum(['application', 'network', 'nat']),
-    protocols: z.array(z.string()).optional(),
-    sourceAddresses: z.array(z.string()).optional(),
-    destinationAddresses: z.array(z.string()).optional(),
-    destinationPorts: z.array(z.string()).optional(),
-  })).optional(),
+  rules: z
+    .array(
+      z.object({
+        name: z.string(),
+        priority: z.number().min(100).max(65000),
+        action: z.enum(['allow', 'deny']),
+        ruleType: z.enum(['application', 'network', 'nat']),
+        protocols: z.array(z.string()).optional(),
+        sourceAddresses: z.array(z.string()).optional(),
+        destinationAddresses: z.array(z.string()).optional(),
+        destinationPorts: z.array(z.string()).optional(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -595,12 +698,22 @@ export const vpnGatewayConfigSchema = z.object({
 
 export const routeTableConfigSchema = z.object({
   disableBgpRoutePropagation: z.boolean().optional().default(false),
-  routes: z.array(z.object({
-    name: z.string(),
-    addressPrefix: z.string(),
-    nextHopType: z.enum(['internet', 'virtual-appliance', 'virtual-network-gateway', 'vnet-local', 'none']),
-    nextHopIpAddress: z.string().optional(),
-  })).optional(),
+  routes: z
+    .array(
+      z.object({
+        name: z.string(),
+        addressPrefix: z.string(),
+        nextHopType: z.enum([
+          'internet',
+          'virtual-appliance',
+          'virtual-network-gateway',
+          'vnet-local',
+          'none',
+        ]),
+        nextHopIpAddress: z.string().optional(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -615,7 +728,9 @@ export const efsConfigSchema = z.object({
   performanceMode: z.enum(['generalPurpose', 'maxIO']).optional().default('generalPurpose'),
   throughputMode: z.enum(['bursting', 'provisioned', 'elastic']).optional().default('bursting'),
   encrypted: z.boolean().optional().default(true),
-  lifecyclePolicy: z.enum(['AFTER_7_DAYS', 'AFTER_14_DAYS', 'AFTER_30_DAYS', 'AFTER_60_DAYS', 'AFTER_90_DAYS']).optional(),
+  lifecyclePolicy: z
+    .enum(['AFTER_7_DAYS', 'AFTER_14_DAYS', 'AFTER_30_DAYS', 'AFTER_60_DAYS', 'AFTER_90_DAYS'])
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -636,17 +751,25 @@ export const serviceBusConfigSchema = z.object({
   sku: z.enum(['basic', 'standard', 'premium']).optional().default('standard'),
   capacity: z.number().min(1).max(16).optional(),
   zoneRedundant: z.boolean().optional().default(false),
-  queues: z.array(z.object({
-    name: z.string(),
-    maxSizeInMb: z.number().optional(),
-    enablePartitioning: z.boolean().optional(),
-    maxDeliveryCount: z.number().optional().default(10),
-  })).optional(),
-  topics: z.array(z.object({
-    name: z.string(),
-    maxSizeInMb: z.number().optional(),
-    enablePartitioning: z.boolean().optional(),
-  })).optional(),
+  queues: z
+    .array(
+      z.object({
+        name: z.string(),
+        maxSizeInMb: z.number().optional(),
+        enablePartitioning: z.boolean().optional(),
+        maxDeliveryCount: z.number().optional().default(10),
+      })
+    )
+    .optional(),
+  topics: z
+    .array(
+      z.object({
+        name: z.string(),
+        maxSizeInMb: z.number().optional(),
+        enablePartitioning: z.boolean().optional(),
+      })
+    )
+    .optional(),
   tags: z.record(z.string()).optional(),
 })
 
@@ -807,21 +930,21 @@ export const CONFIG_SCHEMAS: Record<string, z.ZodSchema> = {
   // ──────────────────────────────────────────
   'github-actions': githubActionsConfigSchema,
   'gitlab-ci': gitlabCIConfigSchema,
-  'jenkins': jenkinsConfigSchema,
-  'argocd': argoCDConfigSchema,
-  'helm': helmConfigSchema,
+  jenkins: jenkinsConfigSchema,
+  argocd: argoCDConfigSchema,
+  helm: helmConfigSchema,
 
   // ──────────────────────────────────────────
   // Monitoring
   // ──────────────────────────────────────────
-  'prometheus': prometheusConfigSchema,
-  'datadog': datadogConfigSchema,
+  prometheus: prometheusConfigSchema,
+  datadog: datadogConfigSchema,
 
   // ──────────────────────────────────────────
   // Messaging (Self-hosted)
   // ──────────────────────────────────────────
-  'rabbitmq': rabbitmqConfigSchema,
-  'kafka': kafkaConfigSchema,
+  rabbitmq: rabbitmqConfigSchema,
+  kafka: kafkaConfigSchema,
 
   // ──────────────────────────────────────────
   // Firebase
@@ -829,7 +952,7 @@ export const CONFIG_SCHEMAS: Record<string, z.ZodSchema> = {
   'gcp-firebase': genericConfigSchema,
 
   // Default for everything else
-  'default': genericConfigSchema,
+  default: genericConfigSchema,
 }
 
 // Helper to get schema for a component

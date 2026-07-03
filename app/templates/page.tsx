@@ -8,9 +8,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
-  ArrowLeft, Layers, Search, Server,
-  Database, Shield, Globe, Cpu, HardDrive, Network,
-  Box, Copy
+  ArrowLeft,
+  Layers,
+  Search,
+  Server,
+  Database,
+  Shield,
+  Globe,
+  Cpu,
+  HardDrive,
+  Network,
+  Box,
+  Copy,
 } from 'lucide-react'
 import { LogoIcon } from '@/components/logo'
 import { useRouter } from 'next/navigation'
@@ -36,10 +45,30 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'web',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'custom', position: { x: 250, y: 50 }, data: { componentId: 'aws-alb', label: 'Load Balancer' } },
-      { id: '2', type: 'custom', position: { x: 100, y: 200 }, data: { componentId: 'aws-ec2', label: 'Web Server 1' } },
-      { id: '3', type: 'custom', position: { x: 400, y: 200 }, data: { componentId: 'aws-ec2', label: 'Web Server 2' } },
-      { id: '4', type: 'custom', position: { x: 250, y: 350 }, data: { componentId: 'aws-rds', label: 'Database' } },
+      {
+        id: '1',
+        type: 'custom',
+        position: { x: 250, y: 50 },
+        data: { componentId: 'aws-alb', label: 'Load Balancer' },
+      },
+      {
+        id: '2',
+        type: 'custom',
+        position: { x: 100, y: 200 },
+        data: { componentId: 'aws-ec2', label: 'Web Server 1' },
+      },
+      {
+        id: '3',
+        type: 'custom',
+        position: { x: 400, y: 200 },
+        data: { componentId: 'aws-ec2', label: 'Web Server 2' },
+      },
+      {
+        id: '4',
+        type: 'custom',
+        position: { x: 250, y: 350 },
+        data: { componentId: 'aws-rds', label: 'Database' },
+      },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -51,18 +80,59 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
   },
   {
     name: 'Microservices Architecture',
-    description: 'Containerized microservices with API Gateway, multiple services, and message queue',
+    description:
+      'Containerized microservices with API Gateway, multiple services, and message queue',
     category: 'microservices',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-api-gateway', label: 'API Gateway' } },
-      { id: '2', type: 'custom', position: { x: 100, y: 180 }, data: { componentId: 'aws-ec2', label: 'User Service' } },
-      { id: '3', type: 'custom', position: { x: 300, y: 180 }, data: { componentId: 'aws-ec2', label: 'Order Service' } },
-      { id: '4', type: 'custom', position: { x: 500, y: 180 }, data: { componentId: 'aws-ec2', label: 'Payment Service' } },
-      { id: '5', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'aws-sqs', label: 'Message Queue' } },
-      { id: '6', type: 'custom', position: { x: 100, y: 450 }, data: { componentId: 'aws-rds', label: 'Users DB' } },
-      { id: '7', type: 'custom', position: { x: 300, y: 450 }, data: { componentId: 'aws-rds', label: 'Orders DB' } },
-      { id: '8', type: 'custom', position: { x: 500, y: 450 }, data: { componentId: 'aws-rds', label: 'Payments DB' } },
+      {
+        id: '1',
+        type: 'custom',
+        position: { x: 300, y: 50 },
+        data: { componentId: 'aws-api-gateway', label: 'API Gateway' },
+      },
+      {
+        id: '2',
+        type: 'custom',
+        position: { x: 100, y: 180 },
+        data: { componentId: 'aws-ec2', label: 'User Service' },
+      },
+      {
+        id: '3',
+        type: 'custom',
+        position: { x: 300, y: 180 },
+        data: { componentId: 'aws-ec2', label: 'Order Service' },
+      },
+      {
+        id: '4',
+        type: 'custom',
+        position: { x: 500, y: 180 },
+        data: { componentId: 'aws-ec2', label: 'Payment Service' },
+      },
+      {
+        id: '5',
+        type: 'custom',
+        position: { x: 300, y: 320 },
+        data: { componentId: 'aws-sqs', label: 'Message Queue' },
+      },
+      {
+        id: '6',
+        type: 'custom',
+        position: { x: 100, y: 450 },
+        data: { componentId: 'aws-rds', label: 'Users DB' },
+      },
+      {
+        id: '7',
+        type: 'custom',
+        position: { x: 300, y: 450 },
+        data: { componentId: 'aws-rds', label: 'Orders DB' },
+      },
+      {
+        id: '8',
+        type: 'custom',
+        position: { x: 500, y: 450 },
+        data: { componentId: 'aws-rds', label: 'Payments DB' },
+      },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -83,11 +153,36 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'serverless',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-api-gateway', label: 'API Gateway' } },
-      { id: '2', type: 'custom', position: { x: 150, y: 180 }, data: { componentId: 'aws-lambda', label: 'Lambda Auth' } },
-      { id: '3', type: 'custom', position: { x: 450, y: 180 }, data: { componentId: 'aws-lambda', label: 'Lambda API' } },
-      { id: '4', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'dynamodb', label: 'DynamoDB' } },
-      { id: '5', type: 'custom', position: { x: 500, y: 320 }, data: { componentId: 'aws-s3', label: 'S3 Storage' } },
+      {
+        id: '1',
+        type: 'custom',
+        position: { x: 300, y: 50 },
+        data: { componentId: 'aws-api-gateway', label: 'API Gateway' },
+      },
+      {
+        id: '2',
+        type: 'custom',
+        position: { x: 150, y: 180 },
+        data: { componentId: 'aws-lambda', label: 'Lambda Auth' },
+      },
+      {
+        id: '3',
+        type: 'custom',
+        position: { x: 450, y: 180 },
+        data: { componentId: 'aws-lambda', label: 'Lambda API' },
+      },
+      {
+        id: '4',
+        type: 'custom',
+        position: { x: 300, y: 320 },
+        data: { componentId: 'dynamodb', label: 'DynamoDB' },
+      },
+      {
+        id: '5',
+        type: 'custom',
+        position: { x: 500, y: 320 },
+        data: { componentId: 'aws-s3', label: 'S3 Storage' },
+      },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -103,9 +198,24 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'web',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-route53', label: 'Route 53' } },
-      { id: '2', type: 'custom', position: { x: 300, y: 180 }, data: { componentId: 'aws-cloudfront', label: 'CloudFront' } },
-      { id: '3', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'aws-s3', label: 'S3 Bucket' } },
+      {
+        id: '1',
+        type: 'custom',
+        position: { x: 300, y: 50 },
+        data: { componentId: 'aws-route53', label: 'Route 53' },
+      },
+      {
+        id: '2',
+        type: 'custom',
+        position: { x: 300, y: 180 },
+        data: { componentId: 'aws-cloudfront', label: 'CloudFront' },
+      },
+      {
+        id: '3',
+        type: 'custom',
+        position: { x: 300, y: 320 },
+        data: { componentId: 'aws-s3', label: 'S3 Bucket' },
+      },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -119,11 +229,36 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'analytics',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'custom', position: { x: 100, y: 150 }, data: { componentId: 'aws-ec2', label: 'Data Source' } },
-      { id: '2', type: 'custom', position: { x: 300, y: 150 }, data: { componentId: 'aws-kinesis', label: 'Kinesis Stream' } },
-      { id: '3', type: 'custom', position: { x: 500, y: 150 }, data: { componentId: 'aws-lambda', label: 'Lambda Process' } },
-      { id: '4', type: 'custom', position: { x: 300, y: 300 }, data: { componentId: 'aws-s3', label: 'S3 Data Lake' } },
-      { id: '5', type: 'custom', position: { x: 500, y: 300 }, data: { componentId: 'aws-rds', label: 'Data Warehouse' } },
+      {
+        id: '1',
+        type: 'custom',
+        position: { x: 100, y: 150 },
+        data: { componentId: 'aws-ec2', label: 'Data Source' },
+      },
+      {
+        id: '2',
+        type: 'custom',
+        position: { x: 300, y: 150 },
+        data: { componentId: 'aws-kinesis', label: 'Kinesis Stream' },
+      },
+      {
+        id: '3',
+        type: 'custom',
+        position: { x: 500, y: 150 },
+        data: { componentId: 'aws-lambda', label: 'Lambda Process' },
+      },
+      {
+        id: '4',
+        type: 'custom',
+        position: { x: 300, y: 300 },
+        data: { componentId: 'aws-s3', label: 'S3 Data Lake' },
+      },
+      {
+        id: '5',
+        type: 'custom',
+        position: { x: 500, y: 300 },
+        data: { componentId: 'aws-rds', label: 'Data Warehouse' },
+      },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -139,12 +274,42 @@ const defaultTemplates: Omit<Template, 'id' | 'created_at'>[] = [
     category: 'containers',
     cloud_provider: 'aws',
     nodes: [
-      { id: '1', type: 'custom', position: { x: 300, y: 50 }, data: { componentId: 'aws-alb', label: 'ALB Ingress' } },
-      { id: '2', type: 'custom', position: { x: 300, y: 180 }, data: { componentId: 'aws-eks', label: 'EKS Cluster' } },
-      { id: '3', type: 'custom', position: { x: 100, y: 320 }, data: { componentId: 'aws-ec2', label: 'Node Group 1' } },
-      { id: '4', type: 'custom', position: { x: 300, y: 320 }, data: { componentId: 'aws-ec2', label: 'Node Group 2' } },
-      { id: '5', type: 'custom', position: { x: 500, y: 320 }, data: { componentId: 'aws-ec2', label: 'Node Group 3' } },
-      { id: '6', type: 'custom', position: { x: 300, y: 450 }, data: { componentId: 'aws-rds', label: 'RDS Database' } },
+      {
+        id: '1',
+        type: 'custom',
+        position: { x: 300, y: 50 },
+        data: { componentId: 'aws-alb', label: 'ALB Ingress' },
+      },
+      {
+        id: '2',
+        type: 'custom',
+        position: { x: 300, y: 180 },
+        data: { componentId: 'aws-eks', label: 'EKS Cluster' },
+      },
+      {
+        id: '3',
+        type: 'custom',
+        position: { x: 100, y: 320 },
+        data: { componentId: 'aws-ec2', label: 'Node Group 1' },
+      },
+      {
+        id: '4',
+        type: 'custom',
+        position: { x: 300, y: 320 },
+        data: { componentId: 'aws-ec2', label: 'Node Group 2' },
+      },
+      {
+        id: '5',
+        type: 'custom',
+        position: { x: 500, y: 320 },
+        data: { componentId: 'aws-ec2', label: 'Node Group 3' },
+      },
+      {
+        id: '6',
+        type: 'custom',
+        position: { x: 300, y: 450 },
+        data: { componentId: 'aws-rds', label: 'RDS Database' },
+      },
     ],
     edges: [
       { id: 'e1-2', source: '1', target: '2' },
@@ -213,7 +378,9 @@ export default function TemplatesPage() {
 
   const handleUseTemplate = async (template: Template) => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       toast.error('Authentication required', { description: 'Please log in to use templates' })
@@ -237,30 +404,33 @@ export default function TemplatesPage() {
       if (projectError) throw projectError
 
       // Create diagram with template nodes/edges
-      const { error: diagramError } = await supabase
-        .from('diagrams')
-        .insert({
-          project_id: project.id,
-          name: 'Main Diagram',
-          nodes: template.nodes,
-          edges: template.edges,
-        })
+      const { error: diagramError } = await supabase.from('diagrams').insert({
+        project_id: project.id,
+        name: 'Main Diagram',
+        nodes: template.nodes,
+        edges: template.edges,
+      })
 
       if (diagramError) throw diagramError
 
-      toast.success('Project created!', { description: 'Template has been applied to your new project' })
+      toast.success('Project created!', {
+        description: 'Template has been applied to your new project',
+      })
 
       // Redirect to the new project
       router.push(`/projects/${project.id}`)
     } catch (error: unknown) {
-      toast.error('Error', { description: (error as Error).message || 'Failed to create project from template' })
+      toast.error('Error', {
+        description: (error as Error).message || 'Failed to create project from template',
+      })
     }
   }
 
   const categories = [...new Set(templates.map(t => t.category))]
 
   const filteredTemplates = templates.filter(t => {
-    const matchesSearch = !searchQuery ||
+    const matchesSearch =
+      !searchQuery ||
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.description?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = !selectedCategory || t.category === selectedCategory
@@ -305,7 +475,7 @@ export default function TemplatesPage() {
             <Input
               placeholder="Search templates..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -338,7 +508,7 @@ export default function TemplatesPage() {
         {/* Templates Grid */}
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map(i => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
                   <div className="h-6 bg-muted rounded w-3/4 mb-2" />
@@ -357,16 +527,21 @@ export default function TemplatesPage() {
               <Layers className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">No templates found</h3>
               <p className="text-muted-foreground">
-                {searchQuery ? 'Try a different search term' : 'No templates available in this category'}
+                {searchQuery
+                  ? 'Try a different search term'
+                  : 'No templates available in this category'}
               </p>
             </div>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => {
+            {filteredTemplates.map(template => {
               const CategoryIcon = categoryIcons[template.category] || Layers
               return (
-                <Card key={template.id} className="group hover:shadow-lg transition-all hover:border-primary/50">
+                <Card
+                  key={template.id}
+                  className="group hover:shadow-lg transition-all hover:border-primary/50"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
@@ -384,9 +559,7 @@ export default function TemplatesPage() {
                         {template.cloud_provider}
                       </Badge>
                     </div>
-                    <CardDescription className="mt-2">
-                      {template.description}
-                    </CardDescription>
+                    <CardDescription className="mt-2">{template.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {/* Mini preview */}

@@ -23,7 +23,9 @@ export async function POST(req: NextRequest) {
     const { nodes, edges, environment } = parsed.data
 
     // Generate TF to see if we have valid outputs
-    const result = generateTerraformWithValidation(nodes as Node[], edges as Edge[], { environment })
+    const result = generateTerraformWithValidation(nodes as Node[], edges as Edge[], {
+      environment,
+    })
 
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
@@ -66,7 +68,9 @@ export async function POST(req: NextRequest) {
           send('\n')
         }
 
-        send('\x1b[1mTerraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:\x1b[0m\n')
+        send(
+          '\x1b[1mTerraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:\x1b[0m\n'
+        )
         send('  \x1b[32m+\x1b[0m create\n\n')
         await sleep(800)
 
@@ -93,14 +97,14 @@ export async function POST(req: NextRequest) {
         send(`\x1b[1mPlan:\x1b[0m ${resourceCount} to add, 0 to change, 0 to destroy.\n`)
 
         controller.close()
-      }
+      },
     })
 
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        Connection: 'keep-alive',
       },
     })
   } catch (error) {

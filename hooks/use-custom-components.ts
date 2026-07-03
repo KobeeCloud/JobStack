@@ -112,31 +112,28 @@ export function useCustomComponents({ organizationId }: UseCustomComponentsOptio
       }
 
       const component = await res.json()
-      setComponents((prev) => [...prev, component])
+      setComponents(prev => [...prev, component])
       return component as CustomComponentRecord
     },
     [organizationId]
   )
 
-  const updateComponent = useCallback(
-    async (id: string, data: Partial<CustomComponentRecord>) => {
-      const res = await fetch(`/api/custom-components/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
+  const updateComponent = useCallback(async (id: string, data: Partial<CustomComponentRecord>) => {
+    const res = await fetch(`/api/custom-components/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
 
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Failed to update component')
-      }
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error.error || 'Failed to update component')
+    }
 
-      const updated = await res.json()
-      setComponents((prev) => prev.map((c) => (c.id === id ? updated : c)))
-      return updated as CustomComponentRecord
-    },
-    []
-  )
+    const updated = await res.json()
+    setComponents(prev => prev.map(c => (c.id === id ? updated : c)))
+    return updated as CustomComponentRecord
+  }, [])
 
   const deleteComponent = useCallback(async (id: string) => {
     const res = await fetch(`/api/custom-components/${id}`, {
@@ -148,7 +145,7 @@ export function useCustomComponents({ organizationId }: UseCustomComponentsOptio
       throw new Error(error.error || 'Failed to delete component')
     }
 
-    setComponents((prev) => prev.filter((c) => c.id !== id))
+    setComponents(prev => prev.filter(c => c.id !== id))
   }, [])
 
   const duplicateComponent = useCallback(

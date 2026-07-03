@@ -45,19 +45,35 @@ const mockStorage: {
       cloud_provider: 'aws',
       nodes: [
         {
-          id: 'web-1', type: 'custom', position: { x: 200, y: 150 },
-          data: { componentId: 'aws-ec2', label: 'Web Server', config: { size: 't3-medium', replicas: 2, osImage: 'ubuntu-22.04' } },
+          id: 'web-1',
+          type: 'custom',
+          position: { x: 200, y: 150 },
+          data: {
+            componentId: 'aws-ec2',
+            label: 'Web Server',
+            config: { size: 't3-medium', replicas: 2, osImage: 'ubuntu-22.04' },
+          },
         },
         {
-          id: 'db-1', type: 'custom', position: { x: 500, y: 150 },
-          data: { componentId: 'aws-rds', label: 'PostgreSQL DB', config: { sku: 'db.t3.micro', maxSizeGb: 100, backupRetentionDays: 7 } },
+          id: 'db-1',
+          type: 'custom',
+          position: { x: 500, y: 150 },
+          data: {
+            componentId: 'aws-rds',
+            label: 'PostgreSQL DB',
+            config: { sku: 'db.t3.micro', maxSizeGb: 100, backupRetentionDays: 7 },
+          },
         },
         {
-          id: 'cdn-1', type: 'custom', position: { x: 200, y: -50 },
+          id: 'cdn-1',
+          type: 'custom',
+          position: { x: 200, y: -50 },
           data: { componentId: 'aws-cloudfront', label: 'CloudFront CDN', config: {} },
         },
         {
-          id: 's3-1', type: 'custom', position: { x: 500, y: -50 },
+          id: 's3-1',
+          type: 'custom',
+          position: { x: 500, y: -50 },
           data: { componentId: 'aws-s3', label: 'Static Assets', config: { size: 50 } },
         },
       ],
@@ -78,28 +94,44 @@ const mockStorage: {
       cloud_provider: 'aws',
       nodes: [
         {
-          id: 'apigw-1', type: 'custom', position: { x: 250, y: -50 },
+          id: 'apigw-1',
+          type: 'custom',
+          position: { x: 250, y: -50 },
           data: { componentId: 'aws-api-gateway', label: 'API Gateway', config: {} },
         },
         {
-          id: 'eks-1', type: 'custom', position: { x: 250, y: 150 },
+          id: 'eks-1',
+          type: 'custom',
+          position: { x: 250, y: 150 },
           data: { componentId: 'aws-eks', label: 'EKS Cluster', config: { replicas: 3 } },
         },
         {
-          id: 'ecr-1', type: 'custom', position: { x: 500, y: 0 },
+          id: 'ecr-1',
+          type: 'custom',
+          position: { x: 500, y: 0 },
           data: { componentId: 'aws-ecr', label: 'Container Registry', config: {} },
         },
         {
-          id: 'sqs-1', type: 'custom', position: { x: 500, y: 200 },
+          id: 'sqs-1',
+          type: 'custom',
+          position: { x: 500, y: 200 },
           data: { componentId: 'aws-sqs', label: 'Message Queue', config: {} },
         },
         {
-          id: 'cache-1', type: 'custom', position: { x: 0, y: 200 },
+          id: 'cache-1',
+          type: 'custom',
+          position: { x: 0, y: 200 },
           data: { componentId: 'aws-elasticache', label: 'Redis Cache', config: {} },
         },
         {
-          id: 'rds-1', type: 'custom', position: { x: 250, y: 350 },
-          data: { componentId: 'aws-rds', label: 'Primary DB', config: { sku: 'db.t3.medium', backupRetentionDays: 14 } },
+          id: 'rds-1',
+          type: 'custom',
+          position: { x: 250, y: 350 },
+          data: {
+            componentId: 'aws-rds',
+            label: 'Primary DB',
+            config: { sku: 'db.t3.medium', backupRetentionDays: 14 },
+          },
         },
       ],
       edges: [
@@ -121,23 +153,33 @@ const mockStorage: {
       cloud_provider: 'aws',
       nodes: [
         {
-          id: 'apigw-1', type: 'custom', position: { x: 250, y: -50 },
+          id: 'apigw-1',
+          type: 'custom',
+          position: { x: 250, y: -50 },
           data: { componentId: 'aws-api-gateway', label: 'API Gateway', config: {} },
         },
         {
-          id: 'lambda-1', type: 'custom', position: { x: 250, y: 150 },
+          id: 'lambda-1',
+          type: 'custom',
+          position: { x: 250, y: 150 },
           data: { componentId: 'aws-lambda', label: 'Lambda Functions', config: { replicas: 1 } },
         },
         {
-          id: 'dynamo-1', type: 'custom', position: { x: 500, y: 150 },
+          id: 'dynamo-1',
+          type: 'custom',
+          position: { x: 500, y: 150 },
           data: { componentId: 'aws-dynamodb', label: 'DynamoDB Table', config: {} },
         },
         {
-          id: 's3-1', type: 'custom', position: { x: 0, y: 150 },
+          id: 's3-1',
+          type: 'custom',
+          position: { x: 0, y: 150 },
           data: { componentId: 'aws-s3', label: 'S3 Bucket', config: { size: 100 } },
         },
         {
-          id: 'cw-1', type: 'custom', position: { x: 250, y: 350 },
+          id: 'cw-1',
+          type: 'custom',
+          position: { x: 250, y: 350 },
           data: { componentId: 'aws-cloudwatch', label: 'CloudWatch Logs', config: {} },
         },
       ],
@@ -159,27 +201,39 @@ const mockStorage: {
       cloud_provider: 'aws',
       nodes: [
         {
-          id: 'kinesis-1', type: 'custom', position: { x: 0, y: 150 },
+          id: 'kinesis-1',
+          type: 'custom',
+          position: { x: 0, y: 150 },
           data: { componentId: 'aws-kinesis', label: 'Kinesis Stream', config: {} },
         },
         {
-          id: 'lambda-1', type: 'custom', position: { x: 250, y: 150 },
+          id: 'lambda-1',
+          type: 'custom',
+          position: { x: 250, y: 150 },
           data: { componentId: 'aws-lambda', label: 'Stream Processor', config: {} },
         },
         {
-          id: 'redshift-1', type: 'custom', position: { x: 500, y: 150 },
+          id: 'redshift-1',
+          type: 'custom',
+          position: { x: 500, y: 150 },
           data: { componentId: 'aws-redshift', label: 'Redshift DWH', config: {} },
         },
         {
-          id: 's3-1', type: 'custom', position: { x: 250, y: -50 },
+          id: 's3-1',
+          type: 'custom',
+          position: { x: 250, y: -50 },
           data: { componentId: 'aws-s3', label: 'Data Lake (S3)', config: { size: 10000 } },
         },
         {
-          id: 'glue-1', type: 'custom', position: { x: 500, y: -50 },
+          id: 'glue-1',
+          type: 'custom',
+          position: { x: 500, y: -50 },
           data: { componentId: 'aws-glue', label: 'Glue ETL Jobs', config: {} },
         },
         {
-          id: 'cw-1', type: 'custom', position: { x: 750, y: 150 },
+          id: 'cw-1',
+          type: 'custom',
+          position: { x: 750, y: 150 },
           data: { componentId: 'aws-cloudwatch', label: 'Monitoring', config: {} },
         },
       ],
@@ -202,27 +256,47 @@ const mockStorage: {
       cloud_provider: 'azure',
       nodes: [
         {
-          id: 'appgw-1', type: 'custom', position: { x: 250, y: -50 },
+          id: 'appgw-1',
+          type: 'custom',
+          position: { x: 250, y: -50 },
           data: { componentId: 'azure-app-gw', label: 'Application Gateway', config: {} },
         },
         {
-          id: 'app-1', type: 'custom', position: { x: 250, y: 150 },
-          data: { componentId: 'azure-app-service', label: 'App Service', config: { sku: 'S1', runtime: 'node|20-lts', alwaysOn: true } },
+          id: 'app-1',
+          type: 'custom',
+          position: { x: 250, y: 150 },
+          data: {
+            componentId: 'azure-app-service',
+            label: 'App Service',
+            config: { sku: 'S1', runtime: 'node|20-lts', alwaysOn: true },
+          },
         },
         {
-          id: 'sql-1', type: 'custom', position: { x: 500, y: 150 },
-          data: { componentId: 'azure-sql', label: 'Azure SQL', config: { sku: 'S2', maxSizeGb: 50, backupRetentionDays: 7 } },
+          id: 'sql-1',
+          type: 'custom',
+          position: { x: 500, y: 150 },
+          data: {
+            componentId: 'azure-sql',
+            label: 'Azure SQL',
+            config: { sku: 'S2', maxSizeGb: 50, backupRetentionDays: 7 },
+          },
         },
         {
-          id: 'redis-1', type: 'custom', position: { x: 0, y: 150 },
+          id: 'redis-1',
+          type: 'custom',
+          position: { x: 0, y: 150 },
           data: { componentId: 'azure-redis', label: 'Redis Cache', config: {} },
         },
         {
-          id: 'kv-1', type: 'custom', position: { x: 250, y: 350 },
+          id: 'kv-1',
+          type: 'custom',
+          position: { x: 250, y: 350 },
           data: { componentId: 'azure-key-vault', label: 'Key Vault', config: {} },
         },
         {
-          id: 'ai-1', type: 'custom', position: { x: 500, y: 350 },
+          id: 'ai-1',
+          type: 'custom',
+          position: { x: 500, y: 350 },
           data: { componentId: 'azure-app-insights', label: 'App Insights', config: {} },
         },
       ],
@@ -245,27 +319,43 @@ const mockStorage: {
       cloud_provider: 'azure',
       nodes: [
         {
-          id: 'appgw-1', type: 'custom', position: { x: 300, y: -50 },
+          id: 'appgw-1',
+          type: 'custom',
+          position: { x: 300, y: -50 },
           data: { componentId: 'azure-app-gw', label: 'Application Gateway', config: {} },
         },
         {
-          id: 'aks-1', type: 'custom', position: { x: 300, y: 150 },
+          id: 'aks-1',
+          type: 'custom',
+          position: { x: 300, y: 150 },
           data: { componentId: 'azure-aks', label: 'AKS Cluster', config: { replicas: 3 } },
         },
         {
-          id: 'acr-1', type: 'custom', position: { x: 600, y: 50 },
+          id: 'acr-1',
+          type: 'custom',
+          position: { x: 600, y: 50 },
           data: { componentId: 'azure-acr', label: 'Container Registry', config: {} },
         },
         {
-          id: 'sql-1', type: 'custom', position: { x: 600, y: 250 },
-          data: { componentId: 'azure-sql', label: 'Azure SQL', config: { sku: 'P1', maxSizeGb: 250 } },
+          id: 'sql-1',
+          type: 'custom',
+          position: { x: 600, y: 250 },
+          data: {
+            componentId: 'azure-sql',
+            label: 'Azure SQL',
+            config: { sku: 'P1', maxSizeGb: 250 },
+          },
         },
         {
-          id: 'kv-1', type: 'custom', position: { x: 0, y: 150 },
+          id: 'kv-1',
+          type: 'custom',
+          position: { x: 0, y: 150 },
           data: { componentId: 'azure-key-vault', label: 'Key Vault', config: {} },
         },
         {
-          id: 'ai-1', type: 'custom', position: { x: 300, y: 350 },
+          id: 'ai-1',
+          type: 'custom',
+          position: { x: 300, y: 350 },
           data: { componentId: 'azure-app-insights', label: 'App Insights', config: {} },
         },
       ],
@@ -315,9 +405,42 @@ mockStorage.diagrams.set('demo-diagram-001', {
   project_id: demoProjectId,
   name: 'Main Architecture',
   nodes: [
-    { id: 'node-1', type: 'custom', position: { x: 100, y: 100 }, data: { label: 'Web Server', componentId: 'aws-ec2', provider: 'aws', service: 'EC2', monthlyCost: 25 } },
-    { id: 'node-2', type: 'custom', position: { x: 350, y: 100 }, data: { label: 'Database', componentId: 'aws-rds', provider: 'aws', service: 'RDS', monthlyCost: 50 } },
-    { id: 'node-3', type: 'custom', position: { x: 225, y: 250 }, data: { label: 'S3 Storage', componentId: 'aws-s3', provider: 'aws', service: 'S3', monthlyCost: 5 } },
+    {
+      id: 'node-1',
+      type: 'custom',
+      position: { x: 100, y: 100 },
+      data: {
+        label: 'Web Server',
+        componentId: 'aws-ec2',
+        provider: 'aws',
+        service: 'EC2',
+        monthlyCost: 25,
+      },
+    },
+    {
+      id: 'node-2',
+      type: 'custom',
+      position: { x: 350, y: 100 },
+      data: {
+        label: 'Database',
+        componentId: 'aws-rds',
+        provider: 'aws',
+        service: 'RDS',
+        monthlyCost: 50,
+      },
+    },
+    {
+      id: 'node-3',
+      type: 'custom',
+      position: { x: 225, y: 250 },
+      data: {
+        label: 'S3 Storage',
+        componentId: 'aws-s3',
+        provider: 'aws',
+        service: 'S3',
+        monthlyCost: 5,
+      },
+    },
   ],
   edges: [
     { id: 'edge-1', source: 'node-1', target: 'node-2', animated: true },
@@ -446,9 +569,9 @@ export function createMockSupabaseClient() {
             let result = [...filteredData]
             for (const filter of filters) {
               if (filter.op === 'eq') {
-                result = result.filter((item) => item[filter.column] === filter.value)
+                result = result.filter(item => item[filter.column] === filter.value)
               } else if (filter.op === 'neq') {
-                result = result.filter((item) => item[filter.column] !== filter.value)
+                result = result.filter(item => item[filter.column] !== filter.value)
               }
             }
             return result

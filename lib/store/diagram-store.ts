@@ -79,7 +79,7 @@ interface DiagramState {
   setCodePreviewZipName: (name: string) => void
 }
 
-export const useDiagramStore = create<DiagramState>((set) => ({
+export const useDiagramStore = create<DiagramState>(set => ({
   nodes: [],
   edges: [],
   diagramId: null,
@@ -111,44 +111,47 @@ export const useDiagramStore = create<DiagramState>((set) => ({
   codePreviewTitle: '',
   codePreviewZipName: 'output.zip',
 
-  setNodes: (updater) => set((state) => ({
-    nodes: typeof updater === 'function' ? updater(state.nodes) : updater,
-    terraformDirty: true
-  })),
+  setNodes: updater =>
+    set(state => ({
+      nodes: typeof updater === 'function' ? updater(state.nodes) : updater,
+      terraformDirty: true,
+    })),
 
-  setEdges: (updater) => set((state) => ({
-    edges: typeof updater === 'function' ? updater(state.edges) : updater
-  })),
+  setEdges: updater =>
+    set(state => ({
+      edges: typeof updater === 'function' ? updater(state.edges) : updater,
+    })),
 
-  setDiagramId: (id) => set({ diagramId: id }),
+  setDiagramId: id => set({ diagramId: id }),
 
-  setSelectedNode: (node) => set({ selectedNode: node }),
-  setConfigPanelOpen: (open) => set({ configPanelOpen: open }),
+  setSelectedNode: node => set({ selectedNode: node }),
+  setConfigPanelOpen: open => set({ configPanelOpen: open }),
 
-  setActivePanel: (panel) => set((state) => ({
-    // If trying to open a panel that is already open, close it instead
-    activePanel: state.activePanel === panel ? 'none' : panel
-  })),
+  setActivePanel: panel =>
+    set(state => ({
+      // If trying to open a panel that is already open, close it instead
+      activePanel: state.activePanel === panel ? 'none' : panel,
+    })),
 
-  setAiIssues: (issues) => set({ aiIssues: issues }),
-  setAiAnalyzing: (analyzing) => set({ aiAnalyzing: analyzing }),
+  setAiIssues: issues => set({ aiIssues: issues }),
+  setAiAnalyzing: analyzing => set({ aiAnalyzing: analyzing }),
 
-  setComplianceReport: (report) => set({ complianceReport: report }),
-  setComplianceScanning: (scanning) => set({ complianceScanning: scanning }),
+  setComplianceReport: report => set({ complianceReport: report }),
+  setComplianceScanning: scanning => set({ complianceScanning: scanning }),
 
-  setTestResults: (results) => set({ testResults: results }),
-  setTesting: (testing) => set({ testing: testing }),
+  setTestResults: results => set({ testResults: results }),
+  setTesting: testing => set({ testing: testing }),
 
-  setHighlightedNodeId: (id) => set({ highlightedNodeId: id }),
+  setHighlightedNodeId: id => set({ highlightedNodeId: id }),
 
-  setTemplateDialogOpen: (open) => set({ templateDialogOpen: open }),
-  setShowK8sWizard: (show) => set({ showK8sWizard: show }),
-  setShowGovernanceWizard: (show) => set({ showGovernanceWizard: show }),
-  setShowQuickBuild: (show) => set({ showQuickBuild: show }),
+  setTemplateDialogOpen: open => set({ templateDialogOpen: open }),
+  setShowK8sWizard: show => set({ showK8sWizard: show }),
+  setShowGovernanceWizard: show => set({ showGovernanceWizard: show }),
+  setShowQuickBuild: show => set({ showQuickBuild: show }),
 
-  setTerraformDirty: (dirty) => set({ terraformDirty: dirty }),
-  setCodePreviewOpen: (open) => set({ codePreviewOpen: open }),
-  setCodePreviewFiles: (files) => set({ codePreviewFiles: files }),
-  setCodePreviewTitle: (title) => set({ codePreviewTitle: title }),
-  setCodePreviewZipName: (name) => set({ codePreviewZipName: name }),
+  setTerraformDirty: dirty => set({ terraformDirty: dirty }),
+  setCodePreviewOpen: open => set({ codePreviewOpen: open }),
+  setCodePreviewFiles: files => set({ codePreviewFiles: files }),
+  setCodePreviewTitle: title => set({ codePreviewTitle: title }),
+  setCodePreviewZipName: name => set({ codePreviewZipName: name }),
 }))

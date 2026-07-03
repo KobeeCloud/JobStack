@@ -22,27 +22,34 @@ import {
 export type EdgeSemanticType = 'flow' | 'dependency' | 'peering'
 
 const TYPE_STROKE: Record<EdgeSemanticType, string> = {
-  flow:       'hsl(221 83% 53%)',   // blue-ish primary
-  dependency: '#9ca3af',            // gray-400
-  peering:    '#3b82f6',            // blue-500
+  flow: 'hsl(221 83% 53%)', // blue-ish primary
+  dependency: '#9ca3af', // gray-400
+  peering: '#3b82f6', // blue-500
 }
 
 const TYPE_STROKE_WIDTH: Record<EdgeSemanticType, number> = {
-  flow: 2, dependency: 1.5, peering: 2.5,
+  flow: 2,
+  dependency: 1.5,
+  peering: 2.5,
 }
 
 const TYPE_DASH: Record<EdgeSemanticType, string | undefined> = {
-  flow: undefined, dependency: '6 3', peering: undefined,
+  flow: undefined,
+  dependency: '6 3',
+  peering: undefined,
 }
 
 const TYPE_BADGE: Record<EdgeSemanticType, string> = {
-  flow: '⟶ flow', dependency: '⋯ depends', peering: '⇄ peer',
+  flow: '⟶ flow',
+  dependency: '⋯ depends',
+  peering: '⇄ peer',
 }
 
 const TYPE_BADGE_CLASS: Record<EdgeSemanticType, string> = {
-  flow:       'bg-blue-100/80 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+  flow: 'bg-blue-100/80 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
   dependency: 'bg-muted/80 text-muted-foreground border-border',
-  peering:    'bg-indigo-100/80 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800',
+  peering:
+    'bg-indigo-100/80 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800',
 }
 
 /**
@@ -70,16 +77,21 @@ export function LabeledEdge({
   const edgeType: EdgeSemanticType = (data?.edgeType as EdgeSemanticType) || 'flow'
 
   const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
   })
 
   const stroke = TYPE_STROKE[edgeType]
-  const markerEndId  = `arrowhead-${edgeType}`
+  const markerEndId = `arrowhead-${edgeType}`
   const markerStartId = edgeType === 'peering' ? `arrowhead-${edgeType}` : undefined
 
   const computedStyle: React.CSSProperties = {
     stroke,
-    strokeWidth:    TYPE_STROKE_WIDTH[edgeType],
+    strokeWidth: TYPE_STROKE_WIDTH[edgeType],
     ...(TYPE_DASH[edgeType] ? { strokeDasharray: TYPE_DASH[edgeType] } : {}),
   }
 
@@ -91,22 +103,25 @@ export function LabeledEdge({
 
   const commitEdit = useCallback(() => {
     setEditing(false)
-    setEdges((eds) =>
-      eds.map((e) =>
-        e.id === id ? { ...e, data: { ...e.data, label: inputValue.trim() } } : e
-      )
+    setEdges(eds =>
+      eds.map(e => (e.id === id ? { ...e, data: { ...e.data, label: inputValue.trim() } } : e))
     )
   }, [id, inputValue, setEdges])
 
   // Click type badge to cycle: flow → dependency → peering → flow
-  const cycleType = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    const order: EdgeSemanticType[] = ['flow', 'dependency', 'peering']
-    const next = order[(order.indexOf(edgeType) + 1) % order.length]
-    setEdges((eds) =>
-      eds.map((edge) => (edge.id === id ? { ...edge, data: { ...edge.data, edgeType: next } } : edge))
-    )
-  }, [id, edgeType, setEdges])
+  const cycleType = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      const order: EdgeSemanticType[] = ['flow', 'dependency', 'peering']
+      const next = order[(order.indexOf(edgeType) + 1) % order.length]
+      setEdges(eds =>
+        eds.map(edge =>
+          edge.id === id ? { ...edge, data: { ...edge.data, edgeType: next } } : edge
+        )
+      )
+    },
+    [id, edgeType, setEdges]
+  )
 
   const label = (data?.label as string) || ''
 
@@ -115,12 +130,14 @@ export function LabeledEdge({
       {/* Inline SVG arrowhead markers — defined once per edge instance */}
       <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
         <defs>
-          {(['flow', 'dependency', 'peering'] as const).map((t) => (
+          {(['flow', 'dependency', 'peering'] as const).map(t => (
             <marker
               key={t}
               id={`arrowhead-${t}`}
-              markerWidth="8" markerHeight="8"
-              refX="7" refY="3.5"
+              markerWidth="8"
+              markerHeight="8"
+              refX="7"
+              refY="3.5"
               orient="auto"
             >
               <polygon points="0 0, 8 3.5, 0 7" fill={TYPE_STROKE[t]} />
@@ -159,9 +176,9 @@ export function LabeledEdge({
             <input
               ref={inputRef}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={e => setInputValue(e.target.value)}
               onBlur={commitEdit}
-              onKeyDown={(e) => {
+              onKeyDown={e => {
                 if (e.key === 'Enter') commitEdit()
                 if (e.key === 'Escape') setEditing(false)
               }}

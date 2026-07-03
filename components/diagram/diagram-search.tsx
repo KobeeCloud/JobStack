@@ -4,11 +4,7 @@ import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Search, X, Filter } from 'lucide-react'
 import { Node } from '@xyflow/react'
 import { COMPONENT_CATALOG } from '@/lib/catalog'
@@ -28,23 +24,25 @@ export function DiagramSearch({ nodes, onHighlightNode, onFitNode }: DiagramSear
   const [filterProvider, setFilterProvider] = useState<string | null>(null)
 
   // Get unique categories and providers from nodes
-  const categories = Array.from(new Set(
-    nodes.map(n => {
-      const componentId = (n.data as any).componentId || (n.data as any).component
-      const comp = COMPONENT_CATALOG.find(c => c.id === componentId)
-      return comp?.category
-    }).filter(Boolean)
-  ))
+  const categories = Array.from(
+    new Set(
+      nodes
+        .map(n => {
+          const componentId = (n.data as any).componentId || (n.data as any).component
+          const comp = COMPONENT_CATALOG.find(c => c.id === componentId)
+          return comp?.category
+        })
+        .filter(Boolean)
+    )
+  )
 
-  const providers = Array.from(new Set(
-    nodes.map(n => (n.data as any).provider).filter(Boolean)
-  ))
+  const providers = Array.from(new Set(nodes.map(n => (n.data as any).provider).filter(Boolean)))
 
   // Search logic
   useEffect(() => {
     if (!searchQuery && !filterCategory && !filterProvider) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setResults(prev => prev.length === 0 ? prev : [])
+      setResults(prev => (prev.length === 0 ? prev : []))
       return
     }
 
@@ -56,7 +54,8 @@ export function DiagramSearch({ nodes, onHighlightNode, onFitNode }: DiagramSear
       const query = searchQuery.toLowerCase()
 
       // Text search
-      const matchesQuery = !searchQuery ||
+      const matchesQuery =
+        !searchQuery ||
         label.includes(query) ||
         componentId.toLowerCase().includes(query) ||
         component?.name.toLowerCase().includes(query)
@@ -139,11 +138,7 @@ export function DiagramSearch({ nodes, onHighlightNode, onFitNode }: DiagramSear
     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-background/90 backdrop-blur shadow-md"
-          >
+          <Button variant="outline" size="sm" className="bg-background/90 backdrop-blur shadow-md">
             <Search className="h-4 w-4 mr-2" />
             Search Components
             <kbd className="ml-2 text-[10px] bg-muted px-1 rounded">⌘F</kbd>
@@ -157,7 +152,7 @@ export function DiagramSearch({ nodes, onHighlightNode, onFitNode }: DiagramSear
               <Input
                 placeholder="Search by name, type..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="pl-8 pr-8"
                 autoFocus
               />

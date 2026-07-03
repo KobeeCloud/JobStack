@@ -11,7 +11,11 @@ export const GET = createApiHandler(
       limit: searchParams.get('limit') || '20',
     })
 
-    const { data: projects, error, count } = await auth.supabase
+    const {
+      data: projects,
+      error,
+      count,
+    } = await auth.supabase
       .from('projects')
       .select('*', { count: 'exact' })
       .or(`user_id.eq.${auth.user.id},organization_id.not.is.null`)
@@ -73,11 +77,21 @@ export const POST = createApiHandler(
       .single()
 
     if (error) {
-      log.error('Failed to create project', error, { userId: auth.user.id, projectName: body?.name })
-      return NextResponse.json({ error: error.message || 'Failed to create project', details: error.details || error }, { status: 500 })
+      log.error('Failed to create project', error, {
+        userId: auth.user.id,
+        projectName: body?.name,
+      })
+      return NextResponse.json(
+        { error: error.message || 'Failed to create project', details: error.details || error },
+        { status: 500 }
+      )
     }
 
-    log.info('Project created', { projectId: project.id, userId: auth.user.id, organization_id: body.organization_id ?? null })
+    log.info('Project created', {
+      projectId: project.id,
+      userId: auth.user.id,
+      organization_id: body.organization_id ?? null,
+    })
 
     // If a template was selected, load it and create an initial diagram
     if (body.templateId) {
@@ -88,14 +102,12 @@ export const POST = createApiHandler(
         .single()
 
       if (template) {
-        const { error: diagramError } = await auth.supabase
-          .from('diagrams')
-          .insert({
-            project_id: project.id,
-            name: template.name ?? 'Main Diagram',
-            nodes: template.nodes ?? [],
-            edges: template.edges ?? [],
-          })
+        const { error: diagramError } = await auth.supabase.from('diagrams').insert({
+          project_id: project.id,
+          name: template.name ?? 'Main Diagram',
+          nodes: template.nodes ?? [],
+          edges: template.edges ?? [],
+        })
 
         if (diagramError) {
           log.error('Failed to create initial diagram from template', diagramError, {
@@ -104,7 +116,10 @@ export const POST = createApiHandler(
           })
           // Non-fatal — project was created, diagram creation failed
         } else {
-          log.info('Initial diagram created from template', { projectId: project.id, templateId: body.templateId })
+          log.info('Initial diagram created from template', {
+            projectId: project.id,
+            templateId: body.templateId,
+          })
         }
       }
     }

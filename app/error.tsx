@@ -30,9 +30,7 @@ export default function GlobalError({
             An unexpected error occurred. Our team has been notified and is working on a fix.
           </p>
           {error.digest && (
-            <p className="text-xs text-muted-foreground font-mono">
-              Error ID: {error.digest}
-            </p>
+            <p className="text-xs text-muted-foreground font-mono">Error ID: {error.digest}</p>
           )}
         </div>
 

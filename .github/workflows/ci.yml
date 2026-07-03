@@ -30,9 +30,11 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - name: npm audit (high + critical)
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
       - name: Check for known vulnerabilities
-        run: npx audit-ci --high
+        # Allowlist: postcss moderate vuln is bundled inside next@latest (unfixable without breaking changes)
+        # Track: https://github.com/advisories/GHSA-qx2v-qp2m-jg93
+        run: npx audit-ci@latest --high --allowlist GHSA-qx2v-qp2m-jg93
 
   test:
     runs-on: ubuntu-latest

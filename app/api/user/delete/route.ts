@@ -21,7 +21,10 @@ export const POST = createApiHandler(
 
     if (error) throw error
 
-    log.info('Account deletion scheduled', { userId: auth.user.id, scheduledFor: scheduledFor.toISOString() })
+    log.info('Account deletion scheduled', {
+      userId: auth.user.id,
+      scheduledFor: scheduledFor.toISOString(),
+    })
 
     return NextResponse.json({
       message: 'Account deletion scheduled',

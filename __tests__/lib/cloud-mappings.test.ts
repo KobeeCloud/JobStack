@@ -93,8 +93,18 @@ describe('convertDiagramToProvider', () => {
 
   it('preserves edge references', () => {
     const nodes = [
-      { id: '1', type: 'custom', position: { x: 0, y: 0 }, data: { component: 'aws-ec2', label: 'A', config: {} } },
-      { id: '2', type: 'custom', position: { x: 0, y: 0 }, data: { component: 'aws-rds', label: 'B', config: {} } },
+      {
+        id: '1',
+        type: 'custom',
+        position: { x: 0, y: 0 },
+        data: { component: 'aws-ec2', label: 'A', config: {} },
+      },
+      {
+        id: '2',
+        type: 'custom',
+        position: { x: 0, y: 0 },
+        data: { component: 'aws-rds', label: 'B', config: {} },
+      },
     ]
     const edges = [{ id: 'e1', source: '1', target: '2', type: 'smoothstep' }]
 

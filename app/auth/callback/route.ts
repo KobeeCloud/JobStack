@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   // ST-1: Validate `next` is a safe relative path to prevent open redirects
   const rawNext = requestUrl.searchParams.get('next') ?? '/dashboard'
-  const isSafeRedirect = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\')
+  const isSafeRedirect =
+    rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\')
   const next = isSafeRedirect ? rawNext : '/dashboard'
   const consentGiven = requestUrl.searchParams.get('consent') === 'true'
   const error_param = requestUrl.searchParams.get('error')
@@ -17,7 +18,10 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth error from provider
   if (error_param) {
-    log.error('OAuth callback error', undefined, { error_param, error_description: error_description ?? undefined })
+    log.error('OAuth callback error', undefined, {
+      error_param,
+      error_description: error_description ?? undefined,
+    })
     return NextResponse.redirect(
       `${origin}/login?error=${encodeURIComponent(error_description || error_param)}`
     )
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookies: Array<{ name: string; value: string; options?: any }>) {
-            cookies.forEach((cookie) => {
+            cookies.forEach(cookie => {
               cookiesToSet.push(cookie)
             })
           },
@@ -53,20 +57,22 @@ export async function GET(request: NextRequest) {
     if (!error) {
       // Ensure a profile row exists (trigger may have failed or fired before
       // raw_user_meta_data was populated for OAuth users)
-      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser()
       if (authUser) {
         try {
           const admin = createAdminClient()
-          const { error: profileError } = await admin.from('profiles').upsert({
-            id: authUser.id,
-            email: authUser.email ?? '',
-            full_name: authUser.user_metadata?.full_name
-              || authUser.user_metadata?.name
-              || null,
-            avatar_url: authUser.user_metadata?.avatar_url
-              || authUser.user_metadata?.picture
-              || null,
-          }, { onConflict: 'id', ignoreDuplicates: false })
+          const { error: profileError } = await admin.from('profiles').upsert(
+            {
+              id: authUser.id,
+              email: authUser.email ?? '',
+              full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+              avatar_url:
+                authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null,
+            },
+            { onConflict: 'id', ignoreDuplicates: false }
+          )
 
           if (profileError) {
             // Log but don't block — the on_auth_user_created trigger is a fallback
@@ -76,10 +82,13 @@ export async function GET(request: NextRequest) {
           // COMPLIANCE: Record ToS consent if user came from registration with consent=true
           if (consentGiven) {
             const now = new Date().toISOString()
-            await admin.from('profiles').update({
-              tos_accepted_at: now,
-              privacy_accepted_at: now,
-            }).eq('id', authUser.id)
+            await admin
+              .from('profiles')
+              .update({
+                tos_accepted_at: now,
+                privacy_accepted_at: now,
+              })
+              .eq('id', authUser.id)
           }
         } catch (adminError) {
           // Admin client not configured (e.g. missing SERVICE_ROLE_KEY) —

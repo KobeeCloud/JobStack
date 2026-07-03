@@ -75,7 +75,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
   const findings: ComplianceFinding[] = []
 
   // CIS 1.1: Ensure encryption at rest is enabled
-  const unencryptedStorage = nodes.filter((n) => {
+  const unencryptedStorage = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     const isStorage =
       component.includes('storage') ||
@@ -96,7 +96,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
       title: 'Encryption at rest not enabled',
       description:
         'Storage resources must have encryption at rest enabled to protect data from unauthorized access.',
-      affectedResources: unencryptedStorage.map((n) => n.id),
+      affectedResources: unencryptedStorage.map(n => n.id),
       remediation: 'Enable encryption at rest using platform-managed or customer-managed keys.',
       references: [
         'https://docs.microsoft.com/azure/storage/common/storage-service-encryption',
@@ -106,7 +106,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
   }
 
   // CIS 1.2: Ensure databases are not publicly accessible
-  const publicDatabases = nodes.filter((n) => {
+  const publicDatabases = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     const isDatabase =
       component.includes('database') ||
@@ -127,7 +127,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
       title: 'Databases publicly accessible',
       description:
         'Databases should not be accessible from the internet. Use private endpoints and VNet integration.',
-      affectedResources: publicDatabases.map((n) => n.id),
+      affectedResources: publicDatabases.map(n => n.id),
       remediation: 'Disable public access and configure Private Link/Private Endpoint.',
       references: [
         'https://docs.microsoft.com/azure/private-link/private-endpoint-overview',
@@ -137,12 +137,12 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
   }
 
   // CIS 2.1: Ensure network security groups are configured
-  const vms = nodes.filter((n) => {
+  const vms = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vm') || component.includes('ec2') || component.includes('compute')
   })
 
-  const nsgs = nodes.filter((n) => {
+  const nsgs = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return (
       component.includes('nsg') ||
@@ -159,7 +159,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
       title: 'Network Security Groups not configured',
       description:
         'Virtual machines must be protected by Network Security Groups to control inbound/outbound traffic.',
-      affectedResources: vms.map((n) => n.id),
+      affectedResources: vms.map(n => n.id),
       remediation: 'Create NSG/Security Groups and associate with VM network interfaces.',
       references: [
         'https://docs.microsoft.com/azure/virtual-network/network-security-groups-overview',
@@ -169,12 +169,12 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
   }
 
   // CIS 3.1: Ensure TLS/SSL is enabled for load balancers
-  const loadBalancers = nodes.filter((n) => {
+  const loadBalancers = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('lb') || component.includes('load-balancer')
   })
 
-  const noTLS = loadBalancers.filter((lb) => {
+  const noTLS = loadBalancers.filter(lb => {
     const config = lb.data.config as any
     return !config?.tls && !config?.https && !config?.ssl
   })
@@ -186,7 +186,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
       severity: 'high',
       title: 'TLS/SSL not configured on load balancers',
       description: 'All external-facing load balancers must use TLS/SSL to encrypt traffic.',
-      affectedResources: noTLS.map((n) => n.id),
+      affectedResources: noTLS.map(n => n.id),
       remediation: 'Configure TLS certificates and redirect HTTP to HTTPS.',
       references: [
         'https://docs.microsoft.com/azure/application-gateway/ssl-overview',
@@ -196,12 +196,12 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
   }
 
   // CIS 4.1: Ensure backups are configured
-  const databases = nodes.filter((n) => {
+  const databases = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
-  const backups = nodes.filter((n) => {
+  const backups = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('backup') || component.includes('vault')
   })
@@ -213,7 +213,7 @@ async function runCISBenchmarkScan(nodes: Node[], _edges: Edge[]): Promise<Compl
       severity: 'critical',
       title: 'Backups not configured',
       description: 'Critical data resources must have automated backup configured.',
-      affectedResources: databases.map((n) => n.id),
+      affectedResources: databases.map(n => n.id),
       remediation: 'Enable automated backups with 7-30 day retention period.',
       references: [
         'https://docs.microsoft.com/azure/backup/backup-overview',
@@ -229,12 +229,12 @@ async function runGDPRScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
   const findings: ComplianceFinding[] = []
 
   // GDPR Art. 32: Encryption of personal data
-  const databases = nodes.filter((n) => {
+  const databases = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
-  const unencryptedDbs = databases.filter((db) => {
+  const unencryptedDbs = databases.filter(db => {
     const config = db.data.config as any
     return !config?.encryption || config?.encryption === false
   })
@@ -245,17 +245,16 @@ async function runGDPRScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
       ruleId: 'GDPR-Art.32',
       severity: 'critical',
       title: 'Personal data not encrypted',
-      description:
-        'GDPR Article 32 requires encryption of personal data at rest and in transit.',
-      affectedResources: unencryptedDbs.map((n) => n.id),
+      description: 'GDPR Article 32 requires encryption of personal data at rest and in transit.',
+      affectedResources: unencryptedDbs.map(n => n.id),
       remediation: 'Enable transparent data encryption (TDE) and use TLS for connections.',
       references: ['https://gdpr-info.eu/art-32-gdpr/'],
     })
   }
 
   // GDPR Art. 25: Data protection by design - geographic restrictions
-  const allResources = nodes.filter((n) => n.data.config)
-  const nonEUResources = allResources.filter((r) => {
+  const allResources = nodes.filter(n => n.data.config)
+  const nonEUResources = allResources.filter(r => {
     const config = r.data.config as any
     const region = (config?.region || '').toLowerCase()
     return (
@@ -275,7 +274,7 @@ async function runGDPRScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
       title: 'Resources deployed outside EU',
       description:
         'GDPR requires personal data of EU citizens to be stored within the EU unless adequate safeguards are in place.',
-      affectedResources: nonEUResources.map((n) => n.id),
+      affectedResources: nonEUResources.map(n => n.id),
       remediation:
         'Deploy resources in EU regions or implement Standard Contractual Clauses (SCCs).',
       references: ['https://gdpr-info.eu/art-25-gdpr/', 'https://gdpr-info.eu/art-44-gdpr/'],
@@ -283,7 +282,7 @@ async function runGDPRScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
   }
 
   // GDPR Art. 32: Logging and monitoring
-  const monitoringComponents = nodes.filter((n) => {
+  const monitoringComponents = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('monitor') || component.includes('log')
   })
@@ -296,7 +295,7 @@ async function runGDPRScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
       title: 'Logging and monitoring not configured',
       description:
         'GDPR requires ability to detect, investigate, and report personal data breaches.',
-      affectedResources: databases.map((n) => n.id),
+      affectedResources: databases.map(n => n.id),
       remediation:
         'Enable diagnostic logs, audit logs, and configure alerts for suspicious activity.',
       references: ['https://gdpr-info.eu/art-32-gdpr/', 'https://gdpr-info.eu/art-33-gdpr/'],
@@ -310,7 +309,7 @@ async function runSOC2Scan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
   const findings: ComplianceFinding[] = []
 
   // SOC2 CC6.1: Logical access controls
-  const identityComponents = nodes.filter((n) => {
+  const identityComponents = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return (
       component.includes('auth') ||
@@ -333,7 +332,7 @@ async function runSOC2Scan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
   }
 
   // SOC2 CC7.2: System monitoring
-  const monitoringComponents = nodes.filter((n) => {
+  const monitoringComponents = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('monitor') || component.includes('application-insights')
   })
@@ -346,8 +345,7 @@ async function runSOC2Scan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFin
       title: 'System monitoring not configured',
       description: 'SOC2 requires continuous monitoring of system performance and availability.',
       affectedResources: [],
-      remediation:
-        'Implement Application Insights, CloudWatch, or similar monitoring solution.',
+      remediation: 'Implement Application Insights, CloudWatch, or similar monitoring solution.',
       references: ['https://www.aicpa.org/interestareas/frc/assuranceadvisoryservices/soc2'],
     })
   }
@@ -359,12 +357,12 @@ async function runPCIDSSScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceF
   const findings: ComplianceFinding[] = []
 
   // PCI-DSS 3.4: Encryption of cardholder data
-  const databases = nodes.filter((n) => {
+  const databases = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
-  const unencrypted = databases.filter((db) => {
+  const unencrypted = databases.filter(db => {
     const config = db.data.config as any
     return !config?.encryption
   })
@@ -376,14 +374,14 @@ async function runPCIDSSScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceF
       severity: 'critical',
       title: 'Cardholder data not encrypted',
       description: 'PCI-DSS requires strong encryption of cardholder data at rest.',
-      affectedResources: unencrypted.map((n) => n.id),
+      affectedResources: unencrypted.map(n => n.id),
       remediation: 'Enable database encryption using AES-256 or stronger.',
       references: ['https://www.pcisecuritystandards.org/documents/PCI_DSS_v3-2-1.pdf'],
     })
   }
 
   // PCI-DSS 1.3: Network segmentation
-  const vnets = nodes.filter((n) => {
+  const vnets = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('vnet') || component.includes('vpc')
   })
@@ -394,7 +392,8 @@ async function runPCIDSSScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceF
       ruleId: 'PCI-DSS-1.3',
       severity: 'critical',
       title: 'Network segmentation not implemented',
-      description: 'PCI-DSS requires cardholder data environment to be segmented from other networks.',
+      description:
+        'PCI-DSS requires cardholder data environment to be segmented from other networks.',
       affectedResources: [],
       remediation: 'Implement VNet/VPC segmentation with DMZ and internal zones.',
       references: ['https://www.pcisecuritystandards.org/documents/PCI_DSS_v3-2-1.pdf'],
@@ -408,12 +407,12 @@ async function runHIPAAScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFi
   const findings: ComplianceFinding[] = []
 
   // HIPAA: Encryption of ePHI
-  const databases = nodes.filter((n) => {
+  const databases = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('database') || component.includes('sql')
   })
 
-  const unencrypted = databases.filter((db) => {
+  const unencrypted = databases.filter(db => {
     const config = db.data.config as any
     return !config?.encryption
   })
@@ -424,16 +423,15 @@ async function runHIPAAScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFi
       ruleId: 'HIPAA-164.312',
       severity: 'critical',
       title: 'ePHI not encrypted',
-      description:
-        'HIPAA requires encryption of electronic Protected Health Information (ePHI).',
-      affectedResources: unencrypted.map((n) => n.id),
+      description: 'HIPAA requires encryption of electronic Protected Health Information (ePHI).',
+      affectedResources: unencrypted.map(n => n.id),
       remediation: 'Enable encryption at rest and in transit for all databases containing ePHI.',
       references: ['https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/'],
     })
   }
 
   // HIPAA: Audit controls
-  const monitoringComponents = nodes.filter((n) => {
+  const monitoringComponents = nodes.filter(n => {
     const component = String(n.data.componentId || n.data.component || '')
     return component.includes('monitor') || component.includes('log')
   })
@@ -445,7 +443,7 @@ async function runHIPAAScan(nodes: Node[], _edges: Edge[]): Promise<ComplianceFi
       severity: 'high',
       title: 'Audit controls not configured',
       description: 'HIPAA requires audit logs of all access to ePHI.',
-      affectedResources: databases.map((n) => n.id),
+      affectedResources: databases.map(n => n.id),
       remediation: 'Enable audit logging and configure log retention for at least 6 years.',
       references: ['https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/'],
     })

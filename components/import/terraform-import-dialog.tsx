@@ -11,8 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { importTerraform, importTerraformFiles } from '@/lib/terraform-import'
 import {
-  Upload, FileCode, AlertTriangle, CheckCircle, X,
-  Loader2, Download, Copy
+  Upload,
+  FileCode,
+  AlertTriangle,
+  CheckCircle,
+  X,
+  Loader2,
+  Download,
+  Copy,
 } from 'lucide-react'
 
 interface TerraformImportDialogProps {
@@ -54,9 +60,7 @@ export function TerraformImportDialog({ onImport, onClose }: TerraformImportDial
 
     Array.from(files).forEach(file => {
       if (file.name.endsWith('.tf') || file.name.endsWith('.tf.json')) {
-        filePromises.push(
-          file.text().then(content => ({ name: file.name, content }))
-        )
+        filePromises.push(file.text().then(content => ({ name: file.name, content })))
       }
     })
 
@@ -87,12 +91,15 @@ export function TerraformImportDialog({ onImport, onClose }: TerraformImportDial
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    handleFileUpload(e.dataTransfer.files)
-  }, [handleFileUpload])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setDragActive(false)
+      handleFileUpload(e.dataTransfer.files)
+    },
+    [handleFileUpload]
+  )
 
   const handleImport = useCallback(() => {
     if (preview && preview.nodes.length > 0) {
@@ -169,7 +176,7 @@ resource "aws_s3_bucket" "static" {
       </CardHeader>
 
       <CardContent className="flex-1 overflow-hidden flex flex-col gap-4">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'paste' | 'upload')}>
+        <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'paste' | 'upload')}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="paste">Paste Code</TabsTrigger>
             <TabsTrigger value="upload">Upload Files</TabsTrigger>
@@ -193,7 +200,7 @@ resource "aws_s3_bucket" "static" {
             <Textarea
               placeholder="Paste your Terraform configuration here..."
               value={terraformCode}
-              onChange={(e) => setTerraformCode(e.target.value)}
+              onChange={e => setTerraformCode(e.target.value)}
               className="font-mono text-sm min-h-[200px]"
             />
             <Button
@@ -238,7 +245,7 @@ resource "aws_s3_bucket" "static" {
                 multiple
                 accept=".tf,.tf.json"
                 className="hidden"
-                onChange={(e) => handleFileUpload(e.target.files)}
+                onChange={e => handleFileUpload(e.target.files)}
               />
               <Button variant="outline" asChild>
                 <label htmlFor="terraform-upload" className="cursor-pointer">
@@ -255,12 +262,8 @@ resource "aws_s3_bucket" "static" {
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Import Preview</h3>
               <div className="flex gap-2">
-                <Badge variant="secondary">
-                  {preview.nodes.length} resources
-                </Badge>
-                <Badge variant="secondary">
-                  {preview.edges.length} connections
-                </Badge>
+                <Badge variant="secondary">{preview.nodes.length} resources</Badge>
+                <Badge variant="secondary">{preview.edges.length} connections</Badge>
               </div>
             </div>
 
@@ -299,11 +302,7 @@ resource "aws_s3_bucket" "static" {
             )}
 
             {/* Import Button */}
-            <Button
-              onClick={handleImport}
-              disabled={preview.nodes.length === 0}
-              className="w-full"
-            >
+            <Button onClick={handleImport} disabled={preview.nodes.length === 0} className="w-full">
               <CheckCircle className="h-4 w-4 mr-2" />
               Import {preview.nodes.length} Resources
             </Button>

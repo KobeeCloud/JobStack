@@ -55,7 +55,8 @@ export function MobileWarningOverlay() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-amber-700 dark:text-amber-300">
-          We noticed you&apos;re using a device with a smaller screen. While you can still view diagrams, editing them via drag-and-drop on mobile may be difficult.
+          We noticed you&apos;re using a device with a smaller screen. While you can still view
+          diagrams, editing them via drag-and-drop on mobile may be difficult.
           <div className="mt-4 flex justify-end">
             <Button
               className="bg-amber-600 hover:bg-amber-700 text-white"

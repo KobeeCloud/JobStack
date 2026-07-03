@@ -8,12 +8,14 @@ interface RouteContext {
   params: Promise<{ id: string }>
 }
 
-const updateWebhookSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  url: z.string().url().optional(),
-  events: z.array(z.string()).optional(),
-  is_active: z.boolean().optional(),
-}).refine(obj => Object.keys(obj).length > 0, 'At least one field must be provided')
+const updateWebhookSchema = z
+  .object({
+    name: z.string().min(1).max(100).optional(),
+    url: z.string().url().optional(),
+    events: z.array(z.string()).optional(),
+    is_active: z.boolean().optional(),
+  })
+  .refine(obj => Object.keys(obj).length > 0, 'At least one field must be provided')
 
 // PATCH — update webhook
 export const PATCH = createApiHandler(
@@ -25,7 +27,11 @@ export const PATCH = createApiHandler(
     const body = await request.json()
     const parsed = updateWebhookSchema.safeParse(body)
     if (!parsed.success) {
-      throw new ApiError(400, parsed.error.errors[0]?.message ?? 'Invalid input', 'VALIDATION_ERROR')
+      throw new ApiError(
+        400,
+        parsed.error.errors[0]?.message ?? 'Invalid input',
+        'VALIDATION_ERROR'
+      )
     }
 
     const updates: Record<string, unknown> = {}

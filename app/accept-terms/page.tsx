@@ -58,8 +58,8 @@ export default function AcceptTermsPage() {
           </div>
           <CardTitle className="text-2xl">Terms &amp; Privacy Consent</CardTitle>
           <CardDescription className="text-base">
-            Before you continue, please review and accept our legal agreements.
-            This is required to use JobStack.
+            Before you continue, please review and accept our legal agreements. This is required to
+            use JobStack.
           </CardDescription>
         </CardHeader>
 
@@ -75,11 +75,11 @@ export default function AcceptTermsPage() {
           <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
-              <strong>Important:</strong> JobStack generates Infrastructure as Code (Terraform, etc.)
-              provided <strong>&quot;AS IS&quot;</strong> without any warranties. The creator is not
-              liable for any infrastructure damage, data loss, costs, or system downtime resulting
-              from the use of generated code. You are solely responsible for reviewing and testing
-              all generated code before applying it to any environment.
+              <strong>Important:</strong> JobStack generates Infrastructure as Code (Terraform,
+              etc.) provided <strong>&quot;AS IS&quot;</strong> without any warranties. The creator
+              is not liable for any infrastructure damage, data loss, costs, or system downtime
+              resulting from the use of generated code. You are solely responsible for reviewing and
+              testing all generated code before applying it to any environment.
             </AlertDescription>
           </Alert>
 
@@ -89,7 +89,7 @@ export default function AcceptTermsPage() {
               type="checkbox"
               id="tos"
               checked={tosChecked}
-              onChange={(e) => setTosChecked(e.target.checked)}
+              onChange={e => setTosChecked(e.target.checked)}
               className="mt-1 h-5 w-5 rounded border-border accent-primary cursor-pointer"
             />
             <label htmlFor="tos" className="cursor-pointer">
@@ -99,11 +99,15 @@ export default function AcceptTermsPage() {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 I have read and agree to the{' '}
-                <Link href="/terms" target="_blank" className="text-primary hover:underline font-medium">
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  className="text-primary hover:underline font-medium"
+                >
                   Terms of Service
                 </Link>
-                , including that all generated code is provided &quot;AS IS&quot; and
-                the creator assumes no liability for its use.
+                , including that all generated code is provided &quot;AS IS&quot; and the creator
+                assumes no liability for its use.
               </p>
             </label>
           </div>
@@ -114,7 +118,7 @@ export default function AcceptTermsPage() {
               type="checkbox"
               id="privacy"
               checked={privacyChecked}
-              onChange={(e) => setPrivacyChecked(e.target.checked)}
+              onChange={e => setPrivacyChecked(e.target.checked)}
               className="mt-1 h-5 w-5 rounded border-border accent-primary cursor-pointer"
             />
             <label htmlFor="privacy" className="cursor-pointer">
@@ -124,11 +128,15 @@ export default function AcceptTermsPage() {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 I have read and agree to the{' '}
-                <Link href="/privacy" target="_blank" className="text-primary hover:underline font-medium">
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  className="text-primary hover:underline font-medium"
+                >
                   Privacy Policy
                 </Link>
-                , including how my personal data is collected, processed, and stored
-                in accordance with GDPR (RODO).
+                , including how my personal data is collected, processed, and stored in accordance
+                with GDPR (RODO).
               </p>
             </label>
           </div>
@@ -151,7 +159,10 @@ export default function AcceptTermsPage() {
 
           <p className="text-xs text-center text-muted-foreground">
             You can withdraw consent and delete your account at any time from{' '}
-            <Link href="/settings" className="text-primary hover:underline">Settings</Link>.
+            <Link href="/settings" className="text-primary hover:underline">
+              Settings
+            </Link>
+            .
           </p>
         </CardContent>
       </Card>

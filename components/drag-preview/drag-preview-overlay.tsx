@@ -1,52 +1,52 @@
-'use client';
+'use client'
 
-import { useState, useEffect, useCallback } from 'react';
-import { Node } from '@xyflow/react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useCallback } from 'react'
+import { Node } from '@xyflow/react'
+import { cn } from '@/lib/utils'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface DragPreviewConfig {
-  showGhost: boolean;
-  showDropZones: boolean;
-  showSnapLines: boolean;
-  ghostOpacity: number;
-  snapThreshold: number;
-  animateGhost: boolean;
+  showGhost: boolean
+  showDropZones: boolean
+  showSnapLines: boolean
+  ghostOpacity: number
+  snapThreshold: number
+  animateGhost: boolean
 }
 
 export interface DropZone {
-  id: string;
-  label: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  accepts: string[];
-  isHighlighted: boolean;
+  id: string
+  label: string
+  x: number
+  y: number
+  width: number
+  height: number
+  accepts: string[]
+  isHighlighted: boolean
 }
 
 export interface SnapLine {
-  type: 'horizontal' | 'vertical';
-  position: number;
-  start: number;
-  end: number;
-  label?: string;
+  type: 'horizontal' | 'vertical'
+  position: number
+  start: number
+  end: number
+  label?: string
 }
 
 interface DragPreviewOverlayProps {
-  isDragging: boolean;
-  draggedNode: Node | null;
-  mousePosition: { x: number; y: number };
-  dropZones: DropZone[];
-  snapLines: SnapLine[];
-  config: DragPreviewConfig;
-  zoom: number;
-  viewportOffset: { x: number; y: number };
-  onDropZoneEnter?: (zoneId: string) => void;
-  onDropZoneLeave?: (zoneId: string) => void;
+  isDragging: boolean
+  draggedNode: Node | null
+  mousePosition: { x: number; y: number }
+  dropZones: DropZone[]
+  snapLines: SnapLine[]
+  config: DragPreviewConfig
+  zoom: number
+  viewportOffset: { x: number; y: number }
+  onDropZoneEnter?: (zoneId: string) => void
+  onDropZoneLeave?: (zoneId: string) => void
 }
 
 // ============================================================================
@@ -60,25 +60,25 @@ const DEFAULT_CONFIG: DragPreviewConfig = {
   ghostOpacity: 0.6,
   snapThreshold: 10,
   animateGhost: true,
-};
+}
 
 // Node type icons (simplified representations)
 const NODE_ICONS: Record<string, string> = {
-  'ec2': '🖥️',
-  's3': '📦',
-  'rds': '🗄️',
-  'lambda': 'λ',
-  'vpc': '🌐',
+  ec2: '🖥️',
+  s3: '📦',
+  rds: '🗄️',
+  lambda: 'λ',
+  vpc: '🌐',
   'load-balancer': '⚖️',
   'api-gateway': '🚪',
-  'dynamodb': '📊',
-  'cloudfront': '☁️',
-  'sns': '📢',
-  'sqs': '📬',
-  'container': '📦',
-  'kubernetes': '☸️',
-  'default': '◼️',
-};
+  dynamodb: '📊',
+  cloudfront: '☁️',
+  sns: '📢',
+  sqs: '📬',
+  container: '📦',
+  kubernetes: '☸️',
+  default: '◼️',
+}
 
 // ============================================================================
 // Subcomponents
@@ -90,14 +90,14 @@ function GhostPreview({
   config,
   zoom,
 }: {
-  node: Node;
-  mousePosition: { x: number; y: number };
-  config: DragPreviewConfig;
-  zoom: number;
+  node: Node
+  mousePosition: { x: number; y: number }
+  config: DragPreviewConfig
+  zoom: number
 }) {
-  const nodeWidth = (node.measured?.width || 150) * zoom;
-  const nodeHeight = (node.measured?.height || 50) * zoom;
-  const icon = NODE_ICONS[node.type || 'default'] || NODE_ICONS.default;
+  const nodeWidth = (node.measured?.width || 150) * zoom
+  const nodeHeight = (node.measured?.height || 50) * zoom
+  const icon = NODE_ICONS[node.type || 'default'] || NODE_ICONS.default
 
   return (
     <div
@@ -116,11 +116,11 @@ function GhostPreview({
       <div className="flex items-center justify-center h-full gap-2 text-blue-600">
         <span className="text-lg">{icon}</span>
         <span className="text-sm font-medium truncate max-w-[100px]">
-          {node.data?.label as string || node.id}
+          {(node.data?.label as string) || node.id}
         </span>
       </div>
     </div>
-  );
+  )
 }
 
 function DropZoneHighlight({
@@ -128,14 +128,14 @@ function DropZoneHighlight({
   zoom,
   viewportOffset,
 }: {
-  zone: DropZone;
-  zoom: number;
-  viewportOffset: { x: number; y: number };
+  zone: DropZone
+  zoom: number
+  viewportOffset: { x: number; y: number }
 }) {
-  const x = zone.x * zoom + viewportOffset.x;
-  const y = zone.y * zoom + viewportOffset.y;
-  const width = zone.width * zoom;
-  const height = zone.height * zoom;
+  const x = zone.x * zoom + viewportOffset.x
+  const y = zone.y * zoom + viewportOffset.y
+  const width = zone.width * zoom
+  const height = zone.height * zoom
 
   return (
     <div
@@ -167,7 +167,7 @@ function DropZoneHighlight({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 function SnapLineIndicator({
@@ -175,14 +175,14 @@ function SnapLineIndicator({
   zoom,
   viewportOffset,
 }: {
-  line: SnapLine;
-  zoom: number;
-  viewportOffset: { x: number; y: number };
+  line: SnapLine
+  zoom: number
+  viewportOffset: { x: number; y: number }
 }) {
   if (line.type === 'horizontal') {
-    const y = line.position * zoom + viewportOffset.y;
-    const startX = line.start * zoom + viewportOffset.x;
-    const endX = line.end * zoom + viewportOffset.x;
+    const y = line.position * zoom + viewportOffset.y
+    const startX = line.start * zoom + viewportOffset.x
+    const endX = line.end * zoom + viewportOffset.x
 
     return (
       <div className="fixed pointer-events-none">
@@ -215,13 +215,13 @@ function SnapLineIndicator({
           style={{ top: y, left: endX }}
         />
       </div>
-    );
+    )
   }
 
   // Vertical line
-  const x = line.position * zoom + viewportOffset.x;
-  const startY = line.start * zoom + viewportOffset.y;
-  const endY = line.end * zoom + viewportOffset.y;
+  const x = line.position * zoom + viewportOffset.x
+  const startY = line.start * zoom + viewportOffset.y
+  const endY = line.end * zoom + viewportOffset.y
 
   return (
     <div className="fixed pointer-events-none">
@@ -254,15 +254,15 @@ function SnapLineIndicator({
         style={{ left: x, top: endY }}
       />
     </div>
-  );
+  )
 }
 
 function DragInfo({
   node,
   mousePosition,
 }: {
-  node: Node;
-  mousePosition: { x: number; y: number };
+  node: Node
+  mousePosition: { x: number; y: number }
 }) {
   return (
     <div
@@ -273,13 +273,13 @@ function DragInfo({
       }}
     >
       <div className="flex flex-col gap-0.5">
-        <span className="font-medium">{node.data?.label as string || node.id}</span>
+        <span className="font-medium">{(node.data?.label as string) || node.id}</span>
         <span className="text-gray-400">
           x: {Math.round(mousePosition.x)}, y: {Math.round(mousePosition.y)}
         </span>
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -298,52 +298,62 @@ export function DragPreviewOverlay({
   onDropZoneEnter,
   onDropZoneLeave,
 }: DragPreviewOverlayProps) {
-  const [activeZone, setActiveZone] = useState<string | null>(null);
+  const [activeZone, setActiveZone] = useState<string | null>(null)
 
   // Check which drop zone the cursor is over
   useEffect(() => {
     if (!isDragging || !config.showDropZones) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveZone(null);
-      return;
+      setActiveZone(null)
+      return
     }
 
-    const hoveredZone = dropZones.find((zone) => {
-      const zoneX = zone.x * zoom + viewportOffset.x;
-      const zoneY = zone.y * zoom + viewportOffset.y;
-      const zoneWidth = zone.width * zoom;
-      const zoneHeight = zone.height * zoom;
+    const hoveredZone = dropZones.find(zone => {
+      const zoneX = zone.x * zoom + viewportOffset.x
+      const zoneY = zone.y * zoom + viewportOffset.y
+      const zoneWidth = zone.width * zoom
+      const zoneHeight = zone.height * zoom
 
       return (
         mousePosition.x >= zoneX &&
         mousePosition.x <= zoneX + zoneWidth &&
         mousePosition.y >= zoneY &&
         mousePosition.y <= zoneY + zoneHeight
-      );
-    });
+      )
+    })
 
-    const newZoneId = hoveredZone?.id || null;
+    const newZoneId = hoveredZone?.id || null
 
     if (newZoneId !== activeZone) {
       if (activeZone) {
-        onDropZoneLeave?.(activeZone);
+        onDropZoneLeave?.(activeZone)
       }
       if (newZoneId) {
-        onDropZoneEnter?.(newZoneId);
+        onDropZoneEnter?.(newZoneId)
       }
-      setActiveZone(newZoneId);
+      setActiveZone(newZoneId)
     }
-  }, [isDragging, mousePosition, dropZones, zoom, viewportOffset, activeZone, config.showDropZones, onDropZoneEnter, onDropZoneLeave]);
+  }, [
+    isDragging,
+    mousePosition,
+    dropZones,
+    zoom,
+    viewportOffset,
+    activeZone,
+    config.showDropZones,
+    onDropZoneEnter,
+    onDropZoneLeave,
+  ])
 
   if (!isDragging || !draggedNode) {
-    return null;
+    return null
   }
 
   return (
     <>
       {/* Drop zones */}
       {config.showDropZones &&
-        dropZones.map((zone) => (
+        dropZones.map(zone => (
           <DropZoneHighlight
             key={zone.id}
             zone={{
@@ -379,7 +389,7 @@ export function DragPreviewOverlay({
       {/* Drag info tooltip */}
       <DragInfo node={draggedNode} mousePosition={mousePosition} />
     </>
-  );
+  )
 }
 
 // ============================================================================
@@ -387,15 +397,15 @@ export function DragPreviewOverlay({
 // ============================================================================
 
 export function useDragPreview(nodes: Node[]) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedNode, setDraggedNode] = useState<Node | null>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [snapLines, setSnapLines] = useState<SnapLine[]>([]);
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggedNode, setDraggedNode] = useState<Node | null>(null)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [snapLines, setSnapLines] = useState<SnapLine[]>([])
 
   const calculateSnapLines = useCallback(
     (nodeId: string, position: { x: number; y: number }, threshold: number = 10) => {
-      const lines: SnapLine[] = [];
-      const otherNodes = nodes.filter((n) => n.id !== nodeId);
+      const lines: SnapLine[] = []
+      const otherNodes = nodes.filter(n => n.id !== nodeId)
 
       for (const other of otherNodes) {
         // Horizontal alignment (same Y)
@@ -406,7 +416,7 @@ export function useDragPreview(nodes: Node[]) {
             start: Math.min(position.x, other.position.x) - 50,
             end: Math.max(position.x, other.position.x) + 200,
             label: 'Align Y',
-          });
+          })
         }
 
         // Vertical alignment (same X)
@@ -417,34 +427,34 @@ export function useDragPreview(nodes: Node[]) {
             start: Math.min(position.y, other.position.y) - 50,
             end: Math.max(position.y, other.position.y) + 100,
             label: 'Align X',
-          });
+          })
         }
       }
 
-      setSnapLines(lines);
-      return lines;
+      setSnapLines(lines)
+      return lines
     },
     [nodes]
-  );
+  )
 
   const onDragStart = useCallback((node: Node) => {
-    setIsDragging(true);
-    setDraggedNode(node);
-  }, []);
+    setIsDragging(true)
+    setDraggedNode(node)
+  }, [])
 
   const onDrag = useCallback(
     (event: React.MouseEvent, node: Node) => {
-      setMousePosition({ x: event.clientX, y: event.clientY });
-      calculateSnapLines(node.id, node.position);
+      setMousePosition({ x: event.clientX, y: event.clientY })
+      calculateSnapLines(node.id, node.position)
     },
     [calculateSnapLines]
-  );
+  )
 
   const onDragEnd = useCallback(() => {
-    setIsDragging(false);
-    setDraggedNode(null);
-    setSnapLines([]);
-  }, []);
+    setIsDragging(false)
+    setDraggedNode(null)
+    setSnapLines([])
+  }, [])
 
   return {
     isDragging,
@@ -454,7 +464,7 @@ export function useDragPreview(nodes: Node[]) {
     onDragStart,
     onDrag,
     onDragEnd,
-  };
+  }
 }
 
 // ============================================================================
@@ -464,8 +474,8 @@ export function useDragPreview(nodes: Node[]) {
 export function generateDropZonesFromNodes(nodes: Node[]): DropZone[] {
   // Find container/group nodes and convert to drop zones
   return nodes
-    .filter((node) => node.type === 'group' || node.type === 'vpc' || node.type === 'subnet')
-    .map((node) => ({
+    .filter(node => node.type === 'group' || node.type === 'vpc' || node.type === 'subnet')
+    .map(node => ({
       id: node.id,
       label: (node.data?.label as string) || node.id,
       x: node.position.x,
@@ -474,7 +484,7 @@ export function generateDropZonesFromNodes(nodes: Node[]): DropZone[] {
       height: node.measured?.height || 300,
       accepts: ['ec2', 's3', 'rds', 'lambda'], // Example accepted types
       isHighlighted: false,
-    }));
+    }))
 }
 
-export default DragPreviewOverlay;
+export default DragPreviewOverlay

@@ -15,8 +15,16 @@ interface CollaboratorPresence {
 }
 
 const PRESENCE_COLORS = [
-  '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6',
-  '#EC4899', '#06B6D4', '#F97316', '#14B8A6', '#A855F7',
+  '#EF4444',
+  '#F59E0B',
+  '#10B981',
+  '#3B82F6',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#F97316',
+  '#14B8A6',
+  '#A855F7',
 ]
 
 function getColorForUser(userId: string): string {
@@ -63,16 +71,36 @@ export function useRealtimeCollaboration({
         }
         setCollaborators(others)
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences: _newPresences }: { key: string; newPresences: CollaboratorPresence[] }) => {
-        if (key !== userId) {
-          // Presence join handled by state sync
+      .on(
+        'presence',
+        { event: 'join' },
+        ({
+          key,
+          newPresences: _newPresences,
+        }: {
+          key: string
+          newPresences: CollaboratorPresence[]
+        }) => {
+          if (key !== userId) {
+            // Presence join handled by state sync
+          }
         }
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences: _leftPresences }: { key: string; leftPresences: CollaboratorPresence[] }) => {
-        if (key !== userId) {
-          // Presence leave handled by state sync
+      )
+      .on(
+        'presence',
+        { event: 'leave' },
+        ({
+          key,
+          leftPresences: _leftPresences,
+        }: {
+          key: string
+          leftPresences: CollaboratorPresence[]
+        }) => {
+          if (key !== userId) {
+            // Presence leave handled by state sync
+          }
         }
-      })
+      )
       .subscribe(async (status: string) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({
@@ -121,16 +149,13 @@ export function useRealtimeCollaboration({
     [userId, userName, avatarUrl]
   )
 
-  const broadcastDiagramChange = useCallback(
-    (payload: { type: string; data: unknown }) => {
-      channelRef.current?.send({
-        type: 'broadcast',
-        event: 'diagram_change',
-        payload,
-      })
-    },
-    []
-  )
+  const broadcastDiagramChange = useCallback((payload: { type: string; data: unknown }) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'diagram_change',
+      payload,
+    })
+  }, [])
 
   const onDiagramChange = useCallback(
     (callback: (payload: { type: string; data: unknown }) => void) => {

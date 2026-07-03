@@ -11,7 +11,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Loader2, Copy, GitBranch } from 'lucide-react'
 
 interface DuplicateDialogProps {
@@ -46,7 +52,8 @@ export function DuplicateDialog({
             Duplicate Project
           </DialogTitle>
           <DialogDescription>
-            Creates a copy of &ldquo;{projectName}&rdquo; including all diagrams. Use environment promotion to scale replicas automatically.
+            Creates a copy of &ldquo;{projectName}&rdquo; including all diagrams. Use environment
+            promotion to scale replicas automatically.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -56,7 +63,7 @@ export function DuplicateDialog({
               id="dupName"
               placeholder={`${projectName} (${duplicateEnv.toUpperCase()})`}
               value={duplicateName}
-              onChange={(e) => setDuplicateName(e.target.value)}
+              onChange={e => setDuplicateName(e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -83,7 +90,11 @@ export function DuplicateDialog({
             Cancel
           </Button>
           <Button onClick={onDuplicate} disabled={isDuplicating}>
-            {isDuplicating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Copy className="mr-2 h-4 w-4" />}
+            {isDuplicating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Copy className="mr-2 h-4 w-4" />
+            )}
             Duplicate
           </Button>
         </DialogFooter>

@@ -80,18 +80,18 @@ export function WebhookSettings() {
     if (!name.trim() || !url.trim()) return
     setSaving(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const { error } = await supabase
-        .from('webhooks')
-        .insert({
-          user_id: user.id,
-          name: name.trim(),
-          url: url.trim(),
-          events: selectedEvents,
-          is_active: true,
-        })
+      const { error } = await supabase.from('webhooks').insert({
+        user_id: user.id,
+        name: name.trim(),
+        url: url.trim(),
+        events: selectedEvents,
+        is_active: true,
+      })
 
       if (error) throw error
 
@@ -116,7 +116,7 @@ export function WebhookSettings() {
         .eq('id', id)
 
       if (error) throw error
-      setWebhooks(prev => prev.map(w => w.id === id ? { ...w, is_active: !isActive } : w))
+      setWebhooks(prev => prev.map(w => (w.id === id ? { ...w, is_active: !isActive } : w)))
     } catch {
       toast.error('Failed to update webhook')
     }
@@ -186,7 +186,7 @@ export function WebhookSettings() {
                   id="wh-name"
                   placeholder="My Webhook"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={e => setName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -196,7 +196,7 @@ export function WebhookSettings() {
                   placeholder="https://example.com/webhook"
                   type="url"
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
+                  onChange={e => setUrl(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -277,7 +277,11 @@ export function WebhookSettings() {
                   className="h-6 w-6"
                   onClick={() => setShowSecrets(prev => ({ ...prev, [wh.id]: !prev[wh.id] }))}
                 >
-                  {showSecrets[wh.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  {showSecrets[wh.id] ? (
+                    <EyeOff className="h-3 w-3" />
+                  ) : (
+                    <Eye className="h-3 w-3" />
+                  )}
                 </Button>
                 <Button
                   variant="ghost"

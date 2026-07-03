@@ -17,32 +17,35 @@ export async function fetchLivePricing(params: PricingRequestParams): Promise<nu
   // Simulated API Response mapping from a proper Cloud Pricing API
   const mockDb: Record<string, number> = {
     // AWS
-    'aws:eu-west-1:t3.micro': 8.00,
-    'aws:eu-west-1:t3.small': 15.00,
+    'aws:eu-west-1:t3.micro': 8.0,
+    'aws:eu-west-1:t3.small': 15.0,
     'aws:eu-west-1:t3.medium': 30.22,
-    'aws:eu-west-1:t3.large': 60.00,
+    'aws:eu-west-1:t3.large': 60.0,
     'aws:eu-west-1:m5.large': 70.08,
-    'aws:eu-west-1:c5.large': 62.00,
+    'aws:eu-west-1:c5.large': 62.0,
     // Azure
-    'azure:westeurope:standard_b1s': 4.00,
-    'azure:westeurope:standard_b2s': 30.00,
-    'azure:westeurope:standard_d2s_v3': 70.00,
+    'azure:westeurope:standard_b1s': 4.0,
+    'azure:westeurope:standard_b2s': 30.0,
+    'azure:westeurope:standard_d2s_v3': 70.0,
     // GCP
-    'gcp:europe-west1:e2-micro': 6.00,
-    'gcp:europe-west1:e2-medium': 24.00,
-    'gcp:europe-west1:e2-standard-2': 49.00,
+    'gcp:europe-west1:e2-micro': 6.0,
+    'gcp:europe-west1:e2-medium': 24.0,
+    'gcp:europe-west1:e2-standard-2': 49.0,
   }
 
   // Return the fetched price, or a fallback default if not found
   return mockDb[cacheKey] ?? 0
 }
 
-export async function calculateDynamicCost(nodes: Node[], region: string = 'eu-west-1'): Promise<{ min: number; max: number; breakdown: any[]; currency: string }> {
+export async function calculateDynamicCost(
+  nodes: Node[],
+  region: string = 'eu-west-1'
+): Promise<{ min: number; max: number; breakdown: any[]; currency: string }> {
   let totalMonthlyCost = 0
   const breakdown: any[] = []
 
   // Asynchronously resolve all node prices (executes in parallel)
-  const costPromises = nodes.map(async (node) => {
+  const costPromises = nodes.map(async node => {
     const config = (node.data?.config || {}) as Record<string, any>
     const provider = String(node.data?.provider || 'aws') as 'aws' | 'azure' | 'gcp'
     const componentId = node.data?.componentId as string
@@ -50,9 +53,12 @@ export async function calculateDynamicCost(nodes: Node[], region: string = 'eu-w
 
     // Compute (VMs / Instances)
     if (['aws-ec2', 'azure-vm', 'gcp-compute-instance'].includes(componentId)) {
-      const instanceType = config?.size || (provider === 'aws' ? 't3.micro' : provider === 'azure' ? 'standard_b1s' : 'e2-micro')
+      const instanceType =
+        config?.size ||
+        (provider === 'aws' ? 't3.micro' : provider === 'azure' ? 'standard_b1s' : 'e2-micro')
 
-      const regionOverride = provider === 'azure' ? 'westeurope' : provider === 'gcp' ? 'europe-west1' : region
+      const regionOverride =
+        provider === 'azure' ? 'westeurope' : provider === 'gcp' ? 'europe-west1' : region
 
       const monthlyRate = await fetchLivePricing({
         provider,
@@ -62,19 +68,19 @@ export async function calculateDynamicCost(nodes: Node[], region: string = 'eu-w
           instanceType: instanceType.toLowerCase(),
           operatingSystem: config?.osImage?.includes('windows') ? 'Windows' : 'Linux',
           preInstalledSw: 'NA',
-          tenancy: 'Shared'
-        }
+          tenancy: 'Shared',
+        },
       })
 
       // Compute attached dynamic storage costs
-      const diskSizeFn = config?.diskSize ? (config.diskSize * 0.08) : 0 // $0.08/GB-mo for standard ssd
+      const diskSizeFn = config?.diskSize ? config.diskSize * 0.08 : 0 // $0.08/GB-mo for standard ssd
 
       nodeCost = (monthlyRate + diskSizeFn) * (config?.replicas || 1)
     }
     // Databases
     else if (['aws-rds', 'azure-sql', 'gcp-cloud-sql'].includes(componentId)) {
       const monthlyRate = 120 // simplified fallback for DB
-      const storageCost = config?.allocated_storage ? (config.allocated_storage * 0.11) : 0
+      const storageCost = config?.allocated_storage ? config.allocated_storage * 0.11 : 0
       const hazolMultiplier = config?.multi_az ? 2 : 1
       nodeCost = (monthlyRate + storageCost) * hazolMultiplier
     }
@@ -86,10 +92,10 @@ export async function calculateDynamicCost(nodes: Node[], region: string = 'eu-w
 
     breakdown.push({
       componentId: componentId || 'unknown',
-      componentName: node.data?.label as string || componentId,
+      componentName: (node.data?.label as string) || componentId,
       minCost: nodeCost,
       maxCost: nodeCost,
-      category: 'Compute'
+      category: 'Compute',
     })
 
     return nodeCost
@@ -102,6 +108,6 @@ export async function calculateDynamicCost(nodes: Node[], region: string = 'eu-w
     min: totalMonthlyCost,
     max: totalMonthlyCost,
     breakdown,
-    currency: 'USD'
+    currency: 'USD',
   }
 }

@@ -4,7 +4,12 @@ import { updateProjectSchema, uuidSchema } from '@/lib/validation/schemas'
 import { ApiError } from '@/lib/api-error'
 import { log } from '@/lib/logger'
 
-async function verifyProjectAccess(supabase: any, projectId: string, userId: string, userEmail: string): Promise<void> {
+async function verifyProjectAccess(
+  supabase: any,
+  projectId: string,
+  userId: string,
+  userEmail: string
+): Promise<void> {
   const { data: project, error } = await supabase
     .from('projects')
     .select('id, user_id')
@@ -123,10 +128,7 @@ export const DELETE = createApiHandler(
 
     await verifyProjectAccess(auth.supabase, projectId, auth.user.id, auth.user.email ?? '')
 
-    const { error } = await auth.supabase
-      .from('projects')
-      .delete()
-      .eq('id', projectId)
+    const { error } = await auth.supabase.from('projects').delete().eq('id', projectId)
 
     if (error) {
       log.error('Failed to delete project', error, { projectId, userId: auth.user.id })

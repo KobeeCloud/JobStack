@@ -1,0 +1,48 @@
+---
+# site.yml — Master playbook
+# Runs all roles in correct order on app_servers group
+
+- name: Configure JobStack application servers
+  hosts: app_servers
+  become: true
+  gather_facts: true
+  serial: 1  # Rolling update — one server at a time (zero-downtime)
+
+  pre_tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+        delay: 5
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  roles:
+    - role: common
+      tags: [common, base]
+
+    - role: security
+      tags: [security, hardening]
+
+    - role: nodejs
+      tags: [nodejs, runtime]
+
+    - role: nginx
+      tags: [nginx, webserver]
+
+    - role: pm2
+      tags: [pm2, app]
+
+    - role: monitoring
+      tags: [monitoring, observability]
+
+  post_tasks:
+    - name: Verify app is responding
+      ansible.builtin.uri:
+        url: "http://localhost:{{ app_port }}/api/health"
+        status_code: 200
+        timeout: 30
+      retries: 5
+      delay: 10
+      register: health_check
+      until: health_check.status == 200

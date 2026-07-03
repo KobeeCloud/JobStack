@@ -69,7 +69,8 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
 
   const handleDuplicate = async () => {
     setIsDuplicating(true)
-    const envSuffix = duplicateEnv === 'dev' ? 'DEV' : duplicateEnv === 'staging' ? 'STAGING' : 'PROD'
+    const envSuffix =
+      duplicateEnv === 'dev' ? 'DEV' : duplicateEnv === 'staging' ? 'STAGING' : 'PROD'
     const newName = duplicateName.trim() || `${project.name} (${envSuffix})`
     const replicaMultiplier = duplicateEnv === 'staging' ? 2 : duplicateEnv === 'production' ? 3 : 1
     try {
@@ -174,12 +175,18 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
     <>
       <Card className="hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 cursor-pointer h-full group relative bg-background/50 backdrop-blur-sm overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <Link href={`/projects/${project.id}`} className="absolute inset-0 z-0" aria-label={`Open project ${project.name}`} />
+        <Link
+          href={`/projects/${project.id}`}
+          className="absolute inset-0 z-0"
+          aria-label={`Open project ${project.name}`}
+        />
 
         <CardHeader className="relative z-10 pointer-events-none pb-4">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0 pr-4">
-              <CardTitle className="truncate text-xl font-bold group-hover:text-primary transition-colors mb-2">{project.name}</CardTitle>
+              <CardTitle className="truncate text-xl font-bold group-hover:text-primary transition-colors mb-2">
+                {project.name}
+              </CardTitle>
               <CardDescription className="line-clamp-2 text-sm leading-relaxed min-h-[40px]">
                 {project.description || 'No description provided'}
               </CardDescription>
@@ -191,7 +198,7 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                   >
                     <MoreVertical className="h-4 w-4" />
                     <span className="sr-only">Project actions</span>
@@ -199,7 +206,7 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       router.push(`/projects/${project.id}`)
                     }}
@@ -208,7 +215,7 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
                     Open
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       setEditName(project.name)
                       setEditDescription(project.description || '')
@@ -219,7 +226,7 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
                     Edit Details
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       setDuplicateName('')
                       setDuplicateEnv('dev')
@@ -236,7 +243,7 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       setShowDeleteDialog(true)
                     }}
@@ -254,7 +261,8 @@ export function ProjectCard({ project, onDelete, onUpdate }: ProjectCardProps) {
         <CardContent className="relative z-10 pointer-events-none pt-0 mt-auto">
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mt-4 pt-4 border-t border-border/50">
             <div className="h-2 w-2 rounded-full bg-primary/50 group-hover:bg-primary transition-colors" />
-            Updated {new Date(project.updated_at).toLocaleDateString('en-US', {
+            Updated{' '}
+            {new Date(project.updated_at).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
               day: 'numeric',

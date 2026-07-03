@@ -1,10 +1,10 @@
-'use client';
+'use client'
 
-import { useState, useCallback } from 'react';
-import { Node } from '@xyflow/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useCallback } from 'react'
+import { Node } from '@xyflow/react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -12,72 +12,63 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
-import {
-  Plus,
-  Trash2,
-  Copy,
-  Edit3,
-  Save,
-  Box,
-  Palette,
-  Settings2,
-} from 'lucide-react';
+} from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
+import { Plus, Trash2, Copy, Edit3, Save, Box, Palette, Settings2 } from 'lucide-react'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface CustomComponentDefinition {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  icon: string; // emoji or URL
-  iconType: 'emoji' | 'url' | 'svg';
-  defaultWidth: number;
-  defaultHeight: number;
+  id: string
+  name: string
+  description: string
+  category: string
+  icon: string // emoji or URL
+  iconType: 'emoji' | 'url' | 'svg'
+  defaultWidth: number
+  defaultHeight: number
   style: {
-    backgroundColor: string;
-    borderColor: string;
-    borderRadius: number;
-    borderWidth: number;
-    textColor: string;
-    fontSize: number;
-  };
-  properties: CustomProperty[];
-  terraformResource?: string;
-  cloudformationResource?: string;
-  createdAt: Date;
-  updatedAt: Date;
+    backgroundColor: string
+    borderColor: string
+    borderRadius: number
+    borderWidth: number
+    textColor: string
+    fontSize: number
+  }
+  properties: CustomProperty[]
+  terraformResource?: string
+  cloudformationResource?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface CustomProperty {
-  id: string;
-  name: string;
-  type: 'string' | 'number' | 'boolean' | 'select' | 'color';
-  defaultValue: string | number | boolean;
-  options?: string[]; // For select type
-  required: boolean;
-  description?: string;
+  id: string
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'select' | 'color'
+  defaultValue: string | number | boolean
+  options?: string[] // For select type
+  required: boolean
+  description?: string
 }
 
 interface CustomComponentEditorProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  component?: CustomComponentDefinition;
-  onSave: (component: CustomComponentDefinition) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  component?: CustomComponentDefinition
+  onSave: (component: CustomComponentDefinition) => void
 }
 
 interface CustomComponentLibraryProps {
-  components: CustomComponentDefinition[];
-  onSelect: (component: CustomComponentDefinition) => void;
-  onEdit: (component: CustomComponentDefinition) => void;
-  onDelete: (componentId: string) => void;
-  onDuplicate: (component: CustomComponentDefinition) => void;
-  onCreate: () => void;
-  className?: string;
+  components: CustomComponentDefinition[]
+  onSelect: (component: CustomComponentDefinition) => void
+  onEdit: (component: CustomComponentDefinition) => void
+  onDelete: (componentId: string) => void
+  onDuplicate: (component: CustomComponentDefinition) => void
+  onCreate: () => void
+  className?: string
 }
 
 // ============================================================================
@@ -104,11 +95,37 @@ const DEFAULT_COMPONENT: CustomComponentDefinition = {
   properties: [],
   createdAt: new Date(),
   updatedAt: new Date(),
-};
+}
 
-const PRESET_ICONS = ['📦', '🔧', '⚙️', '🌐', '💾', '🔒', '📊', '🚀', '💻', '☁️', '🔥', '⚡', '🎯', '📡', '🔌'];
+const PRESET_ICONS = [
+  '📦',
+  '🔧',
+  '⚙️',
+  '🌐',
+  '💾',
+  '🔒',
+  '📊',
+  '🚀',
+  '💻',
+  '☁️',
+  '🔥',
+  '⚡',
+  '🎯',
+  '📡',
+  '🔌',
+]
 
-const PRESET_CATEGORIES = ['Custom', 'Compute', 'Storage', 'Database', 'Network', 'Security', 'Integration', 'Analytics', 'DevOps'];
+const PRESET_CATEGORIES = [
+  'Custom',
+  'Compute',
+  'Storage',
+  'Database',
+  'Network',
+  'Security',
+  'Integration',
+  'Analytics',
+  'DevOps',
+]
 
 // ============================================================================
 // Property Editor
@@ -119,23 +136,21 @@ function PropertyEditor({
   onChange,
   onDelete,
 }: {
-  property: CustomProperty;
-  onChange: (property: CustomProperty) => void;
-  onDelete: () => void;
+  property: CustomProperty
+  onChange: (property: CustomProperty) => void
+  onDelete: () => void
 }) {
   return (
     <div className="flex items-center gap-2 p-2 border rounded bg-gray-50">
       <Input
         value={property.name}
-        onChange={(e) => onChange({ ...property, name: e.target.value })}
+        onChange={e => onChange({ ...property, name: e.target.value })}
         placeholder="Property name"
         className="flex-1 h-8 text-sm"
       />
       <select
         value={property.type}
-        onChange={(e) =>
-          onChange({ ...property, type: e.target.value as CustomProperty['type'] })
-        }
+        onChange={e => onChange({ ...property, type: e.target.value as CustomProperty['type'] })}
         className="h-8 px-2 border rounded text-sm"
       >
         <option value="string">Text</option>
@@ -153,7 +168,7 @@ function PropertyEditor({
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -179,7 +194,7 @@ function ComponentPreview({ component }: { component: CustomComponentDefinition 
       <span className="mr-2">{component.icon}</span>
       <span className="truncate">{component.name}</span>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -194,19 +209,19 @@ export function CustomComponentEditor({
 }: CustomComponentEditorProps) {
   const [formData, setFormData] = useState<CustomComponentDefinition>(
     component || { ...DEFAULT_COMPONENT, id: crypto.randomUUID() }
-  );
-  const [activeTab, setActiveTab] = useState<'basic' | 'style' | 'properties'>('basic');
+  )
+  const [activeTab, setActiveTab] = useState<'basic' | 'style' | 'properties'>('basic')
 
   const handleSave = useCallback(() => {
     onSave({
       ...formData,
       updatedAt: new Date(),
-    });
-    onOpenChange(false);
-  }, [formData, onSave, onOpenChange]);
+    })
+    onOpenChange(false)
+  }, [formData, onSave, onOpenChange])
 
   const addProperty = useCallback(() => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       properties: [
         ...prev.properties,
@@ -218,22 +233,22 @@ export function CustomComponentEditor({
           required: false,
         },
       ],
-    }));
-  }, []);
+    }))
+  }, [])
 
   const updateProperty = useCallback((index: number, property: CustomProperty) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       properties: prev.properties.map((p, i) => (i === index ? property : p)),
-    }));
-  }, []);
+    }))
+  }, [])
 
   const removeProperty = useCallback((index: number) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       properties: prev.properties.filter((_, i) => i !== index),
-    }));
-  }, []);
+    }))
+  }, [])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -243,9 +258,7 @@ export function CustomComponentEditor({
             <Box className="h-5 w-5" />
             {component ? 'Edit Component' : 'Create Custom Component'}
           </DialogTitle>
-          <DialogDescription>
-            Design your own cloud architecture component
-          </DialogDescription>
+          <DialogDescription>Design your own cloud architecture component</DialogDescription>
         </DialogHeader>
 
         {/* Tabs */}
@@ -297,9 +310,7 @@ export function CustomComponentEditor({
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 />
               </div>
 
@@ -308,9 +319,7 @@ export function CustomComponentEditor({
                 <Input
                   id="description"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, description: e.target.value }))
-                  }
+                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
               </div>
 
@@ -319,12 +328,10 @@ export function CustomComponentEditor({
                 <select
                   id="category"
                   value={formData.category}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, category: e.target.value }))
-                  }
+                  onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
                   className="w-full h-10 px-3 border rounded-md"
                 >
-                  {PRESET_CATEGORIES.map((cat) => (
+                  {PRESET_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -335,16 +342,14 @@ export function CustomComponentEditor({
               <div className="space-y-2">
                 <Label>Icon</Label>
                 <div className="flex flex-wrap gap-2 p-2 border rounded">
-                  {PRESET_ICONS.map((icon) => (
+                  {PRESET_ICONS.map(icon => (
                     <button
                       key={icon}
                       className={cn(
                         'w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100',
                         formData.icon === icon && 'bg-blue-100 ring-2 ring-blue-500'
                       )}
-                      onClick={() =>
-                        setFormData((prev) => ({ ...prev, icon, iconType: 'emoji' }))
-                      }
+                      onClick={() => setFormData(prev => ({ ...prev, icon, iconType: 'emoji' }))}
                     >
                       {icon}
                     </button>
@@ -359,8 +364,8 @@ export function CustomComponentEditor({
                     id="width"
                     type="number"
                     value={formData.defaultWidth}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
+                    onChange={e =>
+                      setFormData(prev => ({
                         ...prev,
                         defaultWidth: parseInt(e.target.value) || 100,
                       }))
@@ -373,8 +378,8 @@ export function CustomComponentEditor({
                     id="height"
                     type="number"
                     value={formData.defaultHeight}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
+                    onChange={e =>
+                      setFormData(prev => ({
                         ...prev,
                         defaultHeight: parseInt(e.target.value) || 50,
                       }))
@@ -399,8 +404,8 @@ export function CustomComponentEditor({
                     <input
                       type="color"
                       value={formData.style.backgroundColor}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
+                      onChange={e =>
+                        setFormData(prev => ({
                           ...prev,
                           style: { ...prev.style, backgroundColor: e.target.value },
                         }))
@@ -410,8 +415,8 @@ export function CustomComponentEditor({
                     <Input
                       id="bgColor"
                       value={formData.style.backgroundColor}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
+                      onChange={e =>
+                        setFormData(prev => ({
                           ...prev,
                           style: { ...prev.style, backgroundColor: e.target.value },
                         }))
@@ -426,8 +431,8 @@ export function CustomComponentEditor({
                     <input
                       type="color"
                       value={formData.style.borderColor}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
+                      onChange={e =>
+                        setFormData(prev => ({
                           ...prev,
                           style: { ...prev.style, borderColor: e.target.value },
                         }))
@@ -437,8 +442,8 @@ export function CustomComponentEditor({
                     <Input
                       id="borderColor"
                       value={formData.style.borderColor}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
+                      onChange={e =>
+                        setFormData(prev => ({
                           ...prev,
                           style: { ...prev.style, borderColor: e.target.value },
                         }))
@@ -453,8 +458,8 @@ export function CustomComponentEditor({
                     <input
                       type="color"
                       value={formData.style.textColor}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
+                      onChange={e =>
+                        setFormData(prev => ({
                           ...prev,
                           style: { ...prev.style, textColor: e.target.value },
                         }))
@@ -464,8 +469,8 @@ export function CustomComponentEditor({
                     <Input
                       id="textColor"
                       value={formData.style.textColor}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
+                      onChange={e =>
+                        setFormData(prev => ({
                           ...prev,
                           style: { ...prev.style, textColor: e.target.value },
                         }))
@@ -480,8 +485,8 @@ export function CustomComponentEditor({
                     id="fontSize"
                     type="number"
                     value={formData.style.fontSize}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
+                    onChange={e =>
+                      setFormData(prev => ({
                         ...prev,
                         style: { ...prev.style, fontSize: parseInt(e.target.value) || 14 },
                       }))
@@ -495,8 +500,8 @@ export function CustomComponentEditor({
                     id="borderRadius"
                     type="number"
                     value={formData.style.borderRadius}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
+                    onChange={e =>
+                      setFormData(prev => ({
                         ...prev,
                         style: { ...prev.style, borderRadius: parseInt(e.target.value) || 0 },
                       }))
@@ -510,8 +515,8 @@ export function CustomComponentEditor({
                     id="borderWidth"
                     type="number"
                     value={formData.style.borderWidth}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
+                    onChange={e =>
+                      setFormData(prev => ({
                         ...prev,
                         style: { ...prev.style, borderWidth: parseInt(e.target.value) || 1 },
                       }))
@@ -547,7 +552,7 @@ export function CustomComponentEditor({
                     <PropertyEditor
                       key={property.id}
                       property={property}
-                      onChange={(p) => updateProperty(index, p)}
+                      onChange={p => updateProperty(index, p)}
                       onDelete={() => removeProperty(index)}
                     />
                   ))}
@@ -559,8 +564,8 @@ export function CustomComponentEditor({
                 <Input
                   id="terraform"
                   value={formData.terraformResource || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, terraformResource: e.target.value }))
+                  onChange={e =>
+                    setFormData(prev => ({ ...prev, terraformResource: e.target.value }))
                   }
                   placeholder="e.g., aws_instance"
                 />
@@ -571,8 +576,8 @@ export function CustomComponentEditor({
                 <Input
                   id="cloudformation"
                   value={formData.cloudformationResource || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
+                  onChange={e =>
+                    setFormData(prev => ({
                       ...prev,
                       cloudformationResource: e.target.value,
                     }))
@@ -595,7 +600,7 @@ export function CustomComponentEditor({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
 // ============================================================================
@@ -613,13 +618,13 @@ export function CustomComponentLibrary({
 }: CustomComponentLibraryProps) {
   const groupedComponents = components.reduce(
     (acc, comp) => {
-      const category = comp.category || 'Custom';
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(comp);
-      return acc;
+      const category = comp.category || 'Custom'
+      if (!acc[category]) acc[category] = []
+      acc[category].push(comp)
+      return acc
     },
     {} as Record<string, CustomComponentDefinition[]>
-  );
+  )
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
@@ -639,23 +644,16 @@ export function CustomComponentLibrary({
           <div className="text-center py-8 text-gray-500">
             <Box className="h-10 w-10 mx-auto mb-2 text-gray-300" />
             <p className="text-sm">No custom components yet</p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-3"
-              onClick={onCreate}
-            >
+            <Button size="sm" variant="outline" className="mt-3" onClick={onCreate}>
               Create your first component
             </Button>
           </div>
         ) : (
           Object.entries(groupedComponents).map(([category, comps]) => (
             <div key={category} className="mb-4">
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">
-                {category}
-              </h4>
+              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">{category}</h4>
               <div className="space-y-2">
-                {comps.map((comp) => (
+                {comps.map(comp => (
                   <div
                     key={comp.id}
                     className="p-3 border rounded-lg bg-background hover:border-blue-300 transition-colors group"
@@ -668,9 +666,7 @@ export function CustomComponentLibrary({
                         <span className="text-xl">{comp.icon}</span>
                         <div>
                           <div className="font-medium text-sm">{comp.name}</div>
-                          <div className="text-xs text-gray-400">
-                            {comp.description}
-                          </div>
+                          <div className="text-xs text-gray-400">{comp.description}</div>
                         </div>
                       </button>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -708,7 +704,7 @@ export function CustomComponentLibrary({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -729,8 +725,8 @@ export function createNodeFromComponent(
       componentId: component.id,
       properties: component.properties.reduce(
         (acc, prop) => {
-          acc[prop.name] = prop.defaultValue;
-          return acc;
+          acc[prop.name] = prop.defaultValue
+          return acc
         },
         {} as Record<string, unknown>
       ),
@@ -745,7 +741,7 @@ export function createNodeFromComponent(
       color: component.style.textColor,
       fontSize: component.style.fontSize,
     },
-  };
+  }
 }
 
-export default CustomComponentLibrary;
+export default CustomComponentLibrary

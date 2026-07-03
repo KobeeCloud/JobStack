@@ -56,7 +56,11 @@ export const POST = createApiHandler(
     const body = await request.json()
     const parsed = createInviteSchema.safeParse(body)
     if (!parsed.success) {
-      throw new ApiError(400, parsed.error.errors[0]?.message ?? 'Invalid input', 'VALIDATION_ERROR')
+      throw new ApiError(
+        400,
+        parsed.error.errors[0]?.message ?? 'Invalid input',
+        'VALIDATION_ERROR'
+      )
     }
 
     const normalizedEmail = parsed.data.email.trim().toLowerCase()
@@ -94,7 +98,11 @@ export const POST = createApiHandler(
         .eq('organization_id', id)
 
       if ((currentMemberCount || 0) >= (org.max_members || 10)) {
-        throw new ApiError(400, `Organization has reached the maximum member limit (${org.max_members})`, 'MEMBER_LIMIT_REACHED')
+        throw new ApiError(
+          400,
+          `Organization has reached the maximum member limit (${org.max_members})`,
+          'MEMBER_LIMIT_REACHED'
+        )
       }
     }
 
@@ -157,7 +165,11 @@ export const POST = createApiHandler(
       html: emailContent.html,
     })
 
-    log.info('Organization invite sent', { orgId: id, invitedEmailHash: normalizedEmail.replace(/(.{2}).*@/, '$1***@'), invitedBy: auth.user.id })
+    log.info('Organization invite sent', {
+      orgId: id,
+      invitedEmailHash: normalizedEmail.replace(/(.{2}).*@/, '$1***@'),
+      invitedBy: auth.user.id,
+    })
 
     // SECURITY: Strip secret token from response — only sent via email
     const { token: _secret, ...safeInvite } = invite as Record<string, unknown>

@@ -1,0 +1,27 @@
+---
+# group_vars/all.yml — variables available to ALL hosts
+
+# Application
+app_name: jobstack
+app_dir: /opt/jobstack
+app_port: 3000
+app_user: deploy
+app_group: deploy
+
+# Node.js
+nodejs_version: "20"
+nodejs_npm_global_packages:
+  - pm2
+
+# nginx
+nginx_worker_processes: auto
+nginx_client_max_body_size: 50m
+
+# Timezone
+system_timezone: Europe/Warsaw
+
+# Security
+ssh_port: 22
+fail2ban_maxretry: 5
+fail2ban_findtime: 600
+fail2ban_bantime: 3600

@@ -101,8 +101,10 @@ export function generatePDF(options: PDFExportOptions): jsPDF {
     autoTable(doc, {
       startY: y,
       head: [['Cloud Provider', 'Components']],
-      body: Array.from(providerCounts.entries())
-        .map(([provider, count]) => [provider.toUpperCase(), String(count)]),
+      body: Array.from(providerCounts.entries()).map(([provider, count]) => [
+        provider.toUpperCase(),
+        String(count),
+      ]),
       theme: 'striped',
       headStyles: { fillColor: [37, 99, 235] },
       margin: { left: margin, right: margin },
@@ -143,7 +145,11 @@ export function generatePDF(options: PDFExportOptions): jsPDF {
     doc.setFontSize(9)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(100, 100, 100)
-    doc.text(`Type: ${node.type || 'default'} | Category: ${category} | Provider: ${provider}`, margin, y)
+    doc.text(
+      `Type: ${node.type || 'default'} | Category: ${category} | Provider: ${provider}`,
+      margin,
+      y
+    )
     y += 5
 
     // Connections

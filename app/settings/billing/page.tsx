@@ -109,23 +109,23 @@ export default function BillingPage() {
             <Check className="h-5 w-5 text-green-600" />
           </div>
           <div>
-            <p className="font-semibold text-sm">You&apos;re on the Free plan — enjoy all features!</p>
+            <p className="font-semibold text-sm">
+              You&apos;re on the Free plan — enjoy all features!
+            </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              During our launch period every user gets access to all features at no cost.
-              Billing will activate on&nbsp;<strong>September 2026</strong>.
+              During our launch period every user gets access to all features at no cost. Billing
+              will activate on&nbsp;<strong>September 2026</strong>.
             </p>
           </div>
         </div>
 
         {/* Plans */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {plans.map((plan) => (
+          {plans.map(plan => (
             <Card
               key={plan.id}
               className={
-                plan.highlighted
-                  ? 'border-primary ring-2 ring-primary/30 relative'
-                  : 'relative'
+                plan.highlighted ? 'border-primary ring-2 ring-primary/30 relative' : 'relative'
               }
             >
               {plan.badge && (
@@ -148,7 +148,7 @@ export default function BillingPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-2">
-                  {plan.features.map((f) => (
+                  {plan.features.map(f => (
                     <li key={f} className="flex items-start gap-2 text-sm">
                       <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                       {f}
@@ -194,8 +194,8 @@ export default function BillingPage() {
             <div>
               <p className="font-medium">Will there be a grandfathered rate for early adopters?</p>
               <p className="text-muted-foreground mt-1">
-                Yes — users who sign up during the free period will receive a discounted rate
-                when paid plans launch.
+                Yes — users who sign up during the free period will receive a discounted rate when
+                paid plans launch.
               </p>
             </div>
             <div>

@@ -1,9 +1,9 @@
-'use client';
+'use client'
 
-import { useState, useCallback, useMemo } from 'react';
-import { Node, Edge } from '@xyflow/react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { useState, useCallback, useMemo } from 'react'
+import { Node, Edge } from '@xyflow/react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   Check,
   X,
@@ -15,70 +15,70 @@ import {
   ChevronUp,
   GitBranch,
   Shield,
-} from 'lucide-react';
+} from 'lucide-react'
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type ChangeType = 'add' | 'modify' | 'delete' | 'connect' | 'disconnect';
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'changes-requested';
+export type ChangeType = 'add' | 'modify' | 'delete' | 'connect' | 'disconnect'
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'changes-requested'
 
 export interface DiagramChange {
-  id: string;
-  type: ChangeType;
-  entity: 'node' | 'edge';
-  entityId: string;
-  entityName: string;
-  description: string;
-  details: Record<string, unknown>;
-  timestamp: Date;
+  id: string
+  type: ChangeType
+  entity: 'node' | 'edge'
+  entityId: string
+  entityName: string
+  description: string
+  details: Record<string, unknown>
+  timestamp: Date
   author: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  risk: 'low' | 'medium' | 'high';
+    id: string
+    name: string
+    avatar?: string
+  }
+  risk: 'low' | 'medium' | 'high'
 }
 
 export interface ApprovalRequest {
-  id: string;
-  title: string;
-  description: string;
-  changes: DiagramChange[];
-  status: ApprovalStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  title: string
+  description: string
+  changes: DiagramChange[]
+  status: ApprovalStatus
+  createdAt: Date
+  updatedAt: Date
   author: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
+    id: string
+    name: string
+    avatar?: string
+  }
   reviewers: Array<{
-    id: string;
-    name: string;
-    avatar?: string;
-    status: 'pending' | 'approved' | 'rejected';
-    comment?: string;
-    reviewedAt?: Date;
-  }>;
-  requiredApprovals: number;
+    id: string
+    name: string
+    avatar?: string
+    status: 'pending' | 'approved' | 'rejected'
+    comment?: string
+    reviewedAt?: Date
+  }>
+  requiredApprovals: number
   comments: Array<{
-    id: string;
-    author: string;
-    content: string;
-    timestamp: Date;
-  }>;
+    id: string
+    author: string
+    content: string
+    timestamp: Date
+  }>
 }
 
 interface ChangeApprovalPanelProps {
-  request: ApprovalRequest;
-  currentUserId: string;
-  onApprove: (requestId: string, comment?: string) => void;
-  onReject: (requestId: string, comment: string) => void;
-  onRequestChanges: (requestId: string, comment: string) => void;
-  onAddComment: (requestId: string, comment: string) => void;
-  className?: string;
+  request: ApprovalRequest
+  currentUserId: string
+  onApprove: (requestId: string, comment?: string) => void
+  onReject: (requestId: string, comment: string) => void
+  onRequestChanges: (requestId: string, comment: string) => void
+  onAddComment: (requestId: string, comment: string) => void
+  className?: string
 }
 
 // ============================================================================
@@ -88,15 +88,15 @@ interface ChangeApprovalPanelProps {
 function getChangeTypeIcon(type: ChangeType) {
   switch (type) {
     case 'add':
-      return <span className="text-green-500 font-bold">+</span>;
+      return <span className="text-green-500 font-bold">+</span>
     case 'delete':
-      return <span className="text-red-500 font-bold">−</span>;
+      return <span className="text-red-500 font-bold">−</span>
     case 'modify':
-      return <span className="text-yellow-500 font-bold">~</span>;
+      return <span className="text-yellow-500 font-bold">~</span>
     case 'connect':
-      return <span className="text-blue-500">→</span>;
+      return <span className="text-blue-500">→</span>
     case 'disconnect':
-      return <span className="text-gray-500">✕</span>;
+      return <span className="text-gray-500">✕</span>
   }
 }
 
@@ -105,13 +105,11 @@ function getRiskBadge(risk: 'low' | 'medium' | 'high') {
     low: 'bg-green-100 text-green-700',
     medium: 'bg-yellow-100 text-yellow-700',
     high: 'bg-red-100 text-red-700',
-  };
+  }
 
   return (
-    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', colors[risk])}>
-      {risk}
-    </span>
-  );
+    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', colors[risk])}>{risk}</span>
+  )
 }
 
 function getStatusBadge(status: ApprovalStatus) {
@@ -120,25 +118,30 @@ function getStatusBadge(status: ApprovalStatus) {
     approved: { color: 'bg-green-100 text-green-700', icon: Check },
     rejected: { color: 'bg-red-100 text-red-700', icon: X },
     'changes-requested': { color: 'bg-orange-100 text-orange-700', icon: AlertTriangle },
-  };
+  }
 
-  const { color, icon: Icon } = config[status];
+  const { color, icon: Icon } = config[status]
 
   return (
-    <span className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium', color)}>
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium',
+        color
+      )}
+    >
       <Icon className="h-3 w-3" />
       {status.replace('-', ' ')}
     </span>
-  );
+  )
 }
 
 function formatTimeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
 
-  if (seconds < 60) return 'just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
+  if (seconds < 60) return 'just now'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+  return `${Math.floor(seconds / 86400)}d ago`
 }
 
 // ============================================================================
@@ -146,7 +149,7 @@ function formatTimeAgo(date: Date): string {
 // ============================================================================
 
 function ChangeItem({ change }: { change: DiagramChange }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false)
 
   return (
     <div className="border rounded-lg p-3 bg-white">
@@ -186,33 +189,25 @@ function ChangeItem({ change }: { change: DiagramChange }) {
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // ============================================================================
 // Reviewer Item Component
 // ============================================================================
 
-function ReviewerItem({
-  reviewer,
-}: {
-  reviewer: ApprovalRequest['reviewers'][0];
-}) {
+function ReviewerItem({ reviewer }: { reviewer: ApprovalRequest['reviewers'][0] }) {
   const statusIcon = {
     pending: <Clock className="h-4 w-4 text-yellow-500" />,
     approved: <Check className="h-4 w-4 text-green-500" />,
     rejected: <X className="h-4 w-4 text-red-500" />,
-  };
+  }
 
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center gap-2">
         {reviewer.avatar ? (
-          <img
-            src={reviewer.avatar}
-            alt={reviewer.name}
-            className="h-6 w-6 rounded-full"
-          />
+          <img src={reviewer.avatar} alt={reviewer.name} className="h-6 w-6 rounded-full" />
         ) : (
           <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center">
             <User className="h-3 w-3 text-gray-500" />
@@ -223,13 +218,11 @@ function ReviewerItem({
       <div className="flex items-center gap-2">
         {statusIcon[reviewer.status]}
         {reviewer.reviewedAt && (
-          <span className="text-xs text-gray-400">
-            {formatTimeAgo(reviewer.reviewedAt)}
-          </span>
+          <span className="text-xs text-gray-400">{formatTimeAgo(reviewer.reviewedAt)}</span>
         )}
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -245,41 +238,43 @@ export function ChangeApprovalPanel({
   onAddComment,
   className,
 }: ChangeApprovalPanelProps) {
-  const [comment, setComment] = useState('');
-  const [showCommentBox, setShowCommentBox] = useState(false);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | 'changes' | 'comment'>('comment');
+  const [comment, setComment] = useState('')
+  const [showCommentBox, setShowCommentBox] = useState(false)
+  const [actionType, setActionType] = useState<'approve' | 'reject' | 'changes' | 'comment'>(
+    'comment'
+  )
 
-  const isReviewer = request.reviewers.some((r) => r.id === currentUserId);
-  const hasReviewed = request.reviewers.find((r) => r.id === currentUserId)?.status !== 'pending';
-  const approvalCount = request.reviewers.filter((r) => r.status === 'approved').length;
-  const canMerge = approvalCount >= request.requiredApprovals && request.status === 'pending';
+  const isReviewer = request.reviewers.some(r => r.id === currentUserId)
+  const hasReviewed = request.reviewers.find(r => r.id === currentUserId)?.status !== 'pending'
+  const approvalCount = request.reviewers.filter(r => r.status === 'approved').length
+  const canMerge = approvalCount >= request.requiredApprovals && request.status === 'pending'
 
   const riskSummary = useMemo(() => {
-    const counts = { low: 0, medium: 0, high: 0 };
+    const counts = { low: 0, medium: 0, high: 0 }
     for (const change of request.changes) {
-      counts[change.risk]++;
+      counts[change.risk]++
     }
-    return counts;
-  }, [request.changes]);
+    return counts
+  }, [request.changes])
 
   const handleAction = useCallback(() => {
     switch (actionType) {
       case 'approve':
-        onApprove(request.id, comment || undefined);
-        break;
+        onApprove(request.id, comment || undefined)
+        break
       case 'reject':
-        if (comment) onReject(request.id, comment);
-        break;
+        if (comment) onReject(request.id, comment)
+        break
       case 'changes':
-        if (comment) onRequestChanges(request.id, comment);
-        break;
+        if (comment) onRequestChanges(request.id, comment)
+        break
       case 'comment':
-        if (comment) onAddComment(request.id, comment);
-        break;
+        if (comment) onAddComment(request.id, comment)
+        break
     }
-    setComment('');
-    setShowCommentBox(false);
-  }, [actionType, comment, request.id, onApprove, onReject, onRequestChanges, onAddComment]);
+    setComment('')
+    setShowCommentBox(false)
+  }, [actionType, comment, request.id, onApprove, onReject, onRequestChanges, onAddComment])
 
   return (
     <div className={cn('flex flex-col h-full bg-gray-50', className)}>
@@ -320,7 +315,7 @@ export function ChangeApprovalPanel({
           Changes ({request.changes.length})
         </h3>
         <div className="space-y-2">
-          {request.changes.map((change) => (
+          {request.changes.map(change => (
             <ChangeItem key={change.id} change={change} />
           ))}
         </div>
@@ -328,7 +323,7 @@ export function ChangeApprovalPanel({
         {/* Reviewers */}
         <h3 className="text-sm font-medium mt-6 mb-3">Reviewers</h3>
         <div className="bg-white rounded-lg border p-3">
-          {request.reviewers.map((reviewer) => (
+          {request.reviewers.map(reviewer => (
             <ReviewerItem key={reviewer.id} reviewer={reviewer} />
           ))}
         </div>
@@ -341,13 +336,11 @@ export function ChangeApprovalPanel({
               Comments ({request.comments.length})
             </h3>
             <div className="space-y-2">
-              {request.comments.map((c) => (
+              {request.comments.map(c => (
                 <div key={c.id} className="bg-white rounded-lg border p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">{c.author}</span>
-                    <span className="text-xs text-gray-400">
-                      {formatTimeAgo(c.timestamp)}
-                    </span>
+                    <span className="text-xs text-gray-400">{formatTimeAgo(c.timestamp)}</span>
                   </div>
                   <p className="text-sm text-gray-600">{c.content}</p>
                 </div>
@@ -364,11 +357,9 @@ export function ChangeApprovalPanel({
             <div className="space-y-3">
               <textarea
                 value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                onChange={e => setComment(e.target.value)}
                 placeholder={
-                  actionType === 'approve'
-                    ? 'Optional comment...'
-                    : 'Please provide feedback...'
+                  actionType === 'approve' ? 'Optional comment...' : 'Please provide feedback...'
                 }
                 className="w-full h-20 p-2 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -377,8 +368,8 @@ export function ChangeApprovalPanel({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setShowCommentBox(false);
-                    setComment('');
+                    setShowCommentBox(false)
+                    setComment('')
                   }}
                 >
                   Cancel
@@ -386,10 +377,7 @@ export function ChangeApprovalPanel({
                 <Button
                   size="sm"
                   onClick={handleAction}
-                  disabled={
-                    (actionType === 'reject' || actionType === 'changes') &&
-                    !comment
-                  }
+                  disabled={(actionType === 'reject' || actionType === 'changes') && !comment}
                   className={cn(
                     actionType === 'approve' && 'bg-green-600 hover:bg-green-700',
                     actionType === 'reject' && 'bg-red-600 hover:bg-red-700',
@@ -410,8 +398,8 @@ export function ChangeApprovalPanel({
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  setActionType('comment');
-                  setShowCommentBox(true);
+                  setActionType('comment')
+                  setShowCommentBox(true)
                 }}
               >
                 <MessageSquare className="h-4 w-4 mr-1" />
@@ -422,8 +410,8 @@ export function ChangeApprovalPanel({
                 size="sm"
                 className="flex-1 text-orange-600 hover:text-orange-700"
                 onClick={() => {
-                  setActionType('changes');
-                  setShowCommentBox(true);
+                  setActionType('changes')
+                  setShowCommentBox(true)
                 }}
               >
                 <AlertTriangle className="h-4 w-4 mr-1" />
@@ -434,8 +422,8 @@ export function ChangeApprovalPanel({
                 size="sm"
                 className="flex-1 text-red-600 hover:text-red-700"
                 onClick={() => {
-                  setActionType('reject');
-                  setShowCommentBox(true);
+                  setActionType('reject')
+                  setShowCommentBox(true)
                 }}
               >
                 <X className="h-4 w-4 mr-1" />
@@ -445,8 +433,8 @@ export function ChangeApprovalPanel({
                 size="sm"
                 className="flex-1 bg-green-600 hover:bg-green-700"
                 onClick={() => {
-                  setActionType('approve');
-                  setShowCommentBox(true);
+                  setActionType('approve')
+                  setShowCommentBox(true)
                 }}
               >
                 <Check className="h-4 w-4 mr-1" />
@@ -467,7 +455,7 @@ export function ChangeApprovalPanel({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -481,11 +469,11 @@ export function useChangeDetection(
   currentEdges: Edge[]
 ): DiagramChange[] {
   return useMemo(() => {
-    const changes: DiagramChange[] = [];
-    const prevNodeMap = new Map(previousNodes.map((n) => [n.id, n]));
-    const currNodeMap = new Map(currentNodes.map((n) => [n.id, n]));
-    const prevEdgeMap = new Map(previousEdges.map((e) => [e.id, e]));
-    const currEdgeMap = new Map(currentEdges.map((e) => [e.id, e]));
+    const changes: DiagramChange[] = []
+    const prevNodeMap = new Map(previousNodes.map(n => [n.id, n]))
+    const currNodeMap = new Map(currentNodes.map(n => [n.id, n]))
+    const prevEdgeMap = new Map(previousEdges.map(e => [e.id, e]))
+    const currEdgeMap = new Map(currentEdges.map(e => [e.id, e]))
 
     // Detect node changes
     for (const node of currentNodes) {
@@ -501,9 +489,9 @@ export function useChangeDetection(
           timestamp: new Date(),
           author: { id: 'current-user', name: 'You' },
           risk: node.type === 'vpc' || node.type === 'vnet' ? 'high' : 'low',
-        });
+        })
       } else {
-        const prevNode = prevNodeMap.get(node.id)!;
+        const prevNode = prevNodeMap.get(node.id)!
         if (JSON.stringify(prevNode) !== JSON.stringify(node)) {
           changes.push({
             id: `change-modify-${node.id}`,
@@ -516,7 +504,7 @@ export function useChangeDetection(
             timestamp: new Date(),
             author: { id: 'current-user', name: 'You' },
             risk: 'medium',
-          });
+          })
         }
       }
     }
@@ -534,7 +522,7 @@ export function useChangeDetection(
           timestamp: new Date(),
           author: { id: 'current-user', name: 'You' },
           risk: 'high',
-        });
+        })
       }
     }
 
@@ -552,7 +540,7 @@ export function useChangeDetection(
           timestamp: new Date(),
           author: { id: 'current-user', name: 'You' },
           risk: 'low',
-        });
+        })
       }
     }
 
@@ -569,12 +557,12 @@ export function useChangeDetection(
           timestamp: new Date(),
           author: { id: 'current-user', name: 'You' },
           risk: 'medium',
-        });
+        })
       }
     }
 
-    return changes;
-  }, [previousNodes, previousEdges, currentNodes, currentEdges]);
+    return changes
+  }, [previousNodes, previousEdges, currentNodes, currentEdges])
 }
 
-export default ChangeApprovalPanel;
+export default ChangeApprovalPanel

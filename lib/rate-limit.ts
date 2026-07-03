@@ -9,7 +9,7 @@ const inMemoryStore = new Map<string, { count: number; resetAt: number }>()
 function inMemoryLimit(
   identifier: string,
   maxRequests: number,
-  windowMs: number,
+  windowMs: number
 ): { success: boolean; limit: number; remaining: number; reset: number } {
   const now = Date.now()
   const entry = inMemoryStore.get(identifier)
@@ -60,7 +60,9 @@ try {
 }
 
 if (!ratelimit && process.env.NODE_ENV === 'production') {
-  log.warn('Upstash Redis not configured — rate limiting uses in-memory fallback (ineffective on serverless). Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.')
+  log.warn(
+    'Upstash Redis not configured — rate limiting uses in-memory fallback (ineffective on serverless). Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
+  )
 }
 
 // Rate limiters for different endpoints

@@ -1,0 +1,13 @@
+variable "resource_group_name" { type = string }
+variable "location" { type = string }
+variable "name_prefix" { type = string }
+variable "subnet_data_id" { type = string }
+variable "private_dns_zone_pg_id" { type = string }
+variable "pg_sku" { type = string }
+variable "pg_storage_mb" { type = number }
+variable "pg_version" { type = string }
+variable "pg_ha_enabled" { type = bool }
+variable "pg_backup_retention_days" { type = number }
+variable "pg_geo_redundant_backup" { type = bool }
+variable "key_vault_id" { type = string }
+variable "tags" { type = map(string) }

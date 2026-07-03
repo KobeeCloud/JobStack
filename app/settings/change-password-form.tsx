@@ -49,7 +49,7 @@ export function ChangePasswordForm() {
     setIsChanging(true)
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       })
 
       if (error) throw error
@@ -73,7 +73,7 @@ export function ChangePasswordForm() {
             id="newPassword"
             type={showPasswords ? 'text' : 'password'}
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            onChange={e => setNewPassword(e.target.value)}
             placeholder="Enter new password"
           />
           <Button
@@ -98,7 +98,7 @@ export function ChangePasswordForm() {
           id="confirmPassword"
           type={showPasswords ? 'text' : 'password'}
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={e => setConfirmPassword(e.target.value)}
           placeholder="Confirm new password"
         />
       </div>

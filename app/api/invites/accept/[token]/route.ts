@@ -43,15 +43,15 @@ export const POST = createApiHandler(
 
     if (!profile) {
       // Fetch full user object for metadata
-      const { data: { user: fullUser } } = await auth.supabase.auth.getUser()
-      const { error: createProfileError } = await auth.supabase
-        .from('profiles')
-        .insert({
-          id: auth.user.id,
-          email: auth.user.email!,
-          full_name: fullUser?.user_metadata?.full_name || null,
-          avatar_url: fullUser?.user_metadata?.avatar_url || null,
-        })
+      const {
+        data: { user: fullUser },
+      } = await auth.supabase.auth.getUser()
+      const { error: createProfileError } = await auth.supabase.from('profiles').insert({
+        id: auth.user.id,
+        email: auth.user.email!,
+        full_name: fullUser?.user_metadata?.full_name || null,
+        avatar_url: fullUser?.user_metadata?.avatar_url || null,
+      })
 
       if (createProfileError) {
         throw new ApiError(500, 'Failed to create profile', 'PROFILE_CREATE_FAILED')
@@ -59,13 +59,11 @@ export const POST = createApiHandler(
     }
 
     // Add user to organization
-    const { error: memberError } = await auth.supabase
-      .from('organization_members')
-      .insert({
-        organization_id: invite.organization_id,
-        user_id: auth.user.id,
-        role: invite.role,
-      })
+    const { error: memberError } = await auth.supabase.from('organization_members').insert({
+      organization_id: invite.organization_id,
+      user_id: auth.user.id,
+      role: invite.role,
+    })
 
     if (memberError) {
       if (memberError.code === '23505') {
@@ -75,10 +73,7 @@ export const POST = createApiHandler(
     }
 
     // Delete invite
-    await auth.supabase
-      .from('organization_invites')
-      .delete()
-      .eq('token', token)
+    await auth.supabase.from('organization_invites').delete().eq('token', token)
 
     log.info('Invite accepted', { orgId: invite.organization_id, userId: auth.user.id })
 

@@ -52,10 +52,7 @@ export const DELETE = createApiHandler(
     }
 
     // Remove the member
-    const { error } = await auth.supabase
-      .from('organization_members')
-      .delete()
-      .eq('id', memberId)
+    const { error } = await auth.supabase.from('organization_members').delete().eq('id', memberId)
 
     if (error) {
       log.error('Failed to remove member', error)

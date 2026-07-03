@@ -45,7 +45,8 @@ export const GET = createApiHandler(
     const adminClient = createAdminClient()
     const { data: members, error: membersError } = await adminClient
       .from('organization_members')
-      .select(`
+      .select(
+        `
         id,
         role,
         joined_at,
@@ -53,7 +54,8 @@ export const GET = createApiHandler(
           full_name,
           avatar_url
         )
-      `)
+      `
+      )
       .eq('organization_id', orgId)
       .order('joined_at', { ascending: true })
 
@@ -134,10 +136,7 @@ export const DELETE = createApiHandler(
       throw new ApiError(403, 'Only owners can delete organization', 'FORBIDDEN')
     }
 
-    const { error } = await auth.supabase
-      .from('organizations')
-      .delete()
-      .eq('id', orgId)
+    const { error } = await auth.supabase.from('organizations').delete().eq('id', orgId)
 
     if (error) {
       log.error('Failed to delete organization', error)

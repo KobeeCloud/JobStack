@@ -54,7 +54,11 @@ async function verifyDiagramAccess(
 
   // For PUT/DELETE, require edit permission
   if (requireEdit && share.permission !== 'edit') {
-    throw new ApiError(403, 'Forbidden - You do not have edit permission for this diagram', 'FORBIDDEN')
+    throw new ApiError(
+      403,
+      'Forbidden - You do not have edit permission for this diagram',
+      'FORBIDDEN'
+    )
   }
 
   return { diagram, project }
@@ -69,12 +73,18 @@ export const GET = createApiHandler(
     const params = await context.params
     const diagramId = uuidSchema.parse(params.id)
 
-    const { diagram } = await verifyDiagramAccess(auth.supabase, diagramId, auth.user.id, auth.user.email, false)
+    const { diagram } = await verifyDiagramAccess(
+      auth.supabase,
+      diagramId,
+      auth.user.id,
+      auth.user.email,
+      false
+    )
 
     // Return with data wrapper for compatibility
     const responseData = {
       ...diagram,
-      data: { nodes: diagram.nodes || [], edges: diagram.edges || [] }
+      data: { nodes: diagram.nodes || [], edges: diagram.edges || [] },
     }
 
     return NextResponse.json(responseData)
@@ -115,10 +125,7 @@ export const PUT = createApiHandler(
     }
 
     // Build the update query
-    let query = auth.supabase
-      .from('diagrams')
-      .update(updateData)
-      .eq('id', diagramId)
+    let query = auth.supabase.from('diagrams').update(updateData).eq('id', diagramId)
 
     // MEDIUM-001: Optimistic locking — if client sends version, enforce match
     if (typeof body?.version === 'number') {
@@ -134,7 +141,11 @@ export const PUT = createApiHandler(
 
     if (!diagram) {
       if (typeof body?.version === 'number') {
-        throw new ApiError(409, 'Diagram was modified by another user. Refresh and try again.', 'VERSION_CONFLICT')
+        throw new ApiError(
+          409,
+          'Diagram was modified by another user. Refresh and try again.',
+          'VERSION_CONFLICT'
+        )
       }
       throw new ApiError(404, 'Diagram not found', 'DIAGRAM_NOT_FOUND')
     }
@@ -142,7 +153,7 @@ export const PUT = createApiHandler(
     // Return with data wrapper for compatibility
     const responseData = {
       ...diagram,
-      data: { nodes: diagram.nodes || [], edges: diagram.edges || [] }
+      data: { nodes: diagram.nodes || [], edges: diagram.edges || [] },
     }
 
     log.info('Diagram updated', { diagramId, userId: auth.user.id })

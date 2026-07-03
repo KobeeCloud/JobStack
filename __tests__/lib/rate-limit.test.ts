@@ -6,13 +6,19 @@
 // Mock @upstash modules to avoid ESM/uncrypto issues in Jest
 jest.mock('@upstash/ratelimit', () => ({
   Ratelimit: class MockRatelimit {
-    static slidingWindow() { return {} }
+    static slidingWindow() {
+      return {}
+    }
     constructor() {}
-    async limit() { return { success: true, limit: 100, remaining: 99, reset: Date.now() + 60000 } }
+    async limit() {
+      return { success: true, limit: 100, remaining: 99, reset: Date.now() + 60000 }
+    }
   },
 }))
 jest.mock('@upstash/redis', () => ({
-  Redis: class MockRedis { constructor() {} },
+  Redis: class MockRedis {
+    constructor() {}
+  },
 }))
 jest.mock('@/lib/logger', () => ({
   log: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },

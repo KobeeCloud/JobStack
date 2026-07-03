@@ -55,10 +55,13 @@ export function CookieConsent() {
 
   const handleConsent = useCallback((choice: ConsentChoice) => {
     const timestamp = new Date().toISOString()
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify({
-      choice,
-      timestamp,
-    } satisfies ConsentRecord))
+    localStorage.setItem(
+      COOKIE_CONSENT_KEY,
+      JSON.stringify({
+        choice,
+        timestamp,
+      } satisfies ConsentRecord)
+    )
     setShowBanner(false)
 
     // Fire-and-forget: persist consent server-side for GDPR audit trail
@@ -66,7 +69,9 @@ export function CookieConsent() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ choice, timestamp }),
-    }).catch(() => { /* best-effort — localStorage is the primary store */ })
+    }).catch(() => {
+      /* best-effort — localStorage is the primary store */
+    })
 
     // Dispatch a custom event so other components can react to the choice
     window.dispatchEvent(new CustomEvent('cookie-consent-changed', { detail: { choice } }))
@@ -86,22 +91,16 @@ export function CookieConsent() {
                 {t('description')}
                 <Link href="/privacy" className="text-primary hover:underline">
                   {t('privacyPolicy')}
-                </Link>.
+                </Link>
+                .
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleConsent('necessary')}
-            >
+            <Button variant="outline" size="sm" onClick={() => handleConsent('necessary')}>
               {t('necessaryOnly')}
             </Button>
-            <Button
-              size="sm"
-              onClick={() => handleConsent('all')}
-            >
+            <Button size="sm" onClick={() => handleConsent('all')}>
               {t('acceptAll')}
             </Button>
             <Button

@@ -3,13 +3,24 @@
 import { useState } from 'react'
 import { Node, Edge } from '@xyflow/react'
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ChevronRight, ChevronLeft, Server, Container, Check } from 'lucide-react'
 
 interface K8sWizardProps {
@@ -68,7 +79,8 @@ function vmSizesFor(provider: KubeProvider) {
 
 const defaultSystemPool = (provider: KubeProvider): NodePool => ({
   name: 'system',
-  vmSize: provider === 'aks' ? 'Standard_D4s_v3' : provider === 'eks' ? 'm5.large' : 'n2-standard-2',
+  vmSize:
+    provider === 'aks' ? 'Standard_D4s_v3' : provider === 'eks' ? 'm5.large' : 'n2-standard-2',
   minCount: 1,
   maxCount: 3,
   autoscale: true,
@@ -100,9 +112,16 @@ function generateK8sNodes(
   const now = Date.now()
 
   // ── outer container (RG / VPC / Project) ─────────────────────────────────
-  const containerLabel = provider === 'aks' ? `${clusterName}-rg` : provider === 'eks' ? `${clusterName}-vpc` : `${clusterName}-project`
-  const containerCompId = provider === 'aks' ? 'azure-resource-group' : provider === 'eks' ? 'aws-vpc' : 'gcp-project'
-  const clusterCompId   = provider === 'aks' ? 'azure-aks' : provider === 'eks' ? 'aws-eks' : 'gcp-gke'
+  const containerLabel =
+    provider === 'aks'
+      ? `${clusterName}-rg`
+      : provider === 'eks'
+        ? `${clusterName}-vpc`
+        : `${clusterName}-project`
+  const containerCompId =
+    provider === 'aks' ? 'azure-resource-group' : provider === 'eks' ? 'aws-vpc' : 'gcp-project'
+  const clusterCompId =
+    provider === 'aks' ? 'azure-aks' : provider === 'eks' ? 'aws-eks' : 'gcp-gke'
 
   // Width grows with addons count, min 780
   const addonCols = Math.min(addons.length, 4)
@@ -141,7 +160,12 @@ function generateK8sNodes(
 
   // ── node pool nodes ───────────────────────────────────────────────────────
   nodePools.forEach((pool, i) => {
-    const poolCompId = provider === 'aks' ? 'azure-aks-nodepool' : provider === 'eks' ? 'aws-eks-nodegroup' : 'gcp-gke'
+    const poolCompId =
+      provider === 'aks'
+        ? 'azure-aks-nodepool'
+        : provider === 'eks'
+          ? 'aws-eks-nodegroup'
+          : 'gcp-gke'
     const poolId = `k8s-pool-${now}-${i}`
     nodes.push({
       id: poolId,
@@ -174,12 +198,12 @@ function generateK8sNodes(
   // Rendered as regular nodes positioned in a horizontal grid at the bottom.
   addons.forEach((addon, i) => {
     const addonCompMap: Record<Addon, string> = {
-      'ingress':      'k8s-ingress',
+      ingress: 'k8s-ingress',
       'cert-manager': 'k8s-ingress',
-      'prometheus':   'prometheus',
-      'linkerd':      'istio',
-      'argo-cd':      'argocd',
-      'keda':         'k8s-ingress',
+      prometheus: 'prometheus',
+      linkerd: 'istio',
+      'argo-cd': 'argocd',
+      keda: 'k8s-ingress',
     }
     const col = i % 4
     const row = Math.floor(i / 4)
@@ -216,7 +240,9 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
   const [provider, setProvider] = useState<KubeProvider>('aks')
   const [clusterName, setClusterName] = useState('my-cluster')
   const [systemPool, setSystemPool] = useState<NodePool>(defaultSystemPool('aks'))
-  const [selectedAddons, setSelectedAddons] = useState<Set<Addon>>(new Set(['ingress', 'prometheus']))
+  const [selectedAddons, setSelectedAddons] = useState<Set<Addon>>(
+    new Set(['ingress', 'prometheus'])
+  )
 
   const handleProviderChange = (p: KubeProvider) => {
     setProvider(p)
@@ -226,13 +252,19 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
   const toggleAddon = (id: Addon) => {
     setSelectedAddons(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id); else next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
 
   const handleComplete = () => {
-    const { nodes, edges } = generateK8sNodes(provider, clusterName, [systemPool], Array.from(selectedAddons))
+    const { nodes, edges } = generateK8sNodes(
+      provider,
+      clusterName,
+      [systemPool],
+      Array.from(selectedAddons)
+    )
     onComplete(nodes, edges)
     onOpenChange(false)
     // reset
@@ -254,7 +286,8 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
             Kubernetes Cluster Wizard
           </DialogTitle>
           <DialogDescription>
-            Generate a pre-built Kubernetes cluster diagram with your chosen provider and configuration.
+            Generate a pre-built Kubernetes cluster diagram with your chosen provider and
+            configuration.
           </DialogDescription>
         </DialogHeader>
 
@@ -262,14 +295,22 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
         <div className="flex items-center gap-2 py-2">
           {STEPS.map((label, i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-colors ${
-                i < step ? 'bg-blue-600 text-white' :
-                i === step ? 'bg-blue-500 text-white ring-2 ring-blue-300' :
-                'bg-muted text-muted-foreground'
-              }`}>
+              <div
+                className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-colors ${
+                  i < step
+                    ? 'bg-blue-600 text-white'
+                    : i === step
+                      ? 'bg-blue-500 text-white ring-2 ring-blue-300'
+                      : 'bg-muted text-muted-foreground'
+                }`}
+              >
                 {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
               </div>
-              <span className={`text-sm ${i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{label}</span>
+              <span
+                className={`text-sm ${i === step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}
+              >
+                {label}
+              </span>
               {i < STEPS.length - 1 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             </div>
           ))}
@@ -280,7 +321,11 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Cluster Name</Label>
-              <Input value={clusterName} onChange={(e) => setClusterName(e.target.value)} placeholder="my-cluster" />
+              <Input
+                value={clusterName}
+                onChange={e => setClusterName(e.target.value)}
+                placeholder="my-cluster"
+              />
             </div>
             <div className="space-y-2">
               <Label>Kubernetes Provider</Label>
@@ -295,10 +340,15 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
                         : 'border-border hover:border-blue-500/50'
                     }`}
                   >
-                    <div className="font-semibold text-sm uppercase tracking-wider mb-1" style={{ color: PROVIDER_META[p].color }}>
+                    <div
+                      className="font-semibold text-sm uppercase tracking-wider mb-1"
+                      style={{ color: PROVIDER_META[p].color }}
+                    >
                       {p.toUpperCase()}
                     </div>
-                    <div className="text-xs text-muted-foreground leading-snug">{PROVIDER_META[p].label}</div>
+                    <div className="text-xs text-muted-foreground leading-snug">
+                      {PROVIDER_META[p].label}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -312,19 +362,32 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
             <div className="flex items-center gap-2 mb-1">
               <Server className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">System Node Pool</span>
-              <Badge variant="secondary" className="ml-auto">Required</Badge>
+              <Badge variant="secondary" className="ml-auto">
+                Required
+              </Badge>
             </div>
             <div className="space-y-2">
               <Label>Pool Name</Label>
-              <Input value={systemPool.name} onChange={(e) => setSystemPool(p => ({ ...p, name: e.target.value }))} placeholder="system" />
+              <Input
+                value={systemPool.name}
+                onChange={e => setSystemPool(p => ({ ...p, name: e.target.value }))}
+                placeholder="system"
+              />
             </div>
             <div className="space-y-2">
               <Label>VM / Instance Size</Label>
-              <Select value={systemPool.vmSize} onValueChange={(v) => setSystemPool(p => ({ ...p, vmSize: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={systemPool.vmSize}
+                onValueChange={v => setSystemPool(p => ({ ...p, vmSize: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {vmSizes.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -332,16 +395,40 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Min Nodes</Label>
-                <Input type="number" min={1} max={50} value={systemPool.minCount} onChange={(e) => setSystemPool(p => ({ ...p, minCount: parseInt(e.target.value) || 1 }))} />
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={systemPool.minCount}
+                  onChange={e =>
+                    setSystemPool(p => ({ ...p, minCount: parseInt(e.target.value) || 1 }))
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Max Nodes</Label>
-                <Input type="number" min={1} max={100} value={systemPool.maxCount} onChange={(e) => setSystemPool(p => ({ ...p, maxCount: parseInt(e.target.value) || 3 }))} />
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={systemPool.maxCount}
+                  onChange={e =>
+                    setSystemPool(p => ({ ...p, maxCount: parseInt(e.target.value) || 3 }))
+                  }
+                />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="autoscale" checked={systemPool.autoscale} onChange={(e) => setSystemPool(p => ({ ...p, autoscale: e.target.checked }))} className="w-4 h-4" />
-              <Label htmlFor="autoscale" className="font-normal cursor-pointer">Enable Cluster Autoscaler</Label>
+              <input
+                type="checkbox"
+                id="autoscale"
+                checked={systemPool.autoscale}
+                onChange={e => setSystemPool(p => ({ ...p, autoscale: e.target.checked }))}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="autoscale" className="font-normal cursor-pointer">
+                Enable Cluster Autoscaler
+              </Label>
             </div>
           </div>
         )}
@@ -349,7 +436,9 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
         {/* Step 2: Add-ons */}
         {step === 2 && (
           <div className="space-y-3 py-2">
-            <p className="text-sm text-muted-foreground">Select the tools and services to include in your cluster.</p>
+            <p className="text-sm text-muted-foreground">
+              Select the tools and services to include in your cluster.
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {ALL_ADDONS.map(addon => (
                 <button
@@ -378,7 +467,9 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
             <div className="rounded-lg border border-border p-4 space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Provider</span>
-                <span className="font-semibold" style={{ color: PROVIDER_META[provider].color }}>{provider.toUpperCase()}</span>
+                <span className="font-semibold" style={{ color: PROVIDER_META[provider].color }}>
+                  {provider.toUpperCase()}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Cluster Name</span>
@@ -386,27 +477,41 @@ export function K8sWizard({ open, onOpenChange, onComplete }: K8sWizardProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">System Pool</span>
-                <span className="font-medium">{systemPool.vmSize} × {systemPool.minCount}–{systemPool.maxCount}</span>
+                <span className="font-medium">
+                  {systemPool.vmSize} × {systemPool.minCount}–{systemPool.maxCount}
+                </span>
               </div>
               <div className="flex justify-between items-start">
                 <span className="text-muted-foreground">Add-ons</span>
                 <div className="flex flex-wrap gap-1 justify-end max-w-xs">
                   {Array.from(selectedAddons).map(a => (
-                    <Badge key={a} variant="secondary" className="text-xs">{ALL_ADDONS.find(x => x.id === a)?.label}</Badge>
+                    <Badge key={a} variant="secondary" className="text-xs">
+                      {ALL_ADDONS.find(x => x.id === a)?.label}
+                    </Badge>
                   ))}
                   {selectedAddons.size === 0 && <span className="text-muted-foreground">None</span>}
                 </div>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              This will generate {1 + selectedAddons.size + 1} nodes on the canvas. You can adjust any settings after placing them.
+              This will generate {1 + selectedAddons.size + 1} nodes on the canvas. You can adjust
+              any settings after placing them.
             </p>
           </div>
         )}
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => step === 0 ? onOpenChange(false) : setStep(s => s - 1)}>
-            {step === 0 ? 'Cancel' : <><ChevronLeft className="h-4 w-4 mr-1" /> Back</>}
+          <Button
+            variant="outline"
+            onClick={() => (step === 0 ? onOpenChange(false) : setStep(s => s - 1))}
+          >
+            {step === 0 ? (
+              'Cancel'
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4 mr-1" /> Back
+              </>
+            )}
           </Button>
           {step < STEPS.length - 1 ? (
             <Button onClick={() => setStep(s => s + 1)}>
