@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -16,6 +17,7 @@ export default function AcceptTermsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const t = useTranslations('acceptTerms')
 
   const canAccept = tosChecked && privacyChecked
 
@@ -56,11 +58,8 @@ export default function AcceptTermsPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Shield className="h-7 w-7 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Terms &amp; Privacy Consent</CardTitle>
-          <CardDescription className="text-base">
-            Before you continue, please review and accept our legal agreements. This is required to
-            use JobStack.
-          </CardDescription>
+          <CardTitle className="text-2xl">{t('title')}</CardTitle>
+          <CardDescription className="text-base">{t('description')}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -75,11 +74,7 @@ export default function AcceptTermsPage() {
           <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/30">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
-              <strong>Important:</strong> JobStack generates Infrastructure as Code (Terraform,
-              etc.) provided <strong>&quot;AS IS&quot;</strong> without any warranties. The creator
-              is not liable for any infrastructure damage, data loss, costs, or system downtime
-              resulting from the use of generated code. You are solely responsible for reviewing and
-              testing all generated code before applying it to any environment.
+              <strong>{t('importantLabel')}</strong> {t('disclaimer')}
             </AlertDescription>
           </Alert>
 
@@ -95,19 +90,18 @@ export default function AcceptTermsPage() {
             <label htmlFor="tos" className="cursor-pointer">
               <div className="flex items-center gap-2 mb-1">
                 <FileText className="h-4 w-4 text-primary" />
-                <span className="font-medium text-sm">Terms of Service</span>
+                <span className="font-medium text-sm">{t('termsTitle')}</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                I have read and agree to the{' '}
+                {t('termsPrefix')}{' '}
                 <Link
                   href="/terms"
                   target="_blank"
                   className="text-primary hover:underline font-medium"
                 >
-                  Terms of Service
+                  {t('termsLink')}
                 </Link>
-                , including that all generated code is provided &quot;AS IS&quot; and the creator
-                assumes no liability for its use.
+                {t('termsSuffix')}
               </p>
             </label>
           </div>
@@ -124,19 +118,18 @@ export default function AcceptTermsPage() {
             <label htmlFor="privacy" className="cursor-pointer">
               <div className="flex items-center gap-2 mb-1">
                 <Lock className="h-4 w-4 text-primary" />
-                <span className="font-medium text-sm">Privacy Policy (GDPR / RODO)</span>
+                <span className="font-medium text-sm">{t('privacyTitle')}</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                I have read and agree to the{' '}
+                {t('privacyPrefix')}{' '}
                 <Link
                   href="/privacy"
                   target="_blank"
                   className="text-primary hover:underline font-medium"
                 >
-                  Privacy Policy
+                  {t('privacyLink')}
                 </Link>
-                , including how my personal data is collected, processed, and stored in accordance
-                with GDPR (RODO).
+                {t('privacySuffix')}
               </p>
             </label>
           </div>
@@ -150,19 +143,19 @@ export default function AcceptTermsPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Accepting...
+                {t('submitting')}
               </>
             ) : (
-              'Accept & Continue to Dashboard'
+              t('submit')
             )}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            You can withdraw consent and delete your account at any time from{' '}
+            {t('settingsHintPrefix')}{' '}
             <Link href="/settings" className="text-primary hover:underline">
-              Settings
+              {t('settingsLink')}
             </Link>
-            .
+            {t('settingsHintSuffix')}
           </p>
         </CardContent>
       </Card>

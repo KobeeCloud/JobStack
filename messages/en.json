@@ -73,6 +73,7 @@
       "emailLabel": "Email",
       "passwordLabel": "Password",
       "submit": "Sign In",
+      "oauthDivider": "Or continue with",
       "forgotPassword": "Forgot password?",
       "noAccount": "Don't have an account?",
       "signUpLink": "Sign up"
@@ -88,6 +89,7 @@
       "termsLink": "Terms of Service",
       "privacyLink": "Privacy Policy",
       "submit": "Create Account",
+      "oauthDivider": "Or continue with",
       "hasAccount": "Already have an account?",
       "signInLink": "Sign in"
     },
@@ -99,6 +101,25 @@
       "cooldown": "Resend in {seconds}s",
       "backToLogin": "Back to login"
     }
+  },
+  "acceptTerms": {
+    "title": "Terms & Privacy Consent",
+    "description": "Before you continue, please review and accept our legal agreements. This is required to use JobStack.",
+    "importantLabel": "Important:",
+    "disclaimer": "JobStack generates Infrastructure as Code (Terraform, etc.) provided \"AS IS\" without any warranties. The creator is not liable for any infrastructure damage, data loss, costs, or system downtime resulting from the use of generated code. You are solely responsible for reviewing and testing all generated code before applying it to any environment.",
+    "termsTitle": "Terms of Service",
+    "termsPrefix": "I have read and agree to the",
+    "termsLink": "Terms of Service",
+    "termsSuffix": ", including that all generated code is provided \"AS IS\" and the creator assumes no liability for its use.",
+    "privacyTitle": "Privacy Policy (GDPR / RODO)",
+    "privacyPrefix": "I have read and agree to the",
+    "privacyLink": "Privacy Policy",
+    "privacySuffix": ", including how my personal data is collected, processed, and stored in accordance with GDPR (RODO).",
+    "submitting": "Accepting...",
+    "submit": "Accept & Continue to Dashboard",
+    "settingsHintPrefix": "You can withdraw consent and delete your account at any time from",
+    "settingsLink": "Settings",
+    "settingsHintSuffix": "."
   },
   "dashboard": {
     "title": "Dashboard",

@@ -13,13 +13,17 @@ import { LanguageSwitcher } from '@/components/language-switcher'
 import { ExportDataButton } from './export-data-button'
 import { NotificationPreferences } from './notification-preferences'
 import { WebhookSettings } from '@/components/webhook-settings'
+import { getLocale } from 'next-intl/server'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
+  const locale = await getLocale()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const currentLanguageLabel = locale === 'pl' ? 'Polski' : 'English'
 
   return (
     <ErrorBoundary>
@@ -129,7 +133,7 @@ export default async function SettingsPage() {
                 <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="font-semibold mb-1">Language</p>
-                    <p className="text-sm text-muted-foreground">English</p>
+                    <p className="text-sm text-muted-foreground">{currentLanguageLabel}</p>
                   </div>
                   <LanguageSwitcher />
                 </div>

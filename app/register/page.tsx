@@ -126,8 +126,8 @@ export default function RegisterPage() {
       </Link>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Create Account</CardTitle>
-          <CardDescription>Start building infrastructure</CardDescription>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Success message */}
@@ -151,7 +151,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -168,7 +168,7 @@ export default function RegisterPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('passwordLabel')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -200,7 +200,7 @@ export default function RegisterPage() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t('confirmPasswordLabel')}</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -276,7 +276,9 @@ export default function RegisterPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-background px-2 text-muted-foreground">
+                  {t('oauthDivider')}
+                </span>
               </div>
             </div>
 
@@ -329,9 +331,9 @@ export default function RegisterPage() {
             </div>
           </form>
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
+            <span className="text-muted-foreground">{t('hasAccount')} </span>
             <Link href="/login" className="text-primary hover:underline font-medium">
-              Sign in
+              {t('signInLink')}
             </Link>
           </div>
         </CardContent>

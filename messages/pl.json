@@ -73,6 +73,7 @@
       "emailLabel": "Email",
       "passwordLabel": "Hasło",
       "submit": "Zaloguj się",
+      "oauthDivider": "Lub kontynuuj przez",
       "forgotPassword": "Nie pamiętasz hasła?",
       "noAccount": "Nie masz konta?",
       "signUpLink": "Zarejestruj się"
@@ -88,6 +89,7 @@
       "termsLink": "Regulamin",
       "privacyLink": "Politykę Prywatności",
       "submit": "Utwórz Konto",
+      "oauthDivider": "Lub kontynuuj przez",
       "hasAccount": "Masz już konto?",
       "signInLink": "Zaloguj się"
     },
@@ -99,6 +101,25 @@
       "cooldown": "Wyślij ponownie za {seconds}s",
       "backToLogin": "Wróć do logowania"
     }
+  },
+  "acceptTerms": {
+    "title": "Zgoda na Regulamin i Politykę Prywatności",
+    "description": "Zanim przejdziesz dalej, przeczytaj i zaakceptuj nasze dokumenty prawne. Jest to wymagane, aby korzystać z JobStack.",
+    "importantLabel": "Ważne:",
+    "disclaimer": "JobStack generuje Infrastructure as Code (Terraform itd.) dostarczane \"TAK JAK JEST\" bez żadnych gwarancji. Twórca nie ponosi odpowiedzialności za szkody infrastrukturalne, utratę danych, koszty ani przestoje systemów wynikające z użycia wygenerowanego kodu. Pełna odpowiedzialność za przegląd i testowanie wygenerowanego kodu przed wdrożeniem spoczywa na Tobie.",
+    "termsTitle": "Regulamin",
+    "termsPrefix": "Przeczytałem i akceptuję",
+    "termsLink": "Regulamin",
+    "termsSuffix": ", w tym fakt, że cały wygenerowany kod jest dostarczany \"TAK JAK JEST\" i twórca nie ponosi odpowiedzialności za jego użycie.",
+    "privacyTitle": "Polityka Prywatności (GDPR / RODO)",
+    "privacyPrefix": "Przeczytałem i akceptuję",
+    "privacyLink": "Politykę Prywatności",
+    "privacySuffix": ", w tym sposób gromadzenia, przetwarzania i przechowywania moich danych osobowych zgodnie z GDPR (RODO).",
+    "submitting": "Akceptowanie...",
+    "submit": "Akceptuj i przejdź do panelu",
+    "settingsHintPrefix": "Możesz wycofać zgodę i usunąć konto w dowolnym momencie w",
+    "settingsLink": "Ustawieniach",
+    "settingsHintSuffix": "."
   },
   "dashboard": {
     "title": "Panel",

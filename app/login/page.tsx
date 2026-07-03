@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [authError, setAuthError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslations('auth.login')
 
   const {
     register,
@@ -96,13 +98,13 @@ export default function LoginPage() {
       </Link>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
-          <CardDescription>Welcome back</CardDescription>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -118,7 +120,7 @@ export default function LoginPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('passwordLabel')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -167,7 +169,9 @@ export default function LoginPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-background px-2 text-muted-foreground">
+                  {t('oauthDivider')}
+                </span>
               </div>
             </div>
 
@@ -218,9 +222,9 @@ export default function LoginPage() {
             </div>
           </form>
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Don&apos;t have an account? </span>
+            <span className="text-muted-foreground">{t('noAccount')} </span>
             <Link href="/register" className="text-primary hover:underline font-medium">
-              Sign up
+              {t('signUpLink')}
             </Link>
           </div>
         </CardContent>
