@@ -69,6 +69,16 @@ const edgeTypes = { default: LabeledEdge }
 // Derived from CONTAINER_HIERARCHY keys so it stays in sync
 const CONTAINER_COMPONENTS = Object.keys(CONTAINER_HIERARCHY)
 
+// Compact attachment/badge-like components that should be snapped into slots
+const ATTACHMENT_COMPONENTS = new Set([
+  'azure-nsg',
+  'azure-firewall',
+  'azure-route-table',
+  'aws-security-group',
+  'aws-waf',
+  'gcp-firewall-rule',
+])
+
 interface Project {
   id: string
   name: string
@@ -745,11 +755,62 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
       const draggedComponent = draggedNode.data?.componentId as string
       const draggedAbs = getAbsolutePosition(draggedNode, allNodes)
 
+      const getAttachmentSlot = (
+        parentNode: Node,
+        nodes: Node[],
+        excludeNodeId?: string
+      ): { x: number; y: number } => {
+        const width =
+          (parentNode.data?.width as number) ||
+          (parentNode.style?.width as number) ||
+          (parentNode.measured?.width as number) ||
+          400
+        const headerHeight = 40
+        const padding = 10
+        const slotWidth = 132
+        const slotHeight = 34
+        const columns = Math.max(1, Math.floor((width - padding * 2) / slotWidth))
+
+        const occupied = new Set<string>()
+        nodes
+          .filter(n => n.parentId === parentNode.id)
+          .filter(n => n.id !== excludeNodeId)
+          .filter(
+            n =>
+              n.type === 'attachment' ||
+              ATTACHMENT_COMPONENTS.has((n.data?.componentId as string) || '')
+          )
+          .forEach(n => {
+            const col = Math.max(0, Math.round((n.position.x - padding) / slotWidth))
+            const row = Math.max(0, Math.round((n.position.y - (headerHeight + padding)) / slotHeight))
+            occupied.add(`${col}:${row}`)
+          })
+
+        for (let row = 0; row < 100; row++) {
+          for (let col = 0; col < columns; col++) {
+            const key = `${col}:${row}`
+            if (!occupied.has(key)) {
+              return {
+                x: padding + col * slotWidth,
+                y: headerHeight + padding + row * slotHeight,
+              }
+            }
+          }
+        }
+
+        return { x: padding, y: headerHeight + padding }
+      }
+
+      const isAttachmentNode =
+        draggedNode.type === 'attachment' || ATTACHMENT_COMPONENTS.has(draggedComponent)
+
       // Size of the dragged node itself (for proper containment check)
-      const draggedW =
-        (draggedNode.style?.width as number) || (draggedNode.measured?.width as number) || 180
-      const draggedH =
-        (draggedNode.style?.height as number) || (draggedNode.measured?.height as number) || 60
+      const draggedW = isAttachmentNode
+        ? 120
+        : (draggedNode.style?.width as number) || (draggedNode.measured?.width as number) || 180
+      const draggedH = isAttachmentNode
+        ? 32
+        : (draggedNode.style?.height as number) || (draggedNode.measured?.height as number) || 60
 
       // Find the deepest (most specific) valid container at the drop position
       const validContainers = allNodes
@@ -814,6 +875,9 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const neededH = Math.max(containerH, childRelY + draggedH + padding)
         // Ensure child doesn't land in the header
         const clampedY = Math.max(headerHeight + padding, childRelY)
+        const attachmentSlot = isAttachmentNode
+          ? getAttachmentSlot(targetContainer, allNodes, draggedNode.id)
+          : null
 
         setNodes(nds =>
           nds.map(node => {
@@ -821,11 +885,12 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
               return {
                 ...node,
                 parentId: targetContainer.id,
-                extent: undefined,
+                extent: 'parent',
                 expandParent: undefined,
+                type: isAttachmentNode ? 'attachment' : node.type,
                 position: {
-                  x: Math.max(padding, childRelX),
-                  y: clampedY,
+                  x: attachmentSlot ? attachmentSlot.x : Math.max(padding, childRelX),
+                  y: attachmentSlot ? attachmentSlot.y : clampedY,
                 },
                 onAction: (action: string) => {
                   switch (action) {
@@ -886,6 +951,23 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         const childY = draggedNode.position.y
         const neededW = Math.max(containerW, childX + draggedW + padding)
         const neededH = Math.max(containerH, childY + draggedH + padding)
+
+        if (isAttachmentNode) {
+          const slot = getAttachmentSlot(targetContainer, allNodes, draggedNode.id)
+          setNodes(nds =>
+            nds.map(node =>
+              node.id === draggedNode.id
+                ? {
+                    ...node,
+                    type: 'attachment',
+                    parentId: targetContainer.id,
+                    extent: 'parent',
+                    position: slot,
+                  }
+                : node
+            )
+          )
+        }
 
         if (neededW > containerW || neededH > containerH) {
           setNodes(nds =>
@@ -976,6 +1058,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         // Check if this is a container component
         const componentId = component.isCustom ? component.componentId : component.id
         const isContainer = !component.isCustom && CONTAINER_COMPONENTS.includes(component.id)
+        const isAttachmentComponent = ATTACHMENT_COMPONENTS.has(componentId)
 
         // Find the deepest valid container at drop position
         let parentId: string | undefined
@@ -1047,6 +1130,48 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           }
         }
 
+        const getAttachmentSlot = (
+          parentNode: Node,
+          nodes: Node[]
+        ): { x: number; y: number } => {
+          const width =
+            (parentNode.data?.width as number) ||
+            (parentNode.style?.width as number) ||
+            (parentNode.measured?.width as number) ||
+            400
+          const headerHeight = 40
+          const padding = 10
+          const slotWidth = 132
+          const slotHeight = 34
+          const columns = Math.max(1, Math.floor((width - padding * 2) / slotWidth))
+
+          const occupied = new Set<string>()
+          nodes
+            .filter(n => n.parentId === parentNode.id)
+            .filter(
+              n =>
+                n.type === 'attachment' || ATTACHMENT_COMPONENTS.has((n.data?.componentId as string) || '')
+            )
+            .forEach(n => {
+              const col = Math.max(0, Math.round((n.position.x - padding) / slotWidth))
+              const row = Math.max(0, Math.round((n.position.y - (headerHeight + padding)) / slotHeight))
+              occupied.add(`${col}:${row}`)
+            })
+
+          for (let row = 0; row < 100; row++) {
+            for (let col = 0; col < columns; col++) {
+              const key = `${col}:${row}`
+              if (!occupied.has(key)) {
+                return {
+                  x: padding + col * slotWidth,
+                  y: headerHeight + padding + row * slotHeight,
+                }
+              }
+            }
+          }
+          return { x: padding, y: headerHeight + padding }
+        }
+
         // Default sizes for containers
         const getContainerSize = (id: string) => {
           if (id.includes('resource-group')) return { width: 800, height: 600 }
@@ -1071,14 +1196,21 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
         // Auto-resize the parent container if needed
         const childW = containerSize ? containerSize.width : 180
         const childH = containerSize ? containerSize.height : 60
+        const nodeType = isContainer
+          ? 'container'
+          : isAttachmentComponent && !!parentId
+            ? 'attachment'
+            : 'custom'
+        const effectiveChildW = nodeType === 'attachment' ? 120 : childW
+        const effectiveChildH = nodeType === 'attachment' ? 32 : childH
         let parentGrow: { id: string; width: number; height: number } | null = null
         if (parentId) {
           const parentNode = currentNodes.find(n => n.id === parentId)
           if (parentNode) {
             const parentW = (parentNode.style?.width as number) || 400
             const parentH = (parentNode.style?.height as number) || 300
-            const neededW = Math.max(parentW, relativePosition.x + childW + padding)
-            const neededH = Math.max(parentH, relativePosition.y + childH + padding)
+            const neededW = Math.max(parentW, relativePosition.x + effectiveChildW + padding)
+            const neededH = Math.max(parentH, relativePosition.y + effectiveChildH + padding)
             if (neededW > parentW || neededH > parentH) {
               parentGrow = { id: parentId, width: neededW, height: neededH }
             }
@@ -1188,11 +1320,19 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           defaultConfig.addressSpace = cidr
         }
 
+        if (parentId && nodeType === 'attachment') {
+          const parentNode = currentNodes.find(n => n.id === parentId)
+          if (parentNode) {
+            relativePosition = getAttachmentSlot(parentNode, currentNodes)
+          }
+        }
+
         const newNode: Node = {
           id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          type: isContainer ? 'container' : 'custom',
+          type: nodeType,
           position: relativePosition,
           parentId,
+          ...(parentId ? { extent: 'parent' as const } : {}),
           data: {
             label: component.name || component.label,
             componentId: componentId,

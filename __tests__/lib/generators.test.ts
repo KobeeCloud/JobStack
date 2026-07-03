@@ -22,6 +22,7 @@ import { getComponentById } from '@/lib/catalog'
 import { generateCloudFormation } from '@/lib/export/cloudformation-generator'
 import { generateARM } from '@/lib/export/arm-generator'
 import { generatePulumi } from '@/lib/export/pulumi-generator'
+import { generateTerraform } from '@/lib/generators/terraform'
 
 // ─── Test Helpers ────────────────────────────────────────────────────────────
 
@@ -369,6 +370,79 @@ describe('generatePulumi', () => {
     expect(output).toContain('web')
     // The collision-safe logic should produce a unique second name like web_1
     expect(output).toMatch(/web_1|web_2|web2/)
+  })
+})
+
+// ─── Terraform Generator ───────────────────────────────────────────────────
+
+describe('generateTerraform', () => {
+  it('emits Azure RG + VNet + Subnet + NSG + VM resources from nested diagram', () => {
+    const nodes: Node[] = [
+      {
+        id: 'rg1',
+        type: 'container',
+        position: { x: 0, y: 0 },
+        data: { label: 'RG', componentId: 'azure-resource-group' },
+      },
+      {
+        id: 'vnet1',
+        type: 'container',
+        parentId: 'rg1',
+        position: { x: 20, y: 60 },
+        data: {
+          label: 'VNet',
+          componentId: 'azure-vnet',
+          config: { address_space: ['10.10.0.0/16'] },
+        },
+      },
+      {
+        id: 'sub1',
+        type: 'container',
+        parentId: 'vnet1',
+        position: { x: 20, y: 60 },
+        data: {
+          label: 'Subnet',
+          componentId: 'azure-subnet',
+          config: {
+            address_prefixes: ['10.10.1.0/24'],
+          },
+        },
+      },
+      {
+        id: 'nsg1',
+        type: 'attachment',
+        parentId: 'sub1',
+        position: { x: 20, y: 50 },
+        data: { label: 'NSG', componentId: 'azure-nsg' },
+      },
+      {
+        id: 'vm1',
+        type: 'custom',
+        parentId: 'sub1',
+        position: { x: 40, y: 110 },
+        data: {
+          label: 'VM',
+          componentId: 'azure-vm',
+          config: {
+            vm_size: 'Standard_B2s',
+          },
+        },
+      },
+    ]
+
+    const output = generateTerraform(nodes, [], {
+      environment: 'dev',
+      projectName: 'jobstack-test',
+    })
+    const joined = output.map(f => f.code).join('\n')
+
+    expect(joined).toContain('azurerm_resource_group')
+    expect(joined).toContain('azurerm_virtual_network')
+    expect(joined).toContain('azurerm_subnet')
+    expect(joined).toContain('azurerm_network_security_group')
+    expect(joined).toContain('azurerm_linux_virtual_machine')
+    expect(joined).toContain('address_space')
+    expect(joined).toContain('address_prefixes')
   })
 })
 
