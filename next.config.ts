@@ -4,6 +4,9 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./lib/i18n.ts');
 
 const nextConfig: NextConfig = {
+  // 'standalone' enables self-hosted deployment (Docker / PM2 on Azure VMs).
+  // Vercel ignores this setting, so it's safe to keep for both targets.
+  output: 'standalone',
   images: {
     remotePatterns: [
       {

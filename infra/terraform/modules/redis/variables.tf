@@ -1,0 +1,11 @@
+variable "resource_group_name" { type = string }
+variable "location" { type = string }
+variable "name_prefix" { type = string }
+variable "subnet_data_id" { type = string }
+variable "vnet_id" { type = string }
+variable "private_dns_zone_redis_id" { type = string }
+variable "redis_sku" { type = string }
+variable "redis_family" { type = string }
+variable "redis_capacity" { type = number }
+variable "key_vault_id" { type = string }
+variable "tags" { type = map(string) }

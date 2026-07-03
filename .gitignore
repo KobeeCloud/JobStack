@@ -7,3 +7,10 @@ node_modules/
 dist/
 build/
 .vercel
+
+# Terraform provider binaries and state
+infra/terraform/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars.json
+.terraform.lock.hcl

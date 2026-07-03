@@ -1,0 +1,93 @@
+---
+# app-setup.yml — Deploy new app version to servers
+# Called by GitHub Actions CI/CD on every push to main
+
+- name: Deploy JobStack application
+  hosts: app_servers
+  become: true
+  gather_facts: false
+  serial: 1  # Rolling — remove from LB, update, add back
+
+  vars:
+    deploy_release_dir: "{{ app_dir }}/releases/{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
+    deploy_current_dir: "{{ app_dir }}/current"
+
+  tasks:
+    # ── Pull env from Key Vault via Azure CLI (Managed Identity) ────────────
+    - name: Fetch secrets from Azure Key Vault
+      ansible.builtin.command: >
+        az keyvault secret show
+        --vault-name "{{ azure_key_vault_name }}"
+        --name "{{ item.secret }}"
+        --query value -o tsv
+      loop:
+        - { secret: "pg-connection-string", var: "DATABASE_URL" }
+        - { secret: "redis-primary-key", var: "REDIS_KEY" }
+      register: kv_secrets
+      no_log: true  # Never log secrets
+
+    - name: Set env vars from Key Vault
+      ansible.builtin.set_fact:
+        app_env_vars: "{{ app_env_vars | default({}) | combine({item.item.var: item.stdout}) }}"
+      loop: "{{ kv_secrets.results }}"
+      no_log: true
+
+    # ── Create release directory ──────────────────────────────────────────
+    - name: Create release directory
+      ansible.builtin.file:
+        path: "{{ deploy_release_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0755"
+
+    # ── Sync build artifact ───────────────────────────────────────────────
+    - name: Copy Next.js standalone build
+      ansible.builtin.copy:
+        src: "{{ local_build_path }}/"
+        dest: "{{ deploy_release_dir }}/"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: preserve
+
+    # ── Write .env ────────────────────────────────────────────────────────
+    - name: Write application .env file
+      ansible.builtin.template:
+        src: "../roles/pm2/templates/env.j2"
+        dest: "{{ deploy_release_dir }}/.env"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: "0600"
+      no_log: true
+
+    # ── Symlink current release ───────────────────────────────────────────
+    - name: Symlink current → new release
+      ansible.builtin.file:
+        src: "{{ deploy_release_dir }}"
+        dest: "{{ deploy_current_dir }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+
+    # ── Zero-downtime PM2 reload ──────────────────────────────────────────
+    - name: Reload PM2 (zero-downtime)
+      ansible.builtin.command: pm2 reload {{ app_name }} --update-env
+      become_user: "{{ app_user }}"
+
+    # ── Health check ──────────────────────────────────────────────────────
+    - name: Verify health endpoint
+      ansible.builtin.uri:
+        url: "http://localhost:{{ app_port }}/api/health"
+        status_code: 200
+        timeout: 30
+      retries: 10
+      delay: 6
+      register: health
+      until: health.status == 200
+
+    # ── Clean up old releases (keep last 5) ──────────────────────────────
+    - name: Cleanup old releases
+      ansible.builtin.shell: |
+        ls -dt {{ app_dir }}/releases/* | tail -n +6 | xargs rm -rf
+      args:
+        warn: false

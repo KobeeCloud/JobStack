@@ -74,16 +74,17 @@ module "database" {
 module "redis" {
   source = "./modules/redis"
 
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  name_prefix         = local.name_prefix
-  subnet_data_id      = module.networking.subnet_data_id
-  vnet_id             = module.networking.vnet_id
-  redis_sku           = var.redis_sku
-  redis_family        = var.redis_family
-  redis_capacity      = var.redis_capacity
-  key_vault_id        = module.security.key_vault_id
-  tags                = local.default_tags
+  resource_group_name       = azurerm_resource_group.main.name
+  location                  = azurerm_resource_group.main.location
+  name_prefix               = local.name_prefix
+  subnet_data_id            = module.networking.subnet_data_id
+  vnet_id                   = module.networking.vnet_id
+  private_dns_zone_redis_id = module.networking.private_dns_zone_redis_id
+  redis_sku                 = var.redis_sku
+  redis_family              = var.redis_family
+  redis_capacity            = var.redis_capacity
+  key_vault_id              = module.security.key_vault_id
+  tags                      = local.default_tags
 }
 
 # ── Storage ─────────────────────────────────────────────────────────────────
@@ -91,13 +92,13 @@ module "redis" {
 module "storage" {
   source = "./modules/storage"
 
-  resource_group_name    = azurerm_resource_group.main.name
-  location               = azurerm_resource_group.main.location
-  name_prefix            = local.name_prefix
-  subnet_data_id         = module.networking.subnet_data_id
-  vnet_id                = module.networking.vnet_id
-  storage_replication    = var.storage_replication
-  tags                   = local.default_tags
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  name_prefix         = local.name_prefix
+  subnet_data_id      = module.networking.subnet_data_id
+  vnet_id             = module.networking.vnet_id
+  storage_replication = var.storage_replication
+  tags                = local.default_tags
 }
 
 # ── Monitoring ──────────────────────────────────────────────────────────────
@@ -110,6 +111,8 @@ module "monitoring" {
   name_prefix         = local.name_prefix
   log_retention_days  = var.log_retention_days
   alert_email         = var.alert_email
+  pg_server_id        = module.database.postgresql_server_id
+  redis_cache_id      = module.redis.redis_id
   tags                = local.default_tags
 }
 
@@ -118,18 +121,19 @@ module "monitoring" {
 module "compute" {
   source = "./modules/compute"
 
-  resource_group_name       = azurerm_resource_group.main.name
-  location                  = azurerm_resource_group.main.location
-  name_prefix               = local.name_prefix
-  subnet_app_id             = module.networking.subnet_app_id
-  vm_size                   = var.vm_size
-  vm_count                  = var.vm_count
-  admin_username            = var.admin_username
-  ssh_public_key_path       = var.ssh_public_key_path
-  key_vault_id              = module.security.key_vault_id
-  log_analytics_workspace_id = module.monitoring.log_analytics_workspace_id
-  user_assigned_identity_id  = module.security.user_assigned_identity_id
-  tags                      = local.default_tags
+  resource_group_name         = azurerm_resource_group.main.name
+  location                    = azurerm_resource_group.main.location
+  name_prefix                 = local.name_prefix
+  subnet_app_id               = module.networking.subnet_app_id
+  vm_size                     = var.vm_size
+  vm_count                    = var.vm_count
+  admin_username              = var.admin_username
+  ssh_public_key_path         = var.ssh_public_key_path
+  key_vault_id                = module.security.key_vault_id
+  log_analytics_workspace_id  = module.monitoring.log_analytics_workspace_id
+  log_analytics_workspace_key = module.monitoring.log_analytics_workspace_key
+  user_assigned_identity_id   = module.security.user_assigned_identity_id
+  tags                        = local.default_tags
 }
 
 # ── CDN (Azure Front Door) ─────────────────────────────────────────────────
@@ -143,3 +147,4 @@ module "cdn" {
   lb_public_ip        = module.compute.lb_public_ip
   tags                = local.default_tags
 }
+

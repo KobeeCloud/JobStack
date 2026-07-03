@@ -1,0 +1,44 @@
+---
+# roles/monitoring/tasks/main.yml
+# Installs Azure Monitor Agent and ships logs to Log Analytics
+
+- name: Install Azure Monitor Agent
+  ansible.builtin.shell: |
+    az extension add --name monitor-control-service --yes 2>/dev/null || true
+    az vm extension set \
+      --resource-group "{{ azure_resource_group }}" \
+      --vm-name "{{ inventory_hostname }}" \
+      --name AzureMonitorLinuxAgent \
+      --publisher Microsoft.Azure.Monitor \
+      --version 1.28 \
+      --settings '{"GCS_AUTO_CONFIG":true}'
+  changed_when: false
+
+- name: Install Prometheus node exporter (local metrics)
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+
+- name: Enable node exporter
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    enabled: true
+    state: started
+
+- name: Configure logrotate for app logs
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/jobstack
+    content: |
+      {{ app_dir }}/logs/*.log {
+          daily
+          rotate 14
+          compress
+          delaycompress
+          missingok
+          notifempty
+          sharedscripts
+          postrotate
+              pm2 reloadLogs
+          endscript
+      }
+    mode: "0644"

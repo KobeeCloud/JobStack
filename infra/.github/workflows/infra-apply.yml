@@ -1,0 +1,110 @@
+name: "Infra Apply"
+# Applies terraform on merge to main when infra/terraform/** changes.
+# Requires manual approval via GitHub Environments.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/terraform/**"
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options: [dev, prod]
+
+permissions:
+  contents: read
+  id-token: write  # OIDC for Azure auth
+
+env:
+  TF_VERSION: "1.9.0"
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  apply-dev:
+    name: "Apply → dev"
+    runs-on: ubuntu-latest
+    environment: dev  # Requires GitHub Environment approval
+    if: github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: infra/terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform apply — dev
+        run: |
+          terraform apply \
+            -var-file="environments/dev.tfvars" \
+            -auto-approve \
+            -input=false
+
+      - name: Export Ansible inventory
+        run: |
+          mkdir -p ../../ansible/inventory
+          terraform output -json vm_public_ips > /tmp/vm_ips.json
+          echo "Update infra/ansible/inventory/dev.yml with these IPs:"
+          cat /tmp/vm_ips.json
+
+  apply-prod:
+    name: "Apply → prod"
+    runs-on: ubuntu-latest
+    environment: prod  # Requires manual approval in GitHub UI
+    needs: apply-dev
+    if: github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: infra/terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform apply — prod
+        run: |
+          terraform apply \
+            -var-file="environments/prod.tfvars" \
+            -auto-approve \
+            -input=false
