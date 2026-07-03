@@ -125,18 +125,9 @@ DROP TRIGGER IF EXISTS trg_orgs_updated_at ON organizations;
 CREATE TRIGGER trg_orgs_updated_at
   BEFORE UPDATE ON organizations FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- NOTE: organizations RLS policies are defined AFTER organization_members
+-- (below) to avoid a forward-reference error.
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "orgs_select"  ON organizations;
-DROP POLICY IF EXISTS "orgs_insert"  ON organizations;
-DROP POLICY IF EXISTS "orgs_update"  ON organizations;
-DROP POLICY IF EXISTS "orgs_delete"  ON organizations;
-CREATE POLICY "orgs_select" ON organizations FOR SELECT
-  USING (owner_id = auth.uid() OR EXISTS (
-    SELECT 1 FROM organization_members
-    WHERE organization_id = organizations.id AND user_id = auth.uid()));
-CREATE POLICY "orgs_insert" ON organizations FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
-CREATE POLICY "orgs_update" ON organizations FOR UPDATE USING (owner_id = auth.uid());
-CREATE POLICY "orgs_delete" ON organizations FOR DELETE USING (owner_id = auth.uid());
 
 -- ============================================================
 -- TABLE: organization_members
@@ -153,6 +144,19 @@ CREATE TABLE IF NOT EXISTS organization_members (
 
 CREATE INDEX IF NOT EXISTS idx_om_org  ON organization_members(organization_id);
 CREATE INDEX IF NOT EXISTS idx_om_user ON organization_members(user_id);
+
+-- ── organizations RLS (defined here, after organization_members exists) ──────
+DROP POLICY IF EXISTS "orgs_select"  ON organizations;
+DROP POLICY IF EXISTS "orgs_insert"  ON organizations;
+DROP POLICY IF EXISTS "orgs_update"  ON organizations;
+DROP POLICY IF EXISTS "orgs_delete"  ON organizations;
+CREATE POLICY "orgs_select" ON organizations FOR SELECT
+  USING (owner_id = auth.uid() OR EXISTS (
+    SELECT 1 FROM organization_members
+    WHERE organization_id = organizations.id AND user_id = auth.uid()));
+CREATE POLICY "orgs_insert" ON organizations FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "orgs_update" ON organizations FOR UPDATE USING (owner_id = auth.uid());
+CREATE POLICY "orgs_delete" ON organizations FOR DELETE USING (owner_id = auth.uid());
 
 ALTER TABLE organization_members ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "om_select" ON organization_members;
@@ -246,7 +250,30 @@ DROP TRIGGER IF EXISTS trg_projects_updated_at ON projects;
 CREATE TRIGGER trg_projects_updated_at
   BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+-- NOTE: projects RLS policies are defined AFTER project_shares
+-- (below) to avoid a forward-reference error.
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- TABLE: project_shares
+-- ============================================================
+CREATE TABLE IF NOT EXISTS project_shares (
+  id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project_id          UUID NOT NULL REFERENCES projects(id)  ON DELETE CASCADE,
+  shared_by_user_id   UUID NOT NULL REFERENCES profiles(id)  ON DELETE CASCADE,
+  shared_with_user_id UUID         REFERENCES profiles(id)   ON DELETE CASCADE,
+  shared_with_email   TEXT,
+  permission          TEXT NOT NULL DEFAULT 'view' CHECK (permission IN ('view','edit','admin')),
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT shares_needs_target CHECK (
+    shared_with_user_id IS NOT NULL OR shared_with_email IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS idx_shares_proj  ON project_shares(project_id);
+CREATE INDEX IF NOT EXISTS idx_shares_user  ON project_shares(shared_with_user_id) WHERE shared_with_user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_shares_email ON project_shares(shared_with_email)   WHERE shared_with_email IS NOT NULL;
+
+-- ── projects RLS (defined here, after project_shares exists) ─────────────
 DROP POLICY IF EXISTS "proj_select" ON projects;
 DROP POLICY IF EXISTS "proj_insert" ON projects;
 DROP POLICY IF EXISTS "proj_update" ON projects;
@@ -275,25 +302,6 @@ CREATE POLICY "proj_delete" ON projects FOR DELETE USING (
     SELECT 1 FROM organization_members
     WHERE organization_id = projects.organization_id AND user_id = auth.uid()
       AND role IN ('owner','admin'))));
-
--- ============================================================
--- TABLE: project_shares
--- ============================================================
-CREATE TABLE IF NOT EXISTS project_shares (
-  id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  project_id          UUID NOT NULL REFERENCES projects(id)  ON DELETE CASCADE,
-  shared_by_user_id   UUID NOT NULL REFERENCES profiles(id)  ON DELETE CASCADE,
-  shared_with_user_id UUID         REFERENCES profiles(id)   ON DELETE CASCADE,
-  shared_with_email   TEXT,
-  permission          TEXT NOT NULL DEFAULT 'view' CHECK (permission IN ('view','edit','admin')),
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT shares_needs_target CHECK (
-    shared_with_user_id IS NOT NULL OR shared_with_email IS NOT NULL)
-);
-
-CREATE INDEX IF NOT EXISTS idx_shares_proj  ON project_shares(project_id);
-CREATE INDEX IF NOT EXISTS idx_shares_user  ON project_shares(shared_with_user_id) WHERE shared_with_user_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_shares_email ON project_shares(shared_with_email)   WHERE shared_with_email IS NOT NULL;
 
 ALTER TABLE project_shares ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "shares_select" ON project_shares;
