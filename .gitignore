@@ -14,3 +14,4 @@ infra/terraform/.terraform/
 *.tfstate.backup
 *.tfvars.json
 .terraform.lock.hcl
+.env*
