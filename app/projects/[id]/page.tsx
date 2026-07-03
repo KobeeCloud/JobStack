@@ -1085,6 +1085,109 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
           }
         }
 
+        const cloneDefaultConfig = (cfg: Record<string, unknown> | undefined) => {
+          if (!cfg) return {}
+          return JSON.parse(JSON.stringify(cfg)) as Record<string, unknown>
+        }
+
+        const getSubnetBasePrefix = (vnetConfig: Record<string, any>) => {
+          if (Array.isArray(vnetConfig.address_space) && vnetConfig.address_space.length > 0) {
+            return String(vnetConfig.address_space[0])
+          }
+          if (typeof vnetConfig.cidr_block === 'string' && vnetConfig.cidr_block.trim()) {
+            return vnetConfig.cidr_block
+          }
+          if (typeof vnetConfig.addressSpace === 'string' && vnetConfig.addressSpace.trim()) {
+            return vnetConfig.addressSpace.split(',').map((x: string) => x.trim())[0]
+          }
+          return '10.0.0.0/16'
+        }
+
+        const getUsedSubnetPrefixes = (vnetNodeId: string) => {
+          return currentNodes
+            .filter(n => n.parentId === vnetNodeId)
+            .filter(n => (n.data?.componentId as string) === 'azure-subnet')
+            .map(n => {
+              const cfg = (n.data?.config || {}) as Record<string, any>
+              if (Array.isArray(cfg.address_prefixes) && cfg.address_prefixes.length > 0) {
+                return String(cfg.address_prefixes[0])
+              }
+              if (typeof cfg.cidr_block === 'string' && cfg.cidr_block.trim()) return cfg.cidr_block
+              if (typeof cfg.addressPrefix === 'string' && cfg.addressPrefix.trim()) {
+                return cfg.addressPrefix.split(',').map((x: string) => x.trim())[0]
+              }
+              return null
+            })
+            .filter(Boolean) as string[]
+        }
+
+        const nextAzureVnetPrefix = (resourceGroupId: string) => {
+          const usedSecondOctets = new Set(
+            currentNodes
+              .filter(n => n.parentId === resourceGroupId)
+              .filter(n => (n.data?.componentId as string) === 'azure-vnet')
+              .map(n => {
+                const cfg = (n.data?.config || {}) as Record<string, any>
+                const raw = Array.isArray(cfg.address_space)
+                  ? String(cfg.address_space[0] || '')
+                  : typeof cfg.cidr_block === 'string'
+                    ? cfg.cidr_block
+                    : typeof cfg.addressSpace === 'string'
+                      ? cfg.addressSpace.split(',').map((x: string) => x.trim())[0]
+                      : ''
+                const match = raw.match(/^10\.(\d+)\./)
+                return match ? Number(match[1]) : null
+              })
+              .filter((n): n is number => n !== null && !Number.isNaN(n))
+          )
+
+          for (let second = 0; second <= 254; second++) {
+            if (!usedSecondOctets.has(second)) return `10.${second}.0.0/16`
+          }
+
+          return '10.0.0.0/16'
+        }
+
+        const nextAzureSubnetPrefix = (vnetNodeId: string) => {
+          const parentVnet = currentNodes.find(n => n.id === vnetNodeId)
+          const base = getSubnetBasePrefix((parentVnet?.data?.config || {}) as Record<string, any>)
+          const baseMatch = base.match(/^(\d+)\.(\d+)\.\d+\.\d+\/(\d+)$/)
+          if (!baseMatch) return '10.0.1.0/24'
+
+          const first = Number(baseMatch[1])
+          const second = Number(baseMatch[2])
+          const used = new Set(
+            getUsedSubnetPrefixes(vnetNodeId)
+              .map(p => p.match(/^(\d+)\.(\d+)\.(\d+)\.\d+\/\d+$/))
+              .filter(Boolean)
+              .map(match => `${match![1]}.${match![2]}.${match![3]}`)
+          )
+
+          for (let third = 1; third <= 254; third++) {
+            const key = `${first}.${second}.${third}`
+            if (!used.has(key)) return `${first}.${second}.${third}.0/24`
+          }
+
+          return `${first}.${second}.1.0/24`
+        }
+
+        const catalogComponent = COMPONENT_CATALOG.find(c => c.id === componentId)
+        const defaultConfig = cloneDefaultConfig(catalogComponent?.terraform?.defaultConfig)
+
+        if (componentId === 'azure-subnet' && parentId) {
+          const cidr = nextAzureSubnetPrefix(parentId)
+          defaultConfig.address_prefixes = [cidr]
+          defaultConfig.cidr_block = cidr
+          defaultConfig.addressPrefix = cidr
+        }
+
+        if (componentId === 'azure-vnet' && parentId) {
+          const cidr = nextAzureVnetPrefix(parentId)
+          defaultConfig.address_space = [cidr]
+          defaultConfig.cidr_block = cidr
+          defaultConfig.addressSpace = cidr
+        }
+
         const newNode: Node = {
           id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: isContainer ? 'container' : 'custom',
@@ -1095,6 +1198,7 @@ function DiagramCanvas({ projectId }: { projectId: string }) {
             componentId: componentId,
             provider: component.provider,
             category: component.category,
+            config: defaultConfig,
             // Store dimensions in data so ContainerNode can read them reliably
             ...(containerSize && { width: containerSize.width, height: containerSize.height }),
             ...(component.isCustom && {

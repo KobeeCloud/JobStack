@@ -23,17 +23,48 @@ export const vmConfigSchema = z.object({
 // NETWORKING CONFIGURATION
 // ==========================================
 export const vnetConfigSchema = z.object({
+  address_space: z.array(z.string()).optional(),
+  cidr_block: z.string().optional(),
   addressSpace: z.string().optional(), // CIDR (e.g., 10.0.0.0/16)
   enable_dns_hostnames: z.boolean().optional().default(true),
   enable_dns_support: z.boolean().optional().default(true),
   route_table_id: z.string().optional(),
+  dns_servers: z.array(z.string()).optional(),
   dnsServers: z.array(z.string()).optional(),
+  bgp_community: z.string().optional(),
+  flow_timeout_in_minutes: z.number().min(4).max(30).optional(),
+  ddos_protection_enabled: z.boolean().optional(),
+  ddos_protection_plan_id: z.string().optional(),
+  vm_protection_enabled: z.boolean().optional(),
+  instance_tenancy: z.enum(['default', 'dedicated']).optional(),
+  assign_generated_ipv6_cidr_block: z.boolean().optional(),
+  auto_create_subnetworks: z.boolean().optional(),
+  routing_mode: z.enum(['REGIONAL', 'GLOBAL']).optional(),
+  mtu: z.number().optional(),
+  delete_default_routes_on_create: z.boolean().optional(),
   tags: z.record(z.string()).optional(),
 })
 
 export const subnetConfigSchema = z.object({
+  address_prefixes: z.array(z.string()).optional(),
+  cidr_block: z.string().optional(),
   addressPrefix: z.string().optional(), // CIDR (e.g., 10.0.1.0/24)
+  delegation: z.string().optional(),
+  service_endpoints: z.array(z.string()).optional(),
   serviceEndpoints: z.array(z.string()).optional(),
+  private_endpoint_network_policies: z
+    .enum(['Disabled', 'Enabled', 'NetworkSecurityGroupEnabled', 'RouteTableEnabled'])
+    .optional(),
+  private_link_service_network_policies_enabled: z.boolean().optional(),
+  default_outbound_access_enabled: z.boolean().optional(),
+  availability_zone: z.string().optional(),
+  map_public_ip_on_launch: z.boolean().optional(),
+  assign_ipv6_address_on_creation: z.boolean().optional(),
+  customer_owned_ipv4_pool: z.string().optional(),
+  region: z.string().optional(),
+  purpose: z.string().optional(),
+  private_ip_google_access: z.boolean().optional(),
+  log_config_enable: z.boolean().optional(),
   delegations: z.array(z.string()).optional(),
   tags: z.record(z.string()).optional(),
 })

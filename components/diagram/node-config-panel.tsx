@@ -29,7 +29,8 @@ import { generateCICDConfigs } from '@/lib/generators/cicd'
 import { useDiagramStore } from '@/lib/store/diagram-store'
 
 export function NodeConfigPanel() {
-  const { selectedNode: node, configPanelOpen, setConfigPanelOpen, setNodes } = useDiagramStore()
+  const { selectedNode: node, configPanelOpen, setConfigPanelOpen, setNodes, nodes: allNodes } =
+    useDiagramStore()
 
   // Support both 'componentId' (new) and 'component' (old) for backward compatibility
   const componentId = node?.data?.componentId || node?.data?.component
@@ -41,6 +42,7 @@ export function NodeConfigPanel() {
   const [tags, setTags] = useState<Record<string, string>>((initialConfig as any).tags || {})
   const [labels, setLabels] = useState<Record<string, string>>((initialConfig as any).labels || {})
   const [outputCopied, setOutputCopied] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   const [tagDialogOpen, setTagDialogOpen] = useState(false)
   const [newTagKey, setNewTagKey] = useState('')
@@ -52,6 +54,33 @@ export function NodeConfigPanel() {
   const generatorMeta = GENERATOR_TYPE_META[generatorType]
 
   if (!node || !configPanelOpen) return null
+
+  const ipv4CidrToRange = (cidr: string): [number, number] | null => {
+    const match = cidr.trim().match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)\/(\d+)$/)
+    if (!match) return null
+    const octets = match.slice(1, 5).map(Number)
+    const prefix = Number(match[5])
+    if (octets.some(x => Number.isNaN(x) || x < 0 || x > 255)) return null
+    if (prefix < 0 || prefix > 32) return null
+    const ip =
+      ((octets[0] << 24) >>> 0) + ((octets[1] << 16) >>> 0) + ((octets[2] << 8) >>> 0) + octets[3]
+    const mask = prefix === 0 ? 0 : ((0xffffffff << (32 - prefix)) >>> 0)
+    const start = ip & mask
+    const size = 2 ** (32 - prefix)
+    return [start, start + size - 1]
+  }
+
+  const subnetPrefixesFromConfig = (cfg: Record<string, any>): string[] => {
+    if (Array.isArray(cfg.address_prefixes)) return cfg.address_prefixes.filter(Boolean)
+    if (typeof cfg.cidr_block === 'string' && cfg.cidr_block.trim()) return [cfg.cidr_block.trim()]
+    if (typeof cfg.addressPrefix === 'string' && cfg.addressPrefix.trim()) {
+      return cfg.addressPrefix
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter(Boolean)
+    }
+    return []
+  }
 
   // Fallback for components not found in the catalog (e.g. from outdated templates)
   if (!componentInfo) {
@@ -122,18 +151,82 @@ export function NodeConfigPanel() {
     }
 
     try {
+      if (componentInfo.id === 'azure-subnet' && node.parentId) {
+        const subnetPrefixes = subnetPrefixesFromConfig(finalConfig)
+        if (subnetPrefixes.length > 0) {
+          const subnetRanges = subnetPrefixes.map(prefix => ({ prefix, range: ipv4CidrToRange(prefix) }))
+          if (subnetRanges.some(item => item.range == null)) {
+            throw new Error('Subnet CIDR is invalid. Example: 10.0.1.0/24')
+          }
+
+          const parentVnet = allNodes.find(n => n.id === node.parentId)
+          const parentConfig = (parentVnet?.data?.config || {}) as Record<string, any>
+          const vnetPrefixes = Array.isArray(parentConfig.address_space)
+            ? parentConfig.address_space
+            : typeof parentConfig.cidr_block === 'string'
+              ? [parentConfig.cidr_block]
+              : typeof parentConfig.addressSpace === 'string'
+                ? parentConfig.addressSpace.split(',').map((s: string) => s.trim()).filter(Boolean)
+                : []
+          const vnetRanges = vnetPrefixes
+            .map((prefix: string) => ipv4CidrToRange(prefix))
+            .filter((range): range is [number, number] => range !== null)
+
+          if (vnetRanges.length > 0) {
+            const outside = subnetRanges.find(
+              subnet =>
+                !vnetRanges.some(vnet => subnet.range![0] >= vnet[0] && subnet.range![1] <= vnet[1])
+            )
+            if (outside) {
+              throw new Error(
+                `Subnet ${outside.prefix} is outside parent VNet address space (${vnetPrefixes.join(', ')})`
+              )
+            }
+          }
+
+          const siblingSubnets = allNodes.filter(
+            n =>
+              n.id !== node.id &&
+              n.parentId === node.parentId &&
+              (n.data?.componentId === 'azure-subnet' || n.data?.component === 'azure-subnet')
+          )
+
+          const siblingRanges = siblingSubnets.flatMap(sibling => {
+            const cfg = (sibling.data?.config || {}) as Record<string, any>
+            return subnetPrefixesFromConfig(cfg)
+              .map(prefix => ({ prefix, range: ipv4CidrToRange(prefix) }))
+              .filter(item => item.range !== null) as Array<{ prefix: string; range: [number, number] }>
+          })
+
+          const overlap = subnetRanges.find(subnet =>
+            siblingRanges.some(
+              sibling => !(subnet.range![1] < sibling.range[0] || subnet.range![0] > sibling.range[1])
+            )
+          )
+
+          if (overlap) {
+            throw new Error(`Subnet CIDR ${overlap.prefix} overlaps with an existing subnet in this VNet`)
+          }
+        }
+      }
+
       const schema = getConfigSchema(componentInfo.id)
       const validated = schema.parse(finalConfig)
       setNodes(nds =>
         nds.map(n => (n.id === node.id ? { ...n, data: { ...n.data, config: validated } } : n))
       )
+      setValidationError(null)
       setConfigPanelOpen(false)
-    } catch (error) {
+    } catch (error: any) {
+      const message =
+        error?.issues?.[0]?.message || error?.message || 'Invalid configuration values.'
+      setValidationError(String(message))
       console.error('Validation error:', error)
     }
   }
 
   const updateConfig = (key: string, value: any) => {
+    if (validationError) setValidationError(null)
     setConfig((prev: any) => ({ ...prev, [key]: value }))
   }
 
@@ -848,7 +941,7 @@ export function NodeConfigPanel() {
                 'Microsoft.AzureActiveDirectory',
               ]
               const DELEGATIONS: Record<string, string> = {
-                '': 'None',
+                __none__: 'None',
                 'Microsoft.ContainerInstance/containerGroups': 'Container Instances',
                 'Microsoft.Databricks/workspaces': 'Databricks',
                 'Microsoft.Web/serverFarms': 'App Service',
@@ -867,8 +960,10 @@ export function NodeConfigPanel() {
                   <div className="space-y-2">
                     <Label>Service Delegation</Label>
                     <Select
-                      value={config.delegation || ''}
-                      onValueChange={v => updateConfig('delegation', v || undefined)}
+                      value={config.delegation || '__none__'}
+                      onValueChange={v =>
+                        updateConfig('delegation', v === '__none__' ? undefined : v)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="None (general purpose)" />
@@ -4900,6 +4995,11 @@ export function NodeConfigPanel() {
       </div>
 
       <div className="p-4 border-t flex gap-2">
+          {validationError && (
+            <div className="w-full text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded px-2 py-1">
+              {validationError}
+            </div>
+          )}
         <Button size="sm" className="flex-1" onClick={handleSave}>
           Save
         </Button>

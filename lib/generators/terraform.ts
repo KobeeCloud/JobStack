@@ -660,6 +660,33 @@ export function generateTerraformWithValidation(
     const resourceType = component.terraform!.resource
     const userConfig = { ...component.terraform!.defaultConfig, ...(node.data.config || {}) }
 
+    // Normalize older camelCase keys into canonical Terraform keys.
+    if (resourceType === 'azurerm_virtual_network') {
+      if (!Array.isArray(userConfig.address_space) && typeof userConfig.addressSpace === 'string') {
+        const parsed = userConfig.addressSpace
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+        if (parsed.length > 0) userConfig.address_space = parsed
+      }
+      if (!Array.isArray(userConfig.dns_servers) && Array.isArray(userConfig.dnsServers)) {
+        userConfig.dns_servers = userConfig.dnsServers
+      }
+    }
+
+    if (resourceType === 'azurerm_subnet') {
+      if (!Array.isArray(userConfig.address_prefixes) && typeof userConfig.addressPrefix === 'string') {
+        const parsed = userConfig.addressPrefix
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+        if (parsed.length > 0) userConfig.address_prefixes = parsed
+      }
+      if (!Array.isArray(userConfig.service_endpoints) && Array.isArray(userConfig.serviceEndpoints)) {
+        userConfig.service_endpoints = userConfig.serviceEndpoints
+      }
+    }
+
     resourcesTf += `resource "${resourceType}" "${resourceName}" {\n`
 
     // ── name / location ────────────────────────────────────────────────
@@ -681,6 +708,68 @@ export function generateTerraformWithValidation(
       const vnetRef = getAzureVnetRef(node, nodeMap, nodeIdToTfName)
       if (vnetRef) {
         resourcesTf += `  virtual_network_name = ${vnetRef}\n`
+      }
+    }
+
+    // ── Azure VNet: explicitly typed networking fields ────────────────────
+    if (resourceType === 'azurerm_virtual_network') {
+      const addressSpace = Array.isArray(userConfig.address_space)
+        ? userConfig.address_space
+        : typeof userConfig.cidr_block === 'string' && userConfig.cidr_block
+          ? [userConfig.cidr_block]
+          : []
+      if (addressSpace.length > 0) {
+        resourcesTf += `  address_space = ${JSON.stringify(addressSpace)}\n`
+      }
+      if (Array.isArray(userConfig.dns_servers) && userConfig.dns_servers.length > 0) {
+        resourcesTf += `  dns_servers = ${JSON.stringify(userConfig.dns_servers)}\n`
+      }
+      if (typeof userConfig.bgp_community === 'string' && userConfig.bgp_community) {
+        resourcesTf += `  bgp_community = ${JSON.stringify(userConfig.bgp_community)}\n`
+      }
+      if (typeof userConfig.flow_timeout_in_minutes === 'number') {
+        resourcesTf += `  flow_timeout_in_minutes = ${userConfig.flow_timeout_in_minutes}\n`
+      }
+      if (typeof userConfig.ddos_protection_enabled === 'boolean') {
+        resourcesTf += `  ddos_protection_plan {\n`
+        resourcesTf += `    enable = ${userConfig.ddos_protection_enabled}\n`
+        if (userConfig.ddos_protection_enabled && userConfig.ddos_protection_plan_id) {
+          resourcesTf += `    id     = ${JSON.stringify(userConfig.ddos_protection_plan_id)}\n`
+        }
+        resourcesTf += `  }\n`
+      }
+    }
+
+    // ── Azure Subnet: explicitly typed networking fields ──────────────────
+    if (resourceType === 'azurerm_subnet') {
+      const prefixes = Array.isArray(userConfig.address_prefixes)
+        ? userConfig.address_prefixes
+        : typeof userConfig.cidr_block === 'string' && userConfig.cidr_block
+          ? [userConfig.cidr_block]
+          : []
+      if (prefixes.length > 0) {
+        resourcesTf += `  address_prefixes = ${JSON.stringify(prefixes)}\n`
+      }
+      if (Array.isArray(userConfig.service_endpoints) && userConfig.service_endpoints.length > 0) {
+        resourcesTf += `  service_endpoints = ${JSON.stringify(userConfig.service_endpoints)}\n`
+      }
+      if (typeof userConfig.private_endpoint_network_policies === 'string') {
+        resourcesTf += `  private_endpoint_network_policies = ${JSON.stringify(userConfig.private_endpoint_network_policies)}\n`
+      }
+      if (typeof userConfig.private_link_service_network_policies_enabled === 'boolean') {
+        resourcesTf += `  private_link_service_network_policies_enabled = ${userConfig.private_link_service_network_policies_enabled}\n`
+      }
+      if (typeof userConfig.default_outbound_access_enabled === 'boolean') {
+        resourcesTf += `  default_outbound_access_enabled = ${userConfig.default_outbound_access_enabled}\n`
+      }
+      if (typeof userConfig.delegation === 'string' && userConfig.delegation) {
+        resourcesTf += `  delegation {\n`
+        resourcesTf += `    name = \"delegation\"\n`
+        resourcesTf += `    service_delegation {\n`
+        resourcesTf += `      name = ${JSON.stringify(userConfig.delegation)}\n`
+        resourcesTf += `      actions = [\"Microsoft.Network/virtualNetworks/subnets/action\"]\n`
+        resourcesTf += `    }\n`
+        resourcesTf += `  }\n`
       }
     }
 
@@ -894,7 +983,36 @@ export function generateTerraformWithValidation(
       'size',
       'sku',
       'security_rules', // handled above as security_rule blocks
+      // legacy aliases that should not be emitted as HCL arguments
+      'addressSpace',
+      'dnsServers',
+      'addressPrefix',
+      'serviceEndpoints',
     ])
+
+    if (resourceType === 'azurerm_virtual_network') {
+      ;[
+        'address_space',
+        'cidr_block',
+        'dns_servers',
+        'bgp_community',
+        'flow_timeout_in_minutes',
+        'ddos_protection_enabled',
+        'ddos_protection_plan_id',
+      ].forEach(k => handledKeys.add(k))
+    }
+
+    if (resourceType === 'azurerm_subnet') {
+      ;[
+        'address_prefixes',
+        'cidr_block',
+        'service_endpoints',
+        'delegation',
+        'private_endpoint_network_policies',
+        'private_link_service_network_policies_enabled',
+        'default_outbound_access_enabled',
+      ].forEach(k => handledKeys.add(k))
+    }
 
     Object.entries(userConfig).forEach(([key, value]) => {
       if (handledKeys.has(key)) return
